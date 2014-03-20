@@ -12,27 +12,122 @@ import Database.Definition.Type;
 import Database.SingleUserDatabase.JEXWriter;
 
 public class FileWriter {
-	
-	public static JEXDataSingle saveFileDataSingle(String filePath)
+
+	/**
+	 * Make a JEXData file object from a single object
+	 * 
+	 * @param objectName
+	 * @param ObjectFlavor
+	 * @param file
+	 * @return data
+	 */
+	public static JEXData makeFileObject(String objectName, String objectFlavor, Object fileObject)
 	{
-		// Get the file
-		if(filePath == null || filePath == "")
+		// Make the data that will be returned
+		JEXData data = new JEXData(new Type(JEXData.FILE, objectFlavor), objectName);
+
+		// If the file is a string, make a JEXDataSingle with the string embedded
+		JEXDataSingle ds = saveFileDataSingle(fileObject);
+
+		// test the JEXDataSingle
+		if (ds == null) return null;
+
+		// Add the datasingle to the data
+		data.addData(new DimensionMap(), ds);
+
+		// Test to see that the data was well inputed in the new JEXData, else return null
+		if(data.datamap.size() == 0)
 		{
 			return null;
 		}
-		File file = new File(filePath);
-		
-		// if the file doesn't exist return null
-		if(!file.exists())
+
+		// Return the JEXData
+		return data;
+	}
+
+	/**
+	 * Make a JEXData file object from a single object
+	 * 
+	 * @param objectName
+	 * @param ObjectFlavor
+	 * @param file
+	 * @return data
+	 */
+	public static JEXData makeFileObject(String objectName, String objectFlavor, Map<DimensionMap,Object> fileMap)
+	{
+		// Make the data that will be returned
+		JEXData data = new JEXData(new Type(JEXData.FILE, objectFlavor), objectName);
+
+		// loop through the file objects
+		for (DimensionMap map : fileMap.keySet())
+		{
+			// Get the file object
+			Object fileObject = fileMap.get(map);
+
+			// If the file is a string, make a JEXDataSingle with the string embedded
+			JEXDataSingle ds = saveFileDataSingle(fileObject);
+
+			// test the JEXDataSingle
+			if (ds == null) continue;
+
+			// Add the datasingle to the data
+			data.addData(new DimensionMap(), ds);
+		}
+
+		// Test to see that the data was well inputed in the new JEXData, else return null
+		if(data.datamap.size() == 0)
 		{
 			return null;
 		}
-		
+
+		// Return the JEXData
+		return data;
+	}
+
+	/**
+	 * Make a JEXDataSingle from a filepath
+	 * 
+	 * @param filePath
+	 * @return
+	 */
+	public static JEXDataSingle saveFileDataSingle(Object fileObject)
+	{
+		// test the fileObject
+		if (fileObject == null) return null;
+
+		// Create a variable for the path and the file
+		File          file     = null;
+		String        filePath = null;
+
+		// Test the file object send and make a JEXDataSingle based on that
+		if (fileObject.getClass().equals(String.class))
+		{
+			// If the fileObject is a String
+			filePath = (String) fileObject;
+			file     = new File(filePath);
+		}
+		else if (fileObject.getClass().equals(File.class))
+		{
+			// If the fileObject is a file
+			file     = (File) fileObject;
+			filePath = file.getAbsolutePath();
+		}
+		else
+		{
+			return null;
+		}
+
+		// Test if the file exists else return null
+		if(filePath == "" || !file.exists())
+		{
+			return null;
+		}
+
 		// Get a new file name in the temp folder
 		String extension = FileUtility.getFileNameExtension(filePath);
 		String relativePath = JEXWriter.getUniqueRelativeTempPath(extension);
 		File tempFile = new File(JEXWriter.getDatabaseFolder() + File.separator + relativePath);
-		
+
 		try
 		{
 			JEXWriter.copy(file, tempFile); // Doesn't actually copy if trying
@@ -43,102 +138,13 @@ public class FileWriter {
 		{
 			e.printStackTrace();
 		}
-		
+
 		// Make a new JEXDataSingle
 		JEXDataSingle ds = new JEXDataSingle();
 		ds.put(JEXDataSingle.RELATIVEPATH, relativePath);
-		
+
 		// Return the datasingle
 		return ds;
 	}
-	
-	/**
-	 * Make a file data object with a file movie inside
-	 * 
-	 * @param objectName
-	 * @param filePath
-	 * @return data
-	 */
-	public static JEXData makeFileObject(String objectName, String filePath)
-	{
-		return makeFileObject(JEXData.FILE, objectName, filePath);
-	}
-	
-	/**
-	 * Make a file data object with a file movie inside
-	 * 
-	 * @param objectName
-	 * @param filePath
-	 * @return data
-	 */
-	public static JEXData makeFileObject(Type objectType, String objectName, String filePath)
-	{
-		JEXData data = new JEXData(objectType, objectName);
-		
-		// Make a data single
-		JEXDataSingle ds = saveFileDataSingle(filePath);
-		data.addData(new DimensionMap(), ds);
-		
-		if(data.datamap.size() == 0)
-		{
-			return null;
-		}
-		return data;
-	}
-	
-	/**
-	 * Make a file data object with a file movie inside
-	 * 
-	 * @param objectName
-	 * @param filePath
-	 * @return data
-	 */
-	public static JEXData makeFileTable(Type objectType, String objectName, Map<DimensionMap,String> pathMap)
-	{
-		JEXData data = new JEXData(objectType, objectName);
-		
-		for (DimensionMap map : pathMap.keySet())
-		{
-			String path = pathMap.get(map);
-			
-			// Make a data single
-			JEXDataSingle ds = saveFileDataSingle(path);
-			DimensionMap newmap = map.copy();
-			data.addData(newmap, ds);
-		}
-		
-		if(data.datamap.size() == 0)
-		{
-			return null;
-		}
-		return data;
-	}
-	
-	/**
-	 * Return an image stack object from filepaths and a dimensionname (ie T, Time, Z, etc...)
-	 * 
-	 * @param objectName
-	 * @param imageMap
-	 * @return
-	 */
-	public static JEXData makeFileTable(String objectName, Map<DimensionMap,String> imageMap)
-	{
-		JEXData data = new JEXData(JEXData.FILE, objectName);
-		
-		for (DimensionMap map : imageMap.keySet())
-		{
-			String path = imageMap.get(map);
-			
-			// Make a data single
-			JEXDataSingle ds = saveFileDataSingle(path);
-			DimensionMap newmap = map.copy();
-			data.addData(newmap, ds);
-		}
-		
-		if(data.datamap.size() == 0)
-		{
-			return null;
-		}
-		return data;
-	}
+
 }
