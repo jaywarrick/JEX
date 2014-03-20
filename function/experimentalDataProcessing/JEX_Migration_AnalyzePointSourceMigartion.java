@@ -214,7 +214,7 @@ public class JEX_Migration_AnalyzePointSourceMigartion extends ExperimentalDataC
 		// Run the function
 		Logs.log("Running the function", 1, this);
 		
-		PointSourceHelperFunction graphFunc = new PointSourceHelperFunction(entry, trackData, imageData, outputNames, parameters);
+		PointSourceHelperFunction2 graphFunc = new PointSourceHelperFunction2(entry, trackData, imageData, outputNames, parameters);
 		graphFunc.doit();
 		
 		// Collect the outputs
@@ -330,7 +330,7 @@ public class JEX_Migration_AnalyzePointSourceMigartion extends ExperimentalDataC
 	
 }
 
-class PointSourceHelperFunction implements GraphicalCrunchingEnabling, ImagePanelInteractor {
+class PointSourceHelperFunction2 implements GraphicalCrunchingEnabling, ImagePanelInteractor {
 	
 	// GUI variables
 	ImagePanel imagepanel;
@@ -375,7 +375,7 @@ class PointSourceHelperFunction implements GraphicalCrunchingEnabling, ImagePane
 	public double persistenceTime; 			// Persistence time
 	public double percetForward; 			// Percent cells migrating forward
 	
-	PointSourceHelperFunction(JEXEntry entry, JEXData tracks, JEXData timelapse, TypeName[] outputNames, ParameterSet parameters)
+	PointSourceHelperFunction2(JEXEntry entry, JEXData tracks, JEXData timelapse, TypeName[] outputNames, ParameterSet parameters)
 	{
 		// Pass the variables
 		this.tracks = tracks;

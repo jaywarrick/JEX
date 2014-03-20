@@ -10,6 +10,7 @@ import tables.DimensionMap;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXDataSingle;
 import Database.DBObjects.JEXEntry;
+import Database.Definition.Type;
 
 public class RoiWriter {
 	
@@ -18,7 +19,15 @@ public class RoiWriter {
 	 */
 	public static JEXData makeRoiObject(String objectName, ROIPlus roi)
 	{
-		JEXData result = new JEXData(JEXData.ROI, objectName);
+		return makeRoiObject(objectName,null,roi);
+	}
+	
+	/**
+	 * Make a simple, zero dimensional ROI data object
+	 */
+	public static JEXData makeRoiObject(String objectName, String objectFlavor, ROIPlus roi)
+	{
+		JEXData result = new JEXData(new Type(JEXData.ROI,objectFlavor), objectName);
 		result.put(JEXEntry.INFO, "No info inputed");
 		result.put(JEXEntry.DATE, miscellaneous.DateUtility.getDate());
 		result.put(JEXEntry.MODIFDATE, miscellaneous.DateUtility.getDate());
