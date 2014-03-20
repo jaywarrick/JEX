@@ -370,14 +370,14 @@ public class JEX_SingleCell_MicrowellAnalysis extends ExperimentalDataCrunch {
 			JEXStatics.statusBar.setProgressPercentage(percentage);
 		}
 
-		JEXData output0 = FileWriter.makeFileObject(this.outputNames[0].getName(), (String) categoryResults[0]);
+		JEXData output0 = FileWriter.makeFileObject(this.outputNames[0].getName(), null, (String) categoryResults[0]);
 		JEXData output1 = RoiWriter.makeRoiObject(this.outputNames[1].getName(), (TreeMap<DimensionMap,ROIPlus>) categoryResults[1]);
 		JEXData output2 = RoiWriter.makeRoiObject(this.outputNames[2].getName(), (TreeMap<DimensionMap,ROIPlus>) categoryResults[2]);
-		JEXData output3 = FileWriter.makeFileTable(outputNames[3].getName(), intFilesAll);
-		JEXData output4 = FileWriter.makeFileTable(outputNames[4].getName(), intFiles0);
-		JEXData output5 = FileWriter.makeFileTable(outputNames[5].getName(), intFiles1);
-		JEXData output6 = FileWriter.makeFileTable(outputNames[6].getName(), intFilesMulti);
-		JEXData output7 = FileWriter.makeFileTable(outputNames[7].getName(), intFilesUnCat);
+		JEXData output3 = FileWriter.makeFileObject(outputNames[3].getName(), null, intFilesAll);
+		JEXData output4 = FileWriter.makeFileObject(outputNames[4].getName(), null, intFiles0);
+		JEXData output5 = FileWriter.makeFileObject(outputNames[5].getName(), null, intFiles1);
+		JEXData output6 = FileWriter.makeFileObject(outputNames[6].getName(), null, intFilesMulti);
+		JEXData output7 = FileWriter.makeFileObject(outputNames[7].getName(), null, intFilesUnCat);
 
 		this.realOutputs.add(output0);
 		this.realOutputs.add(output1);

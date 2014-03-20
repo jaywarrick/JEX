@@ -254,7 +254,7 @@ public class JEX_OscillatoryAdhesionPlots extends ExperimentalDataCrunch {
 			output1 = ImageWriter.makeImageObject(this.outputNames[0].getName(), (String) results[0]);
 		}
 		
-		JEXData output2 = FileWriter.makeFileObject(this.outputNames[1].getName(), (String) results[1]);
+		JEXData output2 = FileWriter.makeFileObject(this.outputNames[1].getName(), null, (String) results[1]);
 		TreeMap<DimensionMap,Double> fitResults = new TreeMap<DimensionMap,Double>();
 		DimensionMap map = new DimensionMap();
 		map.put("Measurement", "Tau50");
@@ -267,7 +267,7 @@ public class JEX_OscillatoryAdhesionPlots extends ExperimentalDataCrunch {
 		fitResults.put(map.copy(), (Double) results[5]);
 		JEXData output3 = ValueWriter.makeValueTableFromDouble(this.outputNames[2].getName(), fitResults);
 		output3.setDimTable(new DimTable(fitResults));
-		JEXData output4 = FileWriter.makeFileObject(this.outputNames[3].getName(), (String) results[6]);
+		JEXData output4 = FileWriter.makeFileObject(this.outputNames[3].getName(), null, (String) results[6]);
 		
 		// Set the outputs
 		this.realOutputs.add(output1);

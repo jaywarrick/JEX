@@ -323,7 +323,7 @@ public class JEX_OscillatoryAdhesionAnalysis extends ExperimentalDataCrunch {
 		
 		JEXData output1 = ImageWriter.makeImageStackFromPaths(outputNames[0].getName(), imageMap);
 		JEXData output2 = ImageWriter.makeImageStackFromPaths(outputNames[1].getName(), threshMap);
-		JEXData output3 = FileWriter.makeFileObject(outputNames[2].getType(), outputNames[2].getName(), filePath);
+		JEXData output3 = FileWriter.makeFileObject(outputNames[2].getName(), null, filePath);
 		output1.setDimTable(subDimTable);
 		output2.setDimTable(originalDimTable);
 		output3.setDimTable(subDimTable);

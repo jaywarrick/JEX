@@ -526,9 +526,9 @@ public class JEX_SingleCell_MicrowellMeasurements extends ExperimentalDataCrunch
 		}
 		
 		String countStatsPath = JEXTableWriter.writeTable("Cell Count Stats", this.countStats);
-		JEXData output0 = FileWriter.makeFileObject(this.outputNames[0].getName(), countStatsPath);
+		JEXData output0 = FileWriter.makeFileObject(this.outputNames[0].getName(), null, countStatsPath);
 		JEXData output2 = RoiWriter.makeRoiObject(this.outputNames[2].getName(), filteredROIs);
-		JEXData output3 = FileWriter.makeFileObject(this.outputNames[3].getName(), errorPath);
+		JEXData output3 = FileWriter.makeFileObject(this.outputNames[3].getName(), null, errorPath);
 		JEXData output4 = RoiWriter.makeRoiObject(this.outputNames[4].getName(), roiData0);
 		JEXData output5 = RoiWriter.makeRoiObject(this.outputNames[5].getName(), roiData1);
 		JEXData output6 = RoiWriter.makeRoiObject(this.outputNames[6].getName(), roiData2);
@@ -542,7 +542,7 @@ public class JEX_SingleCell_MicrowellMeasurements extends ExperimentalDataCrunch
 		
 		if(measureIntensities)
 		{
-			JEXData output1 = FileWriter.makeFileTable(this.outputNames[1].getName(), resultsPaths);
+			JEXData output1 = FileWriter.makeFileObject(this.outputNames[1].getName(), null, resultsPaths);
 			this.realOutputs.add(output1);
 		}
 		

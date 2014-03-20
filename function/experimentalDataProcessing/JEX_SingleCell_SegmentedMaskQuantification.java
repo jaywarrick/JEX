@@ -254,7 +254,7 @@ public class JEX_SingleCell_SegmentedMaskQuantification extends ExperimentalData
 			}
 			
 			String resultsFile = JEXTableWriter.writeTable(this.outputNames[0].getName(), results);
-			JEXData output0 = FileWriter.makeFileObject(this.outputNames[0].getName(), resultsFile);
+			JEXData output0 = FileWriter.makeFileObject(this.outputNames[0].getName(), null, resultsFile);
 			
 			// Set the outputs
 			this.realOutputs.add(output0);
