@@ -402,7 +402,7 @@ public class JEX_ImageTools_MeasureROIRegion2 extends ExperimentalDataCrunch {
 		
 		String path = JEXTableWriter.writeTable("RegionMeasures", new Table<Double>(resultsDimTable, resultsTreeMap));
 		
-		JEXData output = FileWriter.makeFileObject(this.outputNames[0].getType(), this.outputNames[0].getName(), path);
+		JEXData output = FileWriter.makeFileObject(this.outputNames[0].getName(), null, path);
 		
 		// Set the outputs
 		this.realOutputs.add(output);

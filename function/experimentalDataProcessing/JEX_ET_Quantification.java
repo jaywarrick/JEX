@@ -377,7 +377,7 @@ public class JEX_ET_Quantification extends ExperimentalDataCrunch {
 		JEXData output5 = ValueWriter.makeValueTableFromDouble(this.outputNames[4].getName(), nbOfCellsMap);
 		JEXData output6 = ValueWriter.makeValueTableFromDouble(this.outputNames[5].getName(), nbOfETCellsMap);
 		JEXData output7 = ValueWriter.makeValueTableFromDouble(this.outputNames[6].getName(), nbOfLiveCellsMap);
-		JEXData output8 = FileWriter.makeFileTable(this.outputNames[7].getName(), measurementTableMap);
+		JEXData output8 = FileWriter.makeFileObject(this.outputNames[7].getName(),null, measurementTableMap);
 		
 		// Set the outputs
 		this.realOutputs.add(output1);

@@ -288,7 +288,7 @@ public class JEX_SplitARFFTable extends ExperimentalDataCrunch {
 			{
 				return false;
 			}
-			JEXData output1 = FileWriter.makeFileTable(this.outputNames[0].getName(), outputFileData);
+			JEXData output1 = FileWriter.makeFileObject(this.outputNames[0].getName(), null, outputFileData);
 			
 			// Set the outputs
 			this.realOutputs.add(output1);

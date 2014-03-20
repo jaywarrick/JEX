@@ -262,7 +262,7 @@ public class JEX_MakeFACSMeanPlots extends ExperimentalDataCrunch {
 		
 		// Save the output images in the database
 		JEXData output1 = ImageWriter.makeImageStackFromPaths(outputNames[0].getName(), outputImageData);
-		JEXData output2 = FileWriter.makeFileObject(outputNames[1].getType(), outputNames[1].getName(), outpathData);
+		JEXData output2 = FileWriter.makeFileObject(outputNames[1].getName(), null, outpathData);
 		realOutputs.add(output1);
 		realOutputs.add(output2);
 		

@@ -234,9 +234,9 @@ public class JEX_ThresholdBGNoise extends ExperimentalDataCrunch {
 		
 		JEXData output1 = ImageWriter.makeImageStackFromPaths(this.outputNames[0].getName(), (TreeMap<DimensionMap,String>) output.get("outputMap"));
 		String valuePath2 = JEXTableWriter.writeTable(this.outputNames[1].getName(), (TreeMap<DimensionMap,Double>) output.get("statsMap"));
-		JEXData output2 = FileWriter.makeFileObject(this.outputNames[1].getName(), valuePath2);
+		JEXData output2 = FileWriter.makeFileObject(this.outputNames[1].getName(), null, valuePath2);
 		String valuePath3 = JEXTableWriter.writeTable(this.outputNames[2].getName(), (TreeMap<DimensionMap,Double>) output.get("outputThreshMap"));
-		JEXData output3 = FileWriter.makeFileObject(this.outputNames[2].getName(), valuePath3);
+		JEXData output3 = FileWriter.makeFileObject(this.outputNames[2].getName(), null, valuePath3);
 		
 		// Set the outputs
 		this.realOutputs.add(output1);

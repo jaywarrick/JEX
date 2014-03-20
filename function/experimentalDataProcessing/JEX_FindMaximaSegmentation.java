@@ -494,9 +494,9 @@ public class JEX_FindMaximaSegmentation extends ExperimentalDataCrunch {
 			
 			if(!maximaOnly)
 			{
-				JEXData output1 = FileWriter.makeFileTable(this.outputNames[1].getName(), outputFileMap);
+				JEXData output1 = FileWriter.makeFileObject(this.outputNames[1].getName(), null, outputFileMap);
 				String countsFile = JEXTableWriter.writeTable(this.outputNames[2].getName(), outputCountMap, "arff");
-				JEXData output2 = FileWriter.makeFileObject(this.outputNames[2].getName(), countsFile);
+				JEXData output2 = FileWriter.makeFileObject(this.outputNames[2].getName(), null, countsFile);
 				JEXData output3 = ImageWriter.makeImageStackFromPaths(this.outputNames[3].getName(), outputImageMap);
 				
 				this.realOutputs.add(output1);

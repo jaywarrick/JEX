@@ -607,7 +607,7 @@ class DeformationCalculationHelperFunction implements GraphicalCrunchingEnabling
 		output1 = ImageWriter.makeImageStackFromPaths(outputNames[0].getName(), outputMap1);
 		output1.setDataObjectInfo("Local displacement Image stack");
 		
-		output2 = FileWriter.makeFileTable(outputNames[1].getName(), outputMap2);
+		output2 = FileWriter.makeFileObject(outputNames[1].getName(), null, outputMap2);
 		output2.setDataObjectInfo("Local displacement Value stack");
 	}
 	

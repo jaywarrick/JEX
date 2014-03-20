@@ -215,7 +215,7 @@ public class JEX_VirusSim_ImportData extends ExperimentalDataCrunch {
 		String scriptFilePath = folder.getAbsolutePath() + File.separator + "plotScript.R";
 		
 		JEXData plotData = this.makePlots(data, scriptFilePath);
-		JEXData fileData = FileWriter.makeFileTable(this.outputNames[1].getName(), data.data);
+		JEXData fileData = FileWriter.makeFileObject(this.outputNames[1].getName(), null, data.data);
 		
 		// Set the outputs
 		this.realOutputs.add(plotData);

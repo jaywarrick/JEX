@@ -353,7 +353,7 @@ public class JEX_ImageTools_MeasureROIPointsXY extends ExperimentalDataCrunch {
 			}
 			writer.close();
 			
-			JEXData output1 = FileWriter.makeFileObject(outputNames[0].getType(), outputNames[0].getName(), fullPath);
+			JEXData output1 = FileWriter.makeFileObject(outputNames[0].getName(), null, fullPath);
 			
 			// Set the outputs
 			realOutputs.add(output1);

@@ -310,7 +310,7 @@ public class JEX_CellIntensityAnalyzer extends ExperimentalDataCrunch {
 			}
 			
 			String finalPath = JEXWriter.saveText(result.toString(), "csv");
-			JEXData output1 = FileWriter.makeFileObject(outputNames[0].getType(), outputNames[0].getName(), finalPath);
+			JEXData output1 = FileWriter.makeFileObject(outputNames[0].getName(), null, finalPath);
 			// Set the outputs
 			realOutputs.add(output1);
 		}

@@ -216,7 +216,7 @@ public class JEX_ImageTools_CountPointsToARFF extends ExperimentalDataCrunch {
 		}
 		
 		String path = JEXTableWriter.writeTable("Point Counts", new Table<Double>(outputDimTable, outputCounts));
-		JEXData output1 = FileWriter.makeFileObject(outputNames[0].getType(), outputNames[0].getName(), path);
+		JEXData output1 = FileWriter.makeFileObject(outputNames[0].getName(), null, path);
 		
 		// Set the outputs
 		realOutputs.add(output1);
