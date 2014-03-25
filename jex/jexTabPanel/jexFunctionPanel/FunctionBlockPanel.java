@@ -219,7 +219,7 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 		// outputList.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 		for (int i = 0; i < nbOutput; i++)
 		{
-			FunctionOutputDrag oud = new FunctionOutputDrag(i, function.getExpectedOutputTN(i));
+			FunctionOutputDrag oud = new FunctionOutputDrag(i, function.getSavingSelections().get(i), function.getExpectedOutputTN(i));
 			// oud.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 			this.outputList.add(oud, "growx");
 			this.outputPanes.put(new Integer(i), oud);
@@ -275,6 +275,14 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 			this.function.setExpectedOutputName(index, outPane.getOutputName());
 		}
 		return;
+	}
+	
+	/**
+	 * Set the list of given output names for this function
+	 */
+	public void setSavingSelections()
+	{
+		this.function.setSavingSelections(this.getSavingSelections());
 	}
 	
 	/**
@@ -366,7 +374,18 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 	public JEXFunction getFunction()
 	{
 		this.setListOfOutputNames();
+		this.setSavingSelections();
 		return this.function;
+	}
+	
+	public TreeMap<Integer,Boolean> getSavingSelections()
+	{
+		TreeMap<Integer,Boolean> selections = new TreeMap<Integer,Boolean>();
+		for(Integer pane : this.outputPanes.keySet())
+		{
+			selections.put(pane, this.outputPanes.get(pane).getSavingSelection());
+		}
+		return selections;
 	}
 	
 	// ----------------------------------------------------
@@ -544,10 +563,11 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 		JCheckBox saveOutput = new JCheckBox();
 		JPanel box;
 		
-		FunctionOutputDrag(int index, TypeName tn)
+		FunctionOutputDrag(int index, boolean savingSelection, TypeName tn)
 		{
 			this.tn = tn;
 			this.index = index;
+			this.saveOutput.setSelected(savingSelection);
 			this.initialize();
 		}
 		
@@ -620,6 +640,11 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 			this.add(this.saveOutput);
 			this.add(this.outputTNLabel, "growx");
 			this.repaint();
+		}
+		
+		public boolean getSavingSelection()
+		{
+			return this.saveOutput.isSelected();
 		}
 		
 		public void setCanRun(boolean canRun)
@@ -705,6 +730,7 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 		else if(e.getSource() == this.runButton)
 		{
 			this.setListOfOutputNames();
+			this.setSavingSelections();
 			this.parent.runOneFunction(this.function, this.parent.isAutoSaveSelected());
 		}
 	}

@@ -34,6 +34,7 @@ public class JEXFunction {
 	public static String INPUTS = "__Inputs__";
 	public static String OUTPUTS = "__Outputs__";
 	public static String PARAMETERS = "__Parameters__";
+	public static String SAVINGSELECTIONS = "__SavingSelections__";
 	
 	public static String FUNCTION_NAME = "Function Name";
 	public static String INFOTYPE = "Info Type";
@@ -42,6 +43,7 @@ public class JEXFunction {
 	ParameterSet parameters;
 	TreeMap<String,TypeName> inputs;
 	TreeMap<Integer,TypeName> outputs;
+	TreeMap<Integer,Boolean> savingSelections;
 	// TypeName[] outputTNs ;
 	ExperimentalDataCrunch cruncher;
 	
@@ -60,6 +62,11 @@ public class JEXFunction {
 		for (int i = 0; i < outputs.length; i++)
 		{
 			this.outputs.put(i, outputs[i]);
+		}
+		this.savingSelections = new TreeMap<Integer,Boolean>();
+		for (int i = 0; i < outputs.length; i++)
+		{
+			this.savingSelections.put(i, new Boolean(true));
 		}
 		parameters = this.cruncher.requiredParameters();
 		
@@ -139,10 +146,13 @@ public class JEXFunction {
 			{
 				this.outputs.put(new Integer(map.get(INFOKEY)), new TypeName(single.getValue()));
 			}
-			else
-			// Parameter
+			else if(map.get(INFOTYPE).equals(PARAMETERS))
 			{
 				this.parameters.setValueOfParameter(map.get(INFOKEY), single.getValue());
+			}
+			else
+			{ // Saving selections
+				this.savingSelections.put(new Integer(map.get(INFOKEY)), Boolean.parseBoolean(single.getValue()));
 			}
 		}
 	}
@@ -197,6 +207,21 @@ public class JEXFunction {
 			ret.add(single);
 		}
 		
+		for (Integer index : savingSelections.keySet())
+		{
+			JEXDataSingle single = new JEXDataSingle();
+			DimensionMap map = new DimensionMap();
+			map.put(FUNCTION_NAME, this.getFunctionName());
+			map.put(INFOTYPE, SAVINGSELECTIONS);
+			map.put(INFOKEY, "" + index);
+			Boolean selection = savingSelections.get(index);
+			if(selection == null)
+				continue;
+			single.setValue(selection.toString());
+			single.setDimensionMap(map);
+			ret.add(single);
+		}
+		
 		return ret;
 	}
 	
@@ -223,6 +248,8 @@ public class JEXFunction {
 		
 		Logs.log("Function " + this.getFunctionName() + " returned " + result, 1, this);
 		HashSet<JEXData> dataOutput = crunch.getRealOutputs();
+		
+		
 		
 		return dataOutput;
 	}
@@ -276,6 +303,18 @@ public class JEXFunction {
 		this.outputs.put(index, tn);
 	}
 	
+	public void setSavingSelections(TreeMap<Integer,Boolean> selections)
+	{
+		this.outputs.putAll(duplicateOutputMap(outputs));
+		ExperimentalDataCrunch cr = this.getCrunch();
+		cr.setOutputs(this.getExpectedOutputs());
+	}
+	
+	public TreeMap<Integer,Boolean> getSavingSelections()
+	{
+		return this.savingSelections;
+	}
+	
 	public void setExpectedOutputs(TreeMap<Integer,TypeName> outputs)
 	{
 		// this.checkOutputsLoaded();
@@ -324,6 +363,7 @@ public class JEXFunction {
 		result.setParameters(parameters.duplicate());
 		result.inputs = duplicateInputMap(inputs);
 		result.outputs = duplicateOutputMap(outputs);
+		result.savingSelections = duplicateSavingSelections(savingSelections);
 		result.getCrunch().setOutputs(result.getExpectedOutputs());
 		result.getCrunch().setCanceler(this.cruncher.canceler);
 		return result;
@@ -363,6 +403,18 @@ public class JEXFunction {
 			TypeName newTN = outputMap.get(key).duplicate();
 			Integer keyCopy = new Integer(key);
 			result.put(keyCopy, newTN);
+		}
+		return result;
+	}
+	
+	private static TreeMap<Integer,Boolean> duplicateSavingSelections(TreeMap<Integer,Boolean> selections)
+	{
+		TreeMap<Integer,Boolean> result = new TreeMap<Integer,Boolean>();
+		for (Integer key : selections.keySet())
+		{
+			Boolean selection = selections.get(key).booleanValue();
+			Integer keyCopy = new Integer(key);
+			result.put(keyCopy, selection);
 		}
 		return result;
 	}
