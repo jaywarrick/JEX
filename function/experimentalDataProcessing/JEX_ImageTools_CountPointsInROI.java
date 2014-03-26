@@ -6,6 +6,7 @@ import image.roi.ROIPlus;
 import java.awt.Point;
 import java.awt.Shape;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.TreeMap;
 
 import tables.DimensionMap;
@@ -216,22 +217,49 @@ public class JEX_ImageTools_CountPointsInROI extends ExperimentalDataCrunch {
 		int count = 0;
 		for (DimensionMap map : pointROI.keySet())
 		{
+			DimensionMap mapToSave = map.copy();
 			point = pointROI.get(map);
 			region = regionROI.get(map);
 			if(region == null)
 				continue;
-			regionShape = region.getShape();
-			PointList pl = new PointList();
-			for (Point p : point.pointList)
+			if(region.getPattern().size() > 0)
 			{
-				if(regionShape.contains(p))
+				Iterator<ROIPlus> itrRoi = region.patternRoiIterator();
+				int subCount = 0;
+				while(itrRoi.hasNext())
 				{
-					pl.add(p);
-					count = count + 1;
+					ROIPlus subRegion = itrRoi.next();
+					regionShape = subRegion.getShape();
+					PointList pl = new PointList();
+					for (Point p : point.pointList)
+					{
+						if(regionShape.contains(p))
+						{
+							pl.add(p);
+							count = count + 1;
+						}
+					}
+					mapToSave.put("SubRegionNumber", ""+subCount);
+					outputROI.put(mapToSave.copy(), new ROIPlus(pl, ROIPlus.ROI_POINT));
+					outputCounts.put(mapToSave.copy(), "" + pl.size());
+					subCount = subCount + 1;
 				}
 			}
-			outputROI.put(map, new ROIPlus(pl, ROIPlus.ROI_POINT));
-			outputCounts.put(map, "" + pl.size());
+			else
+			{
+				regionShape = region.getShape();
+				PointList pl = new PointList();
+				for (Point p : point.pointList)
+				{
+					if(regionShape.contains(p))
+					{
+						pl.add(p);
+						count = count + 1;
+					}
+				}
+				outputROI.put(mapToSave.copy(), new ROIPlus(pl, ROIPlus.ROI_POINT));
+				outputCounts.put(mapToSave.copy(), "" + pl.size());
+			}
 		}
 		
 		JEXData output1 = RoiWriter.makeRoiObject(outputNames[0].getName(), outputROI);
