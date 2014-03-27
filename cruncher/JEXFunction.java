@@ -249,9 +249,24 @@ public class JEXFunction {
 		Logs.log("Function " + this.getFunctionName() + " returned " + result, 1, this);
 		HashSet<JEXData> dataOutput = crunch.getRealOutputs();
 		
+		// Save only data which has been selected to be saved.
+		// This will cause issues for people that uncheck things that are needed to run subsequent functions.
+		HashSet<JEXData> savedOutput = new HashSet<JEXData>();
+		for(JEXData d : dataOutput)
+		{
+			for(Integer i : this.outputs.keySet())
+			{
+				if(this.outputs.get(i).equals(d.getTypeName()))
+				{
+					if(this.savingSelections.get(i))
+					{
+						savedOutput.add(d);
+					}
+				}
+			}
+		}
 		
-		
-		return dataOutput;
+		return savedOutput;
 	}
 	
 	// PARAMETERS
@@ -305,9 +320,7 @@ public class JEXFunction {
 	
 	public void setSavingSelections(TreeMap<Integer,Boolean> selections)
 	{
-		this.outputs.putAll(duplicateOutputMap(outputs));
-		ExperimentalDataCrunch cr = this.getCrunch();
-		cr.setOutputs(this.getExpectedOutputs());
+		this.savingSelections.putAll(duplicateSavingSelections(selections));
 	}
 	
 	public TreeMap<Integer,Boolean> getSavingSelections()
