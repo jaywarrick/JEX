@@ -33,7 +33,7 @@ public class DistributorArray implements ActionListener {
 	public HashMap<Point,Boolean> selectionArray;
 	
 	JEXDistributionPanelController parentController;
-	JButton saveButton;
+	JButton importButton;
 	JButton cancelButton;
 	
 	public Point pressed, released;
@@ -48,8 +48,8 @@ public class DistributorArray implements ActionListener {
 		this.rows = 0;
 		this.cols = 0;
 		
-		saveButton = new JButton("Save");
-		saveButton.addActionListener(this);
+		importButton = new JButton("Import");
+		importButton.addActionListener(this);
 		
 		cancelButton = new JButton("Clear");
 		cancelButton.addActionListener(this);
@@ -266,7 +266,7 @@ public class DistributorArray implements ActionListener {
 		pane.setBackground(DisplayStatics.background);
 		pane.setLayout(new MigLayout("ins 5, center, center", "[fill,grow]", "10[fill,grow]0[30]10"));
 		pane.add(arrayPanel, "span 2, width 100%, grow, wrap");
-		pane.add(saveButton, "growx");
+		pane.add(importButton, "growx");
 		pane.add(cancelButton, "growx");
 		
 		// repain and revalidate
@@ -346,7 +346,7 @@ public class DistributorArray implements ActionListener {
 	// /////////////////////////////////////////////////////////
 	public void actionPerformed(ActionEvent e)
 	{
-		if(e.getSource() == saveButton)
+		if(e.getSource() == importButton)
 		{
 			this.parentController.createObjects();
 			this.cancelDistribution();
