@@ -254,11 +254,6 @@ public abstract class ExperimentalDataCrunch implements Canceler, Cancelable {
 	
 	public abstract boolean run(JEXEntry entry, HashMap<String,JEXData> inputs);
 	
-	public void setCanceler(Ticket ticket)
-	{
-		this.canceler = ticket;
-	}
-	
 	public void setCanceler(Canceler canceler)
 	{
 		this.canceler = canceler;
