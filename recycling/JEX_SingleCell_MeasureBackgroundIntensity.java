@@ -22,8 +22,8 @@ import Database.DataWriter.FileWriter;
 import Database.Definition.Parameter;
 import Database.Definition.ParameterSet;
 import Database.Definition.TypeName;
-import function.ExperimentalDataCrunch;
-import function.experimentalDataProcessing.JEX_Filters;
+import function.JEXCrunchable;
+import function.crunchable.JEX_Filters;
 import function.singleCellAnalysis.SingleCellUtility;
 
 /**
@@ -36,7 +36,7 @@ import function.singleCellAnalysis.SingleCellUtility;
  * @author erwinberthier
  * 
  */
-public class JEX_SingleCell_MeasureBackgroundIntensity extends ExperimentalDataCrunch {
+public class JEX_SingleCell_MeasureBackgroundIntensity extends JEXCrunchable {
 	
 	public JEX_SingleCell_MeasureBackgroundIntensity()
 	{}

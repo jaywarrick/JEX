@@ -32,7 +32,7 @@ import Database.DBObjects.JEXDataSingle;
 import Database.DataReader.ImageReader;
 import Database.DataReader.RoiReader;
 import Database.SingleUserDatabase.JEXWriter;
-import function.ExperimentalDataCrunch;
+import function.JEXCrunchable;
 
 public class MovieWriter implements ImageObserver {
 	
@@ -64,7 +64,7 @@ public class MovieWriter implements ImageObserver {
 	 * @param images
 	 * @return
 	 */
-	public String makeQuickTimeMovie(JEXData images, JEXData cropROI, int imageBinning, Format format, int imagesPerSecond, ExperimentalDataCrunch optionalCruncherForCanceling)
+	public String makeQuickTimeMovie(JEXData images, JEXData cropROI, int imageBinning, Format format, int imagesPerSecond, JEXCrunchable optionalCruncherForCanceling)
 	{
 		return this.makeQuickTimeMovie(images, cropROI, imageBinning, format, imagesPerSecond, 0, 0, null, 0, 0, 0, optionalCruncherForCanceling);
 	}
@@ -75,7 +75,7 @@ public class MovieWriter implements ImageObserver {
 	 * @param images
 	 * @return
 	 */
-	public String makeQuickTimeMovie(JEXData images, JEXData cropROI, int imageBinning, Format format, int imagesPerSecond, double startTime, double interval, String units, int digits, int fontSize, int inset, ExperimentalDataCrunch optionalCruncherForCanceling)
+	public String makeQuickTimeMovie(JEXData images, JEXData cropROI, int imageBinning, Format format, int imagesPerSecond, double startTime, double interval, String units, int digits, int fontSize, int inset, JEXCrunchable optionalCruncherForCanceling)
 	{
 		if(images == null || !images.getTypeName().getType().equals(JEXData.IMAGE))
 		{
@@ -270,7 +270,7 @@ public class MovieWriter implements ImageObserver {
 	 * @param images
 	 * @return
 	 */
-	public String makeAVIMovie(JEXData images, JEXData cropROI, int imageBinning, String encoding, int imagesPerSecond, ExperimentalDataCrunch optionalCruncherForCanceling)
+	public String makeAVIMovie(JEXData images, JEXData cropROI, int imageBinning, String encoding, int imagesPerSecond, JEXCrunchable optionalCruncherForCanceling)
 	{
 		return this.makeAVIMovie(images, cropROI, imageBinning, encoding, imagesPerSecond, 0, 0, null, 0, 0, 0, optionalCruncherForCanceling);
 	}
@@ -281,7 +281,7 @@ public class MovieWriter implements ImageObserver {
 	 * @param images
 	 * @return
 	 */
-	public String makeAVIMovie(JEXData images, JEXData cropROI, int imageBinning, String encoding, int imagesPerSecond, double startTime, double interval, String units, int digits, int fontSize, int inset, ExperimentalDataCrunch optionalCruncherForCanceling)
+	public String makeAVIMovie(JEXData images, JEXData cropROI, int imageBinning, String encoding, int imagesPerSecond, double startTime, double interval, String units, int digits, int fontSize, int inset, JEXCrunchable optionalCruncherForCanceling)
 	{
 		if(images == null || !images.getTypeName().getType().equals(JEXData.IMAGE))
 		{

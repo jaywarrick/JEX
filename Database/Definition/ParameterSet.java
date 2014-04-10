@@ -1,33 +1,36 @@
 package Database.Definition;
 
 import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.TreeMap;
+import java.util.Vector;
 
 public class ParameterSet {
 	
-	LinkedHashMap<String,Parameter> params;
+	private TreeMap<String,Parameter> paramsByName;
+	private Vector<Parameter> paramsByOrderAdded;
 	
 	public ParameterSet()
 	{
-		params = new LinkedHashMap<String,Parameter>();
+		paramsByName = new TreeMap<String,Parameter>();
+		paramsByOrderAdded = new Vector<Parameter>();
 	}
 	
 	public ParameterSet(List<Parameter> params)
 	{
-		this.params = new LinkedHashMap<String,Parameter>();
+		this.paramsByName = new TreeMap<String,Parameter>();
 		for (Parameter p : params)
 		{
-			this.params.put(p.title, p);
+			this.paramsByName.put(p.title, p);
 		}
 	}
 	
 	public ParameterSet duplicate()
 	{
 		ParameterSet result = new ParameterSet();
-		for (String key : params.keySet())
+		for (String key : paramsByName.keySet())
 		{
-			result.addParameter(params.get(key).duplicate());
+			result.addParameter(paramsByName.get(key).duplicate());
 		}
 		return result;
 	}
@@ -39,7 +42,8 @@ public class ParameterSet {
 	 */
 	public void addParameter(Parameter param)
 	{
-		this.params.put(param.title, param);
+		this.paramsByName.put(param.title, param);
+		this.paramsByOrderAdded.add(param);
 	}
 	
 	/**
@@ -50,7 +54,7 @@ public class ParameterSet {
 	 */
 	public Parameter getParameter(String name)
 	{
-		return params.get(name);
+		return paramsByName.get(name);
 	}
 	
 	/**
@@ -89,7 +93,6 @@ public class ParameterSet {
 	 */
 	public Collection<Parameter> getParameters()
 	{
-		Collection<Parameter> result = params.values();
-		return result;
+		return this.paramsByOrderAdded;
 	}
 }

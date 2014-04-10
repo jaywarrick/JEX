@@ -45,7 +45,7 @@ import logs.Logs;
 import net.miginfocom.swing.MigLayout;
 import cruncher.JEXFunction;
 import function.CrunchFactory;
-import function.ExperimentalDataCrunch;
+import function.JEXCrunchable;
 
 public class FunctionListPanel implements MouseWheelListener {
 	
@@ -328,7 +328,7 @@ public class FunctionListPanel implements MouseWheelListener {
 			TreePath selPath = this.functionTree.getSelectionPath();
 			if(selPath != null)
 			{
-				ExperimentalDataCrunch cr = this.functionTree.getFunctionForPath(selPath);
+				JEXCrunchable cr = this.functionTree.getFunctionForPath(selPath);
 				if(cr == null)
 				{
 					return null;
@@ -385,7 +385,7 @@ public class FunctionListPanel implements MouseWheelListener {
 		
 		private static final long serialVersionUID = 1L;
 		public DefaultMutableTreeNode top;
-		public ExperimentalDataCrunch cr;
+		public JEXCrunchable cr;
 		
 		public FunctionTree()
 		{
@@ -399,7 +399,7 @@ public class FunctionListPanel implements MouseWheelListener {
 			this.setCellRenderer(new FunctionNodeRenderer());
 		}
 		
-		public ExperimentalDataCrunch getSelectedFunction()
+		public JEXCrunchable getSelectedFunction()
 		{
 			return this.cr;
 		}
@@ -461,13 +461,13 @@ public class FunctionListPanel implements MouseWheelListener {
 			}
 		}
 		
-		public ExperimentalDataCrunch getFunctionForPath(TreePath selectedpath)
+		public JEXCrunchable getFunctionForPath(TreePath selectedpath)
 		{
 			// Get the path selected
 			Object[] path = selectedpath.getPath();
 			Object o = path[path.length - 1];
 			
-			ExperimentalDataCrunch crunch = null;
+			JEXCrunchable crunch = null;
 			if(o instanceof FunctionNode)
 			{
 				crunch = ((FunctionNode) o).function;
@@ -491,8 +491,8 @@ public class FunctionListPanel implements MouseWheelListener {
 			{
 				this.removeAllChildren();
 				
-				TreeMap<String,ExperimentalDataCrunch> availableFunctions = CrunchFactory.getFunctionsFromToolbox(this.toolbox);
-				for (ExperimentalDataCrunch c : availableFunctions.values())
+				TreeMap<String,JEXCrunchable> availableFunctions = CrunchFactory.getFunctionsFromToolbox(this.toolbox);
+				for (JEXCrunchable c : availableFunctions.values())
 				{
 					FunctionNode dbNode = new FunctionNode(c);
 					this.add(dbNode);
@@ -503,9 +503,9 @@ public class FunctionListPanel implements MouseWheelListener {
 		class FunctionNode extends DefaultMutableTreeNode {
 			
 			private static final long serialVersionUID = 1L;
-			ExperimentalDataCrunch function;
+			JEXCrunchable function;
 			
-			public FunctionNode(ExperimentalDataCrunch function)
+			public FunctionNode(JEXCrunchable function)
 			{
 				super(function.getName());
 				this.function = function;

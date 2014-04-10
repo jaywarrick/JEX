@@ -1,6 +1,6 @@
 package jex.jexTabPanel.jexFunctionPanel;
 
-import function.ExperimentalDataCrunch;
+import function.JEXCrunchable;
 import guiObject.FlatRoundedButton;
 
 import java.awt.BasicStroke;
@@ -73,7 +73,7 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 	// Function variables
 	TreeMap<String,FunctionInputDrop> inputPanes;
 	TreeMap<Integer,FunctionOutputDrag> outputPanes;
-	ExperimentalDataCrunch crunch;
+	JEXCrunchable crunch;
 	
 	public FunctionBlockPanel(JEXFunctionPanel parent)
 	{
@@ -176,7 +176,7 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 	{
 		this.function = function;
 		
-		ExperimentalDataCrunch crunch = null;
+		JEXCrunchable crunch = null;
 		if(function != null)
 		{
 			crunch = function.getCrunch();
@@ -318,7 +318,7 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 		}
 		
 		// Set the outputs
-		boolean canRun = (this.crunch.checkInputs() == ExperimentalDataCrunch.INPUTSOK);
+		boolean canRun = (this.crunch.checkInputs() == JEXCrunchable.INPUTSOK);
 		for (FunctionOutputDrag outPane : this.outputPanes.values())
 		{
 			outPane.setCanRun(canRun);

@@ -1,6 +1,6 @@
 package function.singleCellAnalysis;
 
-import function.experimentalDataProcessing.JEX_Filters;
+import function.crunchable.JEX_Filters;
 import function.imageUtility.MaximumFinder;
 import ij.ImagePlus;
 import ij.gui.Roi;

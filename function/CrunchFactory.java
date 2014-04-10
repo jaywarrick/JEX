@@ -9,27 +9,31 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Enumeration;
-import java.util.HashMap;
+import java.util.List;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.Vector;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-import updates.Updater;
-
 import jex.JEXperiment;
 import jex.statics.PrefsUtility;
 import logs.Logs;
 import miscellaneous.StringUtility;
-import function.experimentalDataProcessing.IJ2.IJ2Plugin;
-import function.experimentalDataProcessing.IJ2.IJ2PluginUtility;
+
+import org.scijava.plugin.PluginInfo;
+
+import function.plugin.IJ2.IJ2CrunchablePlugin;
+import function.plugin.IJ2.IJ2PluginUtility;
+import function.plugin.mechanism.JEXCrunchablePlugin;
+import function.plugin.mechanism.JEXPlugin;
+import function.plugin.mechanism.JEXPluginInfo;
 
 public class CrunchFactory extends URLClassLoader {
 	
 	public Vector<String> internalPluginNames = new Vector<String>();
 	public Vector<String> externalPluginNames = new Vector<String>();
-	static HashMap<String,ExperimentalDataCrunch> listOfCrunchers = getExperimentalDataCrunchers();
+	static TreeMap<String,JEXCrunchable> listOfCrunchers = getExperimentalDataCrunchers();
 	
 	public CrunchFactory()
 	{
@@ -108,6 +112,19 @@ public class CrunchFactory extends URLClassLoader {
 		}
 	}
 	
+	private static TreeMap<String,JEXCrunchable> loadJEXCrunchablePlugins()
+	{
+		TreeMap<String,JEXCrunchable> ret = new TreeMap<String,JEXCrunchable>();
+		List<PluginInfo<JEXPlugin>> jexPlugins = IJ2PluginUtility.ij.plugin().getPluginsOfType(JEXPlugin.class);
+		for(PluginInfo<JEXPlugin> info : jexPlugins)
+		{
+			JEXPluginInfo fullInfo = new JEXPluginInfo(info);
+			JEXCrunchablePlugin crunchable = new JEXCrunchablePlugin(fullInfo);
+			ret.put(crunchable.getName(), crunchable);
+		}
+		return ret;
+	}
+	
 	private void add(File f, String packageName)
 	{
 		if(f.getName().endsWith(".jar") || f.getName().endsWith(".zip"))
@@ -144,17 +161,25 @@ public class CrunchFactory extends URLClassLoader {
 	 * @param functionName
 	 * @return An experimental data cruncher
 	 */
-	public static ExperimentalDataCrunch getExperimentalDataCrunch(String functionName)
+	public static JEXCrunchable getExperimentalDataCrunch(String functionName)
 	{
 		try
 		{
 			// Get the native ExperimentalDataCrunch
-			ExperimentalDataCrunch result = listOfCrunchers.get(functionName).getClass().newInstance();
-			if(result instanceof IJ2Plugin)
+			JEXCrunchable result = listOfCrunchers.get(functionName);
+			
+			if(result instanceof IJ2CrunchablePlugin)
 			{
-				((IJ2Plugin) result).setCommand(((IJ2Plugin) listOfCrunchers.get(functionName)).command);
+				return new IJ2CrunchablePlugin(((IJ2CrunchablePlugin) result).command);
 			}
-			return result;
+			if(result instanceof JEXCrunchablePlugin)
+			{
+				return new JEXCrunchablePlugin(((JEXCrunchablePlugin) result).info);
+			}
+			else
+			{ // Old JEXCrunchable
+				return result.getClass().newInstance();
+			}
 		}
 		catch (InstantiationException e)
 		{
@@ -172,17 +197,16 @@ public class CrunchFactory extends URLClassLoader {
 	 * 
 	 * @return
 	 */
-	public static HashMap<String,ExperimentalDataCrunch> getExperimentalDataCrunchers()
+	public static TreeMap<String,JEXCrunchable> getExperimentalDataCrunchers()
 	{
 		// Create a structure to store all the ExperimentalDataCrunch Objects
-		HashMap<String,ExperimentalDataCrunch> result = new HashMap<String,ExperimentalDataCrunch>();
+		TreeMap<String,JEXCrunchable> result = new TreeMap<String,JEXCrunchable>();
 		
-		// Get ImageJ Plugins
-		// if(!Updater.runningFromJar())
-		// {
-		TreeMap<String,IJ2Plugin> commands = IJ2PluginUtility.ijCommands;
-		result.putAll(commands);
-		// }
+		TreeMap<String,JEXCrunchable> jexPlugins = loadJEXCrunchablePlugins();
+		result.putAll(jexPlugins);
+		
+		TreeMap<String,IJ2CrunchablePlugin> ij2Plugins = IJ2PluginUtility.ijCommands;
+		result.putAll(ij2Plugins);
 		
 		// Find externally defined plugin class names
 		String prefsPluginsPath = PrefsUtility.getExternalPluginsFolder();
@@ -190,7 +214,7 @@ public class CrunchFactory extends URLClassLoader {
 		CrunchFactory loader = new CrunchFactory(); // constructor does the storing of the class names in the "externalPluginNames" vector field
 		
 		// Find internally defined plugin class names
-		URL classLoaderURL = ExperimentalDataCrunch.class.getResource("ExperimentalDataCrunch.class");
+		URL classLoaderURL = JEXCrunchable.class.getResource("JEXCrunchable.class");
 		Logs.log("A message that won't error...", CrunchFactory.class);
 		if(classLoaderURL == null)
 		{
@@ -245,7 +269,7 @@ public class CrunchFactory extends URLClassLoader {
 			try
 			{
 				root = new File(classLoaderURL.toURI().getPath());
-				root = new File(root.getParentFile() + File.separator + "experimentalDataProcessing");
+				root = new File(root.getParentFile() + File.separator + "plugin" + File.separator + "old");
 				File[] l = root.listFiles();
 				
 				for (int i = 0; i < l.length; i++)
@@ -267,7 +291,7 @@ public class CrunchFactory extends URLClassLoader {
 		// Create and store internally defined ExperimentalDataCrunch Objects
 		for (String pluginName : loader.internalPluginNames)
 		{
-			ExperimentalDataCrunch c = getInstanceOfExperimentalDataCrunch(pluginName);
+			JEXCrunchable c = getInstanceOfExperimentalDataCrunch(pluginName);
 			if(c == null)
 			{
 				continue;
@@ -306,9 +330,9 @@ public class CrunchFactory extends URLClassLoader {
 					{
 						Class<?> functionClass = loader.loadClass(pluginName);
 						Object function = functionClass.newInstance();
-						if(function instanceof ExperimentalDataCrunch)
+						if(function instanceof JEXCrunchable)
 						{
-							ExperimentalDataCrunch temp = (ExperimentalDataCrunch) function;
+							JEXCrunchable temp = (JEXCrunchable) function;
 							if(temp.showInList())
 							{
 								result.put(temp.getName(), temp);
@@ -355,7 +379,7 @@ public class CrunchFactory extends URLClassLoader {
 				{
 					String packageName = names[names.length - 2];
 					String name = names[names.length - 1];
-					if(packageName.equals("experimentalDataProcessing") && name.length() >= 4 && name.startsWith("JEX_") && name.endsWith(".class") && !name.contains("$"))
+					if(packageName.equals("old") && name.length() >= 4 && name.startsWith("JEX_") && name.endsWith(".class") && !name.contains("$"))
 					{
 						// Need to check for $ because those represent class files that are extra created by Eclipse that won't work
 						Logs.log("Found function definition: " + name, CrunchFactory.class);
@@ -377,14 +401,14 @@ public class CrunchFactory extends URLClassLoader {
 	 * @param name
 	 * @return instance of ExperimentalDataCrunch of name NAME
 	 */
-	public static ExperimentalDataCrunch getInstanceOfExperimentalDataCrunch(String name)
+	public static JEXCrunchable getInstanceOfExperimentalDataCrunch(String name)
 	{
 		// Class toInstantiate;
 		try
 		{
 			@SuppressWarnings("rawtypes")
-			Class toInstantiate = Class.forName("function.experimentalDataProcessing." + name);
-			ExperimentalDataCrunch ret = (ExperimentalDataCrunch) toInstantiate.newInstance();
+			Class toInstantiate = Class.forName("function.plugin.old." + name);
+			JEXCrunchable ret = (JEXCrunchable) toInstantiate.newInstance();
 			return ret;
 		}
 		catch (ClassNotFoundException e)
@@ -412,7 +436,7 @@ public class CrunchFactory extends URLClassLoader {
 		TreeSet<String> result = new TreeSet<String>(new StringUtility());
 		// listOfCrunchers = getExperimentalDataCrunchers();
 		
-		for (ExperimentalDataCrunch c : listOfCrunchers.values())
+		for (JEXCrunchable c : listOfCrunchers.values())
 		{
 			String tb = c.getToolbox();
 			result.add(tb);
@@ -426,13 +450,13 @@ public class CrunchFactory extends URLClassLoader {
 	 * @param toolbox
 	 * @return Sub set of function matching a toolbox name
 	 */
-	public static TreeMap<String,ExperimentalDataCrunch> getFunctionsFromToolbox(String toolbox)
+	public static TreeMap<String,JEXCrunchable> getFunctionsFromToolbox(String toolbox)
 	{
 		// HashMap<String,ExperimentalDataCrunch> result = new
 		// HashMap<String,ExperimentalDataCrunch>();
-		TreeMap<String,ExperimentalDataCrunch> result = new TreeMap<String,ExperimentalDataCrunch>();
+		TreeMap<String,JEXCrunchable> result = new TreeMap<String,JEXCrunchable>();
 		
-		for (ExperimentalDataCrunch c : listOfCrunchers.values())
+		for (JEXCrunchable c : listOfCrunchers.values())
 		{
 			if(c.getToolbox().equals(toolbox))
 			{

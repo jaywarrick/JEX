@@ -1,6 +1,6 @@
 package Database.SingleUserDatabase;
 
-import function.experimentalDataProcessing.IJ2.IJ2PluginUtility;
+import function.plugin.IJ2.IJ2PluginUtility;
 import ij.ImagePlus;
 import ij.io.FileSaver;
 import ij.process.ImageProcessor;
