@@ -15,7 +15,7 @@ import Database.Definition.Parameter;
 import Database.Definition.ParameterSet;
 import Database.Definition.TypeName;
 import function.CrunchFactory;
-import function.ExperimentalDataCrunch;
+import function.JEXCrunchable;
 
 public class JEXFunction {
 	
@@ -45,7 +45,7 @@ public class JEXFunction {
 	TreeMap<Integer,TypeName> outputs;
 	TreeMap<Integer,Boolean> savingSelections;
 	// TypeName[] outputTNs ;
-	ExperimentalDataCrunch cruncher;
+	JEXCrunchable cruncher;
 	
 	public JEXFunction(String functionName)
 	{
@@ -232,7 +232,7 @@ public class JEXFunction {
 	
 	public HashSet<JEXData> run(JEXEntry entry, HashMap<String,JEXData> inputs)
 	{
-		ExperimentalDataCrunch crunch = this.getCrunch();
+		JEXCrunchable crunch = this.getCrunch();
 		
 		crunch.prepareEntry();
 		boolean result = false;
@@ -332,7 +332,7 @@ public class JEXFunction {
 	{
 		// this.checkOutputsLoaded();
 		this.outputs.putAll(duplicateOutputMap(outputs));
-		ExperimentalDataCrunch cr = this.getCrunch();
+		JEXCrunchable cr = this.getCrunch();
 		cr.setOutputs(this.getExpectedOutputs());
 	}
 	
@@ -352,7 +352,7 @@ public class JEXFunction {
 	
 	// ADMINISTRATIVE VARIABLES
 	
-	public ExperimentalDataCrunch getCrunch()
+	public JEXCrunchable getCrunch()
 	{
 		return cruncher;
 	}

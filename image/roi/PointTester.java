@@ -1,6 +1,8 @@
 package image.roi;
 
 import function.CrunchFactory;
+import function.plugin.mechanism.JEXPlugin;
+import function.plugin.mechanism.JEXPluginInfo;
 import function.singleCellAnalysis.SingleCellUtility;
 import ij.ImagePlus;
 import ij.gui.PolygonRoi;
@@ -49,6 +51,11 @@ import miscellaneous.DirectoryManager;
 import miscellaneous.FileUtility;
 import miscellaneous.StatisticsUtility;
 import miscellaneous.StringUtility;
+
+import org.scijava.InstantiableException;
+import org.scijava.plugin.PluginInfo;
+import org.scijava.util.ConversionUtils;
+
 import rtools.R;
 import tables.Dim;
 import tables.DimTable;
@@ -66,7 +73,37 @@ public class PointTester {// extends URLClassLoader {
 	public static void main(String[] args)
 	{
 		Logs.log("Hello", PointTester.class);
-		testTableWriter();
+		testConversionUtils();
+	}
+	
+	public static void testConversionUtils()
+	{
+		String s = "5.1";
+		Logs.log("" + ConversionUtils.canConvert(s, int.class), PointTester.class);
+		Object o = ConversionUtils.convert(s, int.class);
+		Logs.log("" + o.getClass().getSimpleName(), PointTester.class);
+	}
+	
+	public static void testSciJava()
+	{
+		ImageJ ij = new ImageJ();
+		List<PluginInfo<JEXPlugin>> plugins = ij.plugin().getPluginsOfType(JEXPlugin.class);
+		
+		for(PluginInfo<JEXPlugin> info : plugins)
+		{
+			Class<? extends JEXPlugin> pluginClass;
+			try
+			{
+				pluginClass = info.loadClass();
+				JEXPluginInfo jexInfo = new JEXPluginInfo(info);
+				Logs.log(jexInfo.parameters.get("Old Min").toString(), PointTester.class);
+				Logs.log(info.toString(), PointTester.class);
+			}
+			catch (InstantiableException e)
+			{
+				e.printStackTrace();
+			}
+		}
 	}
 	
 	public static void testTableWriter()

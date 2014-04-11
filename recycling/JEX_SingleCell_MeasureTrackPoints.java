@@ -26,7 +26,7 @@ import Database.DataWriter.FileWriter;
 import Database.Definition.Parameter;
 import Database.Definition.ParameterSet;
 import Database.Definition.TypeName;
-import function.ExperimentalDataCrunch;
+import function.JEXCrunchable;
 import function.singleCellAnalysis.SingleCellUtility;
 
 /**
@@ -39,7 +39,7 @@ import function.singleCellAnalysis.SingleCellUtility;
  * @author erwinberthier
  * 
  */
-public class JEX_SingleCell_MeasureTrackPoints extends ExperimentalDataCrunch {
+public class JEX_SingleCell_MeasureTrackPoints extends JEXCrunchable {
 	
 	public JEX_SingleCell_MeasureTrackPoints()
 	{}

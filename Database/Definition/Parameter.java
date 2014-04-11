@@ -158,4 +158,9 @@ public class Parameter {
 		return ret;
 	}
 	
+	public String toString()
+	{
+		return this.getTitle() + ":" + this.getValue();
+	}
+	
 }

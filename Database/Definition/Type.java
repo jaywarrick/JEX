@@ -58,7 +58,7 @@ public class Type implements Comparable<Type> {
 	
 	public String toString()
 	{
-		if (this.getFlavor() == null)
+		if (this.getFlavor() == null || this.getFlavor().equals(""))
 		{
 			return this.getType();
 		}

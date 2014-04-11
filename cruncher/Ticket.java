@@ -18,7 +18,7 @@ import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.Definition.ParameterSet;
 import Database.Definition.TypeName;
-import function.ExperimentalDataCrunch;
+import function.JEXCrunchable;
 
 public class Ticket implements Callable<Integer>, Canceler{
 	
@@ -33,7 +33,7 @@ public class Ticket implements Callable<Integer>, Canceler{
 	TreeMap<JEXEntry,JEXFunction> runList;
 	TreeMap<JEXEntry,Future<Integer>> futures;
 	TreeMap<JEXEntry,Integer> flags; // -2 not run, -1 canceled, 0 failed, 1 success
-	ExperimentalDataCrunch cr;
+	JEXCrunchable cr;
 	ParameterSet firstParamSet;
 	TreeMap<JEXEntry,Set<JEXData>> outputList = new TreeMap<JEXEntry,Set<JEXData>>();
 	int functionsStarted = 0, functionsFinished = 0;

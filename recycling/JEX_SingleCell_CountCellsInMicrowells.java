@@ -23,7 +23,7 @@ import Database.DataWriter.RoiWriter;
 import Database.Definition.Parameter;
 import Database.Definition.ParameterSet;
 import Database.Definition.TypeName;
-import function.ExperimentalDataCrunch;
+import function.JEXCrunchable;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions
@@ -35,7 +35,7 @@ import function.ExperimentalDataCrunch;
  * @author erwinberthier
  * 
  */
-public class JEX_SingleCell_CountCellsInMicrowells extends ExperimentalDataCrunch {
+public class JEX_SingleCell_CountCellsInMicrowells extends JEXCrunchable {
 	
 	public JEX_SingleCell_CountCellsInMicrowells()
 	{}

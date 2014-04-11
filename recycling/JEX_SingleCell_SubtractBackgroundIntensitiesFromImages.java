@@ -18,7 +18,7 @@ import Database.DataWriter.ImageWriter;
 import Database.Definition.ParameterSet;
 import Database.Definition.TypeName;
 import Database.SingleUserDatabase.JEXWriter;
-import function.ExperimentalDataCrunch;
+import function.JEXCrunchable;
 import function.singleCellAnalysis.SingleCellUtility;
 
 /**
@@ -31,7 +31,7 @@ import function.singleCellAnalysis.SingleCellUtility;
  * @author erwinberthier
  * 
  */
-public class JEX_SingleCell_SubtractBackgroundIntensitiesFromImages extends ExperimentalDataCrunch {
+public class JEX_SingleCell_SubtractBackgroundIntensitiesFromImages extends JEXCrunchable {
 	
 	// ----------------------------------------------------
 	// --------- INFORMATION ABOUT THE FUNCTION -----------
