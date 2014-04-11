@@ -1,8 +1,8 @@
 package image.roi;
 
 import function.CrunchFactory;
-import function.crunchable.scijava.JEXPlugin;
-import function.crunchable.scijava.JEXPluginInfo;
+import function.plugin.mechanism.JEXPlugin;
+import function.plugin.mechanism.JEXPluginInfo;
 import function.singleCellAnalysis.SingleCellUtility;
 import ij.ImagePlus;
 import ij.gui.PolygonRoi;
@@ -96,7 +96,7 @@ public class PointTester {// extends URLClassLoader {
 			{
 				pluginClass = info.loadClass();
 				JEXPluginInfo jexInfo = new JEXPluginInfo(info);
-				Logs.log(info.parameters.get("Old Min").toString(), PointTester.class);
+				Logs.log(jexInfo.parameters.get("Old Min").toString(), PointTester.class);
 				Logs.log(info.toString(), PointTester.class);
 			}
 			catch (InstantiableException e)
