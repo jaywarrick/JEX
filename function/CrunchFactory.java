@@ -114,10 +114,12 @@ public class CrunchFactory extends URLClassLoader {
 	
 	private static TreeMap<String,JEXCrunchable> loadJEXCrunchablePlugins()
 	{
+		Logs.log("Getting new JEX Plugins.", CrunchFactory.class);
 		TreeMap<String,JEXCrunchable> ret = new TreeMap<String,JEXCrunchable>();
 		List<PluginInfo<JEXPlugin>> jexPlugins = IJ2PluginUtility.ij.plugin().getPluginsOfType(JEXPlugin.class);
 		for(PluginInfo<JEXPlugin> info : jexPlugins)
 		{
+			Logs.log("Found new JEX Plugin: " + info.getName() + " - "+ info.getClassName(), CrunchFactory.class);
 			JEXPluginInfo fullInfo = new JEXPluginInfo(info);
 			JEXCrunchablePlugin crunchable = new JEXCrunchablePlugin(fullInfo);
 			ret.put(crunchable.getName(), crunchable);
@@ -167,6 +169,11 @@ public class CrunchFactory extends URLClassLoader {
 		{
 			// Get the native ExperimentalDataCrunch
 			JEXCrunchable result = listOfCrunchers.get(functionName);
+			
+			if(result == null)
+			{
+				return null;
+			}
 			
 			if(result instanceof IJ2CrunchablePlugin)
 			{
@@ -354,7 +361,6 @@ public class CrunchFactory extends URLClassLoader {
 		}
 		catch (IOException e)
 		{
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return result;

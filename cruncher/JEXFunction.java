@@ -47,9 +47,14 @@ public class JEXFunction {
 	// TypeName[] outputTNs ;
 	JEXCrunchable cruncher;
 	
-	public JEXFunction(String functionName)
+	public JEXFunction(String functionName) throws InstantiationException
 	{
 		this.cruncher = CrunchFactory.getExperimentalDataCrunch(functionName);
+		
+		if(this.cruncher == null)
+		{
+			throw new InstantiationException();
+		}
 		
 		inputs = new TreeMap<String,TypeName>();
 		TypeName[] inputs = cruncher.getInputNames();
@@ -72,7 +77,7 @@ public class JEXFunction {
 		
 	}
 	
-	public static JEXFunction fromOldJEXData(JEXData data)
+	public static JEXFunction fromOldJEXData(JEXData data) throws InstantiationException
 	{
 		// set the function name
 		DimensionMap map = new DimensionMap();
@@ -131,7 +136,7 @@ public class JEXFunction {
 		return ret;
 	}
 	
-	public JEXFunction(String functionName, Vector<JEXDataSingle> singles)
+	public JEXFunction(String functionName, Vector<JEXDataSingle> singles) throws InstantiationException
 	{
 		this(functionName);
 		
@@ -372,13 +377,23 @@ public class JEXFunction {
 	 */
 	public JEXFunction duplicate()
 	{
-		JEXFunction result = new JEXFunction(this.getFunctionName());
+		JEXFunction result = null;
+		try
+		{
+			result = new JEXFunction(this.getFunctionName());
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+			return null;
+		}
+		
 		result.setParameters(parameters.duplicate());
 		result.inputs = duplicateInputMap(inputs);
 		result.outputs = duplicateOutputMap(outputs);
 		result.savingSelections = duplicateSavingSelections(savingSelections);
 		result.getCrunch().setOutputs(result.getExpectedOutputs());
-		result.getCrunch().setCanceler(this.cruncher.canceler);
+		result.getCrunch().setCanceler(this.cruncher.getCanceler());
 		return result;
 	}
 	

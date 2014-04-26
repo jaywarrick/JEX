@@ -334,8 +334,16 @@ public class FunctionListPanel implements MouseWheelListener {
 					return null;
 				}
 				
-				// make the function
-				JEXFunction result = new JEXFunction(cr.getName());
+				// Try to make the function
+				JEXFunction result = null;
+				try
+				{
+					result = new JEXFunction(cr.getName());
+				}
+				catch(Exception e)
+				{
+					e.printStackTrace();
+				}
 				return result;
 			}
 			return null;
