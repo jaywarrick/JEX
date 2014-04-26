@@ -114,7 +114,6 @@ public class CrunchFactory extends URLClassLoader {
 	
 	private static TreeMap<String,JEXCrunchable> loadJEXCrunchablePlugins()
 	{
-		Logs.log("Getting new JEX Plugins.", CrunchFactory.class);
 		TreeMap<String,JEXCrunchable> ret = new TreeMap<String,JEXCrunchable>();
 		List<PluginInfo<JEXPlugin>> jexPlugins = IJ2PluginUtility.ij.plugin().getPluginsOfType(JEXPlugin.class);
 		for(PluginInfo<JEXPlugin> info : jexPlugins)
@@ -209,6 +208,7 @@ public class CrunchFactory extends URLClassLoader {
 		// Create a structure to store all the ExperimentalDataCrunch Objects
 		TreeMap<String,JEXCrunchable> result = new TreeMap<String,JEXCrunchable>();
 		
+		Logs.log("Getting new JEX Plugins.", CrunchFactory.class);
 		TreeMap<String,JEXCrunchable> jexPlugins = loadJEXCrunchablePlugins();
 		result.putAll(jexPlugins);
 		
