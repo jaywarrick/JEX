@@ -245,7 +245,7 @@ public class ImageStitcher extends JEXPlugin {
 			{
 				for (int c : theCols)
 				{
-					ret.add(r * verDxImage + c * horDxImage, r * verDyImage + c * horDyImage);
+					ret.add(r * verDxImage + c * horDxImage, r * (-1* verDyImage) + c * (-1 * horDyImage));
 				}
 			}
 		}
@@ -255,7 +255,7 @@ public class ImageStitcher extends JEXPlugin {
 			{
 				for (int r : theRows)
 				{
-					ret.add(r * verDxImage + c * horDxImage, r * verDyImage + c * horDyImage);
+					ret.add(r * verDxImage + c * horDxImage, r * (-1* verDyImage) + c * (-1 * horDyImage));
 				}
 			}
 		}
@@ -265,7 +265,7 @@ public class ImageStitcher extends JEXPlugin {
 			{
 				for (int c : theCols)
 				{
-					ret.add(r * verDxImage + c * horDxImage, r * verDyImage + c * horDyImage);
+					ret.add(r * verDxImage + c * horDxImage, r * (-1* verDyImage) + c * (-1 * horDyImage));
 				}
 				if(theCols == myCols)
 				{
@@ -283,7 +283,7 @@ public class ImageStitcher extends JEXPlugin {
 			{
 				for (int r : theRows)
 				{
-					ret.add(r * verDxImage + c * horDxImage, r * verDyImage + c * horDyImage);
+					ret.add(r * verDxImage + c * horDxImage, r * (-1* verDyImage) + c * (-1 * horDyImage));
 				}
 				if(theRows == myRows)
 				{
