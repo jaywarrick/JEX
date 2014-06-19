@@ -259,11 +259,11 @@ public class JEX_OverlayStack extends JEXCrunchable {
 	{
 		if(imp == null)
 		{
-			return null;
+			return (ByteProcessor) FunctionUtility.makeImageToSave(bfImp, "false", 8).getProcessor();
 		}
 		ByteProcessor ret = null;
 		ImagePlus im = null;
-		if(rgbScale.equals("Log"))
+		if(rgbScale.equals(LOG))
 		{
 			imp.log();
 			imp.multiply(255 / Math.log(255));
@@ -343,7 +343,7 @@ public class JEX_OverlayStack extends JEXCrunchable {
 				bfIm = new ImagePlus(bfPath);
 				bfImp = (FloatProcessor) bfIm.getProcessor().convertToFloat(); // should be a float processor
 				FunctionUtility.imAdjust(bfImp, bfMin, bfMax, 0d, 255d, 1d);
-				if(bfScale.equals("Log"))
+				if(bfScale.equals(LOG))
 				{
 					bfImp.log();
 					bfImp.multiply(255 / Math.log(255));
