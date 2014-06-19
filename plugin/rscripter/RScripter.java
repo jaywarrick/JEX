@@ -265,7 +265,7 @@ public class RScripter implements PlugInController, ActionListener, ClipboardOwn
 		
 		String path = JEXTableWriter.writeTable("tempFileTable", new Table<String>(newTable, files));
 		LSVList commands = new LSVList();
-		commands.add("library(RWeka)");
+		commands.add("library(foreign)");
 		commands.add("fileTable <- read.arff(" + R.quotedPath(path) + ")");
 		
 		return commands.toString();
