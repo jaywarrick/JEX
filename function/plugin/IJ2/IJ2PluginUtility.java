@@ -41,11 +41,6 @@ import Database.SingleUserDatabase.JEXWriter;
 
 public class IJ2PluginUtility {
 	
-	static
-	{
-		DefaultLegacyService.preinit();
-	}
-	
 	public static final String NUMTOTAL = "Total", NUMPARAMETERS = "Parameters", NUMINPUTS = "Inputs";
 	public static final String DATASET = Dataset.class.getSimpleName(), IMAGEDISPLAY = ImageDisplay.class.getSimpleName(), STRING = String.class.getSimpleName(), FILE = String.class.getSimpleName(), OVERLAY = Overlay.class.getSimpleName();
 	public static final String ROISUFFIX = "_ROI";

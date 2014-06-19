@@ -3,6 +3,7 @@ package jex;
 import guiObject.DialogGlassPane;
 import guiObject.SignalMenuButton;
 import icons.IconRepository;
+import imagej.legacy.DefaultLegacyService;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -62,6 +63,11 @@ import cruncher.Cruncher;
 public class JEXperiment extends JFrame implements ActionListener, WindowListener, WindowFocusListener, KeyEventDispatcher {
 	
 	private static final long serialVersionUID = 1L;
+	
+	static
+	{
+		DefaultLegacyService.preinit();
+	}
 	
 	// Peripheral GUI elements
 	protected AboutBox aboutBox;
