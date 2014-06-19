@@ -200,6 +200,10 @@ public class JEX_Filters extends JEXCrunchable {
 		int count = 0, percentage = 0;
 		for (DimensionMap map : imageMap.keySet())
 		{
+			if(this.isCanceled())
+			{
+				return false;
+			}
 			ImagePlus im = new ImagePlus(imageMap.get(map));
 			ImageProcessor ip = im.getProcessor().convertToFloat();
 			
