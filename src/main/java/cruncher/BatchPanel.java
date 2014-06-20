@@ -11,7 +11,7 @@ import javax.swing.JPanel;
 
 import net.miginfocom.swing.MigLayout;
 import signals.SSCenter;
-import statics.DisplayStatics;
+import jex.statics.DisplayStatics;
 
 public class BatchPanel implements ActionListener {
 	

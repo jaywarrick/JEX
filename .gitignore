@@ -1,3 +1,5 @@
 .settings
 bin/
 /bin
+/target
+/.apt_generated

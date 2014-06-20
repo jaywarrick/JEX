@@ -1,7 +1,7 @@
 package function.singleCellAnalysis;
 
-import function.crunchable.JEX_Filters;
 import function.imageUtility.MaximumFinder;
+import function.plugin.old.JEX_Filters;
 import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.io.FileSaver;
@@ -106,6 +106,7 @@ public class MicrowellFinder implements Comparator<IdPoint> {
 		return ret;
 	}
 	
+	@SuppressWarnings("deprecation")
 	public static Vector<FloatProcessor> filterAndConvolve(FloatProcessor imp, double radius, boolean edgeFilter, FloatProcessor kernel, boolean isTest)
 	{
 		Vector<FloatProcessor> results = null;

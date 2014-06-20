@@ -100,7 +100,7 @@ public class JEXTableReader {
 		{
 			this.filePath = filePath;
 			this.loader = new ArffLoader();
-			this.loader.setRetainStringValues(false);
+			// TODO figure out what to do with this. this.loader.setRetainStringValues(false);
 		}
 		catch (Exception e)
 		{
