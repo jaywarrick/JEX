@@ -1,10 +1,10 @@
 package jex;
 
-import jex.JExperiment;
+import jex.JEXperiment;
 
 /** Main entry point into JEX. */
 public class Main {
   public static void main(final String[] args) {
-    JExperiment.main(args);
+    JEXperiment.main(args);
   }
 }
