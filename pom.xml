@@ -30,6 +30,12 @@
 
 	<dependencies>
 		<dependency>
+			<groupId>ch.randelshofer</groupId>
+			<artifactId>monte-cc</artifactId>
+			<version>0.7.7</version>
+		</dependency>
+
+		<dependency>
 			<groupId>com.fifesoft</groupId>
 			<artifactId>rsyntaxtextarea</artifactId>
 			<version>2.5.0</version>
@@ -65,6 +71,12 @@
 			<groupId>commons-math</groupId>
 			<artifactId>commons-math</artifactId>
 			<version>1.2</version>
+		</dependency>
+
+		<dependency>
+			<groupId>dk.ange</groupId>
+			<artifactId>javaoctave</artifactId>
+			<version>0.6.4</version>
 		</dependency>
 
 		<dependency>
