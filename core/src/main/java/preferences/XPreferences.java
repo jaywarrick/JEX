@@ -7,6 +7,8 @@ import java.util.List;
 import logs.Logs;
 import miscellaneous.XMLUtility;
 
+import org.jdom.Element;
+
 public class XPreferences implements Property {
 	
 	private static final long serialVersionUID = 1L;
@@ -47,7 +49,8 @@ public class XPreferences implements Property {
 	public void loadFromPath(String path)
 	{
 		Logs.log("Loading preference file " + path, 1, this);
-		XMLPreferences_XElement element = (XMLPreferences_XElement) XMLUtility.XMLload(path, new XMLPreferences_ObjectFactory());
+		Element e = XMLUtility.XMLload(path, new XMLPreferences_ObjectFactory());
+		XMLPreferences_XElement element = (XMLPreferences_XElement) e;
 		// Get the file return if it doesn't exist
 		if(element == null)
 			return;

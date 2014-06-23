@@ -2,6 +2,7 @@ package Database.SingleUserDatabase.xml;
 
 import org.jdom.DefaultJDOMFactory;
 import org.jdom.Element;
+import org.jdom.Namespace;
 
 public class ObjectFactory extends DefaultJDOMFactory {
 	
@@ -49,6 +50,16 @@ public class ObjectFactory extends DefaultJDOMFactory {
 		
 		Element b = new Element(name);
 		return b;
+	}
+	
+	@Override
+	public Element element(String name, Namespace namespace)
+	{
+		if(namespace.equals(Namespace.getNamespace("", "")))
+		{
+			return this.element(name);
+		}
+		return super.element(name, namespace);
 	}
 	
 }

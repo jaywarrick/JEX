@@ -25,7 +25,6 @@ import imagej.data.display.OverlayView;
 import imagej.data.options.OptionsChannels;
 import imagej.data.overlay.Overlay;
 import imagej.data.overlay.RectangleOverlay;
-import imagej.legacy.DefaultLegacyService;
 
 import java.awt.Desktop;
 import java.awt.Point;
@@ -51,6 +50,7 @@ import miscellaneous.DirectoryManager;
 import miscellaneous.FileUtility;
 import miscellaneous.StatisticsUtility;
 import miscellaneous.StringUtility;
+import net.imagej.patcher.LegacyInjector;
 
 import org.scijava.InstantiableException;
 import org.scijava.plugin.PluginInfo;
@@ -67,7 +67,7 @@ public class PointTester {// extends URLClassLoader {
 
 	static
 	{
-		DefaultLegacyService.preinit();
+		LegacyInjector.preinit();
 	}
 	
 	public static void main(String[] args)
