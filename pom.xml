@@ -50,12 +50,6 @@
 			<artifactId>miglayout</artifactId>
 			<version>3.7.4</version>
 		</dependency>
-		<dependency>
-			<groupId>com.sun.mail</groupId>
-			<artifactId>all</artifactId>
-			<version>1.5.2</version>
-			<type>pom</type>
-		</dependency>
 
 		<dependency>
 			<groupId>commons-io</groupId>
@@ -79,6 +73,11 @@
 			<version>0.6.4</version>
 		</dependency>
 
+		<dependency>
+			<groupId>javax.mail</groupId>
+			<artifactId>javax.mail-api</artifactId>
+			<version>1.5.2</version>
+		</dependency>
 		<dependency>
 			<groupId>javax.media</groupId>
 			<artifactId>jmf</artifactId>
