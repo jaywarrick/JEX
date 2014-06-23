@@ -27,7 +27,7 @@ import java.util.Vector;
 import jex.statics.JEXStatics;
 import logs.Logs;
 import tables.DimensionMap;
-import utilities.StringUtility;
+import miscellaneous.StringUtility;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;

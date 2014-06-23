@@ -28,7 +28,7 @@ import miscellaneous.FileUtility;
 import miscellaneous.FontUtility;
 import net.miginfocom.swing.MigLayout;
 import signals.SSCenter;
-import utilities.StringUtility;
+import miscellaneous.StringUtility;
 
 public class FileListPanel extends DialogGlassCenterPanel implements ActionListener {
 	

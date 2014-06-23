@@ -32,7 +32,7 @@ import tables.Dim;
 import tables.DimTable;
 import tables.DimensionMap;
 import tables.Table;
-import utilities.StringUtility;
+import miscellaneous.StringUtility;
 import weka.core.converters.JEXTableWriter;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
