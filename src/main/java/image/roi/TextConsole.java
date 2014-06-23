@@ -5,22 +5,22 @@ import java.awt.Frame;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
-import org.rosuda.JRI.RMainLoopCallbacks;
-import org.rosuda.JRI.Rengine;
+import org.rosuda.REngine.REngineCallbacks;
+import org.rosuda.REngine.REngine;
 
-public class TextConsole implements RMainLoopCallbacks {
+public class TextConsole implements REngineCallbacks {
 	
-	public void rWriteConsole(Rengine re, String text, int oType)
+	public void rWriteConsole(REngine re, String text, int oType)
 	{
 		System.out.print(text);
 	}
 	
-	public void rBusy(Rengine re, int which)
+	public void rBusy(REngine re, int which)
 	{
 		System.out.println("rBusy(" + which + ")");
 	}
 	
-	public String rReadConsole(Rengine re, String prompt, int addToHistory)
+	public String rReadConsole(REngine re, String prompt, int addToHistory)
 	{
 		System.out.print(prompt);
 		try
@@ -36,13 +36,13 @@ public class TextConsole implements RMainLoopCallbacks {
 		return null;
 	}
 	
-	public void rShowMessage(Rengine re, String message)
+	public void rShowMessage(REngine re, String message)
 	{
 		System.out.println("rShowMessage \"" + message + "\"");
 	}
 	
 	@SuppressWarnings("deprecation")
-	public String rChooseFile(Rengine re, int newFile)
+	public String rChooseFile(REngine re, int newFile)
 	{
 		FileDialog fd = new FileDialog(new Frame(), (newFile == 0) ? "Select a file" : "Select a new file", (newFile == 0) ? FileDialog.LOAD : FileDialog.SAVE);
 		fd.show();
@@ -54,12 +54,12 @@ public class TextConsole implements RMainLoopCallbacks {
 		return res;
 	}
 	
-	public void rFlushConsole(Rengine re)
+	public void rFlushConsole(REngine re)
 	{}
 	
-	public void rLoadHistory(Rengine re, String filename)
+	public void rLoadHistory(REngine re, String filename)
 	{}
 	
-	public void rSaveHistory(Rengine re, String filename)
+	public void rSaveHistory(REngine re, String filename)
 	{}
 }
