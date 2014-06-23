@@ -9,9 +9,9 @@
 		<version>0.0.1-SNAPSHOT</version>
 	</parent>
 
-	<artifactId>JEX</artifactId>
+	<artifactId>jex-core</artifactId>
 
-	<name>JEX</name>
+	<name>JEX core functionality</name>
 
 	<dependencies>
 		<dependency>

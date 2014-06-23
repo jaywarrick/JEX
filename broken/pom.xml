@@ -9,11 +9,17 @@
 		<version>0.0.1-SNAPSHOT</version>
 	</parent>
 
-	<artifactId>JEX-broken</artifactId>
+	<artifactId>jex-broken</artifactId>
 
 	<name>JEX Non-compiling code</name>
 
 	<dependencies>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>jex-core</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+
 		<dependency>
 			<groupId>ch.randelshofer</groupId>
 			<artifactId>monte-cc</artifactId>

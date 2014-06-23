@@ -20,6 +20,7 @@
 	<modules>
 		<module>core</module>
 		<module>broken</module>
+		<module>jex</module>
 	</modules>
 
 	<repositories>
