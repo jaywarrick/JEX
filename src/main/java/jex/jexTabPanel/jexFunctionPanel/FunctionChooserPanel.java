@@ -25,7 +25,7 @@ import javax.swing.tree.TreeSelectionModel;
 import logs.Logs;
 import miscellaneous.FontUtility;
 import net.miginfocom.swing.MigLayout;
-import statics.DisplayStatics;
+import jex.statics.DisplayStatics;
 import cruncher.JEXFunction;
 import function.CrunchFactory;
 import function.JEXCrunchable;

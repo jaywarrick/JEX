@@ -6,7 +6,7 @@ import javax.swing.JPanel;
 import miscellaneous.FontUtility;
 import net.miginfocom.swing.MigLayout;
 import signals.SSCenter;
-import statics.DisplayStatics;
+import jex.statics.DisplayStatics;
 
 public class TicketPanel {
 	

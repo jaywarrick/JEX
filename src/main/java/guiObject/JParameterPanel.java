@@ -21,7 +21,7 @@ import javax.swing.event.DocumentListener;
 import jex.statics.JEXStatics;
 import logs.Logs;
 import net.miginfocom.swing.MigLayout;
-import statics.DisplayStatics;
+import jex.statics.DisplayStatics;
 import Database.Definition.Parameter;
 
 public class JParameterPanel implements DocumentListener, ChangeListener, ActionListener {
