@@ -43,8 +43,9 @@ public class DirectoryManager {
 	 * Return a unique name in the temporary folder
 	 * 
 	 * @return
+	 * @throws IOException 
 	 */
-	public synchronized static String getUniqueRelativeTempPath(String extension)
+	public synchronized static String getUniqueRelativeTempPath(String extension) throws IOException
 	{
 		if(hostDirectory == null)
 		{
@@ -61,8 +62,9 @@ public class DirectoryManager {
 	 * Return a unique name in the temporary folder
 	 * 
 	 * @return
+	 * @throws IOException 
 	 */
-	public synchronized static String getUniqueAbsoluteTempPath(String extension)
+	public synchronized static String getUniqueAbsoluteTempPath(String extension) throws IOException
 	{
 		if(hostDirectory == null)
 		{
@@ -78,8 +80,9 @@ public class DirectoryManager {
 	 * Get the path of the temporary folder to save data that is not yet attached to the database
 	 * 
 	 * @return
+	 * @throws IOException 
 	 */
-	public synchronized static String getTempFolderPath()
+	public synchronized static String getTempFolderPath() throws IOException
 	{
 		// Create it if the folder doesn't exist
 		File f = new File(getHostDirectory() + File.separator + TEMP_FOLDER_NAME);
@@ -87,7 +90,7 @@ public class DirectoryManager {
 		{
 			f.mkdirs();
 		}
-		return f.getAbsolutePath();
+		return f.getCanonicalPath();
 	}
 	
 	/**
@@ -123,7 +126,7 @@ public class DirectoryManager {
 		return directory;
 	}
 	
-	public synchronized static void deleteContentsOfTempFolder()
+	public synchronized static void deleteContentsOfTempFolder() throws IOException
 	{
 		File toDelete = new File(getTempFolderPath());
 		try

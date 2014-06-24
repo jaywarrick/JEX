@@ -90,7 +90,15 @@ public class JEXTableWriter {
 	public JEXTableWriter(String tableName, String fileExtension)
 	{
 		this.tableName = tableName;
-		this.filePath = DirectoryManager.getUniqueAbsoluteTempPath(fileExtension);
+		try
+		{
+			this.filePath = DirectoryManager.getUniqueAbsoluteTempPath(fileExtension);
+		}
+		catch(IOException e)
+		{
+			e.printStackTrace();
+			this.filePath = "";
+		}
 	}
 	
 	public <E> void writeTable(Table<E> table)
@@ -323,9 +331,10 @@ public class JEXTableWriter {
 	public static String defrag(String path)
 	{
 		String extension = FileUtility.getFileNameExtension(path);
-		String newPath = DirectoryManager.getUniqueAbsoluteTempPath(extension);
+		String newPath = null;
 		try
 		{
+			newPath = DirectoryManager.getUniqueAbsoluteTempPath(extension);
 			FileUtils.copyFile(new File(path), new File(newPath));
 		}
 		catch (IOException e)
