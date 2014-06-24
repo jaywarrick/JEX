@@ -233,56 +233,6 @@ public class JEX_SplitARFFTable extends ExperimentalDataCrunch {
 				count = count + 1;
 				percentage = (int) (100 * ((count) / (total)));
 				JEXStatics.statusBar.setProgressPercentage(percentage);
-				
-				// count = 0;
-				// String masterFilePath = fileMap.get(map1);
-				// // if(copyLocally)
-				// // {
-				// // String temp = JEXWriter.getUniqueTempPath("arff");
-				// // FileUtility.copy(new File(masterFilePath), new
-				// File(temp));
-				// // masterFilePath = temp;
-				// // }
-				// DimTable arffDimTable =
-				// JEXTableReader.getDimTable(masterFilePath);
-				// Dim splitDim = arffDimTable.getDimWithName(splitDimName);
-				// DimTable splitTable = new DimTable();
-				// splitTable.add(splitDim);
-				// TreeMap<String,JEXTableWriter> writers = new
-				// TreeMap<String,JEXTableWriter>();
-				// for(String newDim : splitDim.dimValues)
-				// {
-				// writers.put(newDim, new
-				// JEXTableWriter(outputNames[0].getName()));
-				// }
-				// total = splitTable.mapCount();
-				// for(DimensionMap map2 : splitTable.getIterator())
-				// {
-				// String path = null;
-				// if(dataType.equals("Numeric"))
-				// {
-				// Table<Double> table =
-				// JEXTableReader.getNumericTable(masterFilePath, map2);
-				// path = JEXTableWriter.writeTable(outputNames[0].getName(),
-				// table, fileExtension);
-				// }
-				// else
-				// {
-				// Table<String> table =
-				// JEXTableReader.getStringTable(masterFilePath, map2);
-				// path = JEXTableWriter.writeTable(outputNames[0].getName(),
-				// table, fileExtension);
-				// }
-				// DimensionMap newDim = new DimensionMap();
-				// newDim.putAll(map1);
-				// newDim.putAll(map2);
-				// outputFileData.put(newDim, path);
-				//
-				// count = count + 1;
-				// percentage = (int) (100 * ((double) (count)/ ((double)
-				// total)));
-				// JEXStatics.statusBar.setProgressPercentage(percentage);
-				// }
 			}
 			if(outputFileData.size() == 0)
 			{
@@ -298,6 +248,7 @@ public class JEX_SplitARFFTable extends ExperimentalDataCrunch {
 		}
 		catch (Exception e)
 		{
+			e.printStackTrace();
 			return false;
 		}
 	}

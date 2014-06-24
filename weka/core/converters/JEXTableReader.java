@@ -88,7 +88,7 @@ public class JEXTableReader {
 		return ret;
 	}
 	
-	public static Table<String> splitTable(String filePath, String splitDimName, String tableName, String fileExtension, Canceler canceler)
+	public static Table<String> splitTable(String filePath, String splitDimName, String tableName, String fileExtension, Canceler canceler) throws Exception
 	{
 		JEXTableReader reader = new JEXTableReader(filePath);
 		return split(reader, splitDimName, tableName, fileExtension, canceler);
@@ -265,7 +265,7 @@ public class JEXTableReader {
 	 * @param fileExtension
 	 * @return
 	 */
-	private static <E> Table<String> split(JEXTableReader reader, String splitDimName, String tableName, String fileExtension, Canceler canceler)
+	private static <E> Table<String> split(JEXTableReader reader, String splitDimName, String tableName, String fileExtension, Canceler canceler) throws Exception
 	{
 		if(splitDimName == null || tableName == null || reader == null)
 		{
@@ -281,6 +281,11 @@ public class JEXTableReader {
 			Dim splitDim = reader.dimTable.getDimWithName(splitDimName);
 			TreeMap<String,JEXTableWriter> writers = new TreeMap<String,JEXTableWriter>();
 			double count = 0;
+			if(splitDim == null)
+			{
+				System.err.println();
+				throw new Exception("JEXTableReader -----> Couldn't split the object on the dim named: " + splitDimName + ". Check spelling.");
+			}
 			double total = splitDim.size();
 			displayPercentage = 0;
 			for (String newDim : splitDim.dimValues)

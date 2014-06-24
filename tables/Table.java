@@ -97,7 +97,16 @@ public class Table<E> implements Iterable<DimensionMap> {
 	{
 		String path = Table.joinTables(fileTable, canceler);
 		
-		Table<String> timeFiles = JEXTableReader.splitTable(path, timeDimName, "TimePoint", JEXTableWriter.ARFF_FILE, canceler);
+		Table<String> timeFiles = null;
+		try
+		{
+			timeFiles = JEXTableReader.splitTable(path, timeDimName, "TimePoint", JEXTableWriter.ARFF_FILE, canceler);
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+			return null;
+		}
 		return timeFiles;
 	}
 	
