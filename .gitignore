@@ -1,3 +1,4 @@
 .settings
 bin/
 /bin
+/.apt_generated
