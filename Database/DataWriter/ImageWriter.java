@@ -35,10 +35,18 @@ public class ImageWriter {
 			ImageProcessor slice = stack.getProcessor(i + 1);
 			String path = JEXWriter.saveImage(new ImagePlus("", slice));
 			JEXDataSingle ds = FileWriter.saveFileDataSingle(path);
-			
+			if(ds == null)
+			{
+				continue;
+			}
 			DimensionMap map = new DimensionMap();
 			map.put(dimensionName, "" + i);
 			data.addData(map, ds);
+		}
+		
+		if(data.getDataMap().size() == 0)
+		{
+			return null;
 		}
 		
 		return data;
@@ -55,7 +63,10 @@ public class ImageWriter {
 	{
 		JEXData data = new JEXData(JEXData.IMAGE, objectName);
 		JEXDataSingle ds = FileWriter.saveFileDataSingle(filePath);
-		
+		if(ds == null)
+		{
+			return null;
+		}
 		data.addData(new DimensionMap(), ds);
 		return data;
 	}
@@ -78,7 +89,10 @@ public class ImageWriter {
 			String indexStr = indexes[index];
 			String filePath = filePaths[index];
 			JEXDataSingle ds = FileWriter.saveFileDataSingle(filePath);
-			
+			if(ds == null)
+			{
+				continue;
+			}
 			DimensionMap map = new DimensionMap();
 			map.put(dimensionName, indexStr);
 			data.addData(map, ds);
@@ -108,7 +122,10 @@ public class ImageWriter {
 			String indexStr = "" + index;
 			String filePath = filePaths[index];
 			JEXDataSingle ds = FileWriter.saveFileDataSingle(filePath);
-			
+			if(ds == null)
+			{
+				continue;
+			}
 			DimensionMap map = new DimensionMap();
 			map.put(dimensionName, indexStr);
 			data.addData(map, ds);
@@ -136,7 +153,10 @@ public class ImageWriter {
 		{
 			String path = imageMap.get(map);
 			JEXDataSingle ds = FileWriter.saveFileDataSingle(path);
-			
+			if(ds == null)
+			{
+				continue;
+			}
 			DimensionMap newmap = map.copy();
 			data.addData(newmap, ds);
 		}
@@ -164,7 +184,10 @@ public class ImageWriter {
 			ImagePlus image = imageMap.get(map);
 			String path = JEXWriter.saveImage(image);
 			JEXDataSingle ds = FileWriter.saveFileDataSingle(path);
-			
+			if(ds == null)
+			{
+				continue;
+			}
 			DimensionMap newmap = map.copy();
 			data.addData(newmap, ds);
 		}
