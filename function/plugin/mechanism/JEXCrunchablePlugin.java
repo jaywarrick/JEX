@@ -6,9 +6,9 @@ import java.util.HashSet;
 import java.util.Vector;
 
 import logs.Logs;
+import miscellaneous.Canceler;
 
 import org.scijava.InstantiableException;
-import org.scijava.MenuPath;
 import org.scijava.util.ClassUtils;
 import org.scijava.util.ConversionUtils;
 
@@ -206,6 +206,24 @@ public class JEXCrunchablePlugin extends JEXCrunchable {
 			i++;
 		}
 		return -1;
+	}
+	
+	@Override
+	public void setCanceler(Canceler canceler)
+	{
+		this.plugin.setCanceler(canceler);
+	}
+	
+	@Override
+	public Canceler getCanceler()
+	{
+		return this.plugin.canceler;
+	}
+	
+	@Override
+	public boolean isCanceled()
+	{
+		return this.plugin.isCanceled();
 	}
 	
 }

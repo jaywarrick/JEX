@@ -36,12 +36,12 @@ import function.plugin.mechanism.ParameterMarker;
 
 @Plugin(
 		type = JEXPlugin.class,
-		name="Adjust Image Test",
-		menuPath="Sandbox > test",
+		name="Adjust Image Intensities",
+		menuPath="Image Processing",
 		visible=true,
 		description="Test of new plugin interface for JEX using the SciJavaPlugin mechanism."
 		)
-public class AdjustImage implements JEXPlugin {
+public class AdjustImage extends JEXPlugin {
 
 	public AdjustImage()
 	{}

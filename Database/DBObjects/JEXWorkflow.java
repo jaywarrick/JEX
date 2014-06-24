@@ -5,6 +5,7 @@ import java.util.TreeMap;
 import java.util.Vector;
 
 import jex.statics.JEXStatics;
+import logs.Logs;
 import miscellaneous.DateUtility;
 import miscellaneous.FileUtility;
 import miscellaneous.Pair;
@@ -50,8 +51,17 @@ public class JEXWorkflow extends Vector<JEXFunction> {
 		}
 		for (Integer index : functions.keySet())
 		{
-			JEXFunction func = new JEXFunction(functions.get(index).p1, functions.get(index).p2);
-			this.add(func);
+			try
+			{
+				JEXFunction func = new JEXFunction(functions.get(index).p1, functions.get(index).p2);
+				this.add(func);
+			}
+			catch(Exception e)
+			{
+				Logs.log("Couldn't load function: " + functions.get(index).p1, this);
+				e.printStackTrace();
+				continue;
+			}
 		}
 	}
 	

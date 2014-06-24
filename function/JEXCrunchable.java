@@ -51,7 +51,7 @@ public abstract class JEXCrunchable implements Canceler, Cancelable {
 	protected int parameterStatus = PARAMETERERROR;
 	protected int outputStatus = OUTPUTERROR;
 	
-	public Canceler canceler = null;
+	private Canceler canceler = null;
 	
 	// Class methods required to be written by the user in the function template
 	public abstract boolean showInList();
@@ -257,6 +257,11 @@ public abstract class JEXCrunchable implements Canceler, Cancelable {
 	public void setCanceler(Canceler canceler)
 	{
 		this.canceler = canceler;
+	}
+	
+	public Canceler getCanceler()
+	{
+		return this.canceler;
 	}
 	
 	public boolean isCanceled()

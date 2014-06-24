@@ -280,7 +280,18 @@ public class JEXDataIO {
 		
 		if(data.getTypeName().getType().equals(JEXData.FUNCTION_OLD))
 		{
-			JEXFunction func = JEXFunction.fromOldJEXData(data);
+			JEXFunction func = null;
+			try
+			{
+				func = JEXFunction.fromOldJEXData(data);
+			}
+			catch(Exception e)
+			{
+				e.printStackTrace();
+				Logs.log("Can't load old function: " + data.toString() + ". Skipping.", JEXDataIO.class);
+				return;
+			}
+			
 			JEXWorkflow workflow = new JEXWorkflow(data.getDataObjectName());
 			workflow.add(func);
 			JEXData newData = workflow.toJEXData();

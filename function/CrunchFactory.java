@@ -28,6 +28,8 @@ import function.plugin.IJ2.IJ2PluginUtility;
 import function.plugin.mechanism.JEXCrunchablePlugin;
 import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.JEXPluginInfo;
+import function.plugin.plugins.imageProcessing.AdjustImage;
+import function.plugin.plugins.imageTools.ImageStitcher;
 
 public class CrunchFactory extends URLClassLoader {
 	
@@ -116,8 +118,10 @@ public class CrunchFactory extends URLClassLoader {
 	{
 		TreeMap<String,JEXCrunchable> ret = new TreeMap<String,JEXCrunchable>();
 		List<PluginInfo<JEXPlugin>> jexPlugins = IJ2PluginUtility.ij.plugin().getPluginsOfType(JEXPlugin.class);
+		Logs.log("Number of JEXPlugins: " + jexPlugins.size(), CrunchFactory.class);
 		for(PluginInfo<JEXPlugin> info : jexPlugins)
 		{
+			Logs.log("Found new JEX Plugin: " + info.getName() + " - "+ info.getClassName(), CrunchFactory.class);
 			JEXPluginInfo fullInfo = new JEXPluginInfo(info);
 			JEXCrunchablePlugin crunchable = new JEXCrunchablePlugin(fullInfo);
 			ret.put(crunchable.getName(), crunchable);
@@ -168,6 +172,11 @@ public class CrunchFactory extends URLClassLoader {
 			// Get the native ExperimentalDataCrunch
 			JEXCrunchable result = listOfCrunchers.get(functionName);
 			
+			if(result == null)
+			{
+				return null;
+			}
+			
 			if(result instanceof IJ2CrunchablePlugin)
 			{
 				return new IJ2CrunchablePlugin(((IJ2CrunchablePlugin) result).command);
@@ -202,6 +211,8 @@ public class CrunchFactory extends URLClassLoader {
 		// Create a structure to store all the ExperimentalDataCrunch Objects
 		TreeMap<String,JEXCrunchable> result = new TreeMap<String,JEXCrunchable>();
 		
+		Logs.log("Getting new JEX Plugins.", CrunchFactory.class);
+		loadMissing();
 		TreeMap<String,JEXCrunchable> jexPlugins = loadJEXCrunchablePlugins();
 		result.putAll(jexPlugins);
 		
@@ -354,7 +365,6 @@ public class CrunchFactory extends URLClassLoader {
 		}
 		catch (IOException e)
 		{
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return result;
@@ -465,6 +475,16 @@ public class CrunchFactory extends URLClassLoader {
 		}
 		
 		return result;
+	}
+	
+	public static void loadMissing()
+	{
+		Object o = new AdjustImage();
+		Logs.log(o.toString(), CrunchFactory.class);
+		o = new ImageStitcher();
+		Logs.log(o.toString(), CrunchFactory.class);
+		return;
+		
 	}
 	
 }

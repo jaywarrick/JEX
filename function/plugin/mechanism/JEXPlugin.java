@@ -1,13 +1,33 @@
 package function.plugin.mechanism;
 
-import org.scijava.plugin.SciJavaPlugin;
-
+import miscellaneous.Cancelable;
+import miscellaneous.Canceler;
 import Database.DBObjects.JEXEntry;
 
-public interface JEXPlugin extends SciJavaPlugin {
+
+public abstract class JEXPlugin implements JEXPluginInterface, Canceler, Cancelable {
 	
-	public boolean run(JEXEntry optionalEntry);
+	public Canceler canceler = null;
+
+	public abstract boolean run(JEXEntry optionalEntry);
+
+	public int getMaxThreads()
+	{
+		return 5;
+	}
+
+	public void setCanceler(Canceler canceler)
+	{
+		this.canceler = canceler;
+	}
 	
-	public int getMaxThreads();
+	public Canceler getCanceler()
+	{
+		return this.canceler;
+	}
 	
+	public boolean isCanceled()
+	{
+		return this.canceler.isCanceled();
+	}
 }

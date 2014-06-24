@@ -38,7 +38,6 @@ public class Ticket implements Callable<Integer>, Canceler{
 	TreeMap<JEXEntry,Set<JEXData>> outputList = new TreeMap<JEXEntry,Set<JEXData>>();
 	int functionsStarted = 0, functionsFinished = 0;
 	String startTime = "", endTime = "";
-	private volatile boolean canceled = false;
 	
 	public boolean autoSave;
 	public Batch parent;
@@ -128,7 +127,7 @@ public class Ticket implements Callable<Integer>, Canceler{
 			SSCenter.defaultCenter().emit(this, SIG_TicketStarted_NULL, (Object[]) null);
 			
 			// Stop if canceled;
-			if(this.canceled == true)
+			if(this.isCanceled() == true)
 			{
 				return this.finish(TICKETFLAG_CANCELED);
 			}
@@ -176,7 +175,7 @@ public class Ticket implements Callable<Integer>, Canceler{
 			int done = 0;
 			for (JEXEntry e : this.futures.keySet())
 			{
-				if(this.canceled == true)
+				if(this.isCanceled() == true)
 				{
 					this.finish(this.getTicketFlag());
 				}
@@ -188,7 +187,7 @@ public class Ticket implements Callable<Integer>, Canceler{
 			TreeMap<JEXEntry,Set<JEXData>> output = new TreeMap<JEXEntry,Set<JEXData>>();
 			for (JEXEntry entry : fcs.keySet())
 			{
-				if(this.canceled == true)
+				if(this.isCanceled() == true)
 				{
 					return this.finish(this.getTicketFlag());
 				}
