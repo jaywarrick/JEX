@@ -61,7 +61,7 @@ public class JEXDataIO {
 		}
 		else
 		{
-			sourcePath = JEXTableWriter.writeTable(data.getTypeName().toString(), tableToSave, WORKFLOW_FILEEXTENSION);
+			sourcePath = JEXTableWriter.writeTable(data.getTypeName().toString(), tableToSave, extension);
 		}
 		
 		return sourcePath;

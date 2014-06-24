@@ -306,7 +306,7 @@ public class JEX_OscillatoryAdhesionAnalysis3 extends JEXCrunchable {
 			return false;
 		}
 		
-		JEXData output1 = FileWriter.makeFileObject(this.outputNames[0].getName(), newMFilePath);
+		JEXData output1 = FileWriter.makeFileObject(this.outputNames[0].getName(), null, newMFilePath);
 		
 		// Set the outputs
 		this.realOutputs.add(output1);

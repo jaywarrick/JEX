@@ -282,7 +282,7 @@ public class JEX_SingleCell_TrackCells extends JEXCrunchable {
 			JEXStatics.statusBar.setProgressPercentage(percentage);
 		}
 		
-		JEXData output1 = FileWriter.makeFileTable(outputNames[0].getName(), outputFileMap);
+		JEXData output1 = FileWriter.makeFileObject(outputNames[0].getName(), null, outputFileMap);
 		JEXData output2 = ImageWriter.makeImageStackFromPaths(outputNames[1].getName(), oldHistDs);
 		JEXData output3 = ImageWriter.makeImageStackFromPaths(outputNames[2].getName(), oldHistFCs);
 		JEXData output4 = ImageWriter.makeImageStackFromPaths(outputNames[3].getName(), newHistDs);

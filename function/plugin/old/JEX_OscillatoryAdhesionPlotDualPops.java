@@ -277,7 +277,7 @@ public class JEX_OscillatoryAdhesionPlotDualPops extends JEXCrunchable {
 		fitResults.put(map.copy(), (Double) results[6]);
 		JEXData output2 = ValueWriter.makeValueTableFromDouble(this.outputNames[1].getName(), fitResults);
 		output2.setDimTable(new DimTable(fitResults));
-		JEXData output3 = FileWriter.makeFileObject(this.outputNames[2].getName(), (String) results[7]);
+		JEXData output3 = FileWriter.makeFileObject(this.outputNames[2].getName(), null, (String) results[7]);
 		
 		// Set the outputs
 		this.realOutputs.add(output1);

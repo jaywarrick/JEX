@@ -312,7 +312,7 @@ public class JEX_MakeFACSMovingAverage extends JEXCrunchable {
 		}
 		
 		// Save the output images in the database
-		JEXData output1 = FileWriter.makeFileTable(outputNames[0].getName(), outputFileTreeMap);
+		JEXData output1 = FileWriter.makeFileObject(outputNames[0].getName(), null, outputFileTreeMap);
 		realOutputs.add(output1);
 		
 		// Return status

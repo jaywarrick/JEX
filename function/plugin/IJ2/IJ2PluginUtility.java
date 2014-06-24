@@ -206,12 +206,12 @@ public class IJ2PluginUtility {
 			{ // it is a file object or data (i.e. string or number)
 				if(File.class.isAssignableFrom(outputType))
 				{ // save each file separately and just keep a table of the file paths
-					ret = FileWriter.makeFileTable(name, dataMap);
+					ret = FileWriter.makeFileObject(name, null, dataMap);
 				}
 				else
 				{ // it is a string or number set that should be saved as a single file instead of a bunch of files
 					String temp = JEXTableWriter.writeTable(name, dataMap);
-					ret = FileWriter.makeFileObject(name, temp);
+					ret = FileWriter.makeFileObject(name, null, temp);
 				}
 			}
 		}

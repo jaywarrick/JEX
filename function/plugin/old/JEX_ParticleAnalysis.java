@@ -333,8 +333,8 @@ public class JEX_ParticleAnalysis extends JEXCrunchable {
 		}
 		
 		JEXData output1 = ImageWriter.makeImageStackFromPaths(this.outputNames[0].getName(), outlineMap);
-		JEXData output2 = FileWriter.makeFileTable(JEXData.FILE, this.outputNames[1].getName(), outputRoiMap);
-		JEXData output3 = FileWriter.makeFileTable(JEXData.FILE, this.outputNames[2].getName(), csvMap);
+		JEXData output2 = FileWriter.makeFileObject(this.outputNames[1].getName(), null, outputRoiMap);
+		JEXData output3 = FileWriter.makeFileObject(this.outputNames[2].getName(), null, csvMap);
 		
 		// Set the outputs
 		this.realOutputs.add(output1);

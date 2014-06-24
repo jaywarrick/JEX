@@ -315,7 +315,7 @@ public class JEX_OscillatoryImportData extends JEXCrunchable {
 		output1.setDimTable(table); // The last dim table will be the largest
 		JEXData output2 = ImageWriter.makeImageStackFromPaths(outputNames[1].getName(), calMap);
 		output2.setDimTable(calTable);
-		JEXData output3 = FileWriter.makeFileObject(outputNames[2].getName(), logFile.getPath());
+		JEXData output3 = FileWriter.makeFileObject(outputNames[2].getName(), null, logFile.getPath());
 		JEXStatics.statusBar.setProgressPercentage(100);
 		
 		// Set the outputs

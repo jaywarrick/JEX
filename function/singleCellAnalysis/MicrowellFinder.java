@@ -39,11 +39,11 @@ public class MicrowellFinder implements Comparator<IdPoint> {
 		FloatProcessor imp = makeKernel(20, 13, false);
 		ImagePlus im = FunctionUtility.makeImageToSave(imp, "false", 8);
 		FileSaver fs = new FileSaver(im);
-		String path = DirectoryManager.getUniqueAbsoluteTempPath("tif");
-		fs.saveAsTiff(path);
-		
+		String path = null;
 		try
 		{
+			path = DirectoryManager.getUniqueAbsoluteTempPath("tif");
+			fs.saveAsTiff(path);
 			FileUtility.openFileDefaultApplication(path);
 		}
 		catch (Exception e)

@@ -241,7 +241,7 @@ public class JEX_OscillatoryAdhesionCompileResults extends JEXCrunchable {
 		for (JEXEntry entry : outputList.keySet())
 		{
 			String path = JEXTableWriter.writeTable(outputNames[0].getName(), new DimTable(compiledData), compiledData, JEXTableWriter.TXT_FILE);
-			JEXData data = FileWriter.makeFileObject(outputNames[0].getName(), path);
+			JEXData data = FileWriter.makeFileObject(outputNames[0].getName(), null, path);
 			Set<JEXData> set = outputList.get(entry);
 			set.clear();
 			set.add(data);

@@ -363,7 +363,7 @@ public class JEX_SingleCell_GatedFACSPlots extends JEXCrunchable {
 		
 		// Save the output images in the database
 		JEXData output1 = ImageWriter.makeImageStackFromPaths(outputNames[0].getName(), outputImageData);
-		JEXData output2 = FileWriter.makeFileObject(outputNames[1].getName(), meansPath);
+		JEXData output2 = FileWriter.makeFileObject(outputNames[1].getName(), null, meansPath);
 		realOutputs.add(output1);
 		realOutputs.add(output2);
 		

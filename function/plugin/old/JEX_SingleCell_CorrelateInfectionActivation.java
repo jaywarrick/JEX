@@ -293,7 +293,7 @@ public class JEX_SingleCell_CorrelateInfectionActivation extends JEXCrunchable {
 		// String tempPath =
 		// JEXTableWriter2.writeTable(outputNames[0].getName(), infectionTimes);
 		
-		JEXData output1 = FileWriter.makeFileObject(outputNames[0].getName(), path);
+		JEXData output1 = FileWriter.makeFileObject(outputNames[0].getName(), null, path);
 		
 		// Set the outputs
 		realOutputs.add(output1);

@@ -294,7 +294,7 @@ public class JEX_SingleCell_TransformRawData_v1 extends JEXCrunchable {
 		}
 		
 		// Save the output images in the database
-		JEXData output1 = FileWriter.makeFileTable(outputNames[0].getName(), newFileMap);
+		JEXData output1 = FileWriter.makeFileObject(outputNames[0].getName(), null, newFileMap);
 		realOutputs.add(output1);
 		
 		// Return status

@@ -31,7 +31,10 @@ public class TrackWriter {
 		String xmlStr = XMLUtility.toHardXML(trajSet);
 		String filePath = JEXWriter.saveText(xmlStr, "xml");
 		JEXDataSingle ds = FileWriter.saveFileDataSingle(filePath);
-		
+		if(ds == null)
+		{
+			return null;
+		}
 		result.addData(new DimensionMap(), ds);
 		
 		return result;
@@ -54,7 +57,10 @@ public class TrackWriter {
 		String xmlStr = XMLUtility.toHardXML(trajSet);
 		String filePath = JEXWriter.saveText(xmlStr, "xml");
 		JEXDataSingle ds = FileWriter.saveFileDataSingle(filePath);
-		
+		if(ds == null)
+		{
+			return null;
+		}
 		result.addData(new DimensionMap(), ds);
 		
 		return result;

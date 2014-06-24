@@ -56,7 +56,7 @@ public class ImportThread implements Callable<Object> {
 			}
 			else if(objectType.equals(JEXData.FILE))
 			{
-				JEXData data = FileWriter.makeFileTable(objectName, files2Drop2);
+				JEXData data = FileWriter.makeFileObject(objectName, null, files2Drop2);
 				data.setDataObjectInfo(objectInfo);
 				toAdd.put(entry, data);
 			}

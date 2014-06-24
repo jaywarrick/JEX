@@ -1,6 +1,7 @@
 package function.plugin.old;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.TreeMap;
 
@@ -215,7 +216,7 @@ public class JEX_VirusSim_ImportData extends JEXCrunchable {
 		String scriptFilePath = folder.getAbsolutePath() + File.separator + "plotScript.R";
 		
 		JEXData plotData = this.makePlots(data, scriptFilePath);
-		JEXData fileData = FileWriter.makeFileTable(this.outputNames[1].getName(), data.data);
+		JEXData fileData = FileWriter.makeFileObject(this.outputNames[1].getName(), null, data.data);
 		
 		// Set the outputs
 		this.realOutputs.add(plotData);
@@ -236,7 +237,15 @@ public class JEX_VirusSim_ImportData extends JEXCrunchable {
 		TreeMap<DimensionMap,String> plotPaths = new TreeMap<DimensionMap,String>();
 		for (DimensionMap map : data.dimTable.getMapIterator())
 		{
-			String plotPath = DirectoryManager.getUniqueAbsoluteTempPath("jpeg");
+			String plotPath = null;
+			try
+			{
+				plotPath = DirectoryManager.getUniqueAbsoluteTempPath("jpeg");
+			}
+			catch(IOException e)
+			{
+				e.printStackTrace();
+			}
 			if(plotPath != null)
 			{
 				R.eval("plotScript(" + R.quotedPath(data.getData(map)) + "," + R.quotedPath(plotPath) + ")");

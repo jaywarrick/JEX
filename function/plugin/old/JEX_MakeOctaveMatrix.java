@@ -394,7 +394,7 @@ public class JEX_MakeOctaveMatrix extends JEXCrunchable {
 		for (JEXEntry entry : outputList.keySet())
 		{
 			String path = JEXWriter.saveText(text.toString(), "m");
-			JEXData data = FileWriter.makeFileObject(outputNames[0].getType(), outputNames[0].getName(), path);
+			JEXData data = FileWriter.makeFileObject(outputNames[0].getName(), null, path);
 			Set<JEXData> set = outputList.get(entry);
 			set.clear();
 			set.add(data);

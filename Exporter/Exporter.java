@@ -256,7 +256,7 @@ public class Exporter {
 			{
 				String objectPath = JEXWriter.saveText(result, "csv");
 				
-				JEXData data2add = FileWriter.makeFileObject(JEXData.FILE, objectName, objectPath);
+				JEXData data2add = FileWriter.makeFileObject(objectName, null, objectPath);
 				data2add.setDataObjectInfo(info);
 				dataArray.put(entry, data2add);
 			}

@@ -394,7 +394,7 @@ public class JEXWriter {
 			// Save the image
 			File dst = new File(fullPath);
 			JEXWriter.copy(f, dst);
-			return fullPath;
+			return dst.getCanonicalPath();
 		}
 		catch (IOException e)
 		{
@@ -671,7 +671,16 @@ public class JEXWriter {
 	public static String getTempFolderName()
 	{
 		// Create it if the folder doesn't exist
-		File f = new File(DirectoryManager.getTempFolderPath());
+		File f = null;
+		try
+		{
+			f = new File(DirectoryManager.getTempFolderPath());
+		}
+		catch(IOException e)
+		{
+			e.printStackTrace();
+			return null;
+		}
 		if(!f.exists())
 		{
 			f.mkdirs();
@@ -687,7 +696,16 @@ public class JEXWriter {
 	public synchronized static String getUniqueRelativeTempPath(String extension)
 	{
 		// Create the file path
-		String relativePath = DirectoryManager.getUniqueRelativeTempPath(extension);
+		String relativePath = null;
+		try
+		{
+			relativePath = DirectoryManager.getUniqueRelativeTempPath(extension);
+		}
+		catch(IOException e)
+		{
+			e.printStackTrace();
+			return null;
+		}
 		return relativePath;
 	}
 	

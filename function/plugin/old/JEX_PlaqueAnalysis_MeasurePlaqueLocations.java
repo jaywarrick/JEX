@@ -359,7 +359,7 @@ public class JEX_PlaqueAnalysis_MeasurePlaqueLocations extends JEXCrunchable{
 			toWrite.put(plq.getData(), 0.0);
 		}
 		String path = JEXTableWriter.writeTable("Plaques", toWrite);
-		JEXData output1 = FileWriter.makeFileObject(outputNames[0].getName(), path);
+		JEXData output1 = FileWriter.makeFileObject(outputNames[0].getName(), null, path);
 		
 		
 		ROIPlus roi = new ROIPlus(newCenters, ROIPlus.ROI_POINT);

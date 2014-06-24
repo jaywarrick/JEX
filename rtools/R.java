@@ -1,6 +1,7 @@
 package rtools;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Vector;
 import java.util.regex.Pattern;
@@ -236,10 +237,18 @@ public class R {
 	public static String startPlot(String extension, double width_inches, double height_inches, double res_ppi, double fontsize_pts, String optionalFont, String optionalTifCompression)
 	{
 		extension = extension.toLowerCase();
-		String filePath = DirectoryManager.getUniqueAbsoluteTempPath(extension);
-		if(R._startPlot(new File(filePath), width_inches, height_inches, res_ppi, fontsize_pts, optionalFont, optionalTifCompression))
+		String filePath = null;
+		try
 		{
-			return filePath;
+			filePath = DirectoryManager.getUniqueAbsoluteTempPath(extension);
+			if(filePath != null && R._startPlot(new File(filePath), width_inches, height_inches, res_ppi, fontsize_pts, optionalFont, optionalTifCompression))
+			{
+				return filePath;
+			}
+		}
+		catch(IOException e)
+		{
+			e.printStackTrace();
 		}
 		return null;
 	}

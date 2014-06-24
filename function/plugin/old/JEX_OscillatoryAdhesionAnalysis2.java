@@ -341,7 +341,7 @@ public class JEX_OscillatoryAdhesionAnalysis2 extends JEXCrunchable {
 		JEXData output1 = ImageWriter.makeImageStackFromPaths(this.outputNames[0].getName(), imageMap);
 		output1.setDimTable(originalDimTable);
 		
-		JEXData output2 = FileWriter.makeFileObject(this.outputNames[1].getName(), mFilePath);
+		JEXData output2 = FileWriter.makeFileObject(this.outputNames[1].getName(), null, mFilePath);
 		
 		// Set the outputs
 		this.realOutputs.add(output1);

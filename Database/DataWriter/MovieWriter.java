@@ -54,6 +54,10 @@ public class MovieWriter implements ImageObserver {
 	{
 		JEXData data = new JEXData(JEXData.MOVIE, objectName);
 		JEXDataSingle ds = FileWriter.saveFileDataSingle(filePath);
+		if(ds == null)
+		{
+			return null;
+		}
 		data.addData(new DimensionMap(), ds);
 		return data;
 	}

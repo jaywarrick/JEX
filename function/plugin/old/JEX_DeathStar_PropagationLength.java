@@ -256,7 +256,7 @@ public class JEX_DeathStar_PropagationLength extends JEXCrunchable {
 		writer.close();
 		
 		JEXData output1;
-		output1 = FileWriter.makeFileObject(this.outputNames[0].getType(), this.outputNames[0].getName(), writer.getPath());
+		output1 = FileWriter.makeFileObject(this.outputNames[0].getName(), null, writer.getPath());
 		
 		// Set the outputs
 		this.realOutputs.add(output1);

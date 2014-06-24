@@ -307,7 +307,7 @@ public class JEX_CTC_SingleCellColocalization extends JEXCrunchable {
 			}
 			
 			String resultsFile = JEXTableWriter.writeTable(this.outputNames[0].getName(), results);
-			JEXData output0 = FileWriter.makeFileObject(this.outputNames[0].getName(), resultsFile);
+			JEXData output0 = FileWriter.makeFileObject(this.outputNames[0].getName(),null, resultsFile);
 			
 			// Set the outputs
 			this.realOutputs.add(output0);
