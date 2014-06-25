@@ -3,7 +3,7 @@ package jex;
 import guiObject.DialogGlassPane;
 import guiObject.SignalMenuButton;
 import icons.IconRepository;
-import imagej.legacy.DefaultLegacyService;
+import imagej.ImageJ;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -51,6 +51,7 @@ import jex.statics.JEXStatics;
 import jex.statics.KeyStatics;
 import jex.statics.PrefsUtility;
 import logs.Logs;
+import net.imagej.patcher.LegacyInjector;
 import plugins.labelManager.DatabaseLabelManager;
 import preferences.XPreferencePanelController;
 import preferences.XPreferences;
@@ -66,7 +67,7 @@ public class JEXperiment extends JFrame implements ActionListener, WindowListene
 	
 	static
 	{
-		DefaultLegacyService.preinit();
+		LegacyInjector.preinit();
 	}
 	
 	// Peripheral GUI elements

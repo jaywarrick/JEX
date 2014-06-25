@@ -10,7 +10,6 @@ import imagej.data.display.ImageDisplay;
 import imagej.data.display.OverlayView;
 import imagej.data.options.OptionsChannels;
 import imagej.data.overlay.Overlay;
-import imagej.legacy.DefaultLegacyService;
 import imagej.module.ModuleItem;
 import imagej.util.ColorRGB;
 
@@ -22,9 +21,10 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.Vector;
 
+import logs.Logs;
+
 import org.scijava.MenuPath;
 
-import logs.Logs;
 import tables.DimensionMap;
 import weka.core.converters.JEXTableWriter;
 import Database.DBObjects.JEXData;
