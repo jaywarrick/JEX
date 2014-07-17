@@ -238,7 +238,7 @@
 		<dependency>
 			<groupId>net.imagej</groupId>
 			<artifactId>ij1-patcher</artifactId>
-			<version>0.9.0</version>
+			<version>0.9.1</version>
 		</dependency>
 		<dependency>
 			<groupId>net.lingala.zip4j</groupId>
@@ -312,7 +312,7 @@
 				<archive>
 					<manifest>
 						<addClasspath>true</addClasspath>
-						<mainClass>jex.JEXperiment</mainClass>
+						<mainClass>jex.Main</mainClass>
 					</manifest>
 				</archive>
 				</configuration>

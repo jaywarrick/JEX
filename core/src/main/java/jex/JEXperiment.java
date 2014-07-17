@@ -65,11 +65,6 @@ public class JEXperiment extends JFrame implements ActionListener, WindowListene
 	
 	private static final long serialVersionUID = 1L;
 	
-	static
-	{
-		LegacyInjector.preinit();
-	}
-	
 	// Peripheral GUI elements
 	protected AboutBox aboutBox;
 	protected JDialog prefsDialog;
