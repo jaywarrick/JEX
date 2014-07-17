@@ -50,7 +50,6 @@ import miscellaneous.DirectoryManager;
 import miscellaneous.FileUtility;
 import miscellaneous.StatisticsUtility;
 import miscellaneous.StringUtility;
-import net.imagej.patcher.LegacyInjector;
 
 import org.scijava.InstantiableException;
 import org.scijava.plugin.PluginInfo;
@@ -64,11 +63,6 @@ import updates.Updater;
 import weka.core.converters.JEXTableWriter;
 
 public class PointTester {// extends URLClassLoader {
-
-	static
-	{
-		LegacyInjector.preinit();
-	}
 	
 	public static void main(String[] args)
 	{
@@ -84,27 +78,27 @@ public class PointTester {// extends URLClassLoader {
 		Logs.log("" + o.getClass().getSimpleName(), PointTester.class);
 	}
 	
-	public static void testSciJava()
-	{
-		ImageJ ij = new ImageJ();
-		List<PluginInfo<JEXPlugin>> plugins = ij.plugin().getPluginsOfType(JEXPlugin.class);
-		
-		for(PluginInfo<JEXPlugin> info : plugins)
-		{
-			Class<? extends JEXPlugin> pluginClass;
-			try
-			{
-				pluginClass = info.loadClass();
-				JEXPluginInfo jexInfo = new JEXPluginInfo(info);
-				Logs.log(jexInfo.parameters.get("Old Min").toString(), PointTester.class);
-				Logs.log(info.toString(), PointTester.class);
-			}
-			catch (InstantiableException e)
-			{
-				e.printStackTrace();
-			}
-		}
-	}
+	//	public static void testSciJava()
+	//	{
+	//		ImageJ ij = new ImageJ();
+	//		List<PluginInfo<JEXPlugin>> plugins = ij.plugin().getPluginsOfType(JEXPlugin.class);
+	//		
+	//		for(PluginInfo<JEXPlugin> info : plugins)
+	//		{
+	//			Class<? extends JEXPlugin> pluginClass;
+	//			try
+	//			{
+	//				pluginClass = info.loadClass();
+	//				JEXPluginInfo jexInfo = new JEXPluginInfo(info);
+	//				Logs.log(jexInfo.parameters.get("Old Min").toString(), PointTester.class);
+	//				Logs.log(info.toString(), PointTester.class);
+	//			}
+	//			catch (InstantiableException e)
+	//			{
+	//				e.printStackTrace();
+	//			}
+	//		}
+	//	}
 	
 	public static void testTableWriter()
 	{
