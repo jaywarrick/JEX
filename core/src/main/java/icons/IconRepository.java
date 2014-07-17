@@ -240,19 +240,8 @@ public class IconRepository {
 	 */
 	public ImageIcon getIconWithName(String iconName, int width, int height)
 	{
-		// URL url = this.getClass().getClassLoader().getResource("icons/" + iconName);
-		URL url = this.getClass().getResource(iconName);
-		
-		if(url == null)
-		{
-			// Logs.log("Icon: " + iconName, this);
-			return null;
-		}
-		// Logs.log("Icon: " + iconName + "  -->  " + url.toString(), this);
-		Image image = Toolkit.getDefaultToolkit().getImage(url);
-		Image scaledimage = image.getScaledInstance(width, height, Image.SCALE_SMOOTH);
+		Image scaledimage = this.getImageWithName(iconName, width, height);
 		ImageIcon icon = new ImageIcon(scaledimage);
-		
 		return icon;
 	}
 	
@@ -267,7 +256,11 @@ public class IconRepository {
 	public Image getImageWithName(String iconName, int width, int height)
 	{
 		// URL url = this.getClass().getClassLoader().getResource("icons/" + iconName);
-		URL url = IconRepository.class.getResource(iconName);
+		URL url = IconRepository.class.getResource("icons/" + iconName);
+		if(url == null)
+		{
+			url = IconRepository.class.getResource("/icons/" + iconName);
+		}
 		if(url == null)
 		{
 			Logs.log("Couldn't find the image: " + iconName, this);
@@ -289,60 +282,49 @@ public class IconRepository {
 	public ImageIcon getJEXDataIcon(TypeName tn, int width, int height)
 	{
 		String result = "";
-		String iconPath = "icons/";
 		Type type = tn.getType();
 		if(type.matches(JEXData.IMAGE) && tn.getDimension() == 1)
 		{
-			result = iconPath + "XImageStack.png";
+			result = "XImageStack.png";
 		}
 		else if(type.matches(JEXData.IMAGE))
 		{
-			result = iconPath + "XImage.png";
+			result = "XImage.png";
 		}
 		else if(type.matches(JEXData.FILE))
 		{
-			result = iconPath + "XFile.png";
+			result = "XFile.png";
 		}
 		else if(type.matches(JEXData.MOVIE))
 		{
-			result = iconPath + "XMovie.png";
+			result = "XMovie.png";
 		}
 		else if(type.matches(JEXData.VALUE))
 		{
-			result = iconPath + "XValue.png";
+			result = "XValue.png";
 		}
 		else if(type.matches(JEXData.LABEL))
 		{
-			result = iconPath + "XLabel.png";
+			result = "XLabel.png";
 		}
 		else if(type.matches(JEXData.ROI))
 		{
-			result = iconPath + "XRoi.png";
+			result = "XRoi.png";
 		}
 		else if(type.matches(JEXData.TRACK))
 		{
-			result = iconPath + "XTrack.png";
+			result = "XTrack.png";
 		}
 		else if(type.matches(JEXData.WORKFLOW))
 		{
-			result = iconPath + "XFunction.png";
+			result = "XFunction.png";
 		}
 		else
 		{
-			result = iconPath + "XDefault.png";
+			result = "XDefault.png";
 		}
 		
-		URL url = this.getClass().getClassLoader().getResource(result);
-		
-		if(url == null)
-		{
-			return null;
-		}
-		Image image = Toolkit.getDefaultToolkit().getImage(url);
-		Image scaledimage = image.getScaledInstance(width, height, Image.SCALE_SMOOTH);
-		ImageIcon icon = new ImageIcon(scaledimage);
-		
-		return icon;
+		return this.getIconWithName(result, width, height);
 	}
 	
 	/**
