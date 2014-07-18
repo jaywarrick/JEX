@@ -256,16 +256,28 @@ public class IconRepository {
 	public Image getImageWithName(String iconName, int width, int height)
 	{
 		// URL url = this.getClass().getClassLoader().getResource("icons/" + iconName);
-		URL url = IconRepository.class.getResource("icons/" + iconName);
+		URL url = IconRepository.class.getResource("" + iconName); // Seems to work when run from maven jar
 		if(url == null)
-		{
+		{ // if run directly from eclipse
+			url = IconRepository.class.getResource("icons/" + iconName);
+		}
+		if(url == null)
+		{ // If run from maven jar (probably duplicate but oh well)
 			url = IconRepository.class.getResource("/icons/" + iconName);
 		}
+		if(url == null)
+		{ // If run from eclipse runnable jar
+			url = IconRepository.class.getResource("/resources/icons/" + iconName);
+		}
+		
+		Logs.log("Trying to get URL: " + url, IconRepository.class);
+		
 		if(url == null)
 		{
 			Logs.log("Couldn't find the image: " + iconName, this);
 			return null;
 		}
+		
 		// Logs.log("Image: " + iconName + "  -->  " + url.toString(), this);
 		Image image = Toolkit.getDefaultToolkit().getImage(url);
 		Image scaledimage = image.getScaledInstance(width, height, Image.SCALE_SMOOTH);
