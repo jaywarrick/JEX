@@ -19,7 +19,6 @@
 
 	<modules>
 		<module>core</module>
-		<module>broken</module>
 		<module>jex</module>
 	</modules>
 
@@ -42,13 +41,6 @@
 		</repository>
 	</repositories>
 	
-	<pluginRepositories>
-        <pluginRepository>
-            <id>onejar-maven-plugin.googlecode.com</id>
-            <url>http://onejar-maven-plugin.googlecode.com/svn/mavenrepo</url>
-        </pluginRepository>
-    </pluginRepositories>
-
 	<build>
 		<plugins>
 			<plugin>
@@ -61,5 +53,19 @@
 			</plugin>
 		</plugins>
 	</build>
+
+	<profiles>
+		<!-- NB: Profile for building the jex-broken module.
+		     Activate it by running "mvn" with the "-Pbroken" flag. -->
+		<profile>
+			<id>broken</id>
+			<activation>
+				<activeByDefault>false</activeByDefault>
+			</activation>
+			<modules>
+				<module>broken</module>
+			</modules>
+		</profile>
+	</profiles>
 
 </project>
