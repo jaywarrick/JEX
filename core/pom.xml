@@ -13,6 +13,10 @@
 
 	<name>JEX core functionality</name>
 
+	<properties>
+		<scijava-common.version>2.27.0</scijava-common.version>
+	</properties>
+
 	<dependencies>
 		<dependency>
 			<groupId>ch.randelshofer</groupId>
