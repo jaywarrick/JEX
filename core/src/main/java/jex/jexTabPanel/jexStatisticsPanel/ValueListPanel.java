@@ -1,5 +1,10 @@
 package jex.jexTabPanel.jexStatisticsPanel;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.Definition.Type;
+import Database.Definition.TypeName;
+
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -22,10 +27,6 @@ import logs.Logs;
 import miscellaneous.FontUtility;
 import net.miginfocom.swing.MigLayout;
 import signals.SSCenter;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.Definition.Type;
-import Database.Definition.TypeName;
 
 public class ValueListPanel extends JPanel implements ActionListener {
 	

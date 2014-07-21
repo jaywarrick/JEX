@@ -1,5 +1,19 @@
 package function.plugin.old;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DataReader.ImageReader;
+import Database.DataReader.RoiReader;
+import Database.DataWriter.ImageWriter;
+import Database.DataWriter.ValueWriter;
+import Database.Definition.Parameter;
+import Database.Definition.ParameterSet;
+import Database.Definition.TypeName;
+import function.GraphicalCrunchingEnabling;
+import function.GraphicalFunctionWrap;
+import function.ImagePanel;
+import function.ImagePanelInteractor;
+import function.JEXCrunchable;
 import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.measure.ResultsTable;
@@ -26,20 +40,6 @@ import java.util.Random;
 import java.util.TreeMap;
 
 import logs.Logs;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DataReader.ImageReader;
-import Database.DataReader.RoiReader;
-import Database.DataWriter.ImageWriter;
-import Database.DataWriter.ValueWriter;
-import Database.Definition.Parameter;
-import Database.Definition.ParameterSet;
-import Database.Definition.TypeName;
-import function.JEXCrunchable;
-import function.GraphicalCrunchingEnabling;
-import function.GraphicalFunctionWrap;
-import function.ImagePanel;
-import function.ImagePanelInteractor;
 
 /**
  * This is a JEXperiment function template

@@ -1,11 +1,5 @@
 package function.plugin.old;
 
-import java.io.File;
-import java.util.HashMap;
-
-import jex.statics.JEXStatics;
-import logs.Logs;
-import miscellaneous.SimpleFileFilter;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.FileReader;
@@ -13,6 +7,13 @@ import Database.Definition.Parameter;
 import Database.Definition.ParameterSet;
 import Database.Definition.TypeName;
 import function.JEXCrunchable;
+
+import java.io.File;
+import java.util.HashMap;
+
+import jex.statics.JEXStatics;
+import logs.Logs;
+import miscellaneous.SimpleFileFilter;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions

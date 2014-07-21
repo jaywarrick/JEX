@@ -1,5 +1,7 @@
 package jex.jexTabPanel.jexStatisticsPanel;
 
+import Database.DBObjects.JEXData;
+import Database.Definition.TypeName;
 import guiObject.FlatRoundedStaticButton;
 import guiObject.TypeNameButton;
 
@@ -16,8 +18,6 @@ import jex.statics.DisplayStatics;
 import jex.statics.JEXStatics;
 import net.miginfocom.swing.MigLayout;
 import signals.SSCenter;
-import Database.DBObjects.JEXData;
-import Database.Definition.TypeName;
 
 public class ValuePanel extends JPanel implements ActionListener, MouseListener {
 	

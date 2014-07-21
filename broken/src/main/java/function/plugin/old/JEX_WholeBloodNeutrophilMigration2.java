@@ -1,5 +1,24 @@
 package function.plugin.old;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DataReader.ImageReader;
+import Database.DataWriter.MovieWriter;
+import Database.DataWriter.TrackWriter;
+import Database.DataWriter.ValueWriter;
+import Database.Definition.Parameter;
+import Database.Definition.ParameterSet;
+import Database.Definition.TypeName;
+import Database.SingleUserDatabase.JEXWriter;
+import function.GraphicalCrunchingEnabling;
+import function.GraphicalFunctionWrap;
+import function.ImagePanel;
+import function.ImagePanelInteractor;
+import function.JEXCrunchable;
+import function.tracker.FindMaxima;
+import function.tracker.SimpleConvolve;
+import function.tracker.TrackStatistics;
+import function.tracker.TracksMovieMaker;
 import ij.ImagePlus;
 import ij.plugin.filter.BackgroundSubtracter;
 import ij.process.Blitter;
@@ -31,25 +50,6 @@ import jex.statics.JEXStatics;
 import jex.utilities.ImageUtility;
 import logs.Logs;
 import tables.DimensionMap;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DataReader.ImageReader;
-import Database.DataWriter.MovieWriter;
-import Database.DataWriter.TrackWriter;
-import Database.DataWriter.ValueWriter;
-import Database.Definition.Parameter;
-import Database.Definition.ParameterSet;
-import Database.Definition.TypeName;
-import Database.SingleUserDatabase.JEXWriter;
-import function.JEXCrunchable;
-import function.GraphicalCrunchingEnabling;
-import function.GraphicalFunctionWrap;
-import function.ImagePanel;
-import function.ImagePanelInteractor;
-import function.tracker.FindMaxima;
-import function.tracker.SimpleConvolve;
-import function.tracker.TrackStatistics;
-import function.tracker.TracksMovieMaker;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions

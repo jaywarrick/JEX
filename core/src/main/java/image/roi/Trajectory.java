@@ -1,5 +1,9 @@
 package image.roi;
 
+import Database.DBObjects.JEXData;
+import Database.Definition.Type;
+import Database.SingleUserDatabase.xml.XDataSingle;
+
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.ArrayList;
@@ -13,9 +17,6 @@ import java.util.Vector;
 
 import miscellaneous.CSVList;
 import miscellaneous.SSVList;
-import Database.DBObjects.JEXData;
-import Database.Definition.Type;
-import Database.SingleUserDatabase.xml.XDataSingle;
 
 public class Trajectory extends XDataSingle {
 	

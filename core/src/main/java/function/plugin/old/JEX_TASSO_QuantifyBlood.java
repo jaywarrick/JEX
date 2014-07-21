@@ -1,5 +1,18 @@
 package function.plugin.old;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DataReader.ImageReader;
+import Database.DataWriter.ValueWriter;
+import Database.Definition.Parameter;
+import Database.Definition.ParameterSet;
+import Database.Definition.TypeName;
+import function.GraphicalCrunchingEnabling;
+import function.GraphicalFunctionWrap;
+import function.ImagePanel;
+import function.ImagePanelInteractor;
+import function.JEXCrunchable;
+import function.imageUtility.jBackgroundSubtracter;
 import ij.ImagePlus;
 import ij.measure.Measurements;
 import ij.measure.ResultsTable;
@@ -11,19 +24,6 @@ import java.util.HashMap;
 import java.util.List;
 
 import logs.Logs;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DataReader.ImageReader;
-import Database.DataWriter.ValueWriter;
-import Database.Definition.Parameter;
-import Database.Definition.ParameterSet;
-import Database.Definition.TypeName;
-import function.JEXCrunchable;
-import function.GraphicalCrunchingEnabling;
-import function.GraphicalFunctionWrap;
-import function.ImagePanel;
-import function.ImagePanelInteractor;
-import function.imageUtility.jBackgroundSubtracter;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions

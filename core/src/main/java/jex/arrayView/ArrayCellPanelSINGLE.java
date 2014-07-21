@@ -1,5 +1,7 @@
 package jex.arrayView;
 
+import Database.DBObjects.JEXEntry;
+
 import java.awt.Dimension;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -15,7 +17,6 @@ import jex.statics.DisplayStatics;
 import jex.statics.JEXStatics;
 import logs.Logs;
 import net.miginfocom.swing.MigLayout;
-import Database.DBObjects.JEXEntry;
 
 public class ArrayCellPanelSINGLE extends ArrayCellPanel implements MouseListener {
 	

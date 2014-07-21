@@ -1,5 +1,15 @@
 package Database.SingleUserDatabase;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DBObjects.JEXLabel;
+import Database.Definition.DimensionGroupMap;
+import Database.Definition.Experiment;
+import Database.Definition.Filter;
+import Database.Definition.FilterSet;
+import Database.Definition.Type;
+import Database.Definition.TypeName;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -14,15 +24,6 @@ import jex.JEXManager;
 import jex.statics.JEXStatics;
 import logs.Logs;
 import signals.SSCenter;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DBObjects.JEXLabel;
-import Database.Definition.DimensionGroupMap;
-import Database.Definition.Experiment;
-import Database.Definition.Filter;
-import Database.Definition.FilterSet;
-import Database.Definition.Type;
-import Database.Definition.TypeName;
 
 public class JEXDB implements Iterable<JEXEntry> {
 	

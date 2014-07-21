@@ -3,10 +3,10 @@ package cruncher;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import jex.statics.DisplayStatics;
 import miscellaneous.FontUtility;
 import net.miginfocom.swing.MigLayout;
 import signals.SSCenter;
-import jex.statics.DisplayStatics;
 
 public class TicketPanel {
 	

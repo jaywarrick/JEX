@@ -1,5 +1,11 @@
 package jex;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.Definition.Type;
+import Database.Definition.TypeName;
+import Database.SingleUserDatabase.JEXDB;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -8,11 +14,6 @@ import java.util.TreeSet;
 
 import jex.statics.JEXStatics;
 import logs.Logs;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.Definition.Type;
-import Database.Definition.TypeName;
-import Database.SingleUserDatabase.JEXDB;
 
 public class JEXDatabaseManager {
 	

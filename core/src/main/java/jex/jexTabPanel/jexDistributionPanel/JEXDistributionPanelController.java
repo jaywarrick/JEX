@@ -1,5 +1,10 @@
 package jex.jexTabPanel.jexDistributionPanel;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.Definition.Experiment;
+import Database.Definition.Type;
+import cruncher.ImportThread;
 import guiObject.DialogGlassPane;
 
 import java.awt.Point;
@@ -20,11 +25,6 @@ import miscellaneous.ArrayUtility;
 import miscellaneous.Pair;
 import signals.SSCenter;
 import tables.DimensionMap;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.Definition.Experiment;
-import Database.Definition.Type;
-import cruncher.ImportThread;
 
 public class JEXDistributionPanelController extends JEXTabPanelController {
 	

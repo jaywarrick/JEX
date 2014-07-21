@@ -1,5 +1,11 @@
 package plugins.imageAligner2;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXDataSingle;
+import Database.DBObjects.JEXEntry;
+import Database.DataReader.ImageReader;
+import Database.DataWriter.ValueWriter;
+import Database.Definition.TypeName;
 import guiObject.PixelComponentDisplay;
 import ij.ImagePlus;
 
@@ -29,12 +35,6 @@ import plugins.viewer.ImageDelegate;
 import signals.SSCenter;
 import tables.DimTable;
 import tables.DimensionMap;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXDataSingle;
-import Database.DBObjects.JEXEntry;
-import Database.DataReader.ImageReader;
-import Database.DataWriter.ValueWriter;
-import Database.Definition.TypeName;
 
 public class ImageAligner implements PlugInController {
 	

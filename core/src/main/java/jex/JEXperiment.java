@@ -1,9 +1,10 @@
 package jex;
 
+import Database.SingleUserDatabase.JEXDBIO;
+import cruncher.Cruncher;
 import guiObject.DialogGlassPane;
 import guiObject.SignalMenuButton;
 import icons.IconRepository;
-import imagej.ImageJ;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -51,15 +52,12 @@ import jex.statics.JEXStatics;
 import jex.statics.KeyStatics;
 import jex.statics.PrefsUtility;
 import logs.Logs;
-import net.imagej.patcher.LegacyInjector;
 import plugins.labelManager.DatabaseLabelManager;
 import preferences.XPreferencePanelController;
 import preferences.XPreferences;
 import rtools.R;
 import signals.SSCenter;
 import updates.Updater;
-import Database.SingleUserDatabase.JEXDBIO;
-import cruncher.Cruncher;
 
 public class JEXperiment extends JFrame implements ActionListener, WindowListener, WindowFocusListener, KeyEventDispatcher {
 	

@@ -1,5 +1,16 @@
 package function.plugin.old;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DataReader.ImageReader;
+import Database.DataReader.RoiReader;
+import Database.DataWriter.ImageWriter;
+import Database.Definition.Parameter;
+import Database.Definition.ParameterSet;
+import Database.Definition.TypeName;
+import Database.SingleUserDatabase.JEXWriter;
+import function.JEXCrunchable;
+import function.imageUtility.jBackgroundSubtracter;
 import ij.ImagePlus;
 import ij.plugin.filter.RankFilters;
 import ij.process.FloatBlitter;
@@ -15,17 +26,6 @@ import jex.utilities.FunctionUtility;
 import jex.utilities.ImageUtility;
 import logs.Logs;
 import tables.DimensionMap;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DataReader.ImageReader;
-import Database.DataReader.RoiReader;
-import Database.DataWriter.ImageWriter;
-import Database.Definition.Parameter;
-import Database.Definition.ParameterSet;
-import Database.Definition.TypeName;
-import Database.SingleUserDatabase.JEXWriter;
-import function.JEXCrunchable;
-import function.imageUtility.jBackgroundSubtracter;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions

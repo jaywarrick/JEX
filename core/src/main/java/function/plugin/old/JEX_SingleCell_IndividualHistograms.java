@@ -1,5 +1,15 @@
 package function.plugin.old;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DataReader.FileReader;
+import Database.DataWriter.ImageWriter;
+import Database.Definition.Parameter;
+import Database.Definition.ParameterSet;
+import Database.Definition.TypeName;
+import function.JEXCrunchable;
+import function.singleCellAnalysis.SingleCellUtility;
+
 import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.List;
@@ -12,15 +22,6 @@ import tables.Dim;
 import tables.DimTable;
 import tables.DimensionMap;
 import tables.Table;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DataReader.FileReader;
-import Database.DataWriter.ImageWriter;
-import Database.Definition.Parameter;
-import Database.Definition.ParameterSet;
-import Database.Definition.TypeName;
-import function.JEXCrunchable;
-import function.singleCellAnalysis.SingleCellUtility;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions

@@ -1,5 +1,7 @@
 package jex.jexTabPanel.jexStatisticsPanel;
 
+import Database.Definition.Type;
+import Database.Definition.TypeName;
 import guiObject.FlatRoundedStaticButton;
 import guiObject.TypeNameButton;
 import icons.IconRepository;
@@ -19,8 +21,6 @@ import javax.swing.JPanel;
 import jex.statics.DisplayStatics;
 import jex.statics.JEXStatics;
 import net.miginfocom.swing.MigLayout;
-import Database.Definition.Type;
-import Database.Definition.TypeName;
 
 public class FilterPanel extends JPanel implements ActionListener, MouseListener {
 	

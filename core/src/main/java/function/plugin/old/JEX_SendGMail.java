@@ -1,5 +1,13 @@
 package function.plugin.old;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.Definition.Parameter;
+import Database.Definition.ParameterSet;
+import Database.Definition.TypeName;
+import cruncher.Ticket;
+import function.JEXCrunchable;
+
 import java.util.HashMap;
 import java.util.Properties;
 
@@ -13,13 +21,6 @@ import javax.mail.internet.MimeMessage;
 
 import jex.statics.JEXStatics;
 import logs.Logs;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.Definition.Parameter;
-import Database.Definition.ParameterSet;
-import Database.Definition.TypeName;
-import cruncher.Ticket;
-import function.JEXCrunchable;
 
 public class JEX_SendGMail extends JEXCrunchable {
 	

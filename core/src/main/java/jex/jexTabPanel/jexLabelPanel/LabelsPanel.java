@@ -1,5 +1,8 @@
 package jex.jexTabPanel.jexLabelPanel;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.Definition.TypeName;
 import guiObject.DialogGlassPane;
 import guiObject.FlatRoundedStaticButton;
 import guiObject.FormGlassPane;
@@ -30,9 +33,6 @@ import logs.Logs;
 import miscellaneous.FontUtility;
 import net.miginfocom.swing.MigLayout;
 import signals.SSCenter;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.Definition.TypeName;
 
 public class LabelsPanel extends JPanel implements ActionListener {
 	

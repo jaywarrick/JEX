@@ -1,10 +1,5 @@
 package function.plugin.old;
 
-import java.util.HashMap;
-import java.util.TreeMap;
-
-import jex.statics.JEXStatics;
-import tables.DimensionMap;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.ValueReader;
@@ -13,6 +8,12 @@ import Database.Definition.Parameter;
 import Database.Definition.ParameterSet;
 import Database.Definition.TypeName;
 import function.JEXCrunchable;
+
+import java.util.HashMap;
+import java.util.TreeMap;
+
+import jex.statics.JEXStatics;
+import tables.DimensionMap;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions

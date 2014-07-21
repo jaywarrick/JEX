@@ -1,12 +1,5 @@
 package function.plugin.old;
 
-import ij.ImagePlus;
-import ij.ImageStack;
-
-import java.util.HashMap;
-import java.util.Hashtable;
-
-import jex.utilities.ZVI_Reader;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.FileReader;
@@ -15,6 +8,13 @@ import Database.Definition.Parameter;
 import Database.Definition.ParameterSet;
 import Database.Definition.TypeName;
 import function.JEXCrunchable;
+import ij.ImagePlus;
+import ij.ImageStack;
+
+import java.util.HashMap;
+import java.util.Hashtable;
+
+import jex.utilities.ZVI_Reader;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions

@@ -1,5 +1,6 @@
 package jex.jexTabPanel.jexFunctionPanel;
 
+import Database.DBObjects.JEXEntry;
 import guiObject.FlatRoundedStaticButton;
 
 import java.awt.Color;
@@ -19,7 +20,6 @@ import logs.Logs;
 import miscellaneous.FontUtility;
 import net.miginfocom.swing.MigLayout;
 import signals.SSCenter;
-import Database.DBObjects.JEXEntry;
 
 public class JEXEntryPanelLine extends JPanel implements ActionListener, MouseListener {
 	

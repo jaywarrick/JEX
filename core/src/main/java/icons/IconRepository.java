@@ -1,5 +1,9 @@
 package icons;
 
+import Database.DBObjects.JEXData;
+import Database.Definition.Type;
+import Database.Definition.TypeName;
+
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Image;
@@ -11,9 +15,6 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 import logs.Logs;
-import Database.DBObjects.JEXData;
-import Database.Definition.Type;
-import Database.Definition.TypeName;
 
 public class IconRepository {
 	

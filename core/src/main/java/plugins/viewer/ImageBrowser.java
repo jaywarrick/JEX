@@ -1,5 +1,16 @@
 package plugins.viewer;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXDataSingle;
+import Database.DBObjects.JEXEntry;
+import Database.DBObjects.JEXLabel;
+import Database.DataReader.ImageReader;
+import Database.DataReader.RoiReader;
+import Database.DataWriter.ImageWriter;
+import Database.DataWriter.RoiWriter;
+import Database.Definition.Type;
+import Database.Definition.TypeName;
+import Database.SingleUserDatabase.JEXWriter;
 import guiObject.ListManager;
 import ij.util.Java2;
 import image.roi.PointList;
@@ -44,17 +55,6 @@ import signals.SSCenter;
 import tables.Dim;
 import tables.DimTable;
 import tables.DimensionMap;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXDataSingle;
-import Database.DBObjects.JEXEntry;
-import Database.DBObjects.JEXLabel;
-import Database.DataReader.ImageReader;
-import Database.DataReader.RoiReader;
-import Database.DataWriter.ImageWriter;
-import Database.DataWriter.RoiWriter;
-import Database.Definition.Type;
-import Database.Definition.TypeName;
-import Database.SingleUserDatabase.JEXWriter;
 
 public class ImageBrowser implements PlugInController {
 	

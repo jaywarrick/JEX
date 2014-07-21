@@ -1,5 +1,13 @@
 package function.plugin.old;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DataReader.FileReader;
+import Database.DataWriter.ImageWriter;
+import Database.Definition.Parameter;
+import Database.Definition.ParameterSet;
+import Database.Definition.TypeName;
+import function.JEXCrunchable;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ImageProcessor;
@@ -10,14 +18,6 @@ import java.util.TreeMap;
 
 import movieio.jmf.JMF_MovieReaderSimple;
 import tables.DimensionMap;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DataReader.FileReader;
-import Database.DataWriter.ImageWriter;
-import Database.Definition.Parameter;
-import Database.Definition.ParameterSet;
-import Database.Definition.TypeName;
-import function.JEXCrunchable;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions

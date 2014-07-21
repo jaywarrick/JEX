@@ -1,5 +1,8 @@
 package jex.arrayView;
 
+import Database.Definition.Experiment;
+import Database.Definition.HierarchyLevel;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.TreeMap;
@@ -12,8 +15,6 @@ import jex.statics.JEXStatics;
 import logs.Logs;
 import net.miginfocom.swing.MigLayout;
 import signals.SSCenter;
-import Database.Definition.Experiment;
-import Database.Definition.HierarchyLevel;
 
 public class ArrayViewController {
 	

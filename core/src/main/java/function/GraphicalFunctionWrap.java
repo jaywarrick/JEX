@@ -1,5 +1,7 @@
 package function;
 
+import Database.Definition.Parameter;
+import Database.Definition.ParameterSet;
 import guiObject.JParameterPanel;
 import guiObject.JRoundedCollapsablePanel;
 
@@ -23,8 +25,6 @@ import javax.swing.JPanel;
 import jex.statics.DisplayStatics;
 import jex.statics.JEXStatics;
 import logs.Logs;
-import Database.Definition.Parameter;
-import Database.Definition.ParameterSet;
 
 public class GraphicalFunctionWrap extends JDialog implements ActionListener {
 	

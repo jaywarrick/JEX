@@ -1,5 +1,11 @@
 package function.plugin.IJ2;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.Definition.ParameterSet;
+import Database.Definition.TypeName;
+import Database.SingleUserDatabase.JEXWriter;
+import function.JEXCrunchable;
 import ij.ImagePlus;
 import ij.process.FloatProcessor;
 import imagej.command.CommandInfo;
@@ -21,12 +27,6 @@ import jex.statics.JEXStatics;
 import jex.utilities.FunctionUtility;
 import tables.DimTable;
 import tables.DimensionMap;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.Definition.ParameterSet;
-import Database.Definition.TypeName;
-import Database.SingleUserDatabase.JEXWriter;
-import function.JEXCrunchable;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions

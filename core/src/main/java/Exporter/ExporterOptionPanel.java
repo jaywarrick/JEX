@@ -1,5 +1,15 @@
 package Exporter;
 
+import Database.DBObjects.JEXEntry;
+import Database.Definition.TypeName;
+
+import com.jgoodies.forms.layout.CellConstraints;
+import com.jgoodies.forms.layout.ColumnSpec;
+import com.jgoodies.forms.layout.FormLayout;
+import com.jgoodies.forms.layout.FormSpec;
+import com.jgoodies.forms.layout.RowSpec;
+import com.jgoodies.forms.layout.Sizes;
+
 import guiObject.DialogGlassCenterPanel;
 
 import java.awt.event.ActionEvent;
@@ -14,15 +24,6 @@ import javax.swing.JTextField;
 import jex.statics.DisplayStatics;
 import jex.statics.JEXStatics;
 import logs.Logs;
-import Database.DBObjects.JEXEntry;
-import Database.Definition.TypeName;
-
-import com.jgoodies.forms.layout.CellConstraints;
-import com.jgoodies.forms.layout.ColumnSpec;
-import com.jgoodies.forms.layout.FormLayout;
-import com.jgoodies.forms.layout.FormSpec;
-import com.jgoodies.forms.layout.RowSpec;
-import com.jgoodies.forms.layout.Sizes;
 
 public class ExporterOptionPanel extends DialogGlassCenterPanel implements ActionListener {
 	

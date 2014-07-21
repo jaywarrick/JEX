@@ -1,5 +1,10 @@
 package jex.jexTabPanel.jexFunctionPanel;
 
+import Database.DBObjects.JEXEntry;
+import Database.Definition.ParameterSet;
+import Database.Definition.TypeName;
+import Database.SingleUserDatabase.tnvi;
+import cruncher.JEXFunction;
 import function.JEXCrunchable;
 import guiObject.FlatRoundedButton;
 
@@ -41,11 +46,6 @@ import logs.Logs;
 import miscellaneous.FontUtility;
 import net.miginfocom.swing.MigLayout;
 import transferables.TransferableTypeName;
-import Database.DBObjects.JEXEntry;
-import Database.Definition.ParameterSet;
-import Database.Definition.TypeName;
-import Database.SingleUserDatabase.tnvi;
-import cruncher.JEXFunction;
 
 public class FunctionBlockPanel implements ActionListener, MouseListener {
 	

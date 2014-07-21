@@ -1,5 +1,11 @@
 package function;
 
+import function.plugin.IJ2.IJ2CrunchablePlugin;
+import function.plugin.IJ2.IJ2PluginUtility;
+import function.plugin.mechanism.JEXCrunchablePlugin;
+import function.plugin.mechanism.JEXPlugin;
+import function.plugin.mechanism.JEXPluginInfo;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.JarURLConnection;
@@ -22,12 +28,6 @@ import logs.Logs;
 import miscellaneous.StringUtility;
 
 import org.scijava.plugin.PluginInfo;
-
-import function.plugin.IJ2.IJ2CrunchablePlugin;
-import function.plugin.IJ2.IJ2PluginUtility;
-import function.plugin.mechanism.JEXCrunchablePlugin;
-import function.plugin.mechanism.JEXPlugin;
-import function.plugin.mechanism.JEXPluginInfo;
 
 public class CrunchFactory extends URLClassLoader {
 	

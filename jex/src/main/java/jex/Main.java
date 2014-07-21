@@ -1,6 +1,5 @@
 package jex;
 
-import jex.JEXperiment;
 
 /** Main entry point into JEX. */
 public class Main {

@@ -1,5 +1,19 @@
 package function.plugin.old;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DataReader.TrackReader;
+import Database.DataWriter.ImageWriter;
+import Database.Definition.Parameter;
+import Database.Definition.ParameterSet;
+import Database.Definition.TypeName;
+import Database.SingleUserDatabase.JEXWriter;
+import function.GraphicalCrunchingEnabling;
+import function.ImagePanel;
+import function.ImagePanelInteractor;
+import function.JEXCrunchable;
+import function.tracker.HistogramFactory;
+import function.tracker.TrackStatistics;
 import image.roi.Trajectory;
 import image.roi.Vect;
 import image.roi.XTrajectorySet;
@@ -14,20 +28,6 @@ import java.util.Random;
 import java.util.Vector;
 
 import logs.Logs;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DataReader.TrackReader;
-import Database.DataWriter.ImageWriter;
-import Database.Definition.Parameter;
-import Database.Definition.ParameterSet;
-import Database.Definition.TypeName;
-import Database.SingleUserDatabase.JEXWriter;
-import function.JEXCrunchable;
-import function.GraphicalCrunchingEnabling;
-import function.ImagePanel;
-import function.ImagePanelInteractor;
-import function.tracker.HistogramFactory;
-import function.tracker.TrackStatistics;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions

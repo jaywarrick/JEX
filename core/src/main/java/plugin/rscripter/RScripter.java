@@ -1,5 +1,12 @@
 package plugin.rscripter;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DataReader.FileReader;
+import Database.DataWriter.ValueWriter;
+import Database.Definition.TypeName;
+import Database.SingleUserDatabase.JEXWriter;
+
 import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.Toolkit;
@@ -23,6 +30,7 @@ import javax.swing.JTextField;
 import jex.statics.JEXStatics;
 import logs.Logs;
 import miscellaneous.LSVList;
+import miscellaneous.StringUtility;
 import miscellaneous.TSVList;
 import net.miginfocom.swing.MigLayout;
 import plugins.plugin.PlugIn;
@@ -32,14 +40,7 @@ import tables.Dim;
 import tables.DimTable;
 import tables.DimensionMap;
 import tables.Table;
-import miscellaneous.StringUtility;
 import weka.core.converters.JEXTableWriter;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DataReader.FileReader;
-import Database.DataWriter.ValueWriter;
-import Database.Definition.TypeName;
-import Database.SingleUserDatabase.JEXWriter;
 
 public class RScripter implements PlugInController, ActionListener, ClipboardOwner {
 	

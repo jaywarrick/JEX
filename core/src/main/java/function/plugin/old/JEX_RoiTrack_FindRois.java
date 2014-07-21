@@ -1,47 +1,10 @@
 package function.plugin.old;
 
-import ij.ImagePlus;
-import ij.gui.EllipseRoi;
-import ij.gui.PolygonRoi;
-import ij.gui.Roi;
-import ij.io.RoiEncoder;
-import ij.measure.Measurements;
-import ij.process.ByteProcessor;
-import ij.process.ColorProcessor;
-import ij.process.ImageProcessor;
-import ij.process.ImageStatistics;
-import image.roi.ROIPlus;
-
-import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Point;
-import java.awt.image.BufferedImage;
-import java.io.BufferedOutputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.Vector;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
-
-import jex.statics.JEXStatics;
-import miscellaneous.CSVList;
-import miscellaneous.LSVList;
-import tables.DimensionMap;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;
-import Database.DataWriter.FileWriter;
 import Database.DataWriter.ImageWriter;
 import Database.DataWriter.RoiWriter;
-import Database.DataWriter.ValueWriter;
 import Database.Definition.Parameter;
 import Database.Definition.ParameterSet;
 import Database.Definition.TypeName;
@@ -50,6 +13,33 @@ import function.JEXCrunchable;
 import function.imageUtility.AutoThresholder;
 import function.imageUtility.JEXUtility_ParticleAnalyzer;
 import function.imageUtility.WatershedUtility;
+import ij.ImagePlus;
+import ij.gui.PolygonRoi;
+import ij.gui.Roi;
+import ij.io.RoiEncoder;
+import ij.process.ByteProcessor;
+import ij.process.ColorProcessor;
+import ij.process.ImageProcessor;
+import image.roi.ROIPlus;
+
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.image.BufferedImage;
+import java.io.BufferedOutputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
+import jex.statics.JEXStatics;
+import tables.DimensionMap;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions

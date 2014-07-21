@@ -1,15 +1,5 @@
 package function.plugin.old;
 
-import ij.ImagePlus;
-import ij.process.FloatProcessor;
-
-import java.io.File;
-import java.util.HashMap;
-import java.util.TreeMap;
-
-import jex.statics.JEXStatics;
-import jex.utilities.FunctionUtility;
-import tables.DimensionMap;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;
@@ -20,6 +10,16 @@ import Database.Definition.TypeName;
 import Database.SingleUserDatabase.JEXWriter;
 import Database.SingleUserDatabase.xml.XElement;
 import function.JEXCrunchable;
+import ij.ImagePlus;
+import ij.process.FloatProcessor;
+
+import java.io.File;
+import java.util.HashMap;
+import java.util.TreeMap;
+
+import jex.statics.JEXStatics;
+import jex.utilities.FunctionUtility;
+import tables.DimensionMap;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions

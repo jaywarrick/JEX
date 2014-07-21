@@ -1,12 +1,13 @@
 package jex;
 
+import Database.DBObjects.JEXLabel;
+
 import java.awt.Color;
 import java.util.Random;
 import java.util.TreeMap;
 
 import logs.Logs;
 import plugins.labelManager.ColorPallet;
-import Database.DBObjects.JEXLabel;
 
 public class JEXLabelColorCode {
 	

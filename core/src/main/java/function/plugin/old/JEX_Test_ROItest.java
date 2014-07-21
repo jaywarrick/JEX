@@ -1,31 +1,16 @@
 package function.plugin.old;
 
-import ij.ImagePlus;
-import ij.gui.Roi;
-import image.roi.PointList;
-import image.roi.ROIPlus;
-
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.TreeMap;
-
-import logs.Logs;
-import tables.DimensionMap;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
-import Database.DataReader.ImageReader;
 import Database.DataWriter.RoiWriter;
 import Database.Definition.ParameterSet;
 import Database.Definition.Type;
 import Database.Definition.TypeName;
 import function.JEXCrunchable;
-import function.GraphicalCrunchingEnabling;
-import function.GraphicalFunctionWrap;
-import function.ImagePanel;
-import function.ImagePanelInteractor;
+import image.roi.PointList;
+import image.roi.ROIPlus;
+
+import java.util.HashMap;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions

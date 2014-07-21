@@ -1,5 +1,11 @@
 package Database.DataWriter;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXDataSingle;
+import Database.DataReader.ImageReader;
+import Database.DataReader.RoiReader;
+import Database.SingleUserDatabase.JEXWriter;
+import function.JEXCrunchable;
 import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.process.ColorProcessor;
@@ -27,12 +33,6 @@ import org.monte.media.math.Rational;
 import org.monte.media.quicktime.QuickTimeWriter;
 
 import tables.DimensionMap;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXDataSingle;
-import Database.DataReader.ImageReader;
-import Database.DataReader.RoiReader;
-import Database.SingleUserDatabase.JEXWriter;
-import function.JEXCrunchable;
 
 public class MovieWriter implements ImageObserver {
 	

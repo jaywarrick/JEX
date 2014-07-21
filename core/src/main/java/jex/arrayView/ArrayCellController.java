@@ -1,5 +1,11 @@
 package jex.arrayView;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.Definition.HierarchyLevel;
+import Database.Definition.Type;
+import Database.Definition.TypeName;
+
 import java.awt.Color;
 import java.util.Set;
 import java.util.TreeMap;
@@ -10,11 +16,6 @@ import jex.statics.DisplayStatics;
 import jex.statics.JEXStatics;
 import logs.Logs;
 import signals.SSCenter;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.Definition.HierarchyLevel;
-import Database.Definition.Type;
-import Database.Definition.TypeName;
 
 public class ArrayCellController {
 	

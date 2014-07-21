@@ -1,5 +1,7 @@
 package preferences;
 
+import Database.SingleUserDatabase.xml.Attribute;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -8,8 +10,6 @@ import miscellaneous.XMLUtility;
 
 import org.jdom.Content;
 import org.jdom.Element;
-
-import Database.SingleUserDatabase.xml.Attribute;
 
 public class XMLPreferences_XElement extends Element {
 	

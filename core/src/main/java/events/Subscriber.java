@@ -3,7 +3,6 @@ package events;
 import logs.Logs;
 
 import org.scijava.event.EventHandler;
-import org.scijava.event.EventSubscriber;
 
 
 public class Subscriber {

@@ -1,12 +1,5 @@
 package function.plugin.old;
 
-import ij.ImagePlus;
-import ij.ImageStack;
-import ij.process.ImageProcessor;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.FileReader;
@@ -17,6 +10,12 @@ import Database.Definition.ParameterSet;
 import Database.Definition.TypeName;
 import Database.SingleUserDatabase.JEXWriter;
 import function.JEXCrunchable;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.process.ImageProcessor;
+
+import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions

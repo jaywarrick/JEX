@@ -5,8 +5,8 @@ import java.awt.Frame;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
-import org.rosuda.REngine.REngineCallbacks;
 import org.rosuda.REngine.REngine;
+import org.rosuda.REngine.REngineCallbacks;
 
 public class TextConsole implements REngineCallbacks {
 	

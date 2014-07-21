@@ -1,16 +1,17 @@
 package Database.SingleUserDatabase;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.Definition.Filter;
+import Database.Definition.FilterSet;
+import Database.Definition.Type;
+
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
 import logs.Logs;
 import signals.SSCenter;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.Definition.Filter;
-import Database.Definition.FilterSet;
-import Database.Definition.Type;
 
 public class tnvi extends TreeMap<Type,TreeMap<String,TreeMap<String,Set<JEXEntry>>>> {
 	

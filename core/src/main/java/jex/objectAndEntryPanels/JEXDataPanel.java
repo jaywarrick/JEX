@@ -1,5 +1,10 @@
 package jex.objectAndEntryPanels;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.Definition.Type;
+import Database.Definition.TypeName;
+import Database.SingleUserDatabase.tnvi;
 import guiObject.DialogGlassPane;
 import guiObject.FlatRoundedButton;
 import guiObject.FormGlassPane;
@@ -34,11 +39,6 @@ import logs.Logs;
 import miscellaneous.FontUtility;
 import net.miginfocom.swing.MigLayout;
 import signals.SSCenter;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.Definition.Type;
-import Database.Definition.TypeName;
-import Database.SingleUserDatabase.tnvi;
 
 public class JEXDataPanel implements ActionListener {
 	

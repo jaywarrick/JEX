@@ -9,9 +9,9 @@ import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 
+import jex.statics.DisplayStatics;
 import net.miginfocom.swing.MigLayout;
 import signals.SSCenter;
-import jex.statics.DisplayStatics;
 
 public class BatchPanel implements ActionListener {
 	

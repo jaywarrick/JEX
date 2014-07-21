@@ -1,5 +1,13 @@
 package function.plugin.old;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DataReader.RoiReader;
+import Database.DataWriter.FileWriter;
+import Database.Definition.Parameter;
+import Database.Definition.ParameterSet;
+import Database.Definition.TypeName;
+import function.JEXCrunchable;
 import image.roi.IdPoint;
 import image.roi.PointList;
 import image.roi.ROIPlus;
@@ -14,14 +22,6 @@ import tables.Dim;
 import tables.DimTable;
 import tables.DimensionMap;
 import weka.core.converters.JEXTableWriter;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DataReader.RoiReader;
-import Database.DataWriter.FileWriter;
-import Database.Definition.Parameter;
-import Database.Definition.ParameterSet;
-import Database.Definition.TypeName;
-import function.JEXCrunchable;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions

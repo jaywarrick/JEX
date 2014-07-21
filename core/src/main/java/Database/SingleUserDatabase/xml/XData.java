@@ -1,10 +1,10 @@
 package Database.SingleUserDatabase.xml;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import Database.DBObjects.JEXData;
 import Database.Definition.Type;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class XData extends XElement {
 	

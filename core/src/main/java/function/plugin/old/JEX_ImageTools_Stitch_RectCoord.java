@@ -1,5 +1,13 @@
 package function.plugin.old;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DataReader.ValueReader;
+import Database.DataWriter.ImageWriter;
+import Database.Definition.Parameter;
+import Database.Definition.ParameterSet;
+import Database.Definition.TypeName;
+import function.JEXCrunchable;
 import image.roi.PointList;
 
 import java.awt.Rectangle;
@@ -13,14 +21,6 @@ import miscellaneous.CSVList;
 import tables.Dim;
 import tables.DimTable;
 import tables.DimensionMap;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DataReader.ValueReader;
-import Database.DataWriter.ImageWriter;
-import Database.Definition.Parameter;
-import Database.Definition.ParameterSet;
-import Database.Definition.TypeName;
-import function.JEXCrunchable;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions

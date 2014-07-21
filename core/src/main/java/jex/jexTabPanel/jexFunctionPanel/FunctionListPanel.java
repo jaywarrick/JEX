@@ -1,5 +1,9 @@
 package jex.jexTabPanel.jexFunctionPanel;
 
+import cruncher.JEXFunction;
+import function.CrunchFactory;
+import function.JEXCrunchable;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -43,9 +47,6 @@ import jex.statics.DisplayStatics;
 import jex.statics.PrefsUtility;
 import logs.Logs;
 import net.miginfocom.swing.MigLayout;
-import cruncher.JEXFunction;
-import function.CrunchFactory;
-import function.JEXCrunchable;
 
 public class FunctionListPanel implements MouseWheelListener {
 	

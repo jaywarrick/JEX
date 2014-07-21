@@ -1,5 +1,8 @@
 package Database.DataWriter;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXDataSingle;
+import Database.SingleUserDatabase.JEXWriter;
 import image.roi.Trajectory;
 import image.roi.TrajectoryROI;
 import image.roi.XTrajectorySet;
@@ -8,9 +11,6 @@ import java.util.List;
 
 import miscellaneous.XMLUtility;
 import tables.DimensionMap;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXDataSingle;
-import Database.SingleUserDatabase.JEXWriter;
 
 public class TrackWriter {
 	

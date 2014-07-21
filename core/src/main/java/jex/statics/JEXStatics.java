@@ -1,5 +1,6 @@
 package jex.statics;
 
+import cruncher.Cruncher;
 import icons.IconRepository;
 
 import java.util.Vector;
@@ -23,7 +24,6 @@ import jex.jexTabPanel.jexStatisticsPanel.JEXStatisticsPanelController;
 import jex.jexTabPanel.jexViewPanel.JEXViewPanelController;
 import plugins.labelManager.DatabaseLabelManager;
 import plugins.plugin.PlugInController;
-import cruncher.Cruncher;
 
 public class JEXStatics {
 	

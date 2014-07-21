@@ -1,5 +1,15 @@
 package jex;
 
+import Database.SingleUserDatabase.JEXDB;
+import Database.SingleUserDatabase.Repository;
+
+import com.jgoodies.forms.layout.CellConstraints;
+import com.jgoodies.forms.layout.ColumnSpec;
+import com.jgoodies.forms.layout.FormLayout;
+import com.jgoodies.forms.layout.FormSpec;
+import com.jgoodies.forms.layout.RowSpec;
+import com.jgoodies.forms.layout.Sizes;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -11,15 +21,6 @@ import javax.swing.JTextField;
 import jex.statics.DisplayStatics;
 import jex.statics.JEXStatics;
 import logs.Logs;
-import Database.SingleUserDatabase.JEXDB;
-import Database.SingleUserDatabase.Repository;
-
-import com.jgoodies.forms.layout.CellConstraints;
-import com.jgoodies.forms.layout.ColumnSpec;
-import com.jgoodies.forms.layout.FormLayout;
-import com.jgoodies.forms.layout.FormSpec;
-import com.jgoodies.forms.layout.RowSpec;
-import com.jgoodies.forms.layout.Sizes;
 
 public class DatabaseCreationPane extends JPanel implements ActionListener {
 	

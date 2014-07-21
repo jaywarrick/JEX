@@ -1,11 +1,12 @@
 package jex.statics;
 
+import Database.SingleUserDatabase.Repository;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import logs.Logs;
 import preferences.XPreferences;
-import Database.SingleUserDatabase.Repository;
 
 public class PrefsUtility {
 	

@@ -1,11 +1,12 @@
 package Database.Definition;
 
+import Database.DBObjects.JEXData;
+
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
 
 import miscellaneous.StringUtility;
-import Database.DBObjects.JEXData;
 
 public class Filter implements Comparable<Filter> {
 	

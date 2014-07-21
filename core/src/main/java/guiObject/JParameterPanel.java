@@ -1,5 +1,7 @@
 package guiObject;
 
+import Database.Definition.Parameter;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
@@ -18,11 +20,10 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import jex.statics.DisplayStatics;
 import jex.statics.JEXStatics;
 import logs.Logs;
 import net.miginfocom.swing.MigLayout;
-import jex.statics.DisplayStatics;
-import Database.Definition.Parameter;
 
 public class JParameterPanel implements DocumentListener, ChangeListener, ActionListener {
 	

@@ -1,5 +1,14 @@
 package function.plugin.old;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DataWriter.FileWriter;
+import Database.DataWriter.ImageWriter;
+import Database.Definition.Parameter;
+import Database.Definition.ParameterSet;
+import Database.Definition.TypeName;
+import Database.SingleUserDatabase.JEXWriter;
+import function.JEXCrunchable;
 import ij.ImagePlus;
 
 import java.io.BufferedReader;
@@ -20,15 +29,6 @@ import miscellaneous.SimpleFileFilter;
 import tables.Dim;
 import tables.DimTable;
 import tables.DimensionMap;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DataWriter.FileWriter;
-import Database.DataWriter.ImageWriter;
-import Database.Definition.Parameter;
-import Database.Definition.ParameterSet;
-import Database.Definition.TypeName;
-import Database.SingleUserDatabase.JEXWriter;
-import function.JEXCrunchable;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions

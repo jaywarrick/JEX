@@ -1,5 +1,13 @@
 package jex.dataView;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DataReader.FileReader;
+import Database.DataReader.ImageReader;
+import Database.DataReader.LabelReader;
+import Database.DataReader.MovieReader;
+import Database.DataReader.ValueReader;
+import Database.SingleUserDatabase.JEXWriter;
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
 
@@ -24,14 +32,6 @@ import jex.statics.DisplayStatics;
 import miscellaneous.FontUtility;
 import net.miginfocom.swing.MigLayout;
 import tables.DimensionMap;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DataReader.FileReader;
-import Database.DataReader.ImageReader;
-import Database.DataReader.LabelReader;
-import Database.DataReader.MovieReader;
-import Database.DataReader.ValueReader;
-import Database.SingleUserDatabase.JEXWriter;
 
 public class JEXDataPanelController {
 	

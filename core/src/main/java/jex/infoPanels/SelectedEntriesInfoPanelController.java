@@ -1,5 +1,7 @@
 package jex.infoPanels;
 
+import Database.DBObjects.JEXEntry;
+
 import java.awt.Color;
 import java.util.TreeSet;
 
@@ -10,7 +12,6 @@ import jex.JEXManager;
 import jex.statics.JEXStatics;
 import net.miginfocom.swing.MigLayout;
 import signals.SSCenter;
-import Database.DBObjects.JEXEntry;
 
 public class SelectedEntriesInfoPanelController extends InfoPanelController {
 	

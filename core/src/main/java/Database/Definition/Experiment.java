@@ -1,13 +1,14 @@
 package Database.Definition;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.SingleUserDatabase.tnvi;
+
 import java.awt.Dimension;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
 import miscellaneous.StringUtility;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.SingleUserDatabase.tnvi;
 
 public class Experiment extends TreeMap<Integer,TreeMap<Integer,JEXEntry>> implements Comparable<Experiment>, HierarchyLevel {
 	

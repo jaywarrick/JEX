@@ -7,12 +7,13 @@
 //
 package transferables;
 
+import Database.Definition.TypeName;
+
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 
 import logs.Logs;
-import Database.Definition.TypeName;
 
 public class TransferableTypeName implements Transferable {
 	

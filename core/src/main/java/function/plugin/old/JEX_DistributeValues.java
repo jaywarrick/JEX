@@ -1,10 +1,5 @@
 package function.plugin.old;
 
-import java.util.HashMap;
-import java.util.TreeMap;
-
-import miscellaneous.CSVList;
-import tables.DimensionMap;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataWriter.ValueWriter;
@@ -13,6 +8,12 @@ import Database.Definition.ParameterSet;
 import Database.Definition.TypeName;
 import cruncher.Ticket;
 import function.JEXCrunchable;
+
+import java.util.HashMap;
+import java.util.TreeMap;
+
+import miscellaneous.CSVList;
+import tables.DimensionMap;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions

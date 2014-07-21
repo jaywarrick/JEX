@@ -1,5 +1,7 @@
 package jex.jexTabPanel.jexFunctionPanel;
 
+import Database.SingleUserDatabase.tnvi;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -15,7 +17,6 @@ import jex.statics.JEXStatics;
 import miscellaneous.FontUtility;
 import net.miginfocom.swing.MigLayout;
 import signals.SSCenter;
-import Database.SingleUserDatabase.tnvi;
 
 public class JEXFunctionRightPanel_OLD extends JPanel implements ActionListener {
 	

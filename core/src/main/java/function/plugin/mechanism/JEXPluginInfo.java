@@ -1,5 +1,9 @@
 package function.plugin.mechanism;
 
+import Database.Definition.Parameter;
+import Database.Definition.Type;
+import Database.Definition.TypeName;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Collections;
@@ -8,17 +12,13 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import logs.Logs;
+import miscellaneous.StringUtility;
 
 import org.scijava.Context;
 import org.scijava.InstantiableException;
 import org.scijava.plugin.PluginInfo;
 import org.scijava.service.Service;
 import org.scijava.util.ClassUtils;
-
-import miscellaneous.StringUtility;
-import Database.Definition.Parameter;
-import Database.Definition.Type;
-import Database.Definition.TypeName;
 
 
 public class JEXPluginInfo {

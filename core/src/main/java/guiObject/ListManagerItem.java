@@ -1,5 +1,8 @@
 package guiObject;
 
+import Database.DBObjects.JEXData;
+import Database.Definition.TypeName;
+
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -12,8 +15,6 @@ import javax.swing.JPanel;
 import jex.statics.DisplayStatics;
 import logs.Logs;
 import net.miginfocom.swing.MigLayout;
-import Database.DBObjects.JEXData;
-import Database.Definition.TypeName;
 
 public class ListManagerItem extends JPanel implements ActionListener, MouseListener {
 	

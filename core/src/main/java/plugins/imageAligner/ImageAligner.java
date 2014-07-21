@@ -1,5 +1,12 @@
 package plugins.imageAligner;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DataReader.ImageReader;
+import Database.DataWriter.ValueWriter;
+import Database.Definition.Parameter;
+import Database.Definition.ParameterSet;
+import Database.Definition.TypeName;
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
 
@@ -49,13 +56,6 @@ import jex.statics.JEXStatics;
 import miscellaneous.FontUtility;
 import plugins.plugin.PlugIn;
 import plugins.plugin.PlugInController;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DataReader.ImageReader;
-import Database.DataWriter.ValueWriter;
-import Database.Definition.Parameter;
-import Database.Definition.ParameterSet;
-import Database.Definition.TypeName;
 
 public class ImageAligner implements PlugInController, ActionListener {
 	

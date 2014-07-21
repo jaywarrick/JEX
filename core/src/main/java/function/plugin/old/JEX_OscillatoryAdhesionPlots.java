@@ -1,18 +1,5 @@
 package function.plugin.old;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.TreeMap;
-
-import jex.statics.Octave;
-import logs.Logs;
-import miscellaneous.FileUtility;
-import miscellaneous.LSVList;
-import rtools.R;
-import tables.DimTable;
-import tables.DimensionMap;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.FileReader;
@@ -27,6 +14,20 @@ import Database.SingleUserDatabase.JEXReader;
 import Database.SingleUserDatabase.JEXWriter;
 import cruncher.Ticket;
 import function.JEXCrunchable;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.TreeMap;
+
+import jex.statics.Octave;
+import logs.Logs;
+import miscellaneous.FileUtility;
+import miscellaneous.LSVList;
+import rtools.R;
+import tables.DimTable;
+import tables.DimensionMap;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions

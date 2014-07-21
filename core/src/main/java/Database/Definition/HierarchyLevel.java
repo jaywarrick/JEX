@@ -1,9 +1,9 @@
 package Database.Definition;
 
+import Database.DBObjects.JEXEntry;
+
 import java.util.TreeMap;
 import java.util.TreeSet;
-
-import Database.DBObjects.JEXEntry;
 
 public interface HierarchyLevel {
 	

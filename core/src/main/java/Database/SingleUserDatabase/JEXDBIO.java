@@ -1,5 +1,20 @@
 package Database.SingleUserDatabase;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXDataSingle;
+import Database.DBObjects.JEXEntry;
+import Database.DBObjects.JEXLabel;
+import Database.DataReader.FileReader;
+import Database.DataReader.ImageReader;
+import Database.DataReader.MovieReader;
+import Database.DataReader.TrackReader;
+import Database.Definition.Type;
+import Database.SingleUserDatabase.xml.ObjectFactory;
+import Database.SingleUserDatabase.xml.XData;
+import Database.SingleUserDatabase.xml.XDataSingle;
+import Database.SingleUserDatabase.xml.XElement;
+import Database.SingleUserDatabase.xml.XEntry;
+import Database.SingleUserDatabase.xml.XEntrySet;
 import image.roi.ROIPlus;
 
 import java.io.File;
@@ -34,21 +49,6 @@ import org.xadisk.filesystem.exceptions.NoTransactionAssociatedException;
 import preferences.XMLPreferences_XElement;
 import tables.DimTable;
 import tables.DimensionMap;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXDataSingle;
-import Database.DBObjects.JEXEntry;
-import Database.DBObjects.JEXLabel;
-import Database.DataReader.FileReader;
-import Database.DataReader.ImageReader;
-import Database.DataReader.MovieReader;
-import Database.DataReader.TrackReader;
-import Database.Definition.Type;
-import Database.SingleUserDatabase.xml.ObjectFactory;
-import Database.SingleUserDatabase.xml.XData;
-import Database.SingleUserDatabase.xml.XDataSingle;
-import Database.SingleUserDatabase.xml.XElement;
-import Database.SingleUserDatabase.xml.XEntry;
-import Database.SingleUserDatabase.xml.XEntrySet;
 
 public class JEXDBIO {
 	

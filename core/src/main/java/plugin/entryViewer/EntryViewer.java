@@ -1,5 +1,7 @@
 package plugin.entryViewer;
 
+import Database.DBObjects.JEXEntry;
+
 import java.awt.BorderLayout;
 
 import javax.swing.BorderFactory;
@@ -16,7 +18,6 @@ import net.miginfocom.swing.MigLayout;
 import plugins.plugin.PlugIn;
 import plugins.plugin.PlugInController;
 import signals.SSCenter;
-import Database.DBObjects.JEXEntry;
 
 public class EntryViewer implements PlugInController {
 	

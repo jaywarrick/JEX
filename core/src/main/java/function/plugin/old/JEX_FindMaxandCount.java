@@ -1,5 +1,20 @@
 package function.plugin.old;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DataReader.ImageReader;
+import Database.DataReader.RoiReader;
+import Database.DataWriter.RoiWriter;
+import Database.DataWriter.ValueWriter;
+import Database.Definition.Parameter;
+import Database.Definition.ParameterSet;
+import Database.Definition.TypeName;
+import function.GraphicalCrunchingEnabling;
+import function.GraphicalFunctionWrap;
+import function.ImagePanel;
+import function.ImagePanelInteractor;
+import function.JEXCrunchable;
+import function.tracker.FindMaxima;
 import ij.ImagePlus;
 import ij.gui.Roi;
 import image.roi.PointList;
@@ -14,21 +29,6 @@ import java.util.TreeMap;
 import jex.statics.JEXStatics;
 import logs.Logs;
 import tables.DimensionMap;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DataReader.ImageReader;
-import Database.DataReader.RoiReader;
-import Database.DataWriter.RoiWriter;
-import Database.DataWriter.ValueWriter;
-import Database.Definition.Parameter;
-import Database.Definition.ParameterSet;
-import Database.Definition.TypeName;
-import function.JEXCrunchable;
-import function.GraphicalCrunchingEnabling;
-import function.GraphicalFunctionWrap;
-import function.ImagePanel;
-import function.ImagePanelInteractor;
-import function.tracker.FindMaxima;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions

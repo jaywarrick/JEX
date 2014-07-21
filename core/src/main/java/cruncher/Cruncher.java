@@ -1,5 +1,9 @@
 package cruncher;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DBObjects.JEXWorkflow;
+
 import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
@@ -13,9 +17,6 @@ import java.util.concurrent.Future;
 import jex.statics.JEXStatics;
 import logs.Logs;
 import miscellaneous.Pair;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DBObjects.JEXWorkflow;
 
 public class Cruncher {
 	

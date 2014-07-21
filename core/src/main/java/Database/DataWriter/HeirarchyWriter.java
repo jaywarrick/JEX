@@ -1,10 +1,10 @@
 package Database.DataWriter;
 
-import jex.statics.JEXStatics;
-import tables.DimensionMap;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXDataSingle;
 import Database.DBObjects.JEXEntry;
+import jex.statics.JEXStatics;
+import tables.DimensionMap;
 
 public class HeirarchyWriter {
 	

@@ -1,5 +1,24 @@
 package jex;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXDataSingle;
+import Database.DBObjects.JEXEntry;
+import Database.DBObjects.JEXLabel;
+import Database.Definition.Bookmark;
+import Database.Definition.DatabaseLevel;
+import Database.Definition.DimensionGroupMap;
+import Database.Definition.Experiment;
+import Database.Definition.Filter;
+import Database.Definition.FilterSet;
+import Database.Definition.HierarchyLevel;
+import Database.Definition.Type;
+import Database.Definition.TypeName;
+import Database.SingleUserDatabase.JEXDB;
+import Database.SingleUserDatabase.JEXDBIO;
+import Database.SingleUserDatabase.JEXDBInfo;
+import Database.SingleUserDatabase.JEXWriter;
+import Database.SingleUserDatabase.Repository;
+import Database.SingleUserDatabase.tnvi;
 import guiObject.DialogGlassPane;
 
 import java.io.File;
@@ -27,25 +46,6 @@ import signals.SSCenter;
 import tables.Dim;
 import tables.DimTable;
 import tables.DimensionMap;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXDataSingle;
-import Database.DBObjects.JEXEntry;
-import Database.DBObjects.JEXLabel;
-import Database.Definition.Bookmark;
-import Database.Definition.DatabaseLevel;
-import Database.Definition.DimensionGroupMap;
-import Database.Definition.Experiment;
-import Database.Definition.Filter;
-import Database.Definition.FilterSet;
-import Database.Definition.HierarchyLevel;
-import Database.Definition.Type;
-import Database.Definition.TypeName;
-import Database.SingleUserDatabase.JEXDB;
-import Database.SingleUserDatabase.JEXDBIO;
-import Database.SingleUserDatabase.JEXDBInfo;
-import Database.SingleUserDatabase.JEXWriter;
-import Database.SingleUserDatabase.Repository;
-import Database.SingleUserDatabase.tnvi;
 
 public class JEXManager {
 	

@@ -1,5 +1,16 @@
 package function.plugin.old;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DataReader.ImageReader;
+import Database.DataWriter.ImageWriter;
+import Database.Definition.Parameter;
+import Database.Definition.ParameterSet;
+import Database.Definition.TypeName;
+import Database.SingleUserDatabase.JEXWriter;
+import function.GraphicalFunctionWrap;
+import function.ImagePanel;
+import function.JEXCrunchable;
 import ij.ImagePlus;
 import ij.process.Blitter;
 import ij.process.FloatProcessor;
@@ -12,17 +23,6 @@ import java.util.TreeMap;
 import jex.statics.JEXStatics;
 import logs.Logs;
 import tables.DimensionMap;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DataReader.ImageReader;
-import Database.DataWriter.ImageWriter;
-import Database.Definition.Parameter;
-import Database.Definition.ParameterSet;
-import Database.Definition.TypeName;
-import Database.SingleUserDatabase.JEXWriter;
-import function.JEXCrunchable;
-import function.GraphicalFunctionWrap;
-import function.ImagePanel;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions

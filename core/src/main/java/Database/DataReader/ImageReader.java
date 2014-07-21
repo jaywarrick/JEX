@@ -1,5 +1,7 @@
 package Database.DataReader;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXDataSingle;
 import ij.ImagePlus;
 import ij.VirtualStack;
 
@@ -9,8 +11,6 @@ import java.util.List;
 import java.util.TreeMap;
 
 import tables.DimensionMap;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXDataSingle;
 
 public class ImageReader {
 	

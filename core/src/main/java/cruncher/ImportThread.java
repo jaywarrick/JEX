@@ -1,5 +1,11 @@
 package cruncher;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DataWriter.FileWriter;
+import Database.DataWriter.ImageWriter;
+import Database.Definition.Type;
+
 import java.util.TreeMap;
 import java.util.Vector;
 import java.util.concurrent.Callable;
@@ -7,11 +13,6 @@ import java.util.concurrent.Callable;
 import jex.statics.JEXStatics;
 import miscellaneous.Pair;
 import tables.DimensionMap;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DataWriter.FileWriter;
-import Database.DataWriter.ImageWriter;
-import Database.Definition.Type;
 
 public class ImportThread implements Callable<Object> {
 	

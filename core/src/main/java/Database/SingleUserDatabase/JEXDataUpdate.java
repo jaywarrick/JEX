@@ -1,5 +1,10 @@
 package Database.SingleUserDatabase;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXDataSingle;
+import Database.DataReader.FileReader;
+import Database.Definition.Type;
+
 import java.io.File;
 import java.util.TreeMap;
 
@@ -10,10 +15,6 @@ import miscellaneous.FileUtility;
 import org.xadisk.bridge.proxies.interfaces.Session;
 
 import tables.DimensionMap;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXDataSingle;
-import Database.DataReader.FileReader;
-import Database.Definition.Type;
 
 public class JEXDataUpdate implements Update {
 	

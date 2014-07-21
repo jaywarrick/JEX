@@ -1,5 +1,8 @@
 package jex.jexTabPanel.jexFunctionPanel;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.Definition.TypeName;
 import guiObject.JSpacedPanel;
 
 import java.awt.BorderLayout;
@@ -13,9 +16,6 @@ import jex.statics.DisplayStatics;
 import jex.statics.JEXStatics;
 import recycling.PreviewMaker;
 import signals.SSCenter;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.Definition.TypeName;
 
 public class FunctionPreviewPanel extends JSpacedPanel implements ActionListener {
 	

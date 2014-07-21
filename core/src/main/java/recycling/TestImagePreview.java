@@ -1,5 +1,7 @@
 package recycling;
 
+import Database.DBObjects.JEXData;
+
 import java.awt.BorderLayout;
 
 import javax.swing.WindowConstants;
@@ -7,7 +9,6 @@ import javax.swing.WindowConstants;
 import jex.statics.DisplayStatics;
 import plugins.plugin.PlugIn;
 import plugins.plugin.PlugInController;
-import Database.DBObjects.JEXData;
 
 public class TestImagePreview implements PlugInController {
 	

@@ -1,5 +1,7 @@
 package plugins.selector;
 
+import Database.Definition.Experiment;
+
 import java.awt.BorderLayout;
 import java.util.TreeMap;
 
@@ -9,7 +11,6 @@ import jex.statics.DisplayStatics;
 import logs.Logs;
 import plugins.plugin.PlugIn;
 import plugins.plugin.PlugInController;
-import Database.Definition.Experiment;
 
 public class SelectorPlugInTester implements PlugInController {
 	

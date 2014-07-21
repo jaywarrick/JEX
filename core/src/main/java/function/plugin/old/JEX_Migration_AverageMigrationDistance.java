@@ -1,5 +1,14 @@
 package function.plugin.old;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DataReader.ImageReader;
+import Database.DataWriter.ValueWriter;
+import Database.Definition.Parameter;
+import Database.Definition.ParameterSet;
+import Database.Definition.TypeName;
+import function.JEXCrunchable;
+import guiObject.JParameterPanel;
 import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.measure.Measurements;
@@ -32,15 +41,6 @@ import jex.statics.DisplayStatics;
 import logs.Logs;
 import miscellaneous.FontUtility;
 import tables.DimensionMap;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DataReader.ImageReader;
-import Database.DataWriter.ValueWriter;
-import Database.Definition.Parameter;
-import Database.Definition.ParameterSet;
-import Database.Definition.TypeName;
-import function.JEXCrunchable;
-import guiObject.JParameterPanel;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions

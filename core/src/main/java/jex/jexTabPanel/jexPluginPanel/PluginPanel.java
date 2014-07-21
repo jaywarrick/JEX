@@ -1,5 +1,11 @@
 package jex.jexTabPanel.jexPluginPanel;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.Definition.Experiment;
+import Database.Definition.TypeName;
+import Exporter.Exporter;
+import Exporter.ExporterOptionPanel;
 import guiObject.DialogGlassPane;
 
 import java.awt.Color;
@@ -22,12 +28,6 @@ import plugins.imageAligner2.ImageAligner;
 import plugins.selector.SelectorPlugInTester;
 import plugins.viewer.ImageBrowser;
 import signals.SSCenter;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.Definition.Experiment;
-import Database.Definition.TypeName;
-import Exporter.Exporter;
-import Exporter.ExporterOptionPanel;
 
 public class PluginPanel implements ActionListener {
 	

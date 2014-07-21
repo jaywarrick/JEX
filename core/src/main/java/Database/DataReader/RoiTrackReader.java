@@ -1,5 +1,7 @@
 package Database.DataReader;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXDataSingle;
 import function.roitracker.RoiTrack;
 import image.roi.ROIPlus;
 
@@ -9,8 +11,6 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import tables.DimensionMap;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXDataSingle;
 
 public class RoiTrackReader {
 	

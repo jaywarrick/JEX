@@ -1,13 +1,5 @@
 package function.plugin.old;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-
-import logs.Logs;
-import tables.DimensionMap;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.RoiTrackReader;
@@ -18,6 +10,15 @@ import Database.Definition.TypeName;
 import function.JEXCrunchable;
 import function.roitracker.RoiTrack;
 import function.roitracker.RoiTrackStatistics;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+
+import logs.Logs;
+import tables.DimensionMap;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions

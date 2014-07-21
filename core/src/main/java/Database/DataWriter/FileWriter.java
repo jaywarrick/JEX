@@ -1,15 +1,16 @@
 package Database.DataWriter;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXDataSingle;
+import Database.Definition.Type;
+import Database.SingleUserDatabase.JEXWriter;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
 import miscellaneous.FileUtility;
 import tables.DimensionMap;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXDataSingle;
-import Database.Definition.Type;
-import Database.SingleUserDatabase.JEXWriter;
 
 public class FileWriter {
 	

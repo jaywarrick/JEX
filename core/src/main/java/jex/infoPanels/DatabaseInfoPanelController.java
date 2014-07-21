@@ -1,5 +1,7 @@
 package jex.infoPanels;
 
+import Database.SingleUserDatabase.JEXDBInfo;
+
 import java.awt.Color;
 import java.io.File;
 
@@ -11,7 +13,6 @@ import jex.statics.JEXStatics;
 import miscellaneous.FileUtility;
 import net.miginfocom.swing.MigLayout;
 import signals.SSCenter;
-import Database.SingleUserDatabase.JEXDBInfo;
 
 public class DatabaseInfoPanelController extends InfoPanelController {
 	

@@ -1,8 +1,8 @@
 package Database.SingleUserDatabase;
 
-import java.io.File;
-
 import Database.DBObjects.JEXEntry;
+
+import java.io.File;
 
 public class JEXEntryUpdate implements Update {
 	

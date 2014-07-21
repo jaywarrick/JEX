@@ -1,5 +1,9 @@
 package recycling;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXDataSingle;
+import Database.DataReader.ImageReader;
+import Database.DataReader.RoiReader;
 import image.roi.PointList;
 import image.roi.ROIPlus;
 import image.roi.ROIPlusSet;
@@ -34,10 +38,6 @@ import plugins.viewer.StatusBar;
 import signals.SSCenter;
 import tables.DimTable;
 import tables.DimensionMap;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXDataSingle;
-import Database.DataReader.ImageReader;
-import Database.DataReader.RoiReader;
 
 public class ImagePreview extends PreviewPanel {
 	

@@ -1,5 +1,10 @@
 package plugins.valueTable;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXDataSingle;
+import Database.DBObjects.JEXEntry;
+import Database.Definition.TypeName;
+
 import java.util.TreeSet;
 import java.util.Vector;
 
@@ -9,10 +14,6 @@ import plugins.plugin.PlugIn;
 import plugins.plugin.PlugInController;
 import signals.SSCenter;
 import tables.DimTable;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXDataSingle;
-import Database.DBObjects.JEXEntry;
-import Database.Definition.TypeName;
 
 public class ValueBrowserController implements PlugInController {
 	

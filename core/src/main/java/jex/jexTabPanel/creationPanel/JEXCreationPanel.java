@@ -1,5 +1,7 @@
 package jex.jexTabPanel.creationPanel;
 
+import Database.DBObjects.JEXEntry;
+import Database.Definition.HierarchyLevel;
 import guiObject.SignalFlatRoundedButtonDeletable;
 
 import java.awt.BorderLayout;
@@ -28,8 +30,6 @@ import miscellaneous.FileUtility;
 import miscellaneous.FontUtility;
 import net.miginfocom.swing.MigLayout;
 import signals.SSCenter;
-import Database.DBObjects.JEXEntry;
-import Database.Definition.HierarchyLevel;
 
 public class JEXCreationPanel extends JPanel implements MouseListener, ActionListener {
 	

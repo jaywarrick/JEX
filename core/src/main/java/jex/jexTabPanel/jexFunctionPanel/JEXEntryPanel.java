@@ -1,5 +1,7 @@
 package jex.jexTabPanel.jexFunctionPanel;
 
+import Database.DBObjects.JEXEntry;
+
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -24,7 +26,6 @@ import logs.Logs;
 import miscellaneous.FontUtility;
 import miscellaneous.StringUtility;
 import signals.SSCenter;
-import Database.DBObjects.JEXEntry;
 
 public class JEXEntryPanel extends JPanel implements ActionListener {
 	

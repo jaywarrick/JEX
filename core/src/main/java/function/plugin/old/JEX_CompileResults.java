@@ -1,5 +1,16 @@
 package function.plugin.old;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DataReader.FileReader;
+import Database.DataReader.LabelReader;
+import Database.DataWriter.FileWriter;
+import Database.Definition.Parameter;
+import Database.Definition.ParameterSet;
+import Database.Definition.TypeName;
+import cruncher.Ticket;
+import function.JEXCrunchable;
+
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -12,16 +23,6 @@ import tables.DimensionMap;
 import tables.Table;
 import weka.core.converters.JEXTableReader;
 import weka.core.converters.JEXTableWriter;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DataReader.FileReader;
-import Database.DataReader.LabelReader;
-import Database.DataWriter.FileWriter;
-import Database.Definition.Parameter;
-import Database.Definition.ParameterSet;
-import Database.Definition.TypeName;
-import cruncher.Ticket;
-import function.JEXCrunchable;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions

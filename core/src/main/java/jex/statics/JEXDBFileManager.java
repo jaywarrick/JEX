@@ -1,5 +1,7 @@
 package jex.statics;
 
+import Database.SingleUserDatabase.JEXWriter;
+
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -19,8 +21,6 @@ import org.xadisk.filesystem.exceptions.InsufficientPermissionOnFileException;
 import org.xadisk.filesystem.exceptions.LockingFailedException;
 import org.xadisk.filesystem.exceptions.NoTransactionAssociatedException;
 import org.xadisk.filesystem.standalone.StandaloneFileSystemConfiguration;
-
-import Database.SingleUserDatabase.JEXWriter;
 
 public class JEXDBFileManager {
 	

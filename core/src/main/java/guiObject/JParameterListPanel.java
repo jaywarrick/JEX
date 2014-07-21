@@ -1,5 +1,8 @@
 package guiObject;
 
+import Database.Definition.Parameter;
+import Database.Definition.ParameterSet;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.event.ActionListener;
@@ -15,8 +18,6 @@ import javax.swing.ScrollPaneConstants;
 import jex.statics.DisplayStatics;
 import logs.Logs;
 import net.miginfocom.swing.MigLayout;
-import Database.Definition.Parameter;
-import Database.Definition.ParameterSet;
 
 public class JParameterListPanel {
 	

@@ -1,10 +1,11 @@
 package plugin.entryViewer;
 
+import Database.DBObjects.JEXEntry;
+
 import javax.swing.JPanel;
 
 import jex.statics.DisplayStatics;
 import net.miginfocom.swing.MigLayout;
-import Database.DBObjects.JEXEntry;
 
 public class EntryInfoPanel extends JPanel {
 	

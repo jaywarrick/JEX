@@ -26,9 +26,9 @@ import logs.Logs;
 import miscellaneous.CSVList;
 import miscellaneous.FileUtility;
 import miscellaneous.FontUtility;
+import miscellaneous.StringUtility;
 import net.miginfocom.swing.MigLayout;
 import signals.SSCenter;
-import miscellaneous.StringUtility;
 
 public class FileListPanel extends DialogGlassCenterPanel implements ActionListener {
 	

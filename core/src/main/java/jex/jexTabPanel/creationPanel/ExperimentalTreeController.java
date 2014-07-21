@@ -1,5 +1,8 @@
 package jex.jexTabPanel.creationPanel;
 
+import Database.Definition.Experiment;
+import Database.Definition.HierarchyLevel;
+
 import java.awt.Color;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -12,8 +15,6 @@ import jex.statics.JEXStatics;
 import logs.Logs;
 import net.miginfocom.swing.MigLayout;
 import signals.SSCenter;
-import Database.Definition.Experiment;
-import Database.Definition.HierarchyLevel;
 
 public class ExperimentalTreeController {
 	

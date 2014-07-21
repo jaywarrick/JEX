@@ -1,5 +1,11 @@
 package image.roi;
 
+import Database.DBObjects.JEXData;
+import Database.Definition.Type;
+import Database.SingleUserDatabase.xml.ObjectFactory;
+import Database.SingleUserDatabase.xml.XData;
+import Database.SingleUserDatabase.xml.XDataSingle;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -11,12 +17,6 @@ import miscellaneous.StopWatch;
 import org.jdom.Document;
 import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
-
-import Database.DBObjects.JEXData;
-import Database.Definition.Type;
-import Database.SingleUserDatabase.xml.ObjectFactory;
-import Database.SingleUserDatabase.xml.XData;
-import Database.SingleUserDatabase.xml.XDataSingle;
 
 public class XTrajectorySet extends XData {
 	

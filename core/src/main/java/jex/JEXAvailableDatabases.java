@@ -1,5 +1,7 @@
 package jex;
 
+import Database.SingleUserDatabase.JEXDBInfo;
+import Database.SingleUserDatabase.Repository;
 import guiObject.JRoundedPanel;
 import guiObject.SignalFlatRoundedButtonDeletable;
 import guiObject.SignalMenuButton;
@@ -34,8 +36,6 @@ import jex.statics.PrefsUtility;
 import logs.Logs;
 import miscellaneous.FontUtility;
 import signals.SSCenter;
-import Database.SingleUserDatabase.JEXDBInfo;
-import Database.SingleUserDatabase.Repository;
 
 public class JEXAvailableDatabases extends JPanel implements ActionListener, MouseListener {
 	

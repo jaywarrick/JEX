@@ -1,5 +1,7 @@
 package Database.DataReader;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXDataSingle;
 import image.roi.ROIPlus;
 import image.roi.Trajectory;
 import image.roi.TrajectoryROI;
@@ -10,8 +12,6 @@ import java.util.List;
 import java.util.TreeMap;
 
 import tables.DimensionMap;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXDataSingle;
 
 public class TrackReader {
 	

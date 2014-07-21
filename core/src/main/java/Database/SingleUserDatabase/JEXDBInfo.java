@@ -1,5 +1,9 @@
 package Database.SingleUserDatabase;
 
+import Database.DBObjects.JEXEntry;
+import Database.Definition.Bookmark;
+import Database.Definition.Experiment;
+
 import java.awt.Color;
 import java.io.File;
 import java.util.ArrayList;
@@ -14,9 +18,6 @@ import logs.Logs;
 import plugins.labelManager.ColorPallet;
 import preferences.XPreferences;
 import preferences.XPreferences_Utilities;
-import Database.DBObjects.JEXEntry;
-import Database.Definition.Bookmark;
-import Database.Definition.Experiment;
 
 public class JEXDBInfo {
 	

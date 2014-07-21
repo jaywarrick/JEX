@@ -1,5 +1,10 @@
 package Database.DBObjects;
 
+import Database.DataWriter.HeirarchyWriter;
+import Database.Definition.Type;
+import Database.Definition.TypeName;
+import Database.SingleUserDatabase.JEXDB;
+
 import java.util.Date;
 import java.util.TreeMap;
 
@@ -7,10 +12,6 @@ import jex.statics.JEXStatics;
 import logs.Logs;
 import miscellaneous.DateUtility;
 import miscellaneous.StringUtility;
-import Database.DataWriter.HeirarchyWriter;
-import Database.Definition.Type;
-import Database.Definition.TypeName;
-import Database.SingleUserDatabase.JEXDB;
 
 public class JEXEntry implements Comparable<JEXEntry> {
 	

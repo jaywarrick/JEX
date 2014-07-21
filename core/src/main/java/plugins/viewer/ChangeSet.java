@@ -1,5 +1,7 @@
 package plugins.viewer;
 
+import Database.DBObjects.JEXEntry;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -8,7 +10,6 @@ import java.util.Vector;
 import logs.Logs;
 import miscellaneous.Copiable;
 import signals.SSCenter;
-import Database.DBObjects.JEXEntry;
 
 public class ChangeSet<E extends Copiable<E>> {
 	

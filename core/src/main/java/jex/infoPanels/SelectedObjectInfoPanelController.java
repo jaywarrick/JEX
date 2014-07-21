@@ -1,5 +1,10 @@
 package jex.infoPanels;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.Definition.Type;
+import Database.Definition.TypeName;
+import Database.SingleUserDatabase.JEXDBIO;
 import ij.ImagePlus;
 
 import java.awt.Color;
@@ -28,11 +33,6 @@ import preferences.XMLPreferences_XElement;
 import preferences.XPreferencePanelController;
 import preferences.XPreferences;
 import signals.SSCenter;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.Definition.Type;
-import Database.Definition.TypeName;
-import Database.SingleUserDatabase.JEXDBIO;
 
 public class SelectedObjectInfoPanelController extends InfoPanelController {
 	

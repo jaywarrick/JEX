@@ -1,38 +1,24 @@
 package function.plugin.old;
 
-import ij.ImagePlus;
-import ij.process.ImageProcessor;
-import image.roi.ROIPlus;
-import image.roi.Trajectory;
-
-import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Point;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-
-import jex.statics.JEXStatics;
-import logs.Logs;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;
-import Database.DataReader.RoiReader;
 import Database.DataReader.RoiTrackReader;
-import Database.DataReader.TrackReader;
 import Database.DataWriter.MovieWriter;
-import Database.DataWriter.RoiTrackWriter;
 import Database.Definition.Parameter;
 import Database.Definition.ParameterSet;
 import Database.Definition.TypeName;
 import Database.SingleUserDatabase.JEXWriter;
-import ch.randelshofer.media.quicktime.QuickTimeOutputStream;
 import function.JEXCrunchable;
 import function.roitracker.RoiTrack;
 import function.roitracker.RoiTrackMovieMaker;
-import function.tracker.TracksMovieMaker;
+
+import java.awt.Color;
+import java.io.File;
+import java.util.HashMap;
+import java.util.List;
+
+import logs.Logs;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions

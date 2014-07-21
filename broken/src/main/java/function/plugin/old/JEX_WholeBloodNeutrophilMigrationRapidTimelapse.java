@@ -1,5 +1,25 @@
 package function.plugin.old;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DataReader.ImageReader;
+import Database.DataWriter.MovieWriter;
+import Database.DataWriter.TrackWriter;
+import Database.DataWriter.ValueWriter;
+import Database.Definition.Parameter;
+import Database.Definition.ParameterSet;
+import Database.Definition.TypeName;
+import Database.SingleUserDatabase.JEXWriter;
+import function.GraphicalCrunchingEnabling;
+import function.GraphicalFunctionWrap;
+import function.ImagePanel;
+import function.ImagePanelInteractor;
+import function.JEXCrunchable;
+import function.tracker.FindMaxima;
+import function.tracker.SimpleConvolve;
+import function.tracker.TrackExtend;
+import function.tracker.TrackStatistics;
+import function.tracker.TrajectoryStatistics;
 import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.process.ByteProcessor;
@@ -26,29 +46,11 @@ import java.util.Vector;
 
 import jex.statics.JEXStatics;
 import logs.Logs;
-import tables.DimensionMap;
 import miscellaneous.StringUtility;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DataReader.ImageReader;
-import Database.DataWriter.MovieWriter;
-import Database.DataWriter.TrackWriter;
-import Database.DataWriter.ValueWriter;
-import Database.Definition.Parameter;
-import Database.Definition.ParameterSet;
-import Database.Definition.TypeName;
-import Database.SingleUserDatabase.JEXWriter;
-import ch.randelshofer.media.quicktime.QuickTimeOutputStream;
-import function.JEXCrunchable;
-import function.GraphicalCrunchingEnabling;
-import function.GraphicalFunctionWrap;
-import function.ImagePanel;
-import function.ImagePanelInteractor;
-import function.tracker.FindMaxima;
-import function.tracker.SimpleConvolve;
-import function.tracker.TrackExtend;
-import function.tracker.TrackStatistics;
-import function.tracker.TrajectoryStatistics;
+
+import org.monte.media.quicktime.QuickTimeOutputStream;
+
+import tables.DimensionMap;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions

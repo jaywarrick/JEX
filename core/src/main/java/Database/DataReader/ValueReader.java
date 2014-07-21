@@ -1,12 +1,13 @@
 package Database.DataReader;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXDataSingle;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
 
 import tables.DimensionMap;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXDataSingle;
 
 public class ValueReader {
 	

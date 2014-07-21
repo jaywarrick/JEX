@@ -7,6 +7,8 @@
 //
 package guiObject;
 
+import Database.Definition.TypeName;
+
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -34,7 +36,6 @@ import jex.statics.JEXStatics;
 import jex.statics.OsVersion;
 import logs.Logs;
 import transferables.TransferableTypeName;
-import Database.Definition.TypeName;
 
 public class TypeNameButton extends JButton implements ActionListener, MouseListener, DragGestureListener {
 	

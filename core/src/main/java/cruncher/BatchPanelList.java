@@ -8,9 +8,9 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
 
+import jex.statics.DisplayStatics;
 import miscellaneous.FontUtility;
 import net.miginfocom.swing.MigLayout;
-import jex.statics.DisplayStatics;
 
 public class BatchPanelList {
 	

@@ -1,14 +1,13 @@
 package Exporter;
 
+import Database.DBObjects.JEXData;
+import Database.DataReader.ValueReader;
 import ij.ImagePlus;
 
 import java.awt.Color;
 import java.awt.Image;
 
 import javax.swing.JFrame;
-
-import Database.DBObjects.JEXData;
-import Database.DataReader.ValueReader;
 
 /**
  * <p>

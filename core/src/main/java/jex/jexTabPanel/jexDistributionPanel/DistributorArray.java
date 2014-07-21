@@ -1,5 +1,8 @@
 package jex.jexTabPanel.jexDistributionPanel;
 
+import Database.DBObjects.JEXEntry;
+import Database.Definition.Experiment;
+
 import java.awt.Color;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
@@ -20,8 +23,6 @@ import miscellaneous.Pair;
 import net.miginfocom.swing.MigLayout;
 import signals.SSCenter;
 import tables.DimensionMap;
-import Database.DBObjects.JEXEntry;
-import Database.Definition.Experiment;
 
 public class DistributorArray implements ActionListener {
 	

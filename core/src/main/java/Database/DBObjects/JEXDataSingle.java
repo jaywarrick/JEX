@@ -1,12 +1,13 @@
 package Database.DBObjects;
 
+import Database.Definition.Type;
+import Database.SingleUserDatabase.JEXWriter;
+
 import java.io.File;
 import java.util.Set;
 import java.util.TreeMap;
 
 import tables.DimensionMap;
-import Database.Definition.Type;
-import Database.SingleUserDatabase.JEXWriter;
 
 public class JEXDataSingle {
 	

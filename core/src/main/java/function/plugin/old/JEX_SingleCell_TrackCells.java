@@ -1,14 +1,5 @@
 package function.plugin.old;
 
-import java.util.HashMap;
-import java.util.TreeMap;
-
-import jex.statics.JEXStatics;
-import tables.DimTable;
-import tables.DimensionMap;
-import tables.Table;
-import weka.core.converters.JEXTableReader;
-import weka.core.converters.JEXTableWriter;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.FileReader;
@@ -19,6 +10,16 @@ import Database.Definition.ParameterSet;
 import Database.Definition.TypeName;
 import function.JEXCrunchable;
 import function.singleCellAnalysis.DataPointTracker;
+
+import java.util.HashMap;
+import java.util.TreeMap;
+
+import jex.statics.JEXStatics;
+import tables.DimTable;
+import tables.DimensionMap;
+import tables.Table;
+import weka.core.converters.JEXTableReader;
+import weka.core.converters.JEXTableWriter;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions

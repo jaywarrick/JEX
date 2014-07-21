@@ -1,5 +1,7 @@
 package jex.jexTabPanel.jexFunctionPanel;
 
+import Database.Definition.ParameterSet;
+import cruncher.JEXFunction;
 import guiObject.JParameterListPanel;
 
 import javax.swing.JLabel;
@@ -8,8 +10,6 @@ import javax.swing.JPanel;
 import jex.statics.DisplayStatics;
 import miscellaneous.FontUtility;
 import net.miginfocom.swing.MigLayout;
-import Database.Definition.ParameterSet;
-import cruncher.JEXFunction;
 
 public class FunctionParameterPanel {
 	

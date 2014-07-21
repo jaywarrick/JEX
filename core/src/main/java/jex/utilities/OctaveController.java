@@ -1,5 +1,9 @@
 package jex.utilities;
 
+import dk.ange.octave.OctaveEngine;
+import dk.ange.octave.OctaveEngineFactory;
+import dk.ange.octave.exception.OctaveEvalException;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -8,9 +12,6 @@ import java.io.Writer;
 import jex.statics.PrefsUtility;
 import logs.Logs;
 import signals.SSCenter;
-import dk.ange.octave.OctaveEngine;
-import dk.ange.octave.OctaveEngineFactory;
-import dk.ange.octave.exception.OctaveEvalException;
 
 public class OctaveController {
 	

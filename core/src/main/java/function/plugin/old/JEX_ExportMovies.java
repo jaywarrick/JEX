@@ -1,9 +1,5 @@
 package function.plugin.old;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.HashMap;
-
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.MovieReader;
@@ -12,6 +8,10 @@ import Database.Definition.ParameterSet;
 import Database.Definition.TypeName;
 import Database.SingleUserDatabase.JEXWriter;
 import function.JEXCrunchable;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions

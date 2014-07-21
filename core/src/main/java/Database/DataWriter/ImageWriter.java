@@ -1,5 +1,8 @@
 package Database.DataWriter;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXDataSingle;
+import Database.SingleUserDatabase.JEXWriter;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ImageProcessor;
@@ -7,9 +10,6 @@ import ij.process.ImageProcessor;
 import java.util.Map;
 
 import tables.DimensionMap;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXDataSingle;
-import Database.SingleUserDatabase.JEXWriter;
 
 public class ImageWriter {
 	

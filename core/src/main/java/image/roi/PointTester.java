@@ -1,8 +1,6 @@
 package image.roi;
 
 import function.CrunchFactory;
-import function.plugin.mechanism.JEXPlugin;
-import function.plugin.mechanism.JEXPluginInfo;
 import function.singleCellAnalysis.SingleCellUtility;
 import ij.ImagePlus;
 import ij.gui.PolygonRoi;
@@ -51,8 +49,6 @@ import miscellaneous.FileUtility;
 import miscellaneous.StatisticsUtility;
 import miscellaneous.StringUtility;
 
-import org.scijava.InstantiableException;
-import org.scijava.plugin.PluginInfo;
 import org.scijava.util.ConversionUtils;
 
 import rtools.R;

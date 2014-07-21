@@ -1,13 +1,5 @@
 package function.plugin.old;
 
-import java.util.HashMap;
-
-import logs.Logs;
-
-import org.monte.media.Format;
-import org.monte.media.VideoFormatKeys;
-import org.monte.media.quicktime.QuickTimeWriter;
-
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataWriter.MovieWriter;
@@ -15,6 +7,14 @@ import Database.Definition.Parameter;
 import Database.Definition.ParameterSet;
 import Database.Definition.TypeName;
 import function.JEXCrunchable;
+
+import java.util.HashMap;
+
+import logs.Logs;
+
+import org.monte.media.Format;
+import org.monte.media.VideoFormatKeys;
+import org.monte.media.quicktime.QuickTimeWriter;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions

@@ -1,13 +1,14 @@
 package Database.DataReader;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXDataSingle;
+import Database.SingleUserDatabase.JEXWriter;
+
 import java.io.File;
 import java.util.TreeMap;
 
 import miscellaneous.FileUtility;
 import tables.DimensionMap;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXDataSingle;
-import Database.SingleUserDatabase.JEXWriter;
 
 public class FileReader {
 	

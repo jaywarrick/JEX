@@ -15,7 +15,8 @@ import java.util.List;
 
 import jex.statics.JEXStatics;
 import logs.Logs;
-import ch.randelshofer.media.quicktime.QuickTimeOutputStream;
+
+import org.monte.media.quicktime.QuickTimeOutputStream;
 
 public class TracksMovieMaker {
 	

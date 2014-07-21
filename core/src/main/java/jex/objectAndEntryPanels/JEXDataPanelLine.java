@@ -1,5 +1,12 @@
 package jex.objectAndEntryPanels;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DBObjects.JEXWorkflow;
+import Database.DataReader.FileReader;
+import Database.DataReader.MovieReader;
+import Database.Definition.TypeName;
+import Database.SingleUserDatabase.JEXWriter;
 import guiObject.TypeNameButton;
 
 import java.awt.Color;
@@ -26,13 +33,6 @@ import plugins.valueTable.ValueBrowserController;
 import plugins.viewer.ImageBrowser;
 import signals.SSCenter;
 import tables.DimensionMap;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DBObjects.JEXWorkflow;
-import Database.DataReader.FileReader;
-import Database.DataReader.MovieReader;
-import Database.Definition.TypeName;
-import Database.SingleUserDatabase.JEXWriter;
 
 public class JEXDataPanelLine extends JPanel implements ActionListener, MouseListener {
 	

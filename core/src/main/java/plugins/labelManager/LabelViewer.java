@@ -1,5 +1,7 @@
 package plugins.labelManager;
 
+import Database.SingleUserDatabase.JEXDBInfo;
+
 import java.awt.BorderLayout;
 
 import javax.swing.JDialog;
@@ -7,7 +9,6 @@ import javax.swing.WindowConstants;
 
 import jex.statics.DisplayStatics;
 import preferences.XPreferences;
-import Database.SingleUserDatabase.JEXDBInfo;
 
 public class LabelViewer extends JDialog {
 	

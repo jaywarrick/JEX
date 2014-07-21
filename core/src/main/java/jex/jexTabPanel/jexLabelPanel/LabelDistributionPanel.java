@@ -1,5 +1,13 @@
 package jex.jexTabPanel.jexLabelPanel;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DBObjects.JEXLabel;
+import Database.DataReader.LabelReader;
+import Database.Definition.Experiment;
+import Database.Definition.Filter;
+import Database.Definition.TypeName;
+
 import java.awt.Color;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
@@ -19,13 +27,6 @@ import net.miginfocom.swing.MigLayout;
 import plugins.labelManager.ColorPallet;
 import plugins.labelManager.DatabaseLabelManager;
 import signals.SSCenter;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DBObjects.JEXLabel;
-import Database.DataReader.LabelReader;
-import Database.Definition.Experiment;
-import Database.Definition.Filter;
-import Database.Definition.TypeName;
 
 public class LabelDistributionPanel implements ActionListener {
 	

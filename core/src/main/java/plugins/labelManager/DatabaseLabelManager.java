@@ -1,5 +1,9 @@
 package plugins.labelManager;
 
+import Database.DBObjects.JEXDataSingle;
+import Database.DBObjects.JEXLabel;
+import Database.SingleUserDatabase.JEXDBInfo;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.util.List;
@@ -13,9 +17,6 @@ import logs.Logs;
 import net.miginfocom.swing.MigLayout;
 import preferences.XPreferences;
 import signals.SSCenter;
-import Database.DBObjects.JEXDataSingle;
-import Database.DBObjects.JEXLabel;
-import Database.SingleUserDatabase.JEXDBInfo;
 
 /* ListDemo.java requires no other files. */
 public class DatabaseLabelManager {

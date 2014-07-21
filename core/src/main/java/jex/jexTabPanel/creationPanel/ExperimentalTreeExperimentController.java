@@ -1,5 +1,8 @@
 package jex.jexTabPanel.creationPanel;
 
+import Database.DBObjects.JEXEntry;
+import Database.Definition.Experiment;
+import Database.Definition.HierarchyLevel;
 import icons.IconRepository;
 
 import java.awt.Color;
@@ -18,9 +21,6 @@ import logs.Logs;
 import miscellaneous.FontUtility;
 import net.miginfocom.swing.MigLayout;
 import signals.SSCenter;
-import Database.DBObjects.JEXEntry;
-import Database.Definition.Experiment;
-import Database.Definition.HierarchyLevel;
 
 public class ExperimentalTreeExperimentController implements Comparable<ExperimentalTreeExperimentController> {
 	

@@ -1,5 +1,14 @@
 package Exporter;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXDataSingle;
+import Database.DBObjects.JEXEntry;
+import Database.DataReader.ImageReader;
+import Database.DataWriter.FileWriter;
+import Database.DataWriter.ImageWriter;
+import Database.Definition.Type;
+import Database.Definition.TypeName;
+import Database.SingleUserDatabase.JEXWriter;
 import ij.ImagePlus;
 import ij.process.ByteProcessor;
 
@@ -11,15 +20,6 @@ import java.util.TreeSet;
 import jex.statics.JEXStatics;
 import logs.Logs;
 import miscellaneous.FileUtility;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXDataSingle;
-import Database.DBObjects.JEXEntry;
-import Database.DataReader.ImageReader;
-import Database.DataWriter.FileWriter;
-import Database.DataWriter.ImageWriter;
-import Database.Definition.Type;
-import Database.Definition.TypeName;
-import Database.SingleUserDatabase.JEXWriter;
 
 public class Exporter {
 	

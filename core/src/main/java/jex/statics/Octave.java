@@ -1,15 +1,16 @@
 package jex.statics;
 
+import dk.ange.octave.OctaveEngine;
+import dk.ange.octave.OctaveEngineFactory;
+import dk.ange.octave.exception.OctaveEvalException;
+import dk.ange.octave.exception.OctaveIOException;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
 
 import logs.Logs;
 import signals.SSCenter;
-import dk.ange.octave.OctaveEngine;
-import dk.ange.octave.OctaveEngineFactory;
-import dk.ange.octave.exception.OctaveEvalException;
-import dk.ange.octave.exception.OctaveIOException;
 
 public class Octave {
 	

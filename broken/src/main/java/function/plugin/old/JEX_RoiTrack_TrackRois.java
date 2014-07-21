@@ -1,17 +1,5 @@
 package function.plugin.old;
 
-import ij.ImagePlus;
-import image.roi.ROIPlus;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeMap;
-
-import logs.Logs;
-import tables.DimensionMap;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;
@@ -26,6 +14,18 @@ import function.JEXCrunchable;
 import function.roitracker.RoiTrack;
 import function.roitracker.RoiTrackExtend;
 import function.roitracker.RoiTrackMovieMaker;
+import ij.ImagePlus;
+import image.roi.ROIPlus;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeMap;
+
+import logs.Logs;
+import tables.DimensionMap;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions

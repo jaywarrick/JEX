@@ -1,5 +1,8 @@
 package plugins.valueTable;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXDataSingle;
+
 import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeMap;
@@ -11,8 +14,6 @@ import javax.swing.table.DefaultTableModel;
 
 import logs.Logs;
 import tables.DimensionMap;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXDataSingle;
 
 public class ValueTable extends JTable {
 	

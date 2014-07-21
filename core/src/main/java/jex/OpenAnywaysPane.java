@@ -1,5 +1,6 @@
 package jex;
 
+import Database.SingleUserDatabase.JEXDBInfo;
 import guiObject.DialogGlassCenterPanel;
 
 import java.awt.Dimension;
@@ -15,7 +16,6 @@ import javax.swing.JPanel;
 import jex.statics.DisplayStatics;
 import jex.statics.JEXStatics;
 import logs.Logs;
-import Database.SingleUserDatabase.JEXDBInfo;
 
 public class OpenAnywaysPane extends DialogGlassCenterPanel implements ActionListener {
 	

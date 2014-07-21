@@ -1,13 +1,5 @@
 package cruncher;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.Vector;
-
-import logs.Logs;
-import tables.DimensionMap;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXDataSingle;
 import Database.DBObjects.JEXEntry;
@@ -16,6 +8,15 @@ import Database.Definition.ParameterSet;
 import Database.Definition.TypeName;
 import function.CrunchFactory;
 import function.JEXCrunchable;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.Vector;
+
+import logs.Logs;
+import tables.DimensionMap;
 
 public class JEXFunction {
 	

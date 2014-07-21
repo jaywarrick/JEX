@@ -1,5 +1,18 @@
 package function.plugin.old;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DataReader.RoiReader;
+import Database.DataReader.TrackReader;
+import Database.DataWriter.ValueWriter;
+import Database.Definition.Parameter;
+import Database.Definition.ParameterSet;
+import Database.Definition.TypeName;
+import function.GraphicalCrunchingEnabling;
+import function.ImagePanel;
+import function.ImagePanelInteractor;
+import function.JEXCrunchable;
+import function.tracker.TrajectoryStatistics;
 import ij.gui.Roi;
 import image.roi.ROIPlus;
 import image.roi.Trajectory;
@@ -13,21 +26,8 @@ import java.util.List;
 import java.util.TreeMap;
 
 import logs.Logs;
-import tables.DimensionMap;
 import miscellaneous.StringUtility;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DataReader.RoiReader;
-import Database.DataReader.TrackReader;
-import Database.DataWriter.ValueWriter;
-import Database.Definition.Parameter;
-import Database.Definition.ParameterSet;
-import Database.Definition.TypeName;
-import function.JEXCrunchable;
-import function.GraphicalCrunchingEnabling;
-import function.ImagePanel;
-import function.ImagePanelInteractor;
-import function.tracker.TrajectoryStatistics;
+import tables.DimensionMap;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions

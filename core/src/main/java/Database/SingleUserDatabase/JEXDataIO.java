@@ -1,5 +1,15 @@
 package Database.SingleUserDatabase;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXDataSingle;
+import Database.DBObjects.JEXEntry;
+import Database.DBObjects.JEXWorkflow;
+import Database.DataReader.FileReader;
+import Database.SingleUserDatabase.xml.ObjectFactory;
+import Database.SingleUserDatabase.xml.XData;
+import Database.SingleUserDatabase.xml.XDataSingle;
+import cruncher.JEXFunction;
+
 import java.io.File;
 import java.util.List;
 import java.util.Map.Entry;
@@ -14,15 +24,6 @@ import tables.DimensionMap;
 import tables.Table;
 import weka.core.converters.JEXTableReader;
 import weka.core.converters.JEXTableWriter;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXDataSingle;
-import Database.DBObjects.JEXEntry;
-import Database.DBObjects.JEXWorkflow;
-import Database.DataReader.FileReader;
-import Database.SingleUserDatabase.xml.ObjectFactory;
-import Database.SingleUserDatabase.xml.XData;
-import Database.SingleUserDatabase.xml.XDataSingle;
-import cruncher.JEXFunction;
 
 public class JEXDataIO {
 	

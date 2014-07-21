@@ -1,5 +1,8 @@
 package jex.jexTabPanel.jexLabelPanel;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.Definition.TypeName;
 import guiObject.FlatRoundedStaticButton;
 import guiObject.TypeNameButton;
 import icons.IconRepository;
@@ -26,9 +29,6 @@ import jex.statics.JEXStatics;
 import logs.Logs;
 import net.miginfocom.swing.MigLayout;
 import signals.SSCenter;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.Definition.TypeName;
 
 public class LabelPanelLine extends JPanel implements ActionListener, MouseListener {
 	

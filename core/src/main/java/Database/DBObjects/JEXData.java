@@ -1,5 +1,9 @@
 package Database.DBObjects;
 
+import Database.Definition.Type;
+import Database.Definition.TypeName;
+import Database.SingleUserDatabase.JEXDataIO;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.TreeMap;
@@ -10,9 +14,6 @@ import miscellaneous.DateUtility;
 import tables.Dim;
 import tables.DimTable;
 import tables.DimensionMap;
-import Database.Definition.Type;
-import Database.Definition.TypeName;
-import Database.SingleUserDatabase.JEXDataIO;
 
 public class JEXData {
 	

@@ -1,7 +1,6 @@
 package jex;
 
 import net.imagej.patcher.LegacyInjector;
-import jex.JEXperiment;
 
 /** Main entry point into JEX. */
 public class Main {

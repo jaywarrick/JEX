@@ -1,11 +1,12 @@
 package Database.Definition;
 
+import Database.DBObjects.JEXEntry;
+
 import java.util.TreeMap;
 import java.util.TreeSet;
 
 import jex.statics.JEXStatics;
 import miscellaneous.StringUtility;
-import Database.DBObjects.JEXEntry;
 
 public class DatabaseLevel extends TreeMap<String,Experiment> implements HierarchyLevel {
 	

@@ -1,5 +1,8 @@
 package plugins.valueTable;
 
+import Database.DBObjects.JEXEntry;
+import Database.Definition.TypeName;
+
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Container;
@@ -11,8 +14,6 @@ import javax.swing.JSplitPane;
 import jex.statics.DisplayStatics;
 import plugins.plugin.PlugIn;
 import tables.DimTable;
-import Database.DBObjects.JEXEntry;
-import Database.Definition.TypeName;
 
 public class ValueBrowser extends PlugIn {
 	

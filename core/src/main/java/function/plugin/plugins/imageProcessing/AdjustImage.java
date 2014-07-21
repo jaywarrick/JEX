@@ -1,5 +1,15 @@
 package function.plugin.plugins.imageProcessing;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DataReader.ImageReader;
+import Database.DataWriter.ImageWriter;
+import Database.SingleUserDatabase.JEXWriter;
+import function.plugin.mechanism.InputMarker;
+import function.plugin.mechanism.JEXPlugin;
+import function.plugin.mechanism.MarkerConstants;
+import function.plugin.mechanism.OutputMarker;
+import function.plugin.mechanism.ParameterMarker;
 import ij.ImagePlus;
 import ij.process.FloatProcessor;
 
@@ -12,16 +22,6 @@ import jex.utilities.FunctionUtility;
 import org.scijava.plugin.Plugin;
 
 import tables.DimensionMap;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DataReader.ImageReader;
-import Database.DataWriter.ImageWriter;
-import Database.SingleUserDatabase.JEXWriter;
-import function.plugin.mechanism.InputMarker;
-import function.plugin.mechanism.JEXPlugin;
-import function.plugin.mechanism.MarkerConstants;
-import function.plugin.mechanism.OutputMarker;
-import function.plugin.mechanism.ParameterMarker;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions

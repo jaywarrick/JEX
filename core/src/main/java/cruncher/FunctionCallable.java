@@ -1,5 +1,8 @@
 package cruncher;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -7,8 +10,6 @@ import java.util.concurrent.Callable;
 
 import jex.statics.JEXStatics;
 import logs.Logs;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
 
 public class FunctionCallable implements Callable<Integer> {
 	

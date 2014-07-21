@@ -1,5 +1,8 @@
 package Database.DBObjects;
 
+import Database.SingleUserDatabase.JEXDataIO;
+import cruncher.JEXFunction;
+
 import java.io.File;
 import java.util.TreeMap;
 import java.util.Vector;
@@ -10,8 +13,6 @@ import miscellaneous.FileUtility;
 import miscellaneous.Pair;
 import tables.DimTable;
 import tables.DimensionMap;
-import Database.SingleUserDatabase.JEXDataIO;
-import cruncher.JEXFunction;
 
 public class JEXWorkflow extends Vector<JEXFunction> {
 	

@@ -1,5 +1,11 @@
 package cruncher;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.Definition.ParameterSet;
+import Database.Definition.TypeName;
+import function.JEXCrunchable;
+
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -14,11 +20,6 @@ import logs.Logs;
 import miscellaneous.Canceler;
 import miscellaneous.LSVList;
 import signals.SSCenter;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.Definition.ParameterSet;
-import Database.Definition.TypeName;
-import function.JEXCrunchable;
 
 public class Ticket implements Callable<Integer>, Canceler{
 	

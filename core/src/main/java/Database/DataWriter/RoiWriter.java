@@ -1,5 +1,9 @@
 package Database.DataWriter;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXDataSingle;
+import Database.DBObjects.JEXEntry;
+import Database.Definition.Type;
 import image.roi.ROIPlus;
 
 import java.util.HashMap;
@@ -7,10 +11,6 @@ import java.util.List;
 import java.util.Map;
 
 import tables.DimensionMap;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXDataSingle;
-import Database.DBObjects.JEXEntry;
-import Database.Definition.Type;
 
 public class RoiWriter {
 	

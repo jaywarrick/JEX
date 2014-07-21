@@ -1,5 +1,14 @@
 package function.plugin.old;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DataWriter.FileWriter;
+import Database.DataWriter.ImageWriter;
+import Database.Definition.Parameter;
+import Database.Definition.ParameterSet;
+import Database.Definition.TypeName;
+import function.JEXCrunchable;
+
 import java.io.File;
 import java.util.HashMap;
 import java.util.TreeMap;
@@ -12,14 +21,6 @@ import rtools.R;
 import tables.DimensionMap;
 import tables.Table;
 import weka.core.converters.JEXTableReader;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DataWriter.FileWriter;
-import Database.DataWriter.ImageWriter;
-import Database.Definition.Parameter;
-import Database.Definition.ParameterSet;
-import Database.Definition.TypeName;
-import function.JEXCrunchable;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions

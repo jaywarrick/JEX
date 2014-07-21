@@ -1,5 +1,7 @@
 package plugins.selector;
 
+import Database.DBObjects.JEXEntry;
+import Database.Definition.Experiment;
 import image.roi.PointList;
 
 import java.awt.Point;
@@ -15,8 +17,6 @@ import jex.statics.DisplayStatics;
 import jex.statics.JEXStatics;
 import net.miginfocom.swing.MigLayout;
 import signals.SSCenter;
-import Database.DBObjects.JEXEntry;
-import Database.Definition.Experiment;
 
 public class QuickSelector {
 	

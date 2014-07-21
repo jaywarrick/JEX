@@ -1,5 +1,7 @@
 package guiObject;
 
+import Database.Definition.Parameter;
+
 import java.awt.Color;
 import java.awt.Dimension;
 
@@ -11,8 +13,6 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-
-import Database.Definition.Parameter;
 
 public class JFormEntryPane extends JPanel {
 	

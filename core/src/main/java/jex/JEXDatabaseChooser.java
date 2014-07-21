@@ -1,5 +1,6 @@
 package jex;
 
+import Database.SingleUserDatabase.JEXDBInfo;
 import guiObject.DialogGlassPane;
 
 import java.awt.BorderLayout;
@@ -19,7 +20,6 @@ import jex.statics.DisplayStatics;
 import jex.statics.JEXStatics;
 import logs.Logs;
 import miscellaneous.FontUtility;
-import Database.SingleUserDatabase.JEXDBInfo;
 
 public class JEXDatabaseChooser extends JFrame implements ActionListener {
 	

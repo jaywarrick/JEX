@@ -1,5 +1,11 @@
 package jex.experimentalTreeAndViewer;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DBObjects.JEXLabel;
+import Database.DataReader.LabelReader;
+import Database.Definition.Experiment;
+import Database.Definition.TypeName;
 import guiObject.PaintComponentDelegate;
 import guiObject.PixelComponentDisplay;
 import image.roi.PointList;
@@ -22,12 +28,6 @@ import jex.statics.JEXStatics;
 import miscellaneous.FontUtility;
 import net.miginfocom.swing.MigLayout;
 import signals.SSCenter;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DBObjects.JEXLabel;
-import Database.DataReader.LabelReader;
-import Database.Definition.Experiment;
-import Database.Definition.TypeName;
 
 public class ArrayPreviewController {
 	

@@ -1,9 +1,10 @@
 package recycling;
 
+import Database.DBObjects.JEXData;
+
 import javax.swing.JPanel;
 
 import jex.statics.DisplayStatics;
-import Database.DBObjects.JEXData;
 
 public abstract class PreviewPanel {
 	
