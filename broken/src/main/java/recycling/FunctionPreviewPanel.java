@@ -1,4 +1,4 @@
-package jex.jexTabPanel.jexFunctionPanel;
+package recycling;
 
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
