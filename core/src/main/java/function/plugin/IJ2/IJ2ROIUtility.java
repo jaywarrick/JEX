@@ -1,11 +1,11 @@
 package function.plugin.IJ2;
 
 import image.roi.ROIPlus;
-import imagej.data.overlay.AbstractROIOverlay;
-import imagej.data.overlay.RectangleOverlay;
 
 import java.awt.Rectangle;
 
+import net.imagej.overlay.AbstractROIOverlay;
+import net.imagej.overlay.RectangleOverlay;
 import net.imglib2.roi.RegionOfInterest;
 
 public class IJ2ROIUtility {

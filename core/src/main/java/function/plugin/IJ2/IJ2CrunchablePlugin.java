@@ -8,12 +8,6 @@ import Database.SingleUserDatabase.JEXWriter;
 import function.JEXCrunchable;
 import ij.ImagePlus;
 import ij.process.FloatProcessor;
-import imagej.command.CommandInfo;
-import imagej.command.CommandModule;
-import imagej.data.Dataset;
-import imagej.data.display.DataView;
-import imagej.data.display.ImageDisplay;
-import imagej.module.ModuleItem;
 
 import java.io.File;
 import java.util.HashMap;
@@ -25,6 +19,14 @@ import java.util.concurrent.Future;
 
 import jex.statics.JEXStatics;
 import jex.utilities.FunctionUtility;
+import net.imagej.Dataset;
+import net.imagej.display.DataView;
+import net.imagej.display.ImageDisplay;
+
+import org.scijava.command.CommandInfo;
+import org.scijava.command.CommandModule;
+import org.scijava.module.ModuleItem;
+
 import tables.DimTable;
 import tables.DimensionMap;
 

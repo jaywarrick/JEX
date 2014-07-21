@@ -12,17 +12,6 @@ import Database.Definition.Type;
 import Database.Definition.TypeName;
 import Database.SingleUserDatabase.JEXWriter;
 import image.roi.ROIPlus;
-import imagej.ImageJ;
-import imagej.command.CommandInfo;
-import imagej.data.ChannelCollection;
-import imagej.data.Dataset;
-import imagej.data.display.DataView;
-import imagej.data.display.ImageDisplay;
-import imagej.data.display.OverlayView;
-import imagej.data.options.OptionsChannels;
-import imagej.data.overlay.Overlay;
-import imagej.module.ModuleItem;
-import imagej.util.ColorRGB;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,8 +22,19 @@ import java.util.TreeMap;
 import java.util.Vector;
 
 import logs.Logs;
+import net.imagej.ChannelCollection;
+import net.imagej.Dataset;
+import net.imagej.ImageJ;
+import net.imagej.display.DataView;
+import net.imagej.display.ImageDisplay;
+import net.imagej.display.OverlayView;
+import net.imagej.options.OptionsChannels;
+import net.imagej.overlay.Overlay;
 
 import org.scijava.MenuPath;
+import org.scijava.command.CommandInfo;
+import org.scijava.module.ModuleItem;
+import org.scijava.util.ColorRGB;
 
 import tables.DimensionMap;
 import weka.core.converters.JEXTableWriter;

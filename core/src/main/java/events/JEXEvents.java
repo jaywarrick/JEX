@@ -1,7 +1,7 @@
 package events;
 
-import imagej.ImageJ;
-import imagej.legacy.DefaultLegacyService;
+import net.imagej.ImageJ;
+import net.imagej.legacy.DefaultLegacyService;
 
 import org.scijava.event.SciJavaEvent;
 

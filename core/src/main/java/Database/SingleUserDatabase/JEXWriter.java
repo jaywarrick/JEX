@@ -6,7 +6,6 @@ import function.plugin.IJ2.IJ2PluginUtility;
 import ij.ImagePlus;
 import ij.io.FileSaver;
 import ij.process.ImageProcessor;
-import imagej.data.Dataset;
 
 import java.awt.image.BufferedImage;
 import java.io.BufferedWriter;
@@ -21,6 +20,7 @@ import logs.Logs;
 import miscellaneous.DateUtility;
 import miscellaneous.DirectoryManager;
 import miscellaneous.FileUtility;
+import net.imagej.Dataset;
 
 import org.apache.commons.io.FileUtils;
 

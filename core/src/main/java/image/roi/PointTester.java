@@ -13,16 +13,6 @@ import ij.process.FloatProcessor;
 import ij.process.FloatStatistics;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
-import imagej.ImageJ;
-import imagej.command.CommandInfo;
-import imagej.data.ChannelCollection;
-import imagej.data.Dataset;
-import imagej.data.display.DataView;
-import imagej.data.display.ImageDisplay;
-import imagej.data.display.OverlayView;
-import imagej.data.options.OptionsChannels;
-import imagej.data.overlay.Overlay;
-import imagej.data.overlay.RectangleOverlay;
 
 import java.awt.Desktop;
 import java.awt.Point;
@@ -48,7 +38,17 @@ import miscellaneous.DirectoryManager;
 import miscellaneous.FileUtility;
 import miscellaneous.StatisticsUtility;
 import miscellaneous.StringUtility;
+import net.imagej.ChannelCollection;
+import net.imagej.Dataset;
+import net.imagej.ImageJ;
+import net.imagej.display.DataView;
+import net.imagej.display.ImageDisplay;
+import net.imagej.display.OverlayView;
+import net.imagej.options.OptionsChannels;
+import net.imagej.overlay.Overlay;
+import net.imagej.overlay.RectangleOverlay;
 
+import org.scijava.command.CommandInfo;
 import org.scijava.util.ConversionUtils;
 
 import rtools.R;
