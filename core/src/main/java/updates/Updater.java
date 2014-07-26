@@ -16,8 +16,6 @@ import java.net.URL;
 import java.util.List;
 import java.util.Map;
 
-import javax.swing.JOptionPane;
-
 import jex.JEXperiment;
 import jex.statics.JEXStatics;
 import logs.Logs;
@@ -30,11 +28,12 @@ import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 
 import org.apache.commons.io.FileUtils;
-import org.jdesktop.swingx.util.OS;
+
+import preferences.OS;
 
 public class Updater {
 	
-	public static String currentVersion = "Version-0.0"; // Keep this syntax to make it download every time (change number to current number to only download if needed)
+	//	public static String currentVersion = "Version-0.0"; // Keep this syntax to make it download every time (change number to current number to only download if needed)
 	
 	public static void attemptJEXUpdate()
 	{
@@ -53,49 +52,49 @@ public class Updater {
 			return;
 		}
 		
-		// Check the version of java and see if it is adequate. If not alert the user to install the required version or higher.
-		// Custom button text
-		String requiredVersion = "1.7";
-		if(!javaVersionIsAtLeast(requiredVersion))
-		{
-			Object[] options = { "Go to Download Site", "Close Dialog" };
-			int n = JOptionPane.showOptionDialog(JEXStatics.main, "Can't update JEX to newest version because a new version of Java is needed.\n\nPlease go to http://www.oracle.com/technetwork/java/javase/downloads/index.html and download.\nInstall the new java version, then try updating JEX again.\n\nJava version " + requiredVersion + " or later required.", "Update Message", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
-			if(n == 0)
-			{
-				openWebpage("http://www.oracle.com/technetwork/java/javase/downloads/index.html");
-			}
-			return;
-		}
+		//		// Check the version of java and see if it is adequate. If not alert the user to install the required version or higher.
+		//		// Custom button text
+		//		String requiredVersion = "1.7";
+		//		if(!javaVersionIsAtLeast(requiredVersion))
+		//		{
+		//			Object[] options = { "Go to Download Site", "Close Dialog" };
+		//			int n = JOptionPane.showOptionDialog(JEXStatics.main, "Can't update JEX to newest version because a new version of Java is needed.\n\nPlease go to http://www.oracle.com/technetwork/java/javase/downloads/index.html and download.\nInstall the new java version, then try updating JEX again.\n\nJava version " + requiredVersion + " or later required.", "Update Message", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+		//			if(n == 0)
+		//			{
+		//				openWebpage("http://www.oracle.com/technetwork/java/javase/downloads/index.html");
+		//			}
+		//			return;
+		//		}
 		
-		// Check the version on the sourceforge repository
-		HttpURLConnection httpConn = null;
-		httpConn = connectToServerFile("Version.txt");
-		if(httpConn == null)
-		{
-			Logs.log("Unable to update. We'll try later.", Updater.class);
-			JEXStatics.statusBar.setStatusText("Unable establish server connection for update. Try later.");
-			return;
-		}
-		Pair<String,LSVList> versionInfo = getVersionInfo(httpConn);
-		if(versionInfo.p1 == null)
-		{
-			Logs.log("Unable to update. We'll try nextTime.", Updater.class);
-			JEXStatics.statusBar.setStatusText("Unable establish server connection for update. Try later.");
-			return;
-		}
-		Logs.log("Server Version: " + versionInfo.p1 + ", Opened Version: " + Updater.currentVersion, Updater.class);
-		if(versionInfo.p1.equals(Updater.currentVersion))
-		{
-			Logs.log("JEX is up-to-date.", Updater.class);
-			JEXStatics.statusBar.setStatusText("JEX is already up-to-date.");
-			closeConnection(httpConn);
-			return;
-		}
+		//		// Check the version on the sourceforge repository
+		//		HttpURLConnection httpConn = null;
+		//		httpConn = connectToServerFile("Version.txt");
+		//		if(httpConn == null)
+		//		{
+		//			Logs.log("Unable to update. We'll try later.", Updater.class);
+		//			JEXStatics.statusBar.setStatusText("Unable establish server connection for update. Try later.");
+		//			return;
+		//		}
+		//		Pair<String,LSVList> versionInfo = getVersionInfo(httpConn);
+		//		if(versionInfo.p1 == null)
+		//		{
+		//			Logs.log("Unable to update. We'll try nextTime.", Updater.class);
+		//			JEXStatics.statusBar.setStatusText("Unable establish server connection for update. Try later.");
+		//			return;
+		//		}
+		//		Logs.log("Server Version: " + versionInfo.p1 + ", Opened Version: " + Updater.currentVersion, Updater.class);
+		//		if(versionInfo.p1.equals(Updater.currentVersion))
+		//		{
+		//			Logs.log("JEX is up-to-date.", Updater.class);
+		//			JEXStatics.statusBar.setStatusText("JEX is already up-to-date.");
+		//			closeConnection(httpConn);
+		//			return;
+		//		}
 		
-		// Update is available
-		Logs.log("An update is available from version " + Updater.currentVersion + " to " + versionInfo.p1 + ".\n\n----Version Information----\n" + versionInfo.p2.toString() + "\n\n", Updater.class);
-		JEXStatics.statusBar.setStatusText("An updated is available from version " + Updater.currentVersion + " to " + versionInfo.p1 + ". Updating...");
-		httpConn = connectToServerFile("JEX Executables for Windows and Mac.zip");
+		// Force update to ensure latest version is being used.
+		Logs.log("Forcing update to latest download from sourceforge file repository.\n\n", Updater.class);
+		JEXStatics.statusBar.setStatusText("Updating. Step 1 of 1 - Downloading...");
+		HttpURLConnection httpConn = connectToServerFile();
 		
 		// Download JEX
 		String download = downloadJEXDistribution(httpConn);
@@ -103,11 +102,12 @@ public class Updater {
 		if(download == null)
 		{
 			Logs.log("Unable to update. We'll try nextTime.", Updater.class);
-			JEXStatics.statusBar.setStatusText("Couldn't download update. Update aborted.");
+			JEXStatics.statusBar.setStatusText("Download failed. Update aborted. Please try again later.");
 			return;
 		}
 		
 		// Replace old JEX
+		JEXStatics.statusBar.setStatusText("Updating. Step 2 of 3 - Replacing old JEX with new JEX...");
 		boolean success = updateJEXFilesWithThisZip(download, pathOfJEXExecutables);
 		if(!success)
 		{
@@ -117,7 +117,18 @@ public class Updater {
 		}
 		
 		// Restart JEX
-		restartJEX(pathOfJEXExecutables);
+		JEXStatics.statusBar.setStatusText("Updating. Step 3 of 3 - Restarting JEX in 1 second...");
+		try
+		{
+			Thread.sleep(1000);
+			restartJEX(pathOfJEXExecutables);
+		}
+		catch (InterruptedException e)
+		{
+			JEXStatics.statusBar.setStatusText("?!?! Couldn't successfully autorestart ?!?! Manually closing and reopening JEX.");
+			e.printStackTrace();
+		}
+		
 	}
 	
 	public static void openWebpage(String address)
@@ -228,7 +239,7 @@ public class Updater {
 		return new Pair<String,LSVList>(version, lines);
 	}
 	
-	public static HttpURLConnection connectToServerFile(String fileNameOnServer)
+	public static HttpURLConnection connectToServerFile()
 	{
 		HttpURLConnection httpConn = null;
 		
@@ -239,7 +250,7 @@ public class Updater {
 			// Got the following URL by going to sourceforge, clicking the download link for the Version.txt file and copying the link information on the following page that indicates the "direct link" to the file.
 			// Set up the connection
 			// ////////////////////////////////////////////////https://downloads.sourceforge.net/project/jextools/Version.txt?r=&ts=1368817297&use_mirror=master
-			httpConn = (HttpURLConnection) (new java.net.URL("http://sourceforge.net/projects/jextools/files/" + fileNameOnServer + "/download").openConnection()); // "https://sourceforge.net/projects/jextools/files/Version.txt/download").openConnection());
+			httpConn = (HttpURLConnection) (new java.net.URL("https://sourceforge.net/projects/jextools/files/latest/download?source=files").openConnection()); // "https://sourceforge.net/projects/jextools/files/Version.txt/download").openConnection());
 			httpConn.setRequestMethod("GET");
 			httpConn.setDoOutput(true);
 			httpConn.setReadTimeout(20000);
@@ -261,25 +272,25 @@ public class Updater {
 				httpConn.connect();
 				responseCode = httpConn.getResponseCode();
 				/* do it until you get some code that is not a redirection */
-				Logs.log("Checking for " + fileNameOnServer + " on sourceforge server. Currnet http response code: " + responseCode + ", Waiting time = " + (System.currentTimeMillis() - t) / 1000 + " s.", Updater.class);
+				Logs.log("Getting latest download on sourceforge server. Currnet http response code: " + responseCode + ", Waiting time = " + (System.currentTimeMillis() - t) / 1000 + " s.", Updater.class);
 				Thread.sleep(1000);
 			}
 			if(responseCode == 404)
 			{
-				Logs.log("Couldn't connect to " + fileNameOnServer + " on the sourceforge server. Server not available (Http Error Code 404).", Updater.class);
+				Logs.log("Couldn't connect to latest download on the sourceforge server. Server not available (Http Error Code 404).", Updater.class);
 				closeConnection(httpConn);
 				return null;
 			}
 			if((responseCode / 100) == 3)
 			{
-				Logs.log("Server took too long to redirect to the download url " + newLocationHeader + " for " + fileNameOnServer + ". (Http Error Code " + responseCode + ")", Updater.class);
+				Logs.log("Server took too long to redirect to the download url " + newLocationHeader + " for latest download. (Http Error Code " + responseCode + ")", Updater.class);
 				closeConnection(httpConn);
 				return null;
 			}
 		}
 		catch (Exception e)
 		{
-			Logs.log("Error while trying to connect to" + fileNameOnServer + " on sourceforge server. Check internet connection.", Updater.class);
+			Logs.log("Error while trying to connect to latest download on sourceforge server. Check internet connection.", Updater.class);
 			closeConnection(httpConn);
 			return null;
 		}

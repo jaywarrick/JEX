@@ -66,13 +66,13 @@ public class XPreferences implements Property {
 	 * 
 	 * @param path
 	 */
-	public void saveToPath(String path)
+	public boolean saveToPath(String path)
 	{
 		// Get the xml string
 		String xmlString = XMLUtility.toHardXML(xelem);
 		
 		// Save the file
-		XMLUtility.XMLsave(path, xmlString);
+		return XMLUtility.XMLsave(path, xmlString);
 	}
 	
 	/**

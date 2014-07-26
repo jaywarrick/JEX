@@ -7,6 +7,9 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 
+import jex.statics.JEXStatics;
+import logs.Logs;
+
 import org.jdom.DefaultJDOMFactory;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -60,15 +63,20 @@ public class XMLUtility {
 	/**
 	 * Saves the data base in a file
 	 */
-	public static void XMLsave(String fullPath, String toSave)
+	public static boolean XMLsave(String fullPath, String toSave)
 	{
 		File outFile = new File(fullPath);
 		File folder = outFile.getParentFile();
 		if(!folder.exists())
 		{
-			folder.mkdirs();
+			if(!folder.mkdirs())
+			{
+				JEXStatics.statusBar.setStatusText("XML creation impossible, couldn't create necessary folder... " + folder.getPath());
+				Logs.log("DB creation impossible, couldn't create necessary folder... " + folder.getPath(), XMLUtility.class);
+				return false;
+			}
 		}
-		saveString(fullPath, toSave);
+		return saveString(fullPath, toSave);
 	}
 	
 	/**
@@ -82,9 +90,9 @@ public class XMLUtility {
 	/**
 	 * Saves the data base in a file
 	 */
-	public static void XMLsavePretty(String fullPath, Element toSave)
+	public static boolean XMLsavePretty(String fullPath, Element toSave)
 	{
-		saveString(fullPath, toXML(toSave));
+		return saveString(fullPath, toXML(toSave));
 	}
 	
 	public static String toXML(Element e)
@@ -115,17 +123,19 @@ public class XMLUtility {
 	 * @param fullPath
 	 * @param toSave
 	 */
-	private static void saveString(String fullPath, String toSave)
+	private static boolean saveString(String fullPath, String toSave)
 	{
 		try
 		{
 			Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fullPath), "UTF-8"));
 			writer.write(toSave);
 			writer.close();
+			return true;
 		}
 		catch (IOException e)
 		{
-			System.out.println("ERROR creatingfile");
+			Logs.log("ERROR creatingfile", XMLUtility.class);
+			return false;
 		}
 	}
 	

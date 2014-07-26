@@ -422,14 +422,23 @@ public class JEXWriter {
 	{
 		// Make database folder
 		File folder = new File(rep.getPath() + File.separator + name);
+		boolean madeFolders = false;
 		if(folder.exists())
 		{
-			JEXStatics.statusBar.setStatusText("DB creation impossible, folder exists...");
+			JEXStatics.statusBar.setStatusText("DB creation impossible, folder exists... " + folder.getPath());
+			Logs.log("DB creation impossible, folder exists... " + folder.getPath(), JEXWriter.class);
 			return null;
 		}
 		else
 		{
-			folder.mkdirs();
+			madeFolders = folder.mkdirs();
+		}
+		
+		if(!madeFolders)
+		{
+			JEXStatics.statusBar.setStatusText("DB creation impossible, folder exists... " + folder.getPath());
+			Logs.log("DB creation impossible, couldn't create necessary folder... " + folder.getPath(), JEXWriter.class);
+			return null;
 		}
 		
 		XPreferences dbInfo = new XPreferences();
@@ -445,7 +454,12 @@ public class JEXWriter {
 		dbInfo.put(JEXDBInfo.DB_TYPE, JEXDB.LOCAL_DATABASE);
 		
 		String path = folder.getAbsolutePath() + File.separator + JEXDBInfo.LOCAL_DBINFO_CURRENTVERSION;
-		dbInfo.saveToPath(path);
+		boolean success = dbInfo.saveToPath(path);
+		
+		if(!success)
+		{
+			return null;
+		}
 		
 		JEXDBInfo ret = new JEXDBInfo(path);
 		return ret;

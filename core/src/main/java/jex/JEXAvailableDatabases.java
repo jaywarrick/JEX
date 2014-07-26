@@ -27,6 +27,7 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
@@ -203,6 +204,13 @@ public class JEXAvailableDatabases extends JPanel implements ActionListener, Mou
 	public void openNewDatabasePanel(Repository rep)
 	{
 		Logs.log("Creating new database", 0, this);
+		
+		// Check to see if this repository is even reachable
+		if(!rep.exists())
+		{
+			JOptionPane.showMessageDialog(JEXStatics.main, "Repository doesn't appear to be connected to this computer.\n\nConnect and restart JEX or try a different repository.");
+			return;
+		}
 		
 		DatabaseCreationPane dbCreationPane = new DatabaseCreationPane(parent, rep);
 		
