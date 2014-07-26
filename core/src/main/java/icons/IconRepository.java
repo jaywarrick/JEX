@@ -271,7 +271,7 @@ public class IconRepository {
 			url = IconRepository.class.getResource("/resources/icons/" + iconName);
 		}
 		
-		Logs.log("Trying to get URL: " + url, IconRepository.class);
+		// Logs.log("Trying to get URL: " + url, IconRepository.class);
 		
 		if(url == null)
 		{
