@@ -1,12 +1,5 @@
 package plugin.rscripter;
 
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DataReader.FileReader;
-import Database.DataWriter.ValueWriter;
-import Database.Definition.TypeName;
-import Database.SingleUserDatabase.JEXWriter;
-
 import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.Toolkit;
@@ -16,6 +9,7 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -41,6 +35,12 @@ import tables.DimTable;
 import tables.DimensionMap;
 import tables.Table;
 import weka.core.converters.JEXTableWriter;
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DataReader.FileReader;
+import Database.DataWriter.ValueWriter;
+import Database.Definition.TypeName;
+import Database.SingleUserDatabase.JEXWriter;
 
 public class RScripter implements PlugInController, ActionListener, ClipboardOwner {
 	
@@ -219,15 +219,17 @@ public class RScripter implements PlugInController, ActionListener, ClipboardOwn
 		// TreeSet<String> trays = new TreeSet<String>();
 		TreeSet<String> xs = new TreeSet<String>();
 		TreeSet<String> ys = new TreeSet<String>();
-		if(tn.getType().equals(JEXData.FILE))
+		
+		for (JEXEntry e : entries)
 		{
-			for (JEXEntry e : entries)
+			
+			JEXData data = JEXStatics.jexManager.getDataOfTypeNameInEntry(tn, e);
+			if(data != null)
 			{
-				JEXData data = JEXStatics.jexManager.getDataOfTypeNameInEntry(tn, e);
-				if(data != null)
+				DimTable tempDimTable = data.getDimTable();
+				totalDimTable = DimTable.union(totalDimTable, tempDimTable);
+				if(tn.getType().matches(JEXData.FILE))
 				{
-					DimTable tempDimTable = data.getDimTable();
-					totalDimTable = DimTable.union(totalDimTable, tempDimTable);
 					TreeMap<DimensionMap,String> temp = FileReader.readObjectToFilePathTable(data);
 					for (DimensionMap map : temp.keySet())
 					{
@@ -246,6 +248,24 @@ public class RScripter implements PlugInController, ActionListener, ClipboardOwn
 						ys.add("" + y);
 						files.put(newMap, temp.get(map));
 					}
+				}
+				else
+				{
+					DimensionMap newMap = new DimensionMap();
+					String expt = e.getEntryExperiment();
+					// String tray = e.getEntryTrayName();
+					int x = e.getTrayX();
+					int y = e.getTrayY();
+					newMap.put("Experiment", expt);
+					// newMap.put("Tray", tray);
+					newMap.put("X", "" + x);
+					newMap.put("Y", "" + y);
+					expts.add(expt);
+					// trays.add(tray);
+					xs.add("" + x);
+					ys.add("" + y);
+					String path = JEXWriter.getDatabaseFolder() + File.separator + data.getDetachedRelativePath();
+					files.put(newMap, path);
 				}
 			}
 		}
