@@ -121,10 +121,23 @@ public class CrunchFactory extends URLClassLoader {
 		Logs.log("Number of JEXPlugins: " + jexPlugins.size(), CrunchFactory.class);
 		for(PluginInfo<JEXPlugin> info : jexPlugins)
 		{
-			Logs.log("Found new JEX Plugin: " + info.getName() + " - "+ info.getClassName(), CrunchFactory.class);
-			JEXPluginInfo fullInfo = new JEXPluginInfo(info);
-			JEXCrunchablePlugin crunchable = new JEXCrunchablePlugin(fullInfo);
-			ret.put(crunchable.getName(), crunchable);
+			Logs.log("Found new JEXPlugin: " + info.getName() + " - "+ info.getClassName(), CrunchFactory.class);
+			try
+			{
+				JEXPluginInfo fullInfo = new JEXPluginInfo(info);
+				JEXCrunchablePlugin crunchable = new JEXCrunchablePlugin(fullInfo);
+				ret.put(crunchable.getName(), crunchable);
+			}
+			catch(java.lang.NoClassDefFoundError e1)
+			{
+				// Just skip this because I think the EclipseHelper is messing up the accumulation of the annotation index
+				Logs.log("Remember to figure out why annotation index in Eclipse helper gets called sometimes (when legacy called first) and not others (when ImageJ2 called first).", CrunchFactory.class);
+			}
+			catch(Exception e)
+			{
+				// Just skip this because I think the EclipseHelper is messing up the accumulation of the annotation index
+				Logs.log("Remember to figure out why annotation index in Eclipse helper gets called sometimes (when legacy called first) and not others (when ImageJ2 called first).", CrunchFactory.class);
+			}
 		}
 		return ret;
 	}
@@ -211,19 +224,22 @@ public class CrunchFactory extends URLClassLoader {
 		// Create a structure to store all the ExperimentalDataCrunch Objects
 		TreeMap<String,JEXCrunchable> result = new TreeMap<String,JEXCrunchable>();
 		
-		Logs.log("Getting new JEX Plugins.", CrunchFactory.class);
-		loadMissing();
+		Logs.log("Getting new JEXPlugins.", CrunchFactory.class);
+		//		loadMissing();
 		TreeMap<String,JEXCrunchable> jexPlugins = loadJEXCrunchablePlugins();
 		result.putAll(jexPlugins);
 		
+		Logs.log("Getting ImageJ Plugins.", CrunchFactory.class);
 		TreeMap<String,IJ2CrunchablePlugin> ij2Plugins = IJ2PluginUtility.ijCommands;
 		result.putAll(ij2Plugins);
 		
+		Logs.log("Getting external JEXCrunchables.", CrunchFactory.class);
 		// Find externally defined plugin class names
 		String prefsPluginsPath = PrefsUtility.getExternalPluginsFolder();
 		String jarPath = null;
 		CrunchFactory loader = new CrunchFactory(); // constructor does the storing of the class names in the "externalPluginNames" vector field
 		
+		Logs.log("Getting internal JEXCrunchables.", CrunchFactory.class);
 		// Find internally defined plugin class names
 		URL classLoaderURL = JEXCrunchable.class.getResource("JEXCrunchable.class");
 		Logs.log("A message that won't error...", CrunchFactory.class);
