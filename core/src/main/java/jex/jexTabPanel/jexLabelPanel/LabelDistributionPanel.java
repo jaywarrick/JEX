@@ -184,8 +184,11 @@ public class LabelDistributionPanel implements ActionListener {
 				JEXLabel newL = this.labels.get(new Point(x, y));
 				JEXData oldL = this.getCurrentLabelInEntry(this.curTray.get(x).get(y));
 				temp = new TreeSet<JEXData>();
-				temp.add(oldL);
-				toRemove.put(e, temp);
+				if(oldL != null)
+				{
+					temp.add(oldL);
+					toRemove.put(e, temp);
+				}
 				if(newL != null)
 				{
 					toAdd.put(e, newL);
