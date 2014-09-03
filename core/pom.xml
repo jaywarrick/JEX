@@ -14,7 +14,7 @@
 	<name>JEX core functionality</name>
 
 	<properties>
-		<scijava-common.version>2.27.0</scijava-common.version>
+		<scijava-common.version>2.31.0</scijava-common.version>
 	</properties>
 
 	<dependencies>
@@ -73,6 +73,33 @@
 			<version>2.1.1e</version>
 		</dependency>
 
+		<!-- ImageJ Plugin dependencies -->
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>TrackMate_</artifactId>
+			<version>2.3.0</version>
+		</dependency>
+		<!-- Needed by trackMate but pom for trackMate wasn't in repo to indicated dependency -->
+		<dependency>
+			<groupId>net.sf.jgrapht</groupId>
+			<artifactId>jgrapht</artifactId>
+			<version>0.8.3</version>
+		</dependency>
+		<dependency>
+			<groupId>mpicbg</groupId>
+			<artifactId>imglib</artifactId>
+			<version>2.0.0-beta6</version>
+		</dependency>
+		<dependency>
+		    <groupId>io.scif</groupId>
+		    <artifactId>scifio</artifactId>
+		</dependency>
+		<dependency>
+		    <groupId>io.scif</groupId>
+		    <artifactId>scifio-bf-compat</artifactId>
+		    <scope>runtime</scope>
+	  	</dependency>
+		
 		<!-- ImageJ dependencies -->
 		<dependency>
 			<groupId>net.imagej</groupId>
@@ -81,6 +108,11 @@
 		<dependency>
 			<groupId>net.imagej</groupId>
 			<artifactId>imagej</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>imagej-ops</artifactId>
+			<version>0.4.3</version>
 		</dependency>
 
 		<dependency>
