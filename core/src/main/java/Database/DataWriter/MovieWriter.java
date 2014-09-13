@@ -346,7 +346,7 @@ public class MovieWriter implements ImageObserver {
 				{
 					return null;
 				}
-				ImagePlus imk = new ImagePlus(imset.get(k));
+				ImagePlus imk = new ImagePlus(imset.get(map));
 				ImageProcessor imp = imk.getProcessor().convertToRGB();
 				
 				if(roiSupplied)
