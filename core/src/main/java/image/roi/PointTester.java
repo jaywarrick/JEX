@@ -13,6 +13,12 @@ import ij.process.FloatProcessor;
 import ij.process.FloatStatistics;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
+import io.scif.ImageMetadata;
+import io.scif.MetaTable;
+import io.scif.Metadata;
+import io.scif.Reader;
+import io.scif.SCIFIO;
+import io.scif.config.SCIFIOConfig;
 
 import java.awt.Desktop;
 import java.awt.Point;
@@ -26,6 +32,8 @@ import java.net.URL;
 import java.text.DecimalFormat;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 import java.util.TreeMap;
 import java.util.Vector;
@@ -47,6 +55,8 @@ import net.imagej.display.OverlayView;
 import net.imagej.options.OptionsChannels;
 import net.imagej.overlay.Overlay;
 import net.imagej.overlay.RectangleOverlay;
+import net.imglib2.meta.CalibratedAxis;
+import net.imglib2.meta.ImgPlus;
 
 import org.scijava.command.CommandInfo;
 import org.scijava.util.ConversionUtils;
@@ -60,10 +70,270 @@ import weka.core.converters.JEXTableWriter;
 
 public class PointTester {// extends URLClassLoader {
 	
-	public static void main(String[] args)
+//	static
+//	{
+//		LegacyInjector.preinit();
+//	}
+	
+	public static void main(String[] args) throws Exception
 	{
-		Logs.log("Hello", PointTester.class);
-		testConversionUtils();
+		Logs.log("Hello there", PointTester.class);
+		testAutoImport();
+	}
+	
+	public static String WAVELENGTH="Name #", X_POSITION="Z position", Y_POSITION="Z position", Z_POSITION="Z position", TIMESTAMP="timestamp", LAMBDA1="λ", LAMBDA2="� ";
+	
+	public static void testAutoImport() throws Exception {
+		//		final String filePath = "/Users/jaywarrick/Documents/JEX/Raw Data/TestImport/x0_y0_Time0.tif";
+		//		final String filePath = "/Users/jaywarrick/Documents/JEX/Raw Data/TestImport/";
+		final String filePath = "/Users/jaywarrick/Google Drive/example.nd2";
+		final String sampleImage = "/Users/jaywarrick/Google Drive/example.nd2";
+		
+		//		// the Bio-Formats way
+		//		final ImporterOptions options = new ImporterOptions();
+		//		options.setGroupFiles(true);
+		//		options.setId(filePath);
+		//		final ImagePlus[] imp = BF.openImagePlus(options);
+		//		System.out.println("X = " + imp[0].getWidth());
+		//		System.out.println("Y = " + imp[0].getHeight());
+		//		System.out.println("Z = " + imp[0].getNSlices());
+		//		System.out.println("C = " + imp[0].getNChannels());
+		//		System.out.println("T = " + imp[0].getNFrames());
+		//
+		//		// wrap it
+		//		final ImgPlus<? extends NumericType<?>> img1 =
+		//			ImgPlus.wrap(ImageJFunctions.wrap(imp[0]));
+		//		dumpInfo(img1);
+		
+		//		// the SCIFIO way
+		//		final ImgOpener imgOpener = new ImgOpener();
+		//		final SCIFIOConfig config = new SCIFIOConfig();
+		//		config.groupableSetGroupFiles(true);
+		//		config.imgOpenerSetOpenAllImages(true);
+		//		final List<SCIFIOImgPlus<?>> imgs = imgOpener.openImgs(filePath, config);
+		//		for(SCIFIOImgPlus<?> img : imgs)
+		//		{
+		//			dumpInfo(img);
+		//		}
+		
+		ImageJ ij = new ImageJ();
+		final SCIFIO scifio = new SCIFIO(ij.getContext());
+		
+////		Dataset ds = ij.dataset().open(filePath, new SCIFIOConfig().checkerSetOpen(true));
+////		Logs.log("" + ds.getSource(), PointTester.class);
+////		Object o = ds.getPlane(0);
+////		Logs.log("" + o.toString(), PointTester.class);
+////		final String sampleImage =
+////				"8bit-signed&pixelType=int8&lengths=50,50,3,5,7&axes=X,Y,Z,Channel,Time.fake";
+//		// We'll need a path to write to. By making it a ".png" we are locking in
+//		// the final format of the file on disk.
+//		final String outPath = "/Users/jaywarrick/Desktop/SCIFIOTutorial.tiff";
+//		// Clear the file if it already exists.
+//		final Location l = new Location(scifio.getContext(), outPath);
+//		if (l.exists()) l.delete();
+		// We'll need a reader for the input image
+		final Reader reader = scifio.initializer().initializeReader(sampleImage, new SCIFIOConfig().checkerSetOpen(true));
+		
+		
+		Metadata meta = reader.getMetadata();
+//		DimTable table = getDataSetDimTable(meta);
+		
+		DimTable table = getDataSetDimTable(meta);
+		
+		Dataset ds = ij.dataset().open(sampleImage, new SCIFIOConfig().checkerSetOpen(true));
+		Object plane = ds.getPlane(0, true);
+		Logs.log(plane.toString(), PointTester.class);
+		
+		
+		
+//		TreeMap<String,Object> results = new TreeMap<String,Object>(new StringUtility());
+//		results.putAll(meta.getTable());
+//		for(Entry<String,Object> e: results.entrySet())
+//		{
+//			Logs.log(e.getKey() + " ==== " + e.getValue().toString(), PointTester.class);
+//			if(e.getKey().contains("Dimensions"))
+//			{
+//				Logs.log("Found One", PointTester.class);
+//			}
+//		}
+//		for(int i = 0; i < meta.getImageCount(); i++)
+//		{
+//			ImageMetadata iMeta = meta.get(i);
+//			TreeMap<String,String> info = getOrderedInfo(iMeta, " ");
+//			Logs.log(info.entrySet().toString(), PointTester.class);
+//		}
+//		
+//		
+//		
+//		List<SCIFIOImgPlus<ShortType>> imgs = IO.openImgs(reader, new ShortType(), new SCIFIOConfig().checkerSetOpen(true));
+////		ij.ui().show(imgs.get(0));
+//		// .. and a writer for the output path
+//		final Writer writer =
+//				scifio.initializer().initializeWriter(reader.getMetadata(), outPath);
+//		
+//		
+//		
+//		// Note that these initialize methods are used for convenience.
+//		// Initializing a reader and a writer requires that you set the source
+//		// and metadata properly. Also note that the Metadata attached to a writer
+//		// describes how to interpret the incoming Planes, but may not reflect
+//		// the image on disk - e.g. if planes were saved in a different order
+//		// than on the input image. For accurate Metadata describing the saved
+//		// image, you need to re-parse it from disk.
+//		// Anyway, now that we have a reader and a writer, we can save all the
+//		// planes. We simply iterate over each image, and then each plane, writing
+//		// the planes out in order.
+//		for (int i = 0; i < reader.getImageCount(); i++) {
+//			for (int j = 0; j < reader.getPlaneCount(i); j++) {
+//				Plane p = reader.openPlane(i, j);
+//				ImageMetadata blah = p.getImageMetadata();
+////				ImageJFunctions.s
+////				ImagePlus im = new ImagePlus("yo", (ImageProcessor) (new ByteProcessor((int) p.getLengths()[0], (int) p.getLengths()[1], p.getBytes())));
+////				im.show();
+////				writer.savePlane(i, j, p);
+//			}
+//		}
+//		// Note that this code is for illustration purposes only.
+//		// A more general solution would need higher level API that could account
+//		// for larger planes, etc..
+//		// close our components now that we're done. This is a critical step, as
+//		// many formats have footer information that is written when the writer is
+//		// closed.
+//		reader.close();
+//		writer.close();
+//		
+//		
+//		
+//		
+//		
+//		//		// Sandbox
+//		//		boolean success = scifio.format().addFormat(new BioFormatsFormat());
+//		//		Logs.log(""+success, PointTester.class);
+//		
+//		// determine dimensions contained within each image.
+////		final Reader reader = scifio.initializer().initializeReader(filePath, new SCIFIOConfig().checkerSetOpen(true));
+//		final List<CalibratedAxis> dimOrderList = reader.getMetadata().get(0).getAxes();
+//		AxisType[] dimOrder = new AxisType[dimOrderList.size()];
+//		for(int i = 0; i < dimOrderList.size(); i++)
+//		{
+//			dimOrder[i] = dimOrderList.get(i).type();
+//		}
+//		final long sizeZ = reader.getMetadata().get(0).getAxisLength(Axes.Z);
+//		final long sizeT =
+//				reader.getMetadata().get(0).getAxisLength(Axes.TIME);
+//		final long sizeC =
+//				reader.getMetadata().get(0).getAxisLength(Axes.CHANNEL);
+//		
+//		
+//		
+////		//		table.indexOfDimWithName(dimName)
+////		// Iterate over each image in the dataset (there's just one in this case)
+////		for (int i = 0; i < reader.getImageCount(); i++)
+////		{
+////			ImageMetadata iMeta = meta.get(i);
+////			for (int j = 0; j < iMeta.getPlaneCount(); j++)
+////			{
+////				
+////			}
+////		}
+////		
+////		for(DimensionMap map : table.getMapIterator())
+////		{
+////			Logs.log(map.toString(), PointTester.class);
+////		}
+////		
+//		
+//		
+//		
+//		
+//		final boolean certain = reader.getMetadata().get(0).isOrderCertain();
+//		reader.close();
+//		Logs.log("[done]", PointTester.class);
+//		Logs.log("\tdimOrder = " + dimOrder + " (" +
+//				(certain ? "certain" : "uncertain") + ")", PointTester.class);
+//		Logs.log("\tsizeZ = " + sizeZ, PointTester.class);
+//		Logs.log("\tsizeT = " + sizeT, PointTester.class);
+//		Logs.log("\tsizeC = " + sizeC, PointTester.class);
+//		reader.getMetadata().get(0).getTable().get("Z");
+//		
+//		// Now get the other dimensions indicated in filenames
+//		File file = new File(filePath);
+//		Logs.log("File = " + file.getAbsoluteFile(), PointTester.class);
+//		final String pat = scifio.filePattern().findPattern(file);
+//		FilePattern fp = new FilePattern(ij.getContext(), pat);
+//		final AxisGuesser ag = new AxisGuesser(fp, dimOrder, sizeZ, sizeT, sizeC, certain);
+//		
+//		// output results
+//		final String[] blocks = fp.getBlocks();
+//		final String[] prefixes = fp.getPrefixes();
+//		final int[] axes = ag.getAxisTypes();
+//		final AxisType[] newOrder = ag.getAdjustedOrder();
+//		final boolean isCertain = ag.isCertain();
+//		fp = ag.getFilePattern();
+//		
+//		Logs.log("FilePattern: " + fp, PointTester.class);
+		
+		
+	}
+	
+	private static DimTable getDataSetDimTable(Metadata meta)
+	{
+		String info = meta.getTable().get("Dimensions").toString();
+		String[] infos = info.split("[ ][x][ ]");
+		DimTable ret = new DimTable();
+		for(String s : infos)
+		{
+			if(!s.equals("x"))
+			{
+				String[] bits = s.split("[(|)]");
+				if(bits[0].equals(LAMBDA1) || bits[0].equals(LAMBDA2))
+				{
+					bits[0] = "Color";
+				}
+				Dim toAdd = new Dim(bits[0], Integer.parseInt(bits[1]));
+				ret.add(toAdd);
+			}
+		}
+		
+		Vector<String> colors = new Vector<String>();
+		for(Entry<String,Object> e : meta.getTable().entrySet())
+		{
+			if(e.getKey().contains("Name #"))
+			{
+				colors.add(e.getValue().toString());
+			}
+		}
+		Dim newColorDim = new Dim("Color", colors);
+		ret.set(ret.indexOfDimWithName("Color"), newColorDim);
+		return ret;
+	}
+	
+	/**
+	 * Returns the plane number and the value of the information for that basename
+	 */
+	private static TreeMap<String,String> getOrderedInfo(ImageMetadata iMeta, String basename)
+	{
+		TreeMap<String,String> ret = new TreeMap<String,String>(new StringUtility());
+		MetaTable info = iMeta.getTable();
+		for(Entry<String,Object> e : info.entrySet())
+		{
+			String key = e.getKey();
+			String val = (String) e.getValue().toString();
+			if(key.contains(basename))
+			{
+				ret.put(key,val);
+			}
+		}
+		return ret;
+	}
+	
+	
+	private static void dumpInfo(final ImgPlus<?> img) {
+		for (int d = 0; d < img.numDimensions(); d++) {
+			final CalibratedAxis axis = img.axis(d);
+			System.out.println("dim #" + d + ": " + img.dimension(d) + " : " +
+					axis.type());
+		}
 	}
 	
 	public static void testConversionUtils()
