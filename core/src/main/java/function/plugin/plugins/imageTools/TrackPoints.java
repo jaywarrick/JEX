@@ -36,8 +36,6 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.Vector;
 
-import logs.Logs;
-
 import org.scijava.plugin.Plugin;
 
 import tables.Dim;
@@ -50,7 +48,7 @@ import Database.DataReader.RoiReader;
 import Database.DataWriter.RoiWriter;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.tracking.LAPTracker;
+import fiji.plugin.trackmate.tracking.oldlap.LAPTracker;
 import function.plugin.mechanism.InputMarker;
 import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.MarkerConstants;
