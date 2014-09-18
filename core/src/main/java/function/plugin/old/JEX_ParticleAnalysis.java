@@ -237,7 +237,7 @@ public class JEX_ParticleAnalysis extends JEXCrunchable {
 		double maxSize = Double.parseDouble(this.parameters.getValueOfParameter("Max Size"));
 		double minCirc = Double.parseDouble(this.parameters.getValueOfParameter("Min Circularity"));
 		double maxCirc = Double.parseDouble(this.parameters.getValueOfParameter("Max Circularity"));
-		boolean excludeOnEdges = Boolean.parseBoolean(this.parameters.getValueOfParameter("Exclude On Edges?"));
+//		boolean excludeOnEdges = Boolean.parseBoolean(this.parameters.getValueOfParameter("Exclude On Edges?"));
 		
 		// Prepare output maps
 		TreeMap<DimensionMap,String> outlineMap = new TreeMap<DimensionMap,String>(); // defaultOutputNames[0]
