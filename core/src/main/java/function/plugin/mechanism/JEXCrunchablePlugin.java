@@ -175,6 +175,7 @@ public class JEXCrunchablePlugin extends JEXCrunchable {
 		return ret;
 	}
 	
+	@SuppressWarnings("deprecation")
 	private Object convertToValue(String o, Field f)
 	{
 		if(ConversionUtils.canConvert(o, f.getType()))
