@@ -28,8 +28,8 @@ import logs.Logs;
 public class ExporterOptionPanel extends DialogGlassCenterPanel implements ActionListener {
 	
 	private static final long serialVersionUID = 1L;
-	private JComboBox savingBox = new JComboBox(new String[] { "Yes", "No" });
-	private JComboBox exportMode = new JComboBox(new String[] { "2D", "1D" });
+	private JComboBox<String> savingBox = new JComboBox<String>(new String[] { "Yes", "No" });
+	private JComboBox<String> exportMode = new JComboBox<String>(new String[] { "2D", "1D" });
 	private JTextField nameField = new JTextField();
 	private JTextField infoField = new JTextField();
 	
