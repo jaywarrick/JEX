@@ -239,13 +239,13 @@ public class JEXDataPanelController {
 		toAddTo.setLayout(new MigLayout("flowy, ins 10, gapy 0", "[fill,grow]", "[fill,grow]"));
 		toAddTo.setBackground(DisplayStatics.lightBackground);
 		
-		JList displayListOfFiles = new JList();
+		JList<File> displayListOfFiles = new JList<File>();
 		displayListOfFiles.setBackground(DisplayStatics.lightBackground);
 		displayListOfFiles.setFont(FontUtility.defaultFonts);
 		displayListOfFiles.setCellRenderer(new FileListCellRenderer());
 		displayListOfFiles.addMouseListener(toAddTo);
 		
-		DefaultListModel newModel = new DefaultListModel();
+		DefaultListModel<File> newModel = new DefaultListModel<File>();
 		for (String path : paths)
 		{
 			newModel.addElement(new File(path));
