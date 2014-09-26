@@ -18,6 +18,7 @@ import tables.DimensionMap;
 public class JEXData {
 	
 	// JEXData types
+	public static final Type ANY = new Type("Any"); // Used when an plugin input can be generic (not a type intended for saving in the database).
 	public static final Type IMAGE = new Type("Image");
 	public static final Type FILE  = new Type("File");
 	public static final Type MOVIE = new Type("Movie");
@@ -236,7 +237,15 @@ public class JEXData {
 	 */
 	public boolean matchesType(Type t)
 	{
-		return this.getTypeName().getType().matches(t);
+		if(this.getTypeName().getType().matches(JEXData.ANY) || t.matches(JEXData.ANY))
+		{
+			// if either of the two to compare is of type (ANY) return true.
+			return true;
+		}
+		else
+		{
+			return this.getTypeName().getType().matches(t);
+		}
 	}
 	
 	public String getDetachedRelativePath()
