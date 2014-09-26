@@ -97,7 +97,7 @@ public class JEXCrunchablePlugin extends JEXCrunchable {
 		for(String paramKey : this.info.pOrder.keySet())
 		{
 			String paramName = this.info.pOrder.get(paramKey);
-			ret.addParameter(this.info.parameters.get(paramName));
+			ret.addParameter(this.info.parameters.get(paramName).duplicate());
 		}
 		return ret;
 	}
