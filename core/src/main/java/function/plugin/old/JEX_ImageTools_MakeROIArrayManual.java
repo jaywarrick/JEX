@@ -221,11 +221,11 @@ public class JEX_ImageTools_MakeROIArrayManual extends JEXCrunchable {
 			
 			// Get the array Locations
 			ROIPlus patternRoi = roiMap.get(roiM);
-			if(patternRoi == null)
+			if(patternRoi == null || patternRoi.pointList.size() == 0)
 			{
-				Logs.log("Couldn't read the roi that defines the array!", 9, this);
-				JEXStatics.statusBar.setStatusText("Couldn't read the roi that defines the array!");
-				return false;
+				Logs.log("Couldn't read the roi that defines the array or no points defined for this image: " + roiM.toString(), 9, this);
+				JEXStatics.statusBar.setStatusText("Couldn't read the roi that defines the arrayor no points defined for this image: " + roiM.toString());
+				continue;
 			}
 			PointList pattern = patternRoi.getPointList();
 			
