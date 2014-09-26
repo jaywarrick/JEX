@@ -51,9 +51,6 @@ public class AdjustImage extends JEXPlugin {
 	@InputMarker(name="Image", type=MarkerConstants.TYPE_IMAGE, description="Image to be adjusted.", optional=false)
 	JEXData imageData;
 	
-	@InputMarker(name="Roi", type=MarkerConstants.TYPE_IMAGE, description="Image to be adjusted.", optional=false)
-	JEXData roiData;
-	
 	/////////// Define Parameters ///////////
 	
 	@ParameterMarker(uiOrder=1, name="Old Min", description="Image Intensity Value", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
