@@ -186,6 +186,21 @@ public class PointList extends Vector<IdPoint> implements Copiable<PointList> {
 		this.setPoints(newl);
 	}
 	
+	public void rotateRelativeToOrigin(double thetaDeg)
+	{
+		AffineTransform toApply = new AffineTransform();
+		toApply.rotate(thetaDeg * Math.PI / 180);
+		
+		Point2D.Double[] srcPts = convert(this.toArray());
+		Point2D.Double[] dstPts = new Point2D.Double[srcPts.length];
+		
+		toApply.transform(srcPts, 0, dstPts, 0, srcPts.length);
+		
+		PointList newl = new PointList(convert(dstPts));
+		//		newl.setCenter(this.getCenter());
+		this.setPoints(newl);
+	}
+	
 	public void scale(double mag)
 	{
 		AffineTransform toApply = new AffineTransform();
@@ -198,6 +213,21 @@ public class PointList extends Vector<IdPoint> implements Copiable<PointList> {
 		
 		PointList newl = new PointList(convert(dstPts));
 		newl.setCenter(this.getCenter());
+		this.setPoints(newl);
+	}
+	
+	public void scaleRelativeToOrigin(double mag)
+	{
+		AffineTransform toApply = new AffineTransform();
+		toApply.scale(mag, mag);
+		
+		Point2D.Double[] srcPts = convert(this.toArray());
+		Point2D.Double[] dstPts = new Point2D.Double[srcPts.length];
+		
+		toApply.transform(srcPts, 0, dstPts, 0, srcPts.length);
+		
+		PointList newl = new PointList(convert(dstPts));
+		// newl.setCenter(this.getCenter());
 		this.setPoints(newl);
 	}
 	
