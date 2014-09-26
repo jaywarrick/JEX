@@ -9,6 +9,7 @@ public class Parameter {
 	public static int FILECHOOSER = 2;
 	public static int CHECKBOX = 3;
 	public static int PASSWORD = 4;
+	public static int SCRIPT = 5;
 	
 	public String title;
 	public String note;
@@ -47,7 +48,7 @@ public class Parameter {
 	}
 	
 	/**
-	 * Typically used for checkbox and filechooser
+	 * Typically used for checkbox, filechooser, and script
 	 * 
 	 * @param title
 	 * @param note

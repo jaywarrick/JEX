@@ -18,6 +18,7 @@ public final class MarkerConstants {
 	//	public static final Type TRACK        = new Type("Track");
 	//	public static final Type ROI_TRACK    = new Type("ROI Track");
 	
+	public static final String TYPE_ANY = "Any";
 	public static final String TYPE_IMAGE = "Image";
 	public static final String TYPE_FILE = "File";
 	public static final String TYPE_MOVIE = "Movie";
@@ -33,6 +34,7 @@ public final class MarkerConstants {
 	public static final int UI_FILECHOOSER = 2;
 	public static final int UI_CHECKBOX = 3;
 	public static final int UI_PASSWORD = 4;
+	public static final int UI_SCRIPT = 5;
 	
 	public static final String IO_INPUT = "input";
 	public static final String IO_OUTPUT = "output";
