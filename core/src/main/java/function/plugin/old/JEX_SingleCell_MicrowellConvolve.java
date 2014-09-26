@@ -145,9 +145,9 @@ public class JEX_SingleCell_MicrowellConvolve extends JEXCrunchable {
 	public ParameterSet requiredParameters()
 	{
 		Parameter pa0 = new Parameter("Test Run?", "Just run this for the first image in each well?", Parameter.DROPDOWN, new String[] { "true", "false" }, 1);
-		Parameter pa1 = new Parameter("Color Dim Name", "Name of the 'Color' dimension.", "Color");
+		Parameter pa1 = new Parameter("Color Dim Name", "Name of the 'Color' dimension. (leave blank if no color dim)", "Color");
 		Parameter pa2 = new Parameter("Color Dim Value", "Which 'Color' to analyze", "2");
-		Parameter pa4 = new Parameter("Time Dim Name", "Name of the 'Time' dimension.", "Time");
+		Parameter pa4 = new Parameter("Time Dim Name", "Name of the 'Time' dimension. (leave blank if no time dim)", "Time");
 		Parameter pa5 = new Parameter("Time Value to Convolve", "Value of the 'Time' dimension that should be chosen for finding microwells", "0");
 		Parameter pb1 = new Parameter("Mean Pre-filter Radius", "Set to 0 or negative to avoid mean prefilter", "5");
 		Parameter pb2 = new Parameter("Edge Pre-filter?", "Apply edge filter prior to convolution?", Parameter.DROPDOWN, new String[] { "true", "false" }, 0);
@@ -203,7 +203,7 @@ public class JEX_SingleCell_MicrowellConvolve extends JEXCrunchable {
 	{
 		// Get the base images
 		JEXData data1 = inputs.get("Image");
-		if(!data1.getTypeName().getType().equals(JEXData.IMAGE))
+		if(data1 == null || !data1.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return false;
 		}
@@ -227,11 +227,25 @@ public class JEX_SingleCell_MicrowellConvolve extends JEXCrunchable {
 		DimTable subTable = null;
 		if(imageTable.getDimWithName(timeDimName) == null)
 		{
-			subTable = imageTable.getSubTable(new DimensionMap(colorDimName + "=" + colorVal));
+			if(imageTable.getDimWithName(colorDimName) == null)
+			{
+				subTable = imageTable.copy();
+			}
+			else
+			{
+				subTable = imageTable.getSubTable(new DimensionMap(colorDimName + "=" + colorVal));
+			}
 		}
 		else
 		{
-			subTable = imageTable.getSubTable(new DimensionMap(colorDimName + "=" + colorVal + "," + timeDimName + "=" + timeVal));
+			if(imageTable.getDimWithName(colorDimName) == null)
+			{
+				subTable = imageTable.getSubTable(new DimensionMap(timeDimName + "=" + timeVal));
+			}
+			else
+			{
+				subTable = imageTable.getSubTable(new DimensionMap(colorDimName + "=" + colorVal + "," + timeDimName + "=" + timeVal));
+			}
 		}
 		
 		// Run the function
