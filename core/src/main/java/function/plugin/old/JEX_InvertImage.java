@@ -1,5 +1,15 @@
 package function.plugin.old;
 
+import ij.ImagePlus;
+import ij.process.FloatProcessor;
+
+import java.util.HashMap;
+import java.util.TreeMap;
+
+import jex.statics.JEXStatics;
+import jex.utilities.FunctionUtility;
+import logs.Logs;
+import tables.DimensionMap;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;
@@ -9,15 +19,6 @@ import Database.Definition.ParameterSet;
 import Database.Definition.TypeName;
 import Database.SingleUserDatabase.JEXWriter;
 import function.JEXCrunchable;
-import ij.ImagePlus;
-import ij.process.ByteProcessor;
-
-import java.util.HashMap;
-import java.util.TreeMap;
-
-import jex.statics.JEXStatics;
-import logs.Logs;
-import tables.DimensionMap;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions
@@ -181,6 +182,7 @@ public class JEX_InvertImage extends JEXCrunchable {
 		// int depth =
 		// Integer.parseInt(parameters.getValueOfParameter("Output Bit Depth"));
 		String lutStr = parameters.getValueOfParameter("Only LUT?");
+		int outputBitDepth = Integer.parseInt(parameters.getValueOfParameter("Output Bit Depth"));
 		boolean lut = Boolean.parseBoolean(lutStr);
 		
 		// Run the function
@@ -197,30 +199,29 @@ public class JEX_InvertImage extends JEXCrunchable {
 			
 			// get the image
 			ImagePlus im = new ImagePlus(path);
-			ByteProcessor bimp = (ByteProcessor) im.getProcessor().convertToByte(true); // should
-			// be
-			// a
-			// float
-			// processor
+			FloatProcessor fimp = (FloatProcessor) im.getProcessor().convertToFloat(); // should be a float processor
 			
-			// //// Begin Actual Function
+			// Begin Actual Function
 			if(lut)
 			{
-				bimp.invertLut();
+				fimp.invertLut();
 			}
 			else
 			{
-				bimp.invert();
+				fimp.invert();
 			}
-			// //// End Actual Function
-			
-			// //// Save the results
-			// String localDir = JEXWriter.getEntryFolder(entry);
-			// String newFileName = FunctionUtility.getNextName(localDir,
-			// f.getName(), "I");
-			// String finalPath = localDir + File.separator + newFileName;
-			// FunctionUtility.imSave(bimp, finalPath);
-			String finalPath = JEXWriter.saveImage(bimp);
+
+			String finalPath = null;
+			if(outputBitDepth!=32)
+			{
+				ImagePlus toSave = FunctionUtility.makeImageToSave(fimp, "false", outputBitDepth);
+				finalPath = JEXWriter.saveImage(toSave);
+				toSave.flush();
+			}
+			else
+			{
+				finalPath = JEXWriter.saveImage(fimp);
+			}
 			
 			outputMap.put(dim.copy(), finalPath);
 			Logs.log("Finished processing " + count + " of " + total + ".", 1, this);
