@@ -154,6 +154,7 @@ public class JEX_SingleCell_MicrowellFinder extends JEXCrunchable {
 		Parameter p6 = new Parameter("Interpolate Missing Wells?", "Whether or not to assume that a well exists between two wells (i.e. there is a row or column gap)", Parameter.CHECKBOX, true);
 		Parameter p7 = new Parameter("Grid Smoothing Tolerance [%]", "Smooth grid locations that don't fit the overall pattern to within X % of the grid spacing\n(negative values or values that result in 0 pixels tolerance result in skipping this step)", "4.0");
 		Parameter p8 = new Parameter("Minimum Number of Wells", "The minimum number of wells to find grouped together to consider the lattice of wells as the correct lattice", "40");
+		Parameter p9 = new Parameter("Color Dim Name", "The name of the color dim so the color dim can be removed from the ROI object so it can be applied to many colors.", "Color");
 		
 		// Make an array of the parameters and return it
 		ParameterSet parameterArray = new ParameterSet();
@@ -166,6 +167,7 @@ public class JEX_SingleCell_MicrowellFinder extends JEXCrunchable {
 		parameterArray.addParameter(p6);
 		parameterArray.addParameter(p7);
 		parameterArray.addParameter(p8);
+		parameterArray.addParameter(p9);
 		return parameterArray;
 	}
 	
@@ -220,6 +222,7 @@ public class JEX_SingleCell_MicrowellFinder extends JEXCrunchable {
 			boolean interpolate = Boolean.parseBoolean(this.parameters.getValueOfParameter("Interpolate Missing Wells?"));
 			double smoothingTolerance = Double.parseDouble(this.parameters.getValueOfParameter("Grid Smoothing Tolerance [%]"));
 			int minNumberOfWells = Integer.parseInt(this.parameters.getValueOfParameter("Minimum Number of Wells"));
+			String colorDimName = this.parameters.getValueOfParameter("Color Dim Name");
 			
 			TreeMap<DimensionMap,ROIPlus> roiMap;
 			// Run the function
@@ -245,11 +248,18 @@ public class JEX_SingleCell_MicrowellFinder extends JEXCrunchable {
 				ImageProcessor imp = (new ImagePlus(imageMap.get(map))).getProcessor();
 				roip = roiMap.get(map);
 				
-				Logs.log("Finding microwells for " + map, 0, JEX_SingleCell_MicrowellFinder.class.getSimpleName());
+				Logs.log("Finding microwells for " + map, 0, JEX_SingleCell_MicrowellFinder.class);
 				PointList points = MicrowellFinder.findMicrowellCentersInConvolvedImage(imp, roip, convThresh, convTol, gridSpacing, gridTol, excludeGridBorder, minNumberOfWells, interpolate, smoothingTolerance);
 				
 				ROIPlus newRoip = new ROIPlus(points, ROIPlus.ROI_POINT);
-				outputRoiMap.put(map, newRoip);
+				
+				DimensionMap mapToSave = map.copy();
+				if(!colorDimName.equals(""))
+				{
+					mapToSave.remove(colorDimName);
+				}
+				
+				outputRoiMap.put(mapToSave, newRoip);
 				count = count + 1;
 				percentage = (int) (100 * ((double) (count) / ((double) imageMap.size())));
 				JEXStatics.statusBar.setProgressPercentage(percentage);
