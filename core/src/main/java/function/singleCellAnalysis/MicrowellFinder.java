@@ -740,9 +740,9 @@ class Grid implements Iterable<GridNode> {
 		}
 		
 		// Second scan through grid going to the left and up.
-		for (int r = rows.p2; r <= rows.p1; r--)
+		for (int r = rows.p2; r >= 0; r--)
 		{
-			for (int c = cols.p2; c <= cols.p1; c--)
+			for (int c = cols.p2; c >= 0; c--)
 			{
 				GridNode newNode = this.getInterpolatedNode(r, c);
 				if(newNode != null)
