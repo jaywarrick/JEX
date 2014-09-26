@@ -22,9 +22,11 @@ import tables.Table;
 
 public class R {
 	
-	public static final String FONT_AVANTGARDE = "AvantGarde", FONT_BOOKMAN = "Bookman", FONT_COURIER = "Courier", FONT_HELVETICA = "Helvetica", FONT_HELVETICA_NARROW = "Helvetica-Narrow", FONT_NEWCENTURYSCHOOLBOOK = "NewCenturySchoolbook",
-			FONT_PALATINO = "Palatino", FONT_TIMES = "Times";
+	public static final String FONT_AVANTGARDE = "AvantGarde", FONT_BOOKMAN = "Bookman", FONT_COURIER = "Courier", FONT_HELVETICA = "Helvetica", FONT_HELVETICA_NARROW = "Helvetica-Narrow", FONT_NEWCENTURYSCHOOLBOOK = "NewCenturySchoolbook", FONT_PALATINO = "Palatino", FONT_TIMES = "Times";
 	private static final String[] fonts = new String[] { FONT_AVANTGARDE, FONT_BOOKMAN, FONT_COURIER, FONT_HELVETICA, FONT_HELVETICA_NARROW, FONT_NEWCENTURYSCHOOLBOOK, FONT_PALATINO, FONT_TIMES };
+	
+	public static final String COMPRESSION_NONE="none", COMPRESSION_RLE="rle", COMPRESSION_LZW="lzw", COMPRESSION_JPEG="jpeg", COMPRESSION_ZIP="zip";
+	public static final String[] compressions = new String[]{COMPRESSION_NONE, COMPRESSION_RLE, COMPRESSION_LZW, COMPRESSION_JPEG, COMPRESSION_ZIP};
 	
 	// R Statistical Analysis Software Package Server Connection
 	public static RConnection rConnection = null;
@@ -328,13 +330,7 @@ public class R {
 	}
 	
 	/**
-	 * Returns the full path where this is being plotted
-	 * 
-	 * @param extension
-	 *            (file extension, e.g. "png")
-	 * @param width
-	 * @param height
-	 * @return
+	 * Calls 'graphics.off()'
 	 */
 	public static REXP endPlot()
 	{
