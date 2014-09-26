@@ -934,6 +934,144 @@ public class StatisticsUtility {
 		return outlierIndex;
 	}
 	
+	/**
+	 * Return the boolean array indicating whether it passes the threshold
+	 * @param values
+	 * @param thresh
+	 * @param greaterThan
+	 * @param inclusive
+	 * @return
+	 */
+	public static boolean[] getThresholdFilter(double[] values, double thresh, boolean greaterThan, boolean inclusive)
+	{
+		boolean[] filtered = new boolean[values.length];
+		if(greaterThan)
+		{
+			if(inclusive)
+			{
+				for(int i = 0; i < values.length; i++)
+				{
+					if(values[i] >= thresh)
+					{
+						filtered[i]=true;
+					}
+				}
+			}
+			else
+			{
+				for(int i = 0; i < values.length; i++)
+				{
+					if(values[i] > thresh)
+					{
+						filtered[i]=true;
+					}
+				}
+			}
+		}
+		else
+		{
+			if(inclusive)
+			{
+				for(int i = 0; i < values.length; i++)
+				{
+					if(values[i] <= thresh)
+					{
+						filtered[i]=true;
+					}
+				}
+			}
+			else
+			{
+				for(int i = 0; i < values.length; i++)
+				{
+					if(values[i] < thresh)
+					{
+						filtered[i]=true;
+					}
+				}
+			}
+		}
+		
+		return filtered;
+	}
+	
+	public static boolean[] union(boolean[] a, boolean[] b)
+	{
+		if(a.length != b.length)
+		{
+			Logs.log("Unequal length arguments not allowed", Logs.ERROR, StatisticsUtility.class);
+			return null;
+		}
+		boolean[] ret = new boolean[a.length];
+		for(int i = 0; i < a.length; i++)
+		{
+			ret[i] = a[i] || b[i];
+		}
+		return ret;
+	}
+	
+	public static boolean[] intersection(boolean[] a, boolean[] b)
+	{
+		if(a.length != b.length)
+		{
+			Logs.log("Unequal length arguments not allowed", Logs.ERROR, StatisticsUtility.class);
+			return null;
+		}
+		boolean[] ret = new boolean[a.length];
+		for(int i = 0; i < a.length; i++)
+		{
+			ret[i] = a[i] && b[i];
+		}
+		return ret;
+	}
+	
+	public static int countFilter(boolean[] filter, boolean countPositives)
+	{
+		// get the number of true elements for initialize the return object
+		int count = 0;
+		for(boolean b : filter)
+		{
+			if(b) count++;
+		}
+		
+		if(countPositives)
+		{
+			return count;
+		}
+		else
+		{
+			return(filter.length-count);
+		}
+	}
+	
+	public static double[] applyFilter(double[] values, boolean[] filter)
+	{
+		if(values.length != filter.length)
+		{
+			Logs.log("Arguments not the same length. Returning null.", Logs.ERROR, StatisticsUtility.class);
+		}
+		
+		// get the number of true elements for initialize the return object
+		int count = 0;
+		for(boolean b : filter)
+		{
+			if(b) count++;
+		}
+		
+		// Put matching values into the return object
+		double[] ret = new double[count];
+		count = 0;
+		for(int i = 0; i < filter.length; i++)
+		{
+			if(filter[i])
+			{
+				ret[count] = values[i];
+				count++;
+			}
+		}
+		return ret;
+	}
+	
 	public static double[] toArray(List<Double> values)
 	{
 		int count = 0;
