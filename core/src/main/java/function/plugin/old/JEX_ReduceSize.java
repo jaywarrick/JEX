@@ -191,6 +191,12 @@ public class JEX_ReduceSize extends JEXCrunchable {
 		int total = images.size();
 		for (DimensionMap dim : images.keySet())
 		{
+			
+			if(this.isCanceled())
+			{
+				return false;
+			}
+			
 			String path = images.get(dim);
 			// File f = new File(path);
 			
