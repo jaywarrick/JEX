@@ -222,11 +222,8 @@ public class JEX_SingleCell_MicrowellEnhanceBorders extends JEXCrunchable {
 			
 			// get the image
 			ImagePlus im = new ImagePlus(path);
-			FloatProcessor imp = (FloatProcessor) im.getProcessor().convertToFloat(); // should
-			// be
-			// a
-			// float
-			// processor
+			FloatProcessor imp = (FloatProcessor) im.getProcessor().convertToFloat();
+			imp.invert();
 			
 			// //// Begin Actual Function
 			jBackgroundSubtracter bS = new jBackgroundSubtracter();
@@ -245,8 +242,8 @@ public class JEX_SingleCell_MicrowellEnhanceBorders extends JEXCrunchable {
 			bS.run(imp);
 			bS.setup("final", im);
 			ImageStatistics stats = ImageStatistics.getStatistics(imp, ImageStatistics.MEDIAN, null);
-			imp.add(-1 * stats.median);
-			imp.multiply(-1);
+			imp.add(-2 * stats.median);
+			// imp.multiply(-1);
 			// //// End Actual Function
 			
 			// //// Save the results
