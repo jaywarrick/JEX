@@ -70,7 +70,7 @@ public class JEX_SingleCell_MicrowellEnhanceBorders extends JEXCrunchable {
 	@Override
 	public String getToolbox()
 	{
-		String toolbox = "Image processing";
+		String toolbox = "Single Cell Analysis";
 		return toolbox;
 	}
 	
