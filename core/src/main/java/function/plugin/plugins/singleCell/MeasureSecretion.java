@@ -10,7 +10,6 @@ import java.util.TreeMap;
 
 import jex.statics.JEXStatics;
 import logs.Logs;
-import miscellaneous.Pair;
 
 import org.scijava.plugin.Plugin;
 
@@ -62,6 +61,9 @@ public class MeasureSecretion extends JEXPlugin {
 	
 	@InputMarker(name="Enhanced BF Image", type=MarkerConstants.TYPE_IMAGE, description="Brightfield image that can help determine which image items are beads and not random fluorescent particles", optional=true)
 	JEXData bfData;
+	
+	@InputMarker(name="Cells", type=MarkerConstants.TYPE_ROI, description="Locations of cells in the microwell array images.", optional=true)
+	JEXData cellData;
 	
 	/////////// Define Parameters ///////////
 	
@@ -124,6 +126,12 @@ public class MeasureSecretion extends JEXPlugin {
 			haveBF = false;
 		}
 		
+		boolean haveCell = true;
+		if(cellData == null || !cellData.getTypeName().getType().equals(JEXData.ROI))
+		{
+			haveCell = false;
+		}
+		
 		// Run the function
 		TreeMap<DimensionMap,String> imageMap = ImageReader.readObjectToImagePathTable(imageData);
 		TreeMap<DimensionMap,ROIPlus> roiMap = RoiReader.readObjectToRoiMap(roiData);
@@ -131,6 +139,11 @@ public class MeasureSecretion extends JEXPlugin {
 		if(haveBF)
 		{
 			bfMap = ImageReader.readObjectToImagePathTable(bfData);
+		}
+		TreeMap<DimensionMap,ROIPlus> cellMap = null;
+		if(haveCell)
+		{
+			cellMap = RoiReader.readObjectToRoiMap(cellData);
 		}
 		TreeMap<DimensionMap,String> outputPlotMap = new TreeMap<DimensionMap,String>();
 		TreeMap<DimensionMap,Double> outputDataMap = new TreeMap<DimensionMap,Double>();
@@ -159,14 +172,23 @@ public class MeasureSecretion extends JEXPlugin {
 				}
 				DimensionMap dataMap = secretionMap.copyAndSet("Microwell=" + p.id);
 				temp = ROIPlus.makeRoi(p.x, p.y, ROIPlus.ORIGIN_CENTER, ROIPlus.ROI_RECT, (int) width, (int) height);
-				Pair<String,Double> result = MicrowellAnalyzer.getSig1ToSig2Ratio(sIm, bIm, p, temp, plot, bfIm, bfThresh, bfRoiScale);
+				ROIPlus cellROI = null;
+				if(haveCell)
+				{
+					cellROI = cellMap.get(secretionMap);
+				}
+				TreeMap<String,Object> result = MicrowellAnalyzer.getSecretionData(sIm, bIm, cellROI, p, temp, plot, bfIm, bfThresh, bfRoiScale);
 				if(result != null)
 				{
 					if(plot)
 					{
-						outputPlotMap.put(dataMap, result.p1);
+						outputPlotMap.put(dataMap, result.get("plot").toString());
 					}
-					outputDataMap.put(dataMap, result.p2);
+					outputDataMap.put(dataMap.copyAndSet("Measurement=Ratio"), (Double) result.get("ratio"));
+					if(haveCell)
+					{
+						outputDataMap.put(dataMap.copyAndSet("Measurement=cellCount"), ((Number) result.get("cellCount")).doubleValue());
+					}
 				}
 				else
 				{

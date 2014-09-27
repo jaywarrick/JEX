@@ -6,9 +6,9 @@ import image.roi.PointList;
 import image.roi.ROIPlus;
 
 import java.awt.Rectangle;
+import java.util.TreeMap;
 
 import logs.Logs;
-import miscellaneous.Pair;
 import miscellaneous.StatisticsUtility;
 import rtools.R;
 
@@ -16,7 +16,7 @@ import rtools.R;
 public class MicrowellAnalyzer {
 	
 	
-	public static Pair<String,Double> getSig1ToSig2Ratio(ImageProcessor image1, ImageProcessor image2, IdPoint microwell, ROIPlus template, boolean plot, ImageProcessor bfIm, double bfThresh, double bfRoiScale)
+	public static TreeMap<String,Object> getSecretionData(ImageProcessor image1, ImageProcessor image2, ROIPlus cells, IdPoint microwell, ROIPlus template, boolean plot, ImageProcessor bfIm, double bfThresh, double bfRoiScale) 
 	{
 		PointList pl = template.getPointList();
 		pl.setCenter(microwell.x, microwell.y);
@@ -71,6 +71,7 @@ public class MicrowellAnalyzer {
 			sig2BG = sig2;
 		}
 		
+		// We want sig1/sig2 ratio so because we calculate dy/dx, we treat sig1 as y and sig2 as x
 		double xMad = StatisticsUtility.mad(sig2BG);
 		double yMad = StatisticsUtility.mad(sig1BG);
 		double xMed = StatisticsUtility.median(sig2BG);
@@ -78,14 +79,10 @@ public class MicrowellAnalyzer {
 		double xThresh = xMed + 4*xMad;
 		double yThresh = yMed + 4*yMad;
 		boolean[] xFilter = StatisticsUtility.getThresholdFilter(sig2, xThresh, true, false); // Make sure we are working with pixels where there is a bead (this is a different measure of 'beadness')
-		
 		double[] xFiltered = StatisticsUtility.applyFilter(sig2, xFilter);
 		double[] yFiltered = StatisticsUtility.applyFilter(sig1, xFilter);
-		
-		
-		// Get the linear model
-		// We want sig1/sig2 ratio so because we calculate dy/dx, we treat sig1 as y and sig2 as x
-		
+			
+		TreeMap<String,Object> results = new TreeMap<String,Object>();
 		if(xFiltered.length > 10)
 		{
 			double rise = StatisticsUtility.mean(yFiltered) - yMed;
@@ -100,21 +97,22 @@ public class MicrowellAnalyzer {
 				path = plotPixels(microwell.id, sig2BG, sig1BG, sig2, sig1, xThresh, yThresh, fit);
 			}
 			
-			return new Pair<String, Double>(path, fit[1]);
+			results.put("plot", path);
+			results.put("ratio", fit[1]);
 			
-			//			LinearModel lm = new LinearModel(xFiltered, yFiltered);
-			//			lm.compute();
-			//			
-			//			// returns {intercept, slope} so grab element at index 1 for slope (i.e. ratio)
-			//			double[] fit = lm.getCoefficients();
-			//			
-			//			String path = null;
-			//			if(plot)
-			//			{
-			//				path = plotPixels(microwell.id, sig2, sig1, xThresh, yThresh, fit);
-			//			}
-			//			
-			//			return new Pair<String, Double>(path, fit[1]);
+			if(cells != null)
+			{
+				int numCells = 0;
+				for(IdPoint p : cells.getPointList())
+				{
+					if(r.contains(p))
+					{
+						numCells++;
+					}
+				}
+				results.put("cellCount", numCells);
+			}
+			return results;
 		}
 		else
 		{
