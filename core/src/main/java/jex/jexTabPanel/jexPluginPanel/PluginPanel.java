@@ -1,11 +1,5 @@
 package jex.jexTabPanel.jexPluginPanel;
 
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.Definition.Experiment;
-import Database.Definition.TypeName;
-import Exporter.Exporter;
-import Exporter.ExporterOptionPanel;
 import guiObject.DialogGlassPane;
 
 import java.awt.Color;
@@ -23,11 +17,18 @@ import jex.statics.DisplayStatics;
 import jex.statics.JEXStatics;
 import miscellaneous.FontUtility;
 import net.miginfocom.swing.MigLayout;
+import plugin.rscripter.ND2DatasetCreator;
 import plugin.rscripter.RScripter;
 import plugins.imageAligner2.ImageAligner;
 import plugins.selector.SelectorPlugInTester;
 import plugins.viewer.ImageBrowser;
 import signals.SSCenter;
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.Definition.Experiment;
+import Database.Definition.TypeName;
+import Exporter.Exporter;
+import Exporter.ExporterOptionPanel;
 
 public class PluginPanel implements ActionListener {
 	
@@ -40,6 +41,7 @@ public class PluginPanel implements ActionListener {
 	private JButton imageAligner = new JButton("Get Image Alignments");
 	private JButton selectorPanel = new JButton("Selector Panel");
 	private JButton rScripterPanel = new JButton("R Scripter");
+	private JButton nd2DatasetCreator = new JButton("ND2 Dataset Creator");
 	
 	public PluginPanel()
 	{
@@ -87,6 +89,9 @@ public class PluginPanel implements ActionListener {
 		this.rScripterPanel.setMaximumSize(new Dimension(150, 20));
 		this.rScripterPanel.setPreferredSize(new Dimension(150, 20));
 		this.rScripterPanel.addActionListener(this);
+		this.nd2DatasetCreator.setMaximumSize(new Dimension(150, 20));
+		this.nd2DatasetCreator.setPreferredSize(new Dimension(150, 20));
+		this.nd2DatasetCreator.addActionListener(this);
 		
 		this.panel.add(label1, "left");
 		// this.panel.add(Box.createVerticalStrut(3));
@@ -103,6 +108,7 @@ public class PluginPanel implements ActionListener {
 		this.panel.add(this.selectorPanel);
 		// this.panel.add(Box.createVerticalGlue());
 		this.panel.add(this.rScripterPanel);
+		this.panel.add(this.nd2DatasetCreator);
 	}
 	
 	// ----------------------------------------------------
@@ -176,6 +182,11 @@ public class PluginPanel implements ActionListener {
 		{
 			@SuppressWarnings("unused")
 			RScripter scripter = new RScripter();
+		}
+		if(e.getSource() == this.nd2DatasetCreator)
+		{
+			@SuppressWarnings("unused")
+			ND2DatasetCreator creator = new ND2DatasetCreator();
 		}
 	}
 }

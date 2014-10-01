@@ -24,8 +24,8 @@ public final class MarkerConstants {
 	public static final String TYPE_MOVIE = "Movie";
 	public static final String TYPE_SOUND = "Sound";
 	public static final String TYPE_VALUE = "Value";
-	public static final String TYPE_Label = "Label";
-	public static final String TYPE_Workflow = "Workflow";
+	public static final String TYPE_LABEL = "Label";
+	public static final String TYPE_WORKFLOW = "Workflow";
 	public static final String TYPE_ROI = "Roi";
 	
 	// Match constants in Database.Definition.Parameter class
