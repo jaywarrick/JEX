@@ -1,4 +1,4 @@
-package function.plugin.plugins.imageTools;
+package function.plugin.plugins.tracking;
 
 import static fiji.plugin.trackmate.tracking.TrackerKeys.DEFAULT_ALTERNATIVE_LINKING_COST_FACTOR;
 import static fiji.plugin.trackmate.tracking.TrackerKeys.DEFAULT_BLOCKING_VALUE;
