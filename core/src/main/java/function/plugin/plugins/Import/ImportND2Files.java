@@ -250,7 +250,16 @@ public class ImportND2Files extends JEXPlugin {
 			}
 		}
 		Dim newColorDim = new Dim("Color", colors);
-		ret.set(ret.indexOfDimWithName("Color"), newColorDim);
+		try
+		{
+			int i = ret.indexOfDimWithName("Color");
+			ret.set(i, newColorDim);
+		}
+		catch (IndexOutOfBoundsException e)
+		{
+			// Just means there is no color dimension
+			// Don't worry about it.
+		}
 		return ret;
 	}
 }
