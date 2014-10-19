@@ -47,13 +47,13 @@ public class FunctionLoadSaveAddRunPanel implements ActionListener {
 		
 		// Create the add button
 		this.loadButton.setText("LOAD");
-		this.loadButton.setToolTipText("Click to add a function to the list");
+		this.loadButton.setToolTipText("Click to load a workflow from a existing file.");
 		// loadButton.setPreferredSize(new Dimension(60,30));
 		// loadButton.setMaximumSize(new Dimension(60,500));
 		this.loadButton.addActionListener(this);
 		
 		this.saveButton.setText("SAVE");
-		this.saveButton.setToolTipText("Click to add a function to the list");
+		this.saveButton.setToolTipText("Click to save the current workflow to a file.");
 		// saveButton.setPreferredSize(new Dimension(60,30));
 		// saveButton.setMaximumSize(new Dimension(60,500));
 		this.saveButton.addActionListener(this);
@@ -66,7 +66,7 @@ public class FunctionLoadSaveAddRunPanel implements ActionListener {
 		
 		// Create the run all button
 		this.runButton.setText("RUN");
-		this.runButton.setToolTipText("Click to add a function to the list");
+		this.runButton.setToolTipText("Run the current workflow.");
 		// runButton.setPreferredSize(new Dimension(60,30));
 		// runButton.setMaximumSize(new Dimension(60,500));
 		this.runButton.addActionListener(this);

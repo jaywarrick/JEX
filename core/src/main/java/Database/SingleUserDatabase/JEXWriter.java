@@ -1,7 +1,5 @@
 package Database.SingleUserDatabase;
 
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
 import function.plugin.IJ2.IJ2PluginUtility;
 import ij.ImagePlus;
 import ij.io.FileSaver;
@@ -25,6 +23,8 @@ import net.imagej.Dataset;
 import org.apache.commons.io.FileUtils;
 
 import preferences.XPreferences;
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
 
 public class JEXWriter {
 	
@@ -308,7 +308,7 @@ public class JEXWriter {
 			return FileUtility.moveFileOrFolder(src, dst, true);
 		}
 		else
-		// else copy
+			// else copy
 		{
 			return copyFileOrFolder(src, dst, true);
 		}

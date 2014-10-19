@@ -4,7 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.IOException;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -12,7 +11,6 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
-import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
@@ -26,7 +24,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 import jex.statics.DisplayStatics;
-import jex.statics.JEXStatics;
+import jex.statics.JEXDialog;
 import logs.Logs;
 import net.miginfocom.swing.MigLayout;
 import Database.Definition.Parameter;
@@ -180,7 +178,7 @@ public class JParameterPanel implements DocumentListener, ChangeListener, Action
 			result = "" + ((JTextArea) this.resultField).getText();
 		}
 		else
-		// works for both plain text field and file chooser text field
+			// works for both plain text field and file chooser text field
 		{
 			result = ((JTextField) this.resultField).getText();
 		}
@@ -261,35 +259,26 @@ public class JParameterPanel implements DocumentListener, ChangeListener, Action
 	{
 		if(action.getSource() == this.fileButton)
 		{
-			JFileChooser fc = new JFileChooser();
-			fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-			int returnVal = fc.showOpenDialog(JEXStatics.main);
-			String directory = null;
-			if(returnVal == JFileChooser.APPROVE_OPTION)
+			// Choose a file/directory
+			String path = JEXDialog.fileChooseDialog(false);
+				
+			if(path != null)
 			{
-				try
-				{
-					directory = fc.getSelectedFile().getCanonicalPath();
-				}
-				catch (IOException e)
-				{
-					e.printStackTrace();
-					return;
-				}
-				if(directory == null)
+				String old = this.p.getValue();
+				((JTextField) this.resultField).setText(path);
+				
+				this.p.setValue(this.getValue());
+				if(this.p.type == Parameter.PASSWORD)
 				{
 					return;
 				}
+				this.resultField.setToolTipText(this.p.getValue());
+				Logs.log("Changed parameter from " + old + " to " + this.p.getValue(), 0, this);
 			}
-			String old = this.p.getValue();
-			((JTextField) this.resultField).setText(directory);
-			this.p.setValue(this.getValue());
-			if(this.p.type == Parameter.PASSWORD)
+			else
 			{
-				return;
-			}
-			this.resultField.setToolTipText(this.p.getValue());
-			Logs.log("Changed parameter from " + old + " to " + this.p.getValue(), 0, this);
+				Logs.log("File chooser dialog canceled", 0, this);
+			}			
 		}
 		else if(action.getSource() == this.scriptButton)
 		{
