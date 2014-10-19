@@ -251,6 +251,7 @@ public class ND2DatasetCreator implements PlugInController, ActionListener {
 		{
 			JEXData value = ValueWriter.makeValueObject(this.image.getText().trim(), files[count].getAbsolutePath());
 			dataArray.put(target, value);
+			count = count + 1;
 		}
 		JEXStatics.jexDBManager.saveDataInEntries(dataArray);
 		JEXStatics.jexManager.saveCurrentDatabase();
