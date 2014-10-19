@@ -8,13 +8,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileFilter;
-import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
-import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -23,6 +24,7 @@ import javax.swing.JTextArea;
 import javax.swing.ScrollPaneConstants;
 
 import jex.statics.DisplayStatics;
+import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import logs.Logs;
 import miscellaneous.SimpleFileFilter;
@@ -48,13 +50,13 @@ public class ND2DatasetCreator implements PlugInController, ActionListener {
 	public JPanel buttons;
 	
 	// Make the text fields
-	public JTextArea expName = new JTextArea("", 5, 50);
-	public JTextArea expInfo = new JTextArea("", 5, 50);
-	public JTextArea expDate = new JTextArea("", 5, 50);
-	public JTextArea directory = new JTextArea("", 5, 50);
-	public JTextArea image = new JTextArea("", 5, 50);
-	public JTextArea imRows = new JTextArea("", 5, 50);
-	public JTextArea imCols = new JTextArea("", 5, 50);
+	public JTextArea expName;
+	public JTextArea expInfo;
+	public JTextArea expDate;
+	public JTextArea directory;
+	public JTextArea image;
+	public JTextArea imRows;
+	public JTextArea imCols;
 	
 	// Make the buttons
 	public JButton create = new JButton("Create");
@@ -70,7 +72,19 @@ public class ND2DatasetCreator implements PlugInController, ActionListener {
 	}
 	
 	private void initialize()
-	{				
+	{
+		DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
+		Date date = new Date();
+		String theDate = dateFormat.format(date);
+		// Make the text fields
+		this.expName = new JTextArea(theDate, 5, 50);
+		this.expInfo = new JTextArea("", 5, 50);
+		this.expDate = new JTextArea(theDate, 5, 50);
+		this.directory = new JTextArea("", 5, 50);
+		this.image = new JTextArea("Image", 5, 50);
+		this.imRows = new JTextArea("1", 5, 50);
+		this.imCols = new JTextArea("1", 5, 50);
+		
 		// Create the buttons panel
 		this.buttons = new JPanel();
 		this.buttons.setBackground(DisplayStatics.lightBackground);
@@ -92,7 +106,6 @@ public class ND2DatasetCreator implements PlugInController, ActionListener {
 		this.infos.add(this.getChooserPanel("ND2 File Directory", this.directory, this.fileButton), "growx");
 		this.infos.add(getInfo("Image Name", this.image, false),  "growx");
 		this.infos.add(getInfo("ImRows", this.imRows, false),  "growx");
-		this.infos.add(getInfo("ImRows", this.imCols, false),  "growx");
 		this.infos.add(getInfo("ImCols", this.imCols, false),  "growx");
 		
 		// Create the main panel and add elements
@@ -174,39 +187,30 @@ public class ND2DatasetCreator implements PlugInController, ActionListener {
 				String expInfoStr = this.expInfo.getText().trim();
 				String dateStr = this.expDate.getText().trim();
 				
-				JEXStatics.jexManager.createEntryArray(expNameStr, dateStr, expInfoStr, w, h);
-				this.entries = JEXStatics.jexManager.getExperimentTree().get(expNameStr).entries;
-				JEXStatics.jexManager.setViewedExperiment(this.expName.getText().trim());
-				JEXStatics.jexManager.setSelectedEntries(this.entries);
-				this.saveValueObject(files);
-				this.runImport();
-				this.dialog.setVisible(false);
-				this.dialog.dispose();
+				boolean created = JEXStatics.jexManager.createEntryArray(expNameStr, dateStr, expInfoStr, w, h);
+				if(created)
+				{
+					this.entries = JEXStatics.jexManager.getExperimentTree().get(expNameStr).entries;
+					JEXStatics.jexManager.setViewedExperiment(this.expName.getText().trim());
+					JEXStatics.jexManager.setSelectedEntries(this.entries);
+					this.saveValueObject(files);
+					this.runImport();
+					this.dialog.setVisible(false);
+					this.dialog.dispose();
+				}
+				else
+				{
+					JEXDialog.messageDialog("Aborting creation of dataset and entries and subsequent import of nd2 files.\nSpecify a unique dataset name and retry.");
+				}
 			}
 		}
 		if(arg0.getSource() == this.fileButton)
 		{
-			JFileChooser fc = new JFileChooser();
-			fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-			int returnVal = fc.showOpenDialog(JEXStatics.main);
-			String directory = null;
-			if(returnVal == JFileChooser.APPROVE_OPTION)
+			String path = JEXDialog.fileChooseDialog(true);
+			if(path != null)
 			{
-				try
-				{
-					directory = fc.getSelectedFile().getCanonicalPath();
-				}
-				catch (IOException e)
-				{
-					e.printStackTrace();
-					return;
-				}
-				if(directory == null)
-				{
-					return;
-				}
+				this.directory.setText(path);
 			}
-			this.directory.setText(directory);
 		}
 		if(arg0.getSource() == this.cancel)
 		{
@@ -272,7 +276,17 @@ public class ND2DatasetCreator implements PlugInController, ActionListener {
 			JEXWorkflow wf = new JEXWorkflow("Import ND2 Files");
 			wf.add(function);
 			JEXStatics.main.displayFunctionPane();
-			JEXStatics.cruncher.runWorkflow(wf, this.entries, true);
+			
+			// Run the import for each nd2 file as a separate item in the process queue so things can be canceled and saved more atomically
+			// This is probably important when dealing with big files that take forever.
+			// For example, you can check to see if the first one imports fine while the second is loading and,
+			// if something happens to the second, the database is saved with the first successfully loaded.
+			for(JEXEntry e : this.entries)
+			{
+				TreeSet<JEXEntry> singleEntry = new TreeSet<JEXEntry>();
+				singleEntry.add(e);
+				JEXStatics.cruncher.runWorkflow(wf, singleEntry, true);
+			}
 		}
 		catch (InstantiationException e)
 		{
