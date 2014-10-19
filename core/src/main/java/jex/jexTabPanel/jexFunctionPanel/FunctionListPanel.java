@@ -1,9 +1,5 @@
 package jex.jexTabPanel.jexFunctionPanel;
 
-import cruncher.JEXFunction;
-import function.CrunchFactory;
-import function.JEXCrunchable;
-
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -28,7 +24,6 @@ import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
-import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
@@ -44,9 +39,12 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
 import jex.statics.DisplayStatics;
-import jex.statics.PrefsUtility;
+import jex.statics.JEXDialog;
 import logs.Logs;
 import net.miginfocom.swing.MigLayout;
+import cruncher.JEXFunction;
+import function.CrunchFactory;
+import function.JEXCrunchable;
 
 public class FunctionListPanel implements MouseWheelListener {
 	
@@ -132,36 +130,12 @@ public class FunctionListPanel implements MouseWheelListener {
 	public void loadFunctionList()
 	{
 		// Creating file chooser to open user preferences
-		JFileChooser fc = new JFileChooser();
+		String path = JEXDialog.fileChooseDialog(false);
 		
-		// Set the current directory
-		String lastPath = PrefsUtility.getLastPath();
-		File filepath = new File(lastPath);
-		if(filepath.isDirectory())
+		if(path != null)
 		{
-			fc.setCurrentDirectory(filepath);
-		}
-		else
-		{
-			File filefolder = filepath.getParentFile();
-			fc.setCurrentDirectory(filefolder);
-		}
-		
-		// Open dialog box
-		int returnVal = fc.showOpenDialog(this.panel);
-		
-		if(returnVal == JFileChooser.APPROVE_OPTION)
-		{
-			// Get the file
-			File file = fc.getSelectedFile();
-			Logs.log("Loading function list at location " + file.getPath(), 0, this);
-			
-			// Set the last path opened to the path selected
-			PrefsUtility.setLastPath(file.getPath());
-			
 			// Save the function list
-			this.parent.loadWorkflowFile(file);
-			
+			this.parent.loadWorkflowFile(new File(path));
 		}
 		else
 		{
@@ -172,36 +146,12 @@ public class FunctionListPanel implements MouseWheelListener {
 	public void saveFunctionList()
 	{
 		// Creating file chooser to open user preferences
-		JFileChooser fc = new JFileChooser();
+		String path = JEXDialog.fileSaveDialog();
 		
-		// Set the current directory
-		String lastPath = PrefsUtility.getLastPath();
-		File filepath = new File(lastPath);
-		if(filepath.isDirectory())
+		if(path != null)
 		{
-			fc.setCurrentDirectory(filepath);
-		}
-		else
-		{
-			File filefolder = filepath.getParentFile();
-			fc.setCurrentDirectory(filefolder);
-		}
-		
-		// Open dialog box
-		int returnVal = fc.showSaveDialog(this.panel);
-		
-		if(returnVal == JFileChooser.APPROVE_OPTION)
-		{
-			// Get the file
-			File file = fc.getSelectedFile();
-			Logs.log("Saving function list at location " + file.getPath(), 0, this);
-			
-			// Set the last path opened to the path selected
-			PrefsUtility.setLastPath(file.getPath());
-			
 			// Save the function list
-			this.parent.saveFunctionList(file);
-			
+			this.parent.saveFunctionList(new File(path));
 		}
 		else
 		{

@@ -1,5 +1,31 @@
 package jex;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
+
+import javax.swing.JOptionPane;
+
+import jex.infoPanels.InfoPanelController;
+import jex.jexTabPanel.jexLabelPanel.LabelsPanel;
+import jex.objectAndEntryPanels.JEXDataPanel;
+import jex.statics.JEXDialog;
+import jex.statics.JEXStatics;
+import jex.statics.PrefsUtility;
+import logs.Logs;
+import miscellaneous.CSVList;
+import miscellaneous.DirectoryManager;
+import miscellaneous.FileUtility;
+import preferences.XPreferences;
+import signals.SSCenter;
+import tables.Dim;
+import tables.DimTable;
+import tables.DimensionMap;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXDataSingle;
 import Database.DBObjects.JEXEntry;
@@ -19,33 +45,6 @@ import Database.SingleUserDatabase.JEXDBInfo;
 import Database.SingleUserDatabase.JEXWriter;
 import Database.SingleUserDatabase.Repository;
 import Database.SingleUserDatabase.tnvi;
-import guiObject.DialogGlassPane;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
-
-import javax.swing.JOptionPane;
-
-import jex.infoPanels.InfoPanelController;
-import jex.jexTabPanel.jexLabelPanel.LabelsPanel;
-import jex.objectAndEntryPanels.JEXDataPanel;
-import jex.statics.JEXStatics;
-import jex.statics.PrefsUtility;
-import logs.Logs;
-import miscellaneous.CSVList;
-import miscellaneous.DirectoryManager;
-import miscellaneous.FileUtility;
-import preferences.XPreferences;
-import signals.SSCenter;
-import tables.Dim;
-import tables.DimTable;
-import tables.DimensionMap;
 
 public class JEXManager {
 	
@@ -707,9 +706,9 @@ public class JEXManager {
 	 * @param info
 	 * @param w
 	 * @param h
-	 * @return entries return the array in case you want to add things like labels using JEXDBManager subsequently to each entry but these entries are already added to the database
+	 * @return false if on already exists and creation was aborted
 	 */
-	public void createEntryArray(String expName, String date, String info, int w, int h)
+	public boolean createEntryArray(String expName, String date, String info, int w, int h)
 	{
 		String author = this.userName;
 		
@@ -718,19 +717,14 @@ public class JEXManager {
 		Experiment arraysOfSameExperimentName = experiments.get(expName);
 		
 		if(arraysOfSameExperimentName != null)
-		{
-			DialogGlassPane diagPanel = new DialogGlassPane("Warning");
-			diagPanel.setSize(400, 200);
-			
-			ErrorMessagePane errorPane = new ErrorMessagePane("Database entries in same eperiment and tray already exist");
-			diagPanel.setCentralPanel(errorPane);
-			
-			JEXStatics.main.displayGlassPane(diagPanel, true);
-			return;
+		{			
+			JEXDialog.messageDialog("Database entries in same eperiment and tray already exist");
+			return false;
 		}
 		
 		JEXStatics.jexDBManager.addEntries(expName, w, h, date, author, info);
 		JEXStatics.statusBar.setStatusText("Created db entries");
+		return true;
 	}
 	
 	// ---------------------------------------------
