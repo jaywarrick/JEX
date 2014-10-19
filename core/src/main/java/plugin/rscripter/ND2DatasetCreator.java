@@ -93,6 +93,7 @@ public class ND2DatasetCreator implements PlugInController, ActionListener {
 		this.infos.add(getInfo("Image Name", this.image, false),  "growx");
 		this.infos.add(getInfo("ImRows", this.imRows, false),  "growx");
 		this.infos.add(getInfo("ImRows", this.imCols, false),  "growx");
+		this.infos.add(getInfo("ImCols", this.imCols, false),  "growx");
 		
 		// Create the main panel and add elements
 		this.main = new JPanel();
