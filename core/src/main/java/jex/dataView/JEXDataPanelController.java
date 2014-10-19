@@ -1,13 +1,5 @@
 package jex.dataView;
 
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DataReader.FileReader;
-import Database.DataReader.ImageReader;
-import Database.DataReader.LabelReader;
-import Database.DataReader.MovieReader;
-import Database.DataReader.ValueReader;
-import Database.SingleUserDatabase.JEXWriter;
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
 
@@ -20,7 +12,6 @@ import java.util.TreeMap;
 import java.util.Vector;
 
 import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -32,6 +23,14 @@ import jex.statics.DisplayStatics;
 import miscellaneous.FontUtility;
 import net.miginfocom.swing.MigLayout;
 import tables.DimensionMap;
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DataReader.FileReader;
+import Database.DataReader.ImageReader;
+import Database.DataReader.LabelReader;
+import Database.DataReader.MovieReader;
+import Database.DataReader.ValueReader;
+import Database.SingleUserDatabase.JEXWriter;
 
 public class JEXDataPanelController {
 	
@@ -95,11 +94,12 @@ public class JEXDataPanelController {
 		JEXValueView()
 		{
 			this.setBackground(DisplayStatics.lightBackground);
-			this.setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
+			this.setLayout(new MigLayout("flowx, ins 0","[grow,center]","[grow,center]"));
 			
 			String valueStr = ValueReader.readValueObject(JEXDataPanelController.this.data);
 			JLabel valueLabel = new JLabel(valueStr);
-			this.add(valueLabel);
+			this.add(valueLabel, "width 0:pref:, height 0:pref:");
+			this.setToolTipText(valueStr);
 		}
 	}
 	
@@ -110,11 +110,12 @@ public class JEXDataPanelController {
 		JEXLabelView()
 		{
 			this.setBackground(DisplayStatics.lightBackground);
-			this.setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
+			this.setLayout(new MigLayout("flowx, ins 0","[grow,center]","[grow,center]"));
 			
 			String valueStr = "" + LabelReader.readLabelValue(JEXDataPanelController.this.data);
 			JLabel valueLabel = new JLabel(valueStr);
-			this.add(valueLabel);
+			this.add(valueLabel, "width 0:pref:, height 0:pref:");
+			this.setToolTipText(valueStr);
 		}
 	}
 	
@@ -234,6 +235,7 @@ public class JEXDataPanelController {
 		}
 	}
 	
+	@SuppressWarnings("unchecked")
 	public static void addFileListScrollPane(ClickableFileListPanel toAddTo, Collection<String> paths)
 	{
 		toAddTo.setLayout(new MigLayout("flowy, ins 10, gapy 0", "[fill,grow]", "[fill,grow]"));

@@ -1,9 +1,5 @@
 package jex.jexTabPanel.jexViewPanel;
 
-import Database.Definition.Experiment;
-import Database.Definition.HierarchyLevel;
-
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.util.TreeMap;
 
@@ -17,6 +13,8 @@ import jex.statics.JEXStatics;
 import logs.Logs;
 import net.miginfocom.swing.MigLayout;
 import signals.SSCenter;
+import Database.Definition.Experiment;
+import Database.Definition.HierarchyLevel;
 
 public class JEXViewPanel extends JPanel {
 	
@@ -89,7 +87,7 @@ public class JEXViewPanel extends JPanel {
 		this.removeAll();
 		
 		// Set graphics
-		this.setLayout(new BorderLayout());
+		this.setLayout(new MigLayout("flowx, ins 0","[grow 100]","[grow 100]"));
 		this.setBackground(DisplayStatics.background);
 		
 		if(tray != null)
@@ -99,7 +97,7 @@ public class JEXViewPanel extends JPanel {
 			arrayPaneController.setArray(tray);
 			
 			// Place the components in this panel
-			this.add(arrayPaneController.panel(), BorderLayout.CENTER);
+			this.add(arrayPaneController.panel(), "grow");
 		}
 		else
 		{
@@ -107,9 +105,9 @@ public class JEXViewPanel extends JPanel {
 			label.setForeground(Color.white);
 			JPanel pane = new JPanel();
 			pane.setBackground(DisplayStatics.background);
-			pane.setLayout(new MigLayout("flowy, ins 5, center, center", "[fill,grow]", "20[fill,grow]10"));
+			pane.setLayout(new MigLayout("flowy, ins 5, center, center", "[grow]", "20[grow]10"));
 			pane.add(label, "width 100%, grow");
-			this.add(pane, BorderLayout.CENTER);
+			this.add(pane, "grow");
 		}
 		
 		// REvalidate

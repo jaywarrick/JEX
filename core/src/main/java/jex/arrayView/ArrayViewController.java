@@ -1,8 +1,6 @@
 package jex.arrayView;
 
-import Database.Definition.Experiment;
-import Database.Definition.HierarchyLevel;
-
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.TreeMap;
@@ -15,6 +13,8 @@ import jex.statics.JEXStatics;
 import logs.Logs;
 import net.miginfocom.swing.MigLayout;
 import signals.SSCenter;
+import Database.Definition.Experiment;
+import Database.Definition.HierarchyLevel;
 
 public class ArrayViewController {
 	
@@ -187,24 +187,8 @@ public class ArrayViewController {
 			// Remove old layout
 			this.removeAll();
 			
-			// Create the layout and set the gui parameters of this panel
-			int percentWidth = (int) (100.0 / (double) width);
-			String columnStr = "5";
-			for (int i = 0; i < width; i++)
-			{
-				columnStr = columnStr + "[]5";
-			}
-			
-			int percentHeight = (int) (100.0 / (double) height);
-			String rowStr = "5";
-			for (int i = 0; i < width; i++)
-			{
-				rowStr = rowStr + "[]5";
-			}
-			
-			// Set the mig layout
 			this.setBackground(DisplayStatics.background);
-			this.setLayout(new MigLayout("ins 0", columnStr, rowStr));
+			this.setLayout(new MigLayout("ins 0", "[grow 100]5", "[grow 100]5"));
 			
 			// add the array panels to this panel
 			for (int i = 0; i < width; i++)
@@ -213,13 +197,13 @@ public class ArrayViewController {
 				{
 					// Get the cell panel
 					JPanel pane = arrayCellControllers[j][i].panel();
-					this.add(pane, "Cell " + i + " " + j + " 0,width " + percentWidth + "%,height " + percentHeight + "%");
+					this.add(pane, "Cell " + i + " " + j + ", grow, width 0:max:, height 0:max:");
 				}
 			}
 			
 			// repain and revalidate
 			this.invalidate();
-			this.validate();
+			this.revalidate();
 			this.repaint();
 		}
 		

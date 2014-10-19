@@ -1,7 +1,5 @@
 package jex;
 
-import Database.SingleUserDatabase.JEXDBIO;
-import cruncher.Cruncher;
 import guiObject.DialogGlassPane;
 import guiObject.SignalMenuButton;
 import icons.IconRepository;
@@ -52,12 +50,15 @@ import jex.statics.JEXStatics;
 import jex.statics.KeyStatics;
 import jex.statics.PrefsUtility;
 import logs.Logs;
+import net.miginfocom.swing.MigLayout;
 import plugins.labelManager.DatabaseLabelManager;
 import preferences.XPreferencePanelController;
 import preferences.XPreferences;
 import rtools.R;
 import signals.SSCenter;
 import updates.Updater;
+import Database.SingleUserDatabase.JEXDBIO;
+import cruncher.Cruncher;
 
 public class JEXperiment extends JFrame implements ActionListener, WindowListener, WindowFocusListener, KeyEventDispatcher {
 	
@@ -234,17 +235,17 @@ public class JEXperiment extends JFrame implements ActionListener, WindowListene
 		
 		// Get the content panel
 		Container contentPane = this.getContentPane();
-		contentPane.setLayout(new BorderLayout());
+		contentPane.setLayout(new MigLayout("flowx, ins 0","[grow]","[grow]"));
 		contentPane.setBackground(DisplayStatics.background);
 		
 		// Add the menu bar
 		this.createMenuBar();
-		contentPane.add(this.menuPane, BorderLayout.PAGE_START);
+		contentPane.add(this.menuPane, "north, height pref!");
 		
 		// Prepare the panels in the main split pane
 		this.centerPane.setBackground(DisplayStatics.background);
-		this.centerPane.setLayout(new BorderLayout());
-		this.centerPane.add(Box.createRigidArea(new Dimension(50, 50)));
+		this.centerPane.setLayout(new MigLayout("flowx, ins 0","[grow]","[grow]"));
+		//this.centerPane.add(Box.createRigidArea(new Dimension(50, 50)));
 		
 		// Prepare the left split pane
 		this.leftPanel = new EntryAndObjectPanel();
@@ -267,11 +268,11 @@ public class JEXperiment extends JFrame implements ActionListener, WindowListene
 		this.menuSplitPane.setResizeWeight(0.0);
 		this.menuSplitPane.setLeftComponent(this.leftPanel);
 		this.menuSplitPane.setRightComponent(this.centerSplitPane);
-		contentPane.add(this.menuSplitPane, BorderLayout.CENTER);
+		contentPane.add(this.menuSplitPane, "grow");
 		
 		// Add the status bar
 		new Thread(JEXStatics.statusBar).start();
-		contentPane.add(JEXStatics.statusBar, BorderLayout.PAGE_END);
+		contentPane.add(JEXStatics.statusBar, "south, height pref!");
 		
 		// Set the key listener
 		this.setQuickKeys();
@@ -796,9 +797,9 @@ public class JEXperiment extends JFrame implements ActionListener, WindowListene
 		Logs.log("Changing view", 0, this);
 		
 		this.centerPane.removeAll();
-		this.centerPane.add(newView, BorderLayout.CENTER);
-		this.centerPane.revalidate();
-		this.centerPane.repaint();
+		this.centerPane.add(newView, "grow");
+		newView.revalidate();
+		newView.repaint();
 	}
 	
 	/**
