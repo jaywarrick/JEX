@@ -11,7 +11,9 @@ import java.util.Vector;
 import java.util.regex.Pattern;
 
 import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 
+import jex.statics.JEXStatics;
 import logs.Logs;
 
 import org.apache.commons.io.FileUtils;
@@ -84,7 +86,25 @@ public class FileUtility implements Comparator<File> {
 	 */
 	public static void deleteDir(File dir) throws IOException
 	{
-		FileUtils.deleteDirectory(dir);
+		if(dir.isDirectory())
+		{
+			Logs.log("Dangerous to delete directories...", FileUtility.class);
+			
+			// Double check with user.
+			int n = JOptionPane.showConfirmDialog(
+			    JEXStatics.main,
+			    "Are you sure you want to delete the entire directory: " + dir.getPath(),
+			    "Continue?",
+			    JOptionPane.YES_NO_OPTION);
+			if(n == 0)
+			{
+				FileUtils.deleteDirectory(dir);
+			}
+		}
+		else
+		{
+			Logs.log("Supplied file is not a directory, aborting attempt to delete: " + dir.getPath(), FileUtility.class);
+		}
 	}
 	
 	/**
@@ -117,7 +137,7 @@ public class FileUtility implements Comparator<File> {
 				{
 					if(dst.isDirectory())
 					{
-						FileUtils.deleteDirectory(dst);
+						deleteDir(dst);						
 					}
 					else
 					{
