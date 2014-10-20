@@ -118,7 +118,7 @@ public class SelectedObjectInfoPanelController extends InfoPanelController {
 			super();
 			
 			// Do some connexions
-			viewInArray.addActionListener(this);
+			viewInArray.addActionListener(this);			
 			
 			// Make the gui
 			rebuild();
