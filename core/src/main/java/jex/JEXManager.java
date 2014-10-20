@@ -187,6 +187,7 @@ public class JEXManager {
 		this.groups = null;
 		this.infoPanelControllersExp = null;
 		this.infoPanelControllersArr = null;
+		this.displayDataInArray = true;
 		
 		// Make the scope set
 		this.scopeSet = new HashMap<String,String>();
