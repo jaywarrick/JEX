@@ -260,6 +260,7 @@ public class JEXFunction {
 		HashSet<JEXData> savedOutput = new HashSet<JEXData>();
 		for(JEXData d : dataOutput)
 		{
+			// Have to iterate through all outputs multiple times to match names and selection because the HashSet is not ordered
 			for(Integer i : this.outputs.keySet())
 			{
 				if(this.outputs.get(i).equals(d.getTypeName()))
