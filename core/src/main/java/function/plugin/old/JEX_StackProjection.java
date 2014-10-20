@@ -36,7 +36,7 @@ import tables.DimensionMap;
  */
 public class JEX_StackProjection extends JEXCrunchable {
 	
-	public static String METHOD_MEAN = "mean", METHOD_MIN = "min", METHOD_MAX = "max", METHOD_MEDIAN = "median", METHOD_SUM = "sum", METHOD_STDEV = "std. dev.";
+	public static final String METHOD_MEAN = "mean", METHOD_MIN = "min", METHOD_MAX = "max", METHOD_MEDIAN = "median", METHOD_SUM = "sum", METHOD_STDEV = "std. dev.";
 	
 	public JEX_StackProjection()
 	{}

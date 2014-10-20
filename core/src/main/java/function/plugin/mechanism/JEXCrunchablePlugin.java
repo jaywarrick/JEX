@@ -12,12 +12,15 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Vector;
 
+import jex.statics.JEXStatics;
 import logs.Logs;
 import miscellaneous.Canceler;
 
 import org.scijava.InstantiableException;
 import org.scijava.util.ClassUtils;
 import org.scijava.util.ConversionUtils;
+
+import cruncher.Ticket;
 
 
 public class JEXCrunchablePlugin extends JEXCrunchable {
@@ -37,6 +40,22 @@ public class JEXCrunchablePlugin extends JEXCrunchable {
 			Logs.log("Couldn't instantiate the JEXPlugin.", Logs.ERROR, this);
 			e.printStackTrace();
 		}
+	}
+	
+	// run after ending
+	public void finalizeEntry()
+	{
+		JEXStatics.statusBar.setProgressPercentage(0);
+	}
+	
+	public void prepareTicket()
+	{   
+		this.plugin.prepareTicket();
+	}
+	
+	public void finalizeTicket(Ticket ticket)
+	{   
+		this.plugin.finalizeTicket(ticket);
 	}
 	
 	public int getMaxThreads()
