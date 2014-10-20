@@ -135,8 +135,9 @@ public class CrunchFactory extends URLClassLoader {
 			}
 			catch(Exception e)
 			{
+				e.printStackTrace();
 				// Just skip this because I think the EclipseHelper is messing up the accumulation of the annotation index
-				Logs.log("Remember to figure out why annotation index in Eclipse helper gets called sometimes (when legacy called first) and not others (when ImageJ2 called first).", CrunchFactory.class);
+				Logs.log("Couldn't load " + info.getName() + ". Check error and see if an @Parameter, @Input, or @Output annotation isn't perfectly correct.", CrunchFactory.class);
 			}
 		}
 		return ret;
@@ -224,11 +225,6 @@ public class CrunchFactory extends URLClassLoader {
 		// Create a structure to store all the ExperimentalDataCrunch Objects
 		TreeMap<String,JEXCrunchable> result = new TreeMap<String,JEXCrunchable>();
 		
-		Logs.log("Getting new JEXPlugins.", CrunchFactory.class);
-		//		loadMissing();
-		TreeMap<String,JEXCrunchable> jexPlugins = loadJEXCrunchablePlugins();
-		result.putAll(jexPlugins);
-		
 		Logs.log("Getting ImageJ Plugins.", CrunchFactory.class);
 		TreeMap<String,IJ2CrunchablePlugin> ij2Plugins = IJ2PluginUtility.ijCommands;
 		result.putAll(ij2Plugins);
@@ -241,8 +237,7 @@ public class CrunchFactory extends URLClassLoader {
 		
 		Logs.log("Getting internal JEXCrunchables.", CrunchFactory.class);
 		// Find internally defined plugin class names
-		URL classLoaderURL = JEXCrunchable.class.getResource("JEXCrunchable.class");
-		Logs.log("A message that won't error...", CrunchFactory.class);
+		URL classLoaderURL = JEXCrunchable.class.getResource("JEXCrunchable.class");		
 		if(classLoaderURL == null)
 		{
 			Logs.log("ClassLoaderURL was null", CrunchFactory.class);
@@ -383,6 +378,13 @@ public class CrunchFactory extends URLClassLoader {
 		{
 			e.printStackTrace();
 		}
+		
+		// Load these last in case there is a name conflict, we take the newer version instead as JEXPlugin style is the newer style
+		Logs.log("Getting new JEXPlugins.", CrunchFactory.class);
+		//		loadMissing();
+		TreeMap<String,JEXCrunchable> jexPlugins = loadJEXCrunchablePlugins();
+		result.putAll(jexPlugins);
+		
 		return result;
 	}
 	
