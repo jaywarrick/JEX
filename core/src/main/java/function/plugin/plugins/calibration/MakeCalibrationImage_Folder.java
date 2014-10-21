@@ -2,16 +2,12 @@ package function.plugin.plugins.calibration;
 
 import ij.ImagePlus;
 import ij.plugin.filter.RankFilters;
-import ij.process.Blitter;
-import ij.process.FloatBlitter;
 import ij.process.FloatProcessor;
 
-import java.io.File;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
-
-import jex.statics.JEXStatics;
+import java.util.Vector;
 
 import org.scijava.plugin.Plugin;
 
@@ -30,7 +26,7 @@ import function.plugin.old.JEX_StackProjection;
 
 @Plugin(
 		type = JEXPlugin.class,
-		name="Make Calibration Image (Folder, Unfinished)",
+		name="Make Calibration Image (Folder)",
 		menuPath="Calibration",
 		visible=true,
 		description="Treat an image object as a stack, calculate the median/mean of subgroups of images, take the mean of the subgroups, and smooth if desired. Result of the first successful entry is copied to all selected entries if desired."
@@ -56,6 +52,16 @@ public class MakeCalibrationImage_Folder extends JEXPlugin {
 	
 	@ParameterMarker(
 			uiOrder=1,
+			name="Folder",
+			description="Folder from which to grab a list of image files and treat as a stack",
+			ui=MarkerConstants.UI_FILECHOOSER,
+			choices={ "Mean", "Median", "Pseudo-Median" },
+			defaultChoice=2
+			)
+	String folder;
+	
+	@ParameterMarker(
+			uiOrder=2,
 			name="Stack projection method",
 			description="Calculation method for projecting the stack to a single image (pseudo median = The median of subgroups will be averaged)",
 			ui=MarkerConstants.UI_DROPDOWN,
@@ -65,7 +71,7 @@ public class MakeCalibrationImage_Folder extends JEXPlugin {
 	String projectionMethod;
 	
 	@ParameterMarker(
-			uiOrder=2,
+			uiOrder=3,
 			name="Pseudo median subroup size",
 			description="The number of images in each subgroup. Used for pseudo median option. Each median operation only produces integer value increments. Mean produces decimal increments",
 			ui=MarkerConstants.UI_TEXTFIELD,
@@ -74,7 +80,34 @@ public class MakeCalibrationImage_Folder extends JEXPlugin {
 	int groupSize;
 	
 	@ParameterMarker(
-			uiOrder=3,
+			uiOrder=4,
+			name="Start frame",
+			description="Index of first frame to include from stack (first index is 1, inclusive)",
+			ui=MarkerConstants.UI_TEXTFIELD,
+			defaultText="1"
+			)
+	int start;
+	
+	@ParameterMarker(
+			uiOrder=5,
+			name="Interval",
+			description="Interval between successive images used from the stack (typically set to 1 to grab all frames starting at 'start' and ending at 'start' + 'total' + 1).",
+			ui=MarkerConstants.UI_TEXTFIELD,
+			defaultText="1"
+			)
+	int interval;
+	
+	@ParameterMarker(
+			uiOrder=6,
+			name="Total",
+			description="Number of frames to grab total",
+			ui=MarkerConstants.UI_TEXTFIELD,
+			defaultText="10"
+			)
+	int total;
+	
+	@ParameterMarker(
+			uiOrder=7,
 			name="Smoothing method",
 			description="Smoothing function to apply at the end, if at all.",
 			ui=MarkerConstants.UI_DROPDOWN,
@@ -84,22 +117,13 @@ public class MakeCalibrationImage_Folder extends JEXPlugin {
 	String smoothingMethod;
 	
 	@ParameterMarker(
-			uiOrder=4,
+			uiOrder=8,
 			name="Smoothing filter radius",
 			description="Radius of the smoothing filter",
 			ui=MarkerConstants.UI_TEXTFIELD,
 			defaultText="0.0"
 			)
 	double smoothingRadius;
-	
-	@ParameterMarker(
-			uiOrder=5,
-			name="Copy 1st successful to all",
-			description="If true, copies the first successful result to all selected entries (good for making a common calibration image for many entries).",
-			ui=MarkerConstants.UI_CHECKBOX,
-			defaultBoolean=true
-			)
-	boolean copyAll;
 	
 	/////////// Define Outputs ///////////
 	
@@ -109,14 +133,7 @@ public class MakeCalibrationImage_Folder extends JEXPlugin {
 	@Override
 	public int getMaxThreads()
 	{
-		if(copyAll)
-		{
-			return 1;
-		}
-		else
-		{
-			return 10;
-		}
+		return 1;
 	}
 	
 	@Override
@@ -132,135 +149,65 @@ public class MakeCalibrationImage_Folder extends JEXPlugin {
 		{
 			String[] filePaths = ImageReader.readObjectToImagePathStack(imageData);
 			
+			Vector<Integer> indicesToGrab = getIndicesToGrab(); 
+			
 			FloatProcessor imp = null;
 			if(projectionMethod.equals("Mean"))
 			{
-				imp = getMeanProjection(filePaths);
+				imp = getMeanProjection(filePaths, indicesToGrab);
 			}
 			else
 			{
-				imp = getPseudoMedianProjection(filePaths, groupSize);
+				imp = getPseudoMedianProjection(filePaths, indicesToGrab);
 			}
 			
 			if(!smoothingMethod.equals("none"))
 			{
 				RankFilters rF = new RankFilters();
-				rF.rank(imp, smoothingRadius, convertRankMethodNameToInt(smoothingMethod));
+				rF.rank(imp, smoothingRadius, MakeCalibrationImage_Object.convertRankMethodNameToInt(smoothingMethod));
 			}
 			
 			// End Actual Function
-			if(copyAll)
-			{
-				// Then set the shared instance to trigger skipping of rest of entries and copying of result via the "finishTicket" mechanism
-				sharedCalibrationImage = new ImagePlus("temp", imp);
-			}
-			else
-			{
-				// Save the image to the function output
-				String path = JEXWriter.saveImage(imp);
-				output = ImageWriter.makeImageObject("temp", path); 
-			}
+			// Then set the shared instance to trigger skipping of rest of entries and copying of result via the "finishTicket" mechanism
+			sharedCalibrationImage = new ImagePlus("temp", imp); // setting this to something other than null causes other entries to be skipped
 		}
 		
 		return true;
 	}
 	
-	public FloatProcessor getPseudoMedianProjection(String[] fileList, int groupSize)
+	public Vector<Integer> getIndicesToGrab()
 	{
-		int i = 0, k = 0;
-		FloatProcessor ret = null, imp = null;
-		FloatBlitter blit = null;
-		while (i < fileList.length)
-		{
-			File[] files = new File[groupSize];
-			for (int j = 0; j < groupSize && i < fileList.length; j++)
-			{
-				files[j] = new File(fileList[i]);
-				i++;
-			}
-			// Get the median of the group
-			ImagePlus stack = ImageReader.readFileListToVirtualStack(files);
-			stack.setProcessor((FloatProcessor) stack.getProcessor().convertToFloat());
-			imp = JEX_StackProjection.evaluate(stack, JEX_StackProjection.METHOD_MEDIAN, groupSize);
-			
-			// Add it to the total for taking the mean of the groups
-			if(k == 0)
-			{
-				ret = imp;
-				blit = new FloatBlitter(ret);
-			}
-			else
-			{
-				blit.copyBits(imp, 0, 0, Blitter.ADD);
-			}
-			JEXStatics.statusBar.setProgressPercentage((int) (100 * (double) i / fileList.length));
-			k++;
-		}
-		// Divide the total by the number of groups to get the final mean of the
-		// groups
-		ret.multiply((double) 1 / k);
-		return ret;
+		return MakeCalibrationImage_Object.getIndicesToGrab(start, total, interval);
 	}
 	
-	public FloatProcessor getMeanProjection(String[] fileList)
+	public FloatProcessor getPseudoMedianProjection(String[] fileList, Vector<Integer> indicesToGrab)
 	{
-		int i = 0;
-		FloatProcessor imp1 = null, imp2 = null;
-		FloatBlitter blit = null;
-		for (String f : fileList)
-		{
-			if(i == 0)
-			{
-				imp1 = (FloatProcessor) (new ImagePlus(f)).getProcessor().convertToFloat();
-				blit = new FloatBlitter(imp1);
-			}
-			else
-			{
-				imp2 = (FloatProcessor) (new ImagePlus(f)).getProcessor().convertToFloat();
-				blit.copyBits(imp2, 0, 0, Blitter.ADD);
-			}
-			JEXStatics.statusBar.setProgressPercentage((int) (100 * (double) i / fileList.length));
-			i++;
-		}
-		imp1.multiply((double) 1 / fileList.length);
-		return imp1;
+		return MakeCalibrationImage_Object.getMeanProjection(fileList, indicesToGrab);
 	}
 	
+	public FloatProcessor getMeanProjection(String[] fileList, Vector<Integer> indicesToGrab)
+	{
+		return MakeCalibrationImage_Object.getMeanProjection(fileList, indicesToGrab);
+	}
+	
+	@Override
 	public void finalizeTicket(Ticket ticket)
 	{
-		if(sharedCalibrationImage != null && copyAll)
+		if(sharedCalibrationImage != null)
 		{
 			// Copy the calibration image to all the locations
 			TreeMap<JEXEntry,Set<JEXData>> outputs = ticket.getOutputList();
 			for (Entry<JEXEntry,Set<JEXData>> e : outputs.entrySet())
 			{
 				String finalPath = JEXWriter.saveImage(sharedCalibrationImage);
-				JEXData temp = ImageWriter.makeImageObject("temp", finalPath);
+				JEXData temp = ImageWriter.makeImageObject("CalibrationImage_Common", finalPath);
 				Set<JEXData> data = e.getValue();
 				data.clear();
 				data.add(temp);
 			}
 			sharedCalibrationImage.flush();
-			sharedCalibrationImage = null;
 		}
-	}
-	
-	public static int convertRankMethodNameToInt(String method)
-	{
-		// :,mean,max,min,sum,std. dev.,median"///
-		int methodInt = 5;
-		if(method.equals(JEX_StackProjection.METHOD_MEAN))
-			methodInt = 0;
-		else if(method.equals(JEX_StackProjection.METHOD_MAX))
-			methodInt = 1;
-		else if(method.equals(JEX_StackProjection.METHOD_MIN))
-			methodInt = 2;
-		else if(method.equals(JEX_StackProjection.METHOD_SUM))
-			methodInt = 3;
-		else if(method.equals(JEX_StackProjection.METHOD_STDEV))
-			methodInt = 4;
-		else if(method.equals(JEX_StackProjection.METHOD_MEDIAN))
-			methodInt = 5;
-		return methodInt;
+		
+		sharedCalibrationImage = null;
 	}
 }
