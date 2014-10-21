@@ -1,8 +1,5 @@
 package cruncher;
 
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -10,6 +7,8 @@ import java.util.concurrent.Callable;
 
 import jex.statics.JEXStatics;
 import logs.Logs;
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
 
 public class FunctionCallable implements Callable<Integer> {
 	
@@ -45,6 +44,21 @@ public class FunctionCallable implements Callable<Integer> {
 		{
 			// Run the JEXFunction
 			this.outputData = this.run(this.entry, this.function);
+			
+			Set<JEXData> filteredOutputData = new HashSet<JEXData>();
+			// Remove any empty data objects
+			for(JEXData d : this.outputData)
+			{
+				if(d.getDataMap().size() != 0 && d.getDictionaryValue() != null)
+				{
+					filteredOutputData.add(d);
+				}
+				else
+				{
+					Logs.log("Removing empty data from function output. Data output name: " + d.getTypeName().toString(), FunctionCallable.class);
+				}
+			}
+			this.outputData = filteredOutputData;
 			
 			this.parent.finishedFunctionCallable();
 		}
