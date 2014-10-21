@@ -26,6 +26,7 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
+import jex.jexTabPanel.jexFunctionPanel.FunctionListPanel.FunctionTree.FunctionNode;
 import jex.statics.DisplayStatics;
 import logs.Logs;
 import miscellaneous.FontUtility;
@@ -105,7 +106,11 @@ class FunctionChooserPanel {
 					{
 						if(FunctionChooserPanel.this.isFunctionSelected())
 						{
-							FunctionChooserPanel.this.parent.addFunction(FunctionChooserPanel.this.getSelectedFunction());
+							JEXFunction toAdd = FunctionChooserPanel.this.getSelectedFunction();
+							if(toAdd.getCrunch().showInList())
+							{
+								FunctionChooserPanel.this.parent.addFunction(toAdd);
+							}
 						}
 					}
 				}
@@ -265,6 +270,11 @@ class FunctionTree extends JTree implements TreeSelectionListener {
 			TreeMap<String,JEXCrunchable> availableFunctions = CrunchFactory.getFunctionsFromToolbox(this.toolbox);
 			for (JEXCrunchable c : availableFunctions.values())
 			{
+				//				if(c.showInList())
+				//				{
+				//					FunctionNode dbNode = new FunctionNode(c);
+				//					this.add(dbNode);
+				//				}	
 				FunctionNode dbNode = new FunctionNode(c);
 				this.add(dbNode);
 			}
@@ -403,19 +413,18 @@ class FunctionTree extends JTree implements TreeSelectionListener {
 		@Override
 		public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus)
 		{
-			
 			super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
-			
 			if(value instanceof FunctionNode)
 			{
 				FunctionNode fn = (FunctionNode) value;
 				this.setToolTipText(fn.function.getInfo());
+				this.setEnabled(fn.function.showInList());  
+				this.setDisabledIcon(this.getDefaultLeafIcon());
 			}
 			else
 			{
 				this.setToolTipText(null); // no tool tip
 			}
-			
 			return this;
 		}
 		
