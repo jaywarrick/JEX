@@ -187,20 +187,30 @@ public class ND2DatasetCreator implements PlugInController, ActionListener {
 				String expInfoStr = this.expInfo.getText().trim();
 				String dateStr = this.expDate.getText().trim();
 				
-				boolean created = JEXStatics.jexManager.createEntryArray(expNameStr, dateStr, expInfoStr, w, h);
-				if(created)
+				JEXStatics.jexManager.createEntryArray(expNameStr, dateStr, expInfoStr, w, h);
+				
+				this.entries = JEXStatics.jexManager.getExperimentTree().get(expNameStr).entries;
+				JEXStatics.jexManager.setViewedExperiment(this.expName.getText().trim());
+				JEXStatics.jexManager.setSelectedEntries(this.entries);
+				this.dialog.setVisible(false);
+				JEXStatics.main.displayFunctionPane();
+				try
 				{
-					this.entries = JEXStatics.jexManager.getExperimentTree().get(expNameStr).entries;
-					JEXStatics.jexManager.setViewedExperiment(this.expName.getText().trim());
-					JEXStatics.jexManager.setSelectedEntries(this.entries);
-					this.saveValueObject(files);
-					this.runImport();
-					this.dialog.setVisible(false);
+					// allow the view to change.
+					Thread.sleep(100);
+				}
+				catch (InterruptedException e)
+				{
+					e.printStackTrace();
+				}
+				boolean success = this.runImport(files);
+				if(success)
+				{
 					this.dialog.dispose();
 				}
 				else
 				{
-					JEXDialog.messageDialog("Aborting creation of dataset and entries and subsequent import of nd2 files.\nSpecify a unique dataset name and retry.");
+					this.dialog.setVisible(true);
 				}
 			}
 		}
@@ -236,62 +246,63 @@ public class ND2DatasetCreator implements PlugInController, ActionListener {
 		return this.dialog;
 	}
 	
-	private void saveValueObject(File[] files)
-	{
-		TreeMap<JEXEntry,JEXData> dataArray = new TreeMap<JEXEntry,JEXData>();
-		TreeMap<DimensionMap,JEXEntry> selectedEntries = new TreeMap<DimensionMap,JEXEntry>();
-		
-		// Organize the selected entries by row and col
-		for (JEXEntry entry : this.entries)
-		{
-			DimensionMap map = new DimensionMap();
-			map.put("X", "" + entry.getTrayX());
-			map.put("Y", "" + entry.getTrayY());
-			selectedEntries.put(map, entry);
-		}
-		
-		// iterator goes Through them in dimensionMap sorted order
-		int count = 0;
-		for (JEXEntry target : selectedEntries.values())
-		{
-			JEXData value = ValueWriter.makeValueObject(this.image.getText().trim(), files[count].getAbsolutePath());
-			dataArray.put(target, value);
-			count = count + 1;
-		}
-		JEXStatics.jexDBManager.saveDataInEntries(dataArray);
-		JEXStatics.jexManager.saveCurrentDatabase();
-	}
-	
-	public void runImport()
+	public boolean runImport(File[] files)
 	{
 		JEXFunction function;
+		
 		try
 		{
-			function = new JEXFunction("Import ND2 Files");
-			function.setInput("Path", new TypeName(JEXData.VALUE, this.image.getText().trim()));
-			ParameterSet params = function.getParameters();
-			params.setValueOfParameter("ImRows", this.imRows.getText().trim());
-			params.setValueOfParameter("ImCols", this.imCols.getText().trim());
-			function.setExpectedOutputName(0, this.image.getText().trim());
-			JEXWorkflow wf = new JEXWorkflow("Import ND2 Files");
-			wf.add(function);
-			JEXStatics.main.displayFunctionPane();
+			TreeMap<DimensionMap,JEXEntry> selectedEntries = new TreeMap<DimensionMap,JEXEntry>();
 			
-			// Run the import for each nd2 file as a separate item in the process queue so things can be canceled and saved more atomically
-			// This is probably important when dealing with big files that take forever.
-			// For example, you can check to see if the first one imports fine while the second is loading and,
-			// if something happens to the second, the database is saved with the first successfully loaded.
-			for(JEXEntry e : this.entries)
+			// Organize the selected entries by row and col
+			for (JEXEntry entry : this.entries)
 			{
-				TreeSet<JEXEntry> singleEntry = new TreeSet<JEXEntry>();
-				singleEntry.add(e);
-				JEXStatics.cruncher.runWorkflow(wf, singleEntry, true);
+				DimensionMap map = new DimensionMap();
+				map.put("X", "" + entry.getTrayX());
+				map.put("Y", "" + entry.getTrayY());
+				selectedEntries.put(map, entry);
 			}
+			
+			// iterator goes through them in dimensionMap sorted order
+			// adds a ticket to import each ND2 file for each entry
+			int count = 0;
+			TreeMap<JEXEntry,JEXData> dataArray = new TreeMap<JEXEntry,JEXData>();
+			for (JEXEntry target : selectedEntries.values())
+			{
+				if(count < files.length)
+				{
+					String path = files[count].getAbsolutePath().trim();
+					function = new JEXFunction("Import ND2 Files");
+					ParameterSet params = function.getParameters();
+					params.setValueOfParameter("File path", path);
+					params.setValueOfParameter("ImRows", this.imRows.getText().trim());
+					params.setValueOfParameter("ImCols", this.imCols.getText().trim());
+					function.setExpectedOutputName(0, this.image.getText().trim());
+					JEXWorkflow wf = new JEXWorkflow("Import ND2 Files");
+					TreeSet<JEXEntry> singleEntry = new TreeSet<JEXEntry>();
+					singleEntry.add(target);
+					wf.add(function);
+					JEXStatics.cruncher.runWorkflow(wf, singleEntry, true);
+					
+					JEXData value = ValueWriter.makeValueObject(this.image.getText().trim(), path);
+					dataArray.put(target, value);
+					count = count + 1;
+					JEXStatics.jexManager.saveCurrentDatabase();
+				}
+				else
+				{
+					break;
+				}
+			}
+			JEXStatics.jexDBManager.saveDataInEntries(dataArray);
+			JEXStatics.jexManager.saveCurrentDatabase();
+			return true;
 		}
 		catch (InstantiationException e)
 		{
 			JOptionPane.showMessageDialog(this.dialog, "Couldn't find the 'Import ND2 Files' function!");
 			e.printStackTrace();
+			return false;
 		}
 	}
 }
