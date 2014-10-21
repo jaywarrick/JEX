@@ -30,11 +30,9 @@ import tables.DimTable;
 import tables.DimensionMap;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
-import Database.DataReader.ValueReader;
 import Database.DataWriter.ImageWriter;
 import Database.SingleUserDatabase.JEXWriter;
 import function.plugin.IJ2.IJ2PluginUtility;
-import function.plugin.mechanism.InputMarker;
 import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.MarkerConstants;
 import function.plugin.mechanism.OutputMarker;
@@ -65,17 +63,15 @@ public class ImportND2Files extends JEXPlugin {
 	public ImportND2Files()
 	{}
 	
-	/////////// Define Inputs ///////////
-	
-	@InputMarker(name="Path", type=MarkerConstants.TYPE_VALUE, description="Value containing the file path to the ND2 file to be imported.", optional=false)
-	JEXData path;
-	
 	///////// Define Parameters //////////
 	
-	@ParameterMarker(uiOrder=1, name="ImRows", description="Number of rows to split each image into.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
+	@ParameterMarker(uiOrder=1, name="File path", description="Path to the ND2 file to be imported for this entry (meant to be run on one entry at a time unless you want the same file in all the wells)", ui=MarkerConstants.UI_FILECHOOSER, defaultText="")
+	String path;
+	
+	@ParameterMarker(uiOrder=2, name="ImRows", description="Number of rows to split each image into.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
 	int imRows;
 	
-	@ParameterMarker(uiOrder=1, name="ImCols", description="Number of cols to split each image into.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
+	@ParameterMarker(uiOrder=3, name="ImCols", description="Number of cols to split each image into.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
 	int imCols;
 	
 	/////////// Define Outputs ///////////
@@ -93,7 +89,7 @@ public class ImportND2Files extends JEXPlugin {
 	public boolean run(JEXEntry optionalEntry)
 	{
 		// Get the path
-		String nd2File = ValueReader.readValueObject(path);
+		String nd2File = path;
 		
 		// Get the tiffs according to stuff in PointTester (need to modify to split ImRows and ImCols)
 		final SCIFIO scifio = new SCIFIO(IJ2PluginUtility.ij.getContext());
@@ -173,7 +169,7 @@ public class ImportND2Files extends JEXPlugin {
 		
 		// Set the output
 		output = ImageWriter.makeImageStackFromPaths("temp", ret);
-
+		
 		return true;
 	}
 	
