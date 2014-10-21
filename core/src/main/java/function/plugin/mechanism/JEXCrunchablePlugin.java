@@ -45,7 +45,14 @@ public class JEXCrunchablePlugin extends JEXCrunchable {
 	// run before starting
 	public void prepareEntry()
 	{
-		
+		// Create an empty JEXData with the right type and name in case you want that information within the function during run.
+		for(String outputName : this.info.outputs.keySet())
+		{
+			Field outputField = this.info.oField.get(outputName);
+			JEXData emptyJEXData = new JEXData(this.info.outputs.get(outputName));
+			outputField.setAccessible(true);
+			ClassUtils.setValue(outputField, this.plugin, emptyJEXData);
+		}
 	}
 	
 	// run after ending
