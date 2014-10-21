@@ -719,7 +719,7 @@ public class JEXManager {
 		
 		if(arraysOfSameExperimentName != null)
 		{			
-			JEXDialog.messageDialog("Database entries in same eperiment and tray already exist");
+			JEXDialog.messageDialog("Warning: A dataset by that name already exists. No additional dataset created.");
 			return false;
 		}
 		
