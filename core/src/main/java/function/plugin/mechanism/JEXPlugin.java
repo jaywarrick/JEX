@@ -1,12 +1,15 @@
 package function.plugin.mechanism;
 
 import jex.statics.JEXStatics;
-import cruncher.Ticket;
-import Database.DBObjects.JEXEntry;
 import miscellaneous.Cancelable;
 import miscellaneous.Canceler;
 
-public abstract class JEXPlugin implements JEXPluginInterface, Canceler, Cancelable {
+import org.scijava.plugin.SciJavaPlugin;
+
+import Database.DBObjects.JEXEntry;
+import cruncher.Ticket;
+
+public abstract class JEXPlugin implements SciJavaPlugin, Canceler, Cancelable {
 	
 	public Canceler canceler = null;
 	
