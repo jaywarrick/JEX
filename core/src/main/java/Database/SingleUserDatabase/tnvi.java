@@ -259,20 +259,25 @@ public class tnvi extends TreeMap<Type,TreeMap<String,TreeMap<String,Set<JEXEntr
 			thisNVI.put(data.getTypeName().getName(), thisVI);
 		}
 		
-		// Get the entries for the new value
-		Set<JEXEntry> entries = thisVI.get(data.getDictionaryValue());
-		
-		// If null create a new list of entries
-		if(entries == null)
+		if(data.getDictionaryValue() != null)
 		{
-			entries = new TreeSet<JEXEntry>();
-			thisVI.put(data.getDictionaryValue(), entries);
+			// Get the entries for the new value
+			Set<JEXEntry> entries = thisVI.get(data.getDictionaryValue());
+			
+			// If null create a new list of entries
+			if(entries == null)
+			{
+				entries = new TreeSet<JEXEntry>();
+				thisVI.put(data.getDictionaryValue(), entries);
+			}
+			
+			// Add the entry ENTRY to the list of entries
+			entries.add(entry);
+			
+			return true;
 		}
 		
-		// Add the entry ENTRY to the list of entries
-		entries.add(entry);
-		
-		return true;
+		return false;
 	}
 	
 	public tnvi getFilteredTNVI(FilterSet filters)
