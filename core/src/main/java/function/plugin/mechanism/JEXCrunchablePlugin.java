@@ -42,6 +42,12 @@ public class JEXCrunchablePlugin extends JEXCrunchable {
 		}
 	}
 	
+	// run before starting
+	public void prepareEntry()
+	{
+		
+	}
+	
 	// run after ending
 	public void finalizeEntry()
 	{
