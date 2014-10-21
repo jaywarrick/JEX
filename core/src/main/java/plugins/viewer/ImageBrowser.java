@@ -1,16 +1,5 @@
 package plugins.viewer;
 
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXDataSingle;
-import Database.DBObjects.JEXEntry;
-import Database.DBObjects.JEXLabel;
-import Database.DataReader.ImageReader;
-import Database.DataReader.RoiReader;
-import Database.DataWriter.ImageWriter;
-import Database.DataWriter.RoiWriter;
-import Database.Definition.Type;
-import Database.Definition.TypeName;
-import Database.SingleUserDatabase.JEXWriter;
 import guiObject.ListManager;
 import ij.util.Java2;
 import image.roi.PointList;
@@ -55,6 +44,17 @@ import signals.SSCenter;
 import tables.Dim;
 import tables.DimTable;
 import tables.DimensionMap;
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXDataSingle;
+import Database.DBObjects.JEXEntry;
+import Database.DBObjects.JEXLabel;
+import Database.DataReader.ImageReader;
+import Database.DataReader.RoiReader;
+import Database.DataWriter.ImageWriter;
+import Database.DataWriter.RoiWriter;
+import Database.Definition.Type;
+import Database.Definition.TypeName;
+import Database.SingleUserDatabase.JEXWriter;
 
 public class ImageBrowser implements PlugInController {
 	
@@ -465,7 +465,8 @@ public class ImageBrowser implements PlugInController {
 		int n = JOptionPane.showOptionDialog(this.dialog, "Export to Database or Folder?", "Export Images", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[2]);
 		if(n == 1)
 		{
-			JEXStatics.jexDBManager.saveDataListInEntries(this._createJEXDatasForExport(checkbox.isSelected()), false);
+			//this._queueImports(checkbox.isSelected())
+			JEXStatics.jexDBManager.saveDataListInEntries(this._queueImports(checkbox.isSelected()), false);
 			Logs.log("Exported new Image based on " + this.imageTN.getName() + " into the database.", 0, this);
 			this.statusBar.setText("Exported sub-image.");
 		}
@@ -513,7 +514,7 @@ public class ImageBrowser implements PlugInController {
 		return exportMap;
 	}
 	
-	private TreeMap<JEXEntry,Set<JEXData>> _createJEXDatasForExport(boolean deleteSingletonDims)
+	private TreeMap<JEXEntry,Set<JEXData>> _queueImports(boolean deleteSingletonDims)
 	{
 		TypeName newTN = new TypeName(this.imageTN.getType(), this.imageTN.getName() + " Exported");
 		String newName = JEXStatics.jexManager.getNextAvailableTypeNameInEntries(newTN, this.entries).getName();
@@ -566,6 +567,24 @@ public class ImageBrowser implements PlugInController {
 					smashedTable.removeDimWithName(d);
 				}
 			}
+			//			// CREATE WORKFLOW AND RUN
+			//			try
+			//			{
+			//				JEXFunction function = new JEXFunction("Import images");
+			//				((ImportImages) ((JEXCrunchablePlugin) function.getCrunch()).plugin).setImagesToCopy(newFileTable);
+			//				((ImportImages) ((JEXCrunchablePlugin) function.getCrunch()).plugin).setOptionalDimTable(smashedTable);
+			//				function.setExpectedOutputName(0, newName);
+			//				JEXWorkflow wf = new JEXWorkflow("Import images");
+			//				TreeSet<JEXEntry> singleEntry = new TreeSet<JEXEntry>();
+			//				singleEntry.add(e);
+			//				wf.add(function);
+			//				JEXStatics.cruncher.runWorkflow(wf, singleEntry, true);
+			//			}
+			//			catch (InstantiationException e1)
+			//			{
+			//				e1.printStackTrace();
+			//		}
+			
 			
 			JEXData newImageData = ImageWriter.makeImageStackFromPaths(newName, newFileTable);
 			newImageData.setDimTable(smashedTable);
@@ -611,8 +630,8 @@ public class ImageBrowser implements PlugInController {
 							dimTable = oldRoiData.getDimTable();
 						}
 						else
-						// it was created while looking at image and matches
-						// image dims
+							// it was created while looking at image and matches
+							// image dims
 						{
 							dimTable = this.getImageDimTable(e);
 						}
@@ -840,7 +859,7 @@ public class ImageBrowser implements PlugInController {
 			}
 		}
 		else
-		// else check the database for the roi information
+			// else check the database for the roi information
 		{
 			TypeName temp = new TypeName(JEXData.ROI, roiName);
 			roiData = JEXStatics.jexManager.getDataOfTypeNameInEntry(temp, e);
@@ -927,8 +946,8 @@ public class ImageBrowser implements PlugInController {
 		{
 			roiData = JEXStatics.jexManager.getDataOfTypeNameInEntry(new TypeName(JEXData.ROI, roiName), this.currentEntry());
 			if(imageDimTable != null && roiData != null)// &&
-			// DimTable.intersect(roiData.getDimTable(),
-			// imageDimTable).matches(imageDimTable))
+				// DimTable.intersect(roiData.getDimTable(),
+				// imageDimTable).matches(imageDimTable))
 			{
 				this.filteredRois.add(roiName);
 			}
@@ -994,7 +1013,7 @@ public class ImageBrowser implements PlugInController {
 			ret = ret + "Polyline ";
 		}
 		else
-		// (type == ROIPlus.ROI_RECT)
+			// (type == ROIPlus.ROI_RECT)
 		{
 			ret = ret + "Rectangle ";
 		}
@@ -1198,7 +1217,7 @@ public class ImageBrowser implements PlugInController {
 				limMax = 4095;
 			}
 			else
-			// <= 35535
+				// <= 35535
 			{
 				limMin = 0;
 				limMax = 65535;
