@@ -1,27 +1,25 @@
 package cruncher;
 
+import java.util.Map.Entry;
+import java.util.TreeMap;
+import java.util.concurrent.Callable;
+
+import jex.statics.JEXStatics;
+import tables.DimensionMap;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataWriter.FileWriter;
 import Database.DataWriter.ImageWriter;
 import Database.Definition.Type;
 
-import java.util.TreeMap;
-import java.util.Vector;
-import java.util.concurrent.Callable;
-
-import jex.statics.JEXStatics;
-import miscellaneous.Pair;
-import tables.DimensionMap;
-
 public class ImportThread implements Callable<Object> {
 	
 	String objectName, objectInfo;
 	Type objectType; 
-	TreeMap<JEXEntry,Vector<Pair<DimensionMap,String>>> dataArray;
+	TreeMap<JEXEntry,TreeMap<DimensionMap,String>> dataArray;
 	TreeMap<JEXEntry,JEXData> toAdd = new TreeMap<JEXEntry,JEXData>();
 	
-	public ImportThread(String objectName, Type objectType, String objectInfo, TreeMap<JEXEntry,Vector<Pair<DimensionMap,String>>> dataArray)
+	public ImportThread(String objectName, Type objectType, String objectInfo, TreeMap<JEXEntry,TreeMap<DimensionMap,String>> dataArray)
 	{
 		this.objectName = objectName;
 		this.objectType = objectType;
@@ -43,11 +41,7 @@ public class ImportThread implements Callable<Object> {
 				JEXStatics.cruncher.finishImportThread(null);
 				return null;
 			}
-			TreeMap<DimensionMap,String> files2Drop2 = new TreeMap<DimensionMap,String>();
-			for (Pair<DimensionMap,String> pair : this.dataArray.get(entry))
-			{
-				files2Drop2.put(pair.p1, pair.p2);
-			}
+			TreeMap<DimensionMap,String> files2Drop2 = this.dataArray.get(entry);
 			
 			if(objectType.equals(JEXData.IMAGE))
 			{

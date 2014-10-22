@@ -346,7 +346,7 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 			oType = JEXData.LABEL;
 		}
 		
-		TreeMap<JEXEntry,Vector<Pair<DimensionMap,String>>> importObject = new TreeMap<JEXEntry,Vector<Pair<DimensionMap,String>>>();
+		TreeMap<JEXEntry,TreeMap<DimensionMap,String>> importObject = new TreeMap<JEXEntry,TreeMap<DimensionMap,String>>();
 		for (int x = 0; x < this.importController.getNumberColumns(); x++)
 		{
 			for (int y = 0; y < this.importController.getNumberRows(); y++)
@@ -363,9 +363,15 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 				}
 				
 				Vector<Pair<DimensionMap,String>> files2Drop = this.files.get(new Point(y, x));
+				
 				if(files2Drop != null)
 				{
-					importObject.put(e, files2Drop);
+					TreeMap<DimensionMap,String> temp = new TreeMap<DimensionMap,String>();
+					for(Pair<DimensionMap,String> file: files2Drop)
+					{
+						temp.put(file.p1, file.p2);
+					}
+					importObject.put(e, temp);
 				}
 			}
 		}
