@@ -1,9 +1,5 @@
 package jex.jexTabPanel.jexFunctionPanel;
 
-import cruncher.JEXFunction;
-import function.CrunchFactory;
-import function.JEXCrunchable;
-
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.MouseAdapter;
@@ -26,11 +22,13 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
-import jex.jexTabPanel.jexFunctionPanel.FunctionListPanel.FunctionTree.FunctionNode;
 import jex.statics.DisplayStatics;
 import logs.Logs;
 import miscellaneous.FontUtility;
 import net.miginfocom.swing.MigLayout;
+import cruncher.JEXFunction;
+import function.CrunchFactory;
+import function.JEXCrunchable;
 
 //----------------------------------------------------
 // --------- FUNCTION LIST PANEL ----------------------
