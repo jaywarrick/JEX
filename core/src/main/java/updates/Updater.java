@@ -15,8 +15,9 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
-import jex.JEXperiment;
+import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import logs.Logs;
 import miscellaneous.DirectoryManager;
@@ -33,68 +34,31 @@ import preferences.OS;
 
 public class Updater {
 	
+	private static boolean runningFromJar = false;
 	//	public static String currentVersion = "Version-0.0"; // Keep this syntax to make it download every time (change number to current number to only download if needed)
 	
+	public static final String RELEASE_DEVELOPMENT="Development", RELEASE_OFFICIAL="Official", CONNECTION="Connection";
+	
 	public static void attemptJEXUpdate()
-	{
-		// DirectoryManager.setHostDirectory("/Users/jaywarrick/Desktop/Temp");
-		// String testFile = "/Users/jaywarrick/Desktop/Temp/temp/JEXData0000000000.zip";
-		// updateJEXFilesWithThisZip(testFile);
-		// Logs.log("We did it!! " + testFile, Updater.class);
-		
+	{		
 		JEXStatics.statusBar.setStatusText("Attempting to update JEX...");
 		// Check to see if we are running from an executable version of JEX
-		String pathOfJEXExecutables = getPathOfJEXExecutablesFolder();
-		if(pathOfJEXExecutables == null)
+		
+		if(!runningFromJar)
 		{
-			Logs.log("JEX is not being run from a runnable jar exported by eclipse (e.g., might be running directly from Eclipse or other IDE) so we won't update anything.", Updater.class);
-			JEXStatics.statusBar.setStatusText("No update needed or not running from a JEX.jar file...");
+			Logs.log("The -fromJar flag was not detected upon launching JEX to mark this as running from a jar. Therefore, assuming we are not running from a jar. Aborting attempt to update.", Logs.ERROR, Updater.class);
+			JEXStatics.statusBar.setStatusText("Not running from a *.jar file... can't update jar file. Aborting update.");
 			return;
 		}
 		
-		//		// Check the version of java and see if it is adequate. If not alert the user to install the required version or higher.
-		//		// Custom button text
-		//		String requiredVersion = "1.7";
-		//		if(!javaVersionIsAtLeast(requiredVersion))
-		//		{
-		//			Object[] options = { "Go to Download Site", "Close Dialog" };
-		//			int n = JOptionPane.showOptionDialog(JEXStatics.main, "Can't update JEX to newest version because a new version of Java is needed.\n\nPlease go to http://www.oracle.com/technetwork/java/javase/downloads/index.html and download.\nInstall the new java version, then try updating JEX again.\n\nJava version " + requiredVersion + " or later required.", "Update Message", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
-		//			if(n == 0)
-		//			{
-		//				openWebpage("http://www.oracle.com/technetwork/java/javase/downloads/index.html");
-		//			}
-		//			return;
-		//		}
-		
-		//		// Check the version on the sourceforge repository
-		//		HttpURLConnection httpConn = null;
-		//		httpConn = connectToServerFile("Version.txt");
-		//		if(httpConn == null)
-		//		{
-		//			Logs.log("Unable to update. We'll try later.", Updater.class);
-		//			JEXStatics.statusBar.setStatusText("Unable establish server connection for update. Try later.");
-		//			return;
-		//		}
-		//		Pair<String,LSVList> versionInfo = getVersionInfo(httpConn);
-		//		if(versionInfo.p1 == null)
-		//		{
-		//			Logs.log("Unable to update. We'll try nextTime.", Updater.class);
-		//			JEXStatics.statusBar.setStatusText("Unable establish server connection for update. Try later.");
-		//			return;
-		//		}
-		//		Logs.log("Server Version: " + versionInfo.p1 + ", Opened Version: " + Updater.currentVersion, Updater.class);
-		//		if(versionInfo.p1.equals(Updater.currentVersion))
-		//		{
-		//			Logs.log("JEX is up-to-date.", Updater.class);
-		//			JEXStatics.statusBar.setStatusText("JEX is already up-to-date.");
-		//			closeConnection(httpConn);
-		//			return;
-		//		}
+		String pathOfJEXExecutables = getPathOfJEXExecutablesFolder();
 		
 		// Force update to ensure latest version is being used.
+		int version = JEXDialog.getChoice("Update JEX...", "Which version would you like?", new String[]{"Development Version","Last Official Release"}, 0);
 		Logs.log("Forcing update to latest download from sourceforge file repository.\n\n", Updater.class);
 		JEXStatics.statusBar.setStatusText("Updating. Step 1 of 1 - Downloading...");
-		HttpURLConnection httpConn = connectToServerFile();
+		TreeMap<String,Object> connectionResults = connectToServerFile(version == 0);
+		HttpURLConnection httpConn = (HttpURLConnection) connectionResults.get(CONNECTION);
 		
 		// Download JEX
 		String download = downloadJEXDistribution(httpConn);
@@ -159,7 +123,12 @@ public class Updater {
 	
 	public static boolean runningFromJar()
 	{
-		return getPathOfJEXExecutablesFolder() != null;
+		return runningFromJar;
+	}
+	
+	public static void setRunningFromJar(boolean runningFromJar)
+	{
+		Updater.runningFromJar = runningFromJar;
 	}
 	
 	public static void restartJEX(String pathOfJEXExecutables)
@@ -239,7 +208,7 @@ public class Updater {
 		return new Pair<String,LSVList>(version, lines);
 	}
 	
-	public static HttpURLConnection connectToServerFile()
+	public static HttpURLConnection getConnectionTo(String urlPath)
 	{
 		HttpURLConnection httpConn = null;
 		
@@ -250,7 +219,8 @@ public class Updater {
 			// Got the following URL by going to sourceforge, clicking the download link for the Version.txt file and copying the link information on the following page that indicates the "direct link" to the file.
 			// Set up the connection
 			// ////////////////////////////////////////////////https://downloads.sourceforge.net/project/jextools/Version.txt?r=&ts=1368817297&use_mirror=master
-			httpConn = (HttpURLConnection) (new java.net.URL("https://sourceforge.net/projects/jextools/files/latest/download?source=files").openConnection()); // "https://sourceforge.net/projects/jextools/files/Version.txt/download").openConnection());
+			// Make sure the URL doesn't have the httpS in it, only http. Otherwise the redirect gets us into a neverending loop.
+			httpConn = (HttpURLConnection) (new java.net.URL(urlPath).openConnection()); // "https://sourceforge.net/projects/jextools/files/Version.txt/download").openConnection());
 			httpConn.setRequestMethod("GET");
 			httpConn.setDoOutput(true);
 			httpConn.setReadTimeout(20000);
@@ -272,12 +242,12 @@ public class Updater {
 				httpConn.connect();
 				responseCode = httpConn.getResponseCode();
 				/* do it until you get some code that is not a redirection */
-				Logs.log("Getting latest download on sourceforge server. Currnet http response code: " + responseCode + ", Waiting time = " + (System.currentTimeMillis() - t) / 1000 + " s.", Updater.class);
-				Thread.sleep(1000);
+				Logs.log("Getting " + urlPath + " on sourceforge server. Current http response code: " + responseCode + ", Waiting time = " + (System.currentTimeMillis() - t) / 1000 + " s.", Updater.class);
+				Thread.sleep(500);
 			}
 			if(responseCode == 404)
 			{
-				Logs.log("Couldn't connect to latest download on the sourceforge server. Server not available (Http Error Code 404).", Updater.class);
+				Logs.log("Couldn't connect to " + urlPath + " on the sourceforge server. Server not available (Http Error Code 404).", Updater.class);
 				closeConnection(httpConn);
 				return null;
 			}
@@ -290,11 +260,63 @@ public class Updater {
 		}
 		catch (Exception e)
 		{
-			Logs.log("Error while trying to connect to latest download on sourceforge server. Check internet connection.", Updater.class);
+			Logs.log("Error while trying to connect to"+ urlPath + " on sourceforge server. Check internet connection.", Updater.class);
 			closeConnection(httpConn);
 			return null;
 		}
 		return httpConn;
+	}
+	
+	/**
+	 * Connect to sourceforge. Parse the latest download to determine the latest
+	 * developmental release (i.e., SNAPSHOT version), official release, and also
+	 * return the actuall HttpURLConnection. The keys for each are the static strings,
+	 * RELEASE_DEVELOPMENT, RELEASE_OFFICIAL, and CONNECTION.
+	 * @return TreeMap<String,Object>
+	 */
+	public static TreeMap<String,Object> connectToServerFile(boolean developmentalVersion)
+	{
+		HttpURLConnection httpConn = getConnectionTo("http://sourceforge.net/projects/jextools/files/latest/download?source=files");
+		
+		if(httpConn != null)
+		{
+			TreeMap<String,Object> ret = new TreeMap<String,Object>();
+			String developmentFileName = httpConn.getURL().getPath();
+			String baseFileName = FileUtility.getFileNameWithoutExtension(developmentFileName);
+			String[] pieces = baseFileName.split("-");
+			String[] versionNums = pieces[1].split(".");
+			Integer temp = Integer.parseInt(versionNums[2])-1;
+			String officialVersionNum = versionNums[0] + "." + versionNums[1] + "." + temp;
+			String officialReleaseFileName = pieces[0] + "-" + officialVersionNum + ".zip";
+			ret.put(RELEASE_DEVELOPMENT, developmentFileName);
+			ret.put(RELEASE_OFFICIAL, officialReleaseFileName);
+			
+			if(!developmentalVersion)
+			{
+				httpConn.disconnect();
+				
+				// Make sure the URL doesn't have the httpS in it, only http. Otherwise the redirect gets us into a neverending loop.
+				httpConn = getConnectionTo("http://sourceforge.net/projects/jextools/files/" + officialReleaseFileName + "/download");
+				if(httpConn != null)
+				{
+					ret.put(CONNECTION, httpConn);
+				}
+				else
+				{
+					return null;
+				}
+			}
+			else
+			{
+				ret.put(CONNECTION, httpConn);
+			}
+			
+			return ret;
+		}
+		else
+		{
+			return null;
+		}
 	}
 	
 	public static void closeConnection(HttpURLConnection httpConn)
@@ -305,6 +327,11 @@ public class Updater {
 		}
 	}
 	
+	/**
+	 * Get the most recent JEXDistribution
+	 * @param httpConn
+	 * @return TreeMap<String,String> containing the "Development" zip file name
+	 */
 	public static String downloadJEXDistribution(HttpURLConnection httpConn)
 	{
 		BufferedInputStream from = null;
@@ -443,26 +470,24 @@ public class Updater {
 	
 	public static String getPathOfJEXExecutablesFolder()
 	{
-		// Find internally defined plugin class names
-		URL classLoaderURL = JEXperiment.class.getResource("JEXperiment.class");
-		if(classLoaderURL == null || !classLoaderURL.toString().startsWith("rsrc:")) // rsrc: indicates JEX is running from a runnable jar
-		{
-			// Auto Update function does not work when running from eclipse. It only works when running from a runnable jar.
-			return null;
-		}
-		
-		// Then we are running JEX from the JEX.jar created using the Eclipse export Runnable Jar plugin (jarinjar rsrc URL) and we can find the path to the JEX.jar this way...
-		try
-		{
-			// String jarFolderPath = Updater.class.getProtectionDomain().getCodeSource().toURI().getPath();
-			String jarFolderPath = ClassLoader.getSystemClassLoader().getResource(".").toURI().getPath();
-			Logs.log("System JEX.jar path... " + jarFolderPath, Updater.class);
-			return jarFolderPath;
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-		}
+		if(Updater.runningFromJar())
+		{			
+			// Then we are running JEX from the JEX.jar
+			try
+			{
+				// String jarFolderPath = Updater.class.getProtectionDomain().getCodeSource().toURI().getPath();
+				String jarFolderPath = ClassLoader.getSystemClassLoader().getResource(".").toURI().getPath();
+				Logs.log("System JEX.jar path... " + jarFolderPath, Updater.class);
+				return jarFolderPath;
+			}
+			catch (Exception e)
+			{
+				e.printStackTrace();
+				Logs.log("Error occurred while trying to get the path to the JEX executables folder. Aborting and returning null for file path.", Logs.ERROR, Updater.class);
+				return null;
+			}
+		}	
+		Logs.log("The -fromJar flag was not detected upon launching JEX to mark this as running from a jar. Therefore, assuming we are not running from a jar. Aborting and returning null for file path to jar.", Logs.ERROR, Updater.class);
 		return null;
 	}
 	
