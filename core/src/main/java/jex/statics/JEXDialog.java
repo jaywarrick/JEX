@@ -5,10 +5,13 @@ import java.io.IOException;
 
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 import logs.Logs;
+import net.miginfocom.swing.MigLayout;
 import Database.SingleUserDatabase.JEXWriter;
 
 
@@ -18,6 +21,35 @@ public class JEXDialog {
 	{
 		//default icon, custom title
 		JOptionPane.showMessageDialog(JEXStatics.main, msg);
+	}
+	
+	/**
+	 * Get the index of the choice made by the user from the supplied list.
+	 * @param title
+	 * @param question Question to prompt user with for making the choice.
+	 * @param choices
+	 * @param defaultChoice
+	 * @returnthe index of the choice preferred by the user otherwise cancel returns -1
+	 */
+	public static Integer getChoice(String title, String question, String[] choices, int defaultChoice)
+	{
+		JList<String> list = new JList<String>(choices);
+		list.setSelectedIndex(defaultChoice);
+		JLabel questionLabel = new JLabel(question);
+		JPanel panel = new JPanel();
+		panel.setLayout(new MigLayout("flowy","[grow, center]","[]5"));
+		panel.add(questionLabel);
+		panel.add(list);
+		
+		int option = JOptionPane.showConfirmDialog(JEXStatics.main, panel, title, JOptionPane.OK_CANCEL_OPTION);
+		if(option == 0)
+		{
+			return list.getSelectedIndex();
+		}
+		else
+		{
+			return -1;
+		}
 	}
 	
 	public static String fileSaveDialog()
