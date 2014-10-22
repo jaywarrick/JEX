@@ -166,7 +166,7 @@ public class Ticket implements Callable<Integer>, Canceler{
 				if(fc != null)
 				{
 					fcs.put(entry, fc);
-					Future<Integer> future = JEXStatics.cruncher.runFunction(fc, this.cr.allowMultithreading());
+					Future<Integer> future = JEXStatics.cruncher.runFunction(fc);
 					this.futures.put(entry,future);
 				}
 			}
@@ -272,7 +272,8 @@ public class Ticket implements Callable<Integer>, Canceler{
 	}
 	
 	/**
-	 * Run the JEXfunction function on the pre-set entry entry
+	 * Run the JEXfunction function on the pre-set entry entry taking care to copy
+	 * the function before wrapping it in a function callable to ensure thread independence
 	 * 
 	 * @param function
 	 */
@@ -291,16 +292,6 @@ public class Ticket implements Callable<Integer>, Canceler{
 			// Prepare the JEXData for the input to the function
 			JEXData data = JEXStatics.jexManager.getDataOfTypeNameInEntry(tn, entry);
 			
-			// // If the data is null yet someone defined a typeName, print
-			// error and return
-			// if (tn != null && data == null)
-			// {
-			// Logs.log("Missing input data "+tn.toString(), 0,
-			// this);
-			// JEXStatics.statusBar.setStatusText("Missing input "+tn.toString());
-			// return null;
-			// }
-			
 			// Set the data as input to the function (a null tn indicates the
 			// input is supposed to be optional)
 			collectedInputs.put(inputName, data);
@@ -309,7 +300,6 @@ public class Ticket implements Callable<Integer>, Canceler{
 		// Run the function
 		FunctionCallable fc = new FunctionCallable(function.duplicate(), entry, collectedInputs, this);
 		return fc;
-		
 	}
 	
 	public void printTicketFlags()

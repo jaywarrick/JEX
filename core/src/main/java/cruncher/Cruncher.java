@@ -70,12 +70,12 @@ public class Cruncher {
 		this.ticketQueue.submit(ticket);
 	}
 	
-	public Future<Integer> runFunction(FunctionCallable function, boolean multiThreading)
+	public Future<Integer> runFunction(FunctionCallable function)
 	{
 		Logs.log("Added function to cruncher queue ", 1, this);
 		JEXStatics.statusBar.setStatusText("Added function to cruncher queue ");
 		Future<Integer> result = null;
-		if(multiThreading)
+		if(function.getFunctionObject().getCrunch().allowMultithreading())
 		{
 			result = this.multiFunctionQueue.submit(function);
 		}
