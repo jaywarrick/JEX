@@ -19,6 +19,7 @@ import java.util.TreeMap;
 
 import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
+import jex.statics.KeyStatics;
 import logs.Logs;
 import miscellaneous.DirectoryManager;
 import miscellaneous.FileUtility;
@@ -53,6 +54,12 @@ public class Updater {
 		
 		String pathOfJEXExecutables = getPathOfJEXExecutablesFolder();
 		
+		if(pathOfJEXExecutables == null)
+		{
+			Logs.log("Couldn't determine folder where JEX is being run from. Aborting update.", Updater.class);
+			JEXStatics.statusBar.setStatusText("Couldn't determine folder where JEX is being run from. Aborting update.");
+			return;
+		}
 		// Force update to ensure latest version is being used.
 		int version = JEXDialog.getChoice("Update JEX...", "Which version would you like?", new String[]{"Development Version","Last Official Release"}, 0);
 		Logs.log("Forcing update to latest download from sourceforge file repository.\n\n", Updater.class);
@@ -132,7 +139,7 @@ public class Updater {
 	}
 	
 	public static void restartJEX(String pathOfJEXExecutables)
-	{
+	{		
 		String commandFile = pathOfJEXExecutables + File.separator + "JEX for Windows.bat";
 		if(OS.isMacOSX())
 		{
@@ -283,11 +290,11 @@ public class Updater {
 			TreeMap<String,Object> ret = new TreeMap<String,Object>();
 			String developmentFileName = httpConn.getURL().getPath();
 			String baseFileName = FileUtility.getFileNameWithoutExtension(developmentFileName);
-			String[] pieces = baseFileName.split("-");
-			String[] versionNums = pieces[1].split(".");
+			String[] pieces = baseFileName.split("\\-");
+			String[] versionNums = pieces[1].split("\\.");
 			Integer temp = Integer.parseInt(versionNums[2])-1;
 			String officialVersionNum = versionNums[0] + "." + versionNums[1] + "." + temp;
-			String officialReleaseFileName = pieces[0] + "-" + officialVersionNum + ".zip";
+			String officialReleaseFileName = pieces[0] + "-" + officialVersionNum + "-all.zip";
 			ret.put(RELEASE_DEVELOPMENT, developmentFileName);
 			ret.put(RELEASE_OFFICIAL, officialReleaseFileName);
 			
@@ -439,6 +446,12 @@ public class Updater {
 	{
 		boolean ret = true;
 		
+		// Preload classes that we'll need to shutdown JEX programmatically because we'll be overwriting the jar file (fun fun).
+		@SuppressWarnings("unused")
+		Class<?> c = OS.class; // for testing which script to run to start the new jex
+		c = KeyStatics.class; // for loading the KeyStatics class which is called when 
+		Logs.log("Restarting JEX...", Updater.class);
+		
 		try
 		{
 			// create output directory is not exists
@@ -472,20 +485,20 @@ public class Updater {
 	{
 		if(Updater.runningFromJar())
 		{			
-			// Then we are running JEX from the JEX.jar
-			try
+			// String jarFolderPath = Updater.class.getProtectionDomain().getCodeSource().toURI().getPath();
+			String updaterClass = Updater.class.getResource(Updater.class.getSimpleName()+ ".class").toString();
+			System.out.println(updaterClass);
+			if(updaterClass.startsWith("jar:file:"))
 			{
-				// String jarFolderPath = Updater.class.getProtectionDomain().getCodeSource().toURI().getPath();
-				String jarFolderPath = ClassLoader.getSystemClassLoader().getResource(".").toURI().getPath();
-				Logs.log("System JEX.jar path... " + jarFolderPath, Updater.class);
-				return jarFolderPath;
+				String jarFile = updaterClass.substring(9, updaterClass.indexOf("!"));
+				String jarFolder = FileUtility.getFileParent(jarFile);
+				if(jarFolder != null)
+				{
+					return jarFolder;
+				}
 			}
-			catch (Exception e)
-			{
-				e.printStackTrace();
-				Logs.log("Error occurred while trying to get the path to the JEX executables folder. Aborting and returning null for file path.", Logs.ERROR, Updater.class);
-				return null;
-			}
+			Logs.log("Didn't recognize the jar URL properly. Aborting and returning null for file path.", Logs.ERROR, Updater.class);
+			return null;
 		}	
 		Logs.log("The -fromJar flag was not detected upon launching JEX to mark this as running from a jar. Therefore, assuming we are not running from a jar. Aborting and returning null for file path to jar.", Logs.ERROR, Updater.class);
 		return null;
