@@ -69,6 +69,7 @@ import net.imglib2.meta.ImgPlus;
 import org.scijava.command.CommandInfo;
 import org.scijava.util.ConversionUtils;
 
+import preferences.OS;
 import rtools.R;
 import tables.Dim;
 import tables.DimTable;
@@ -87,11 +88,22 @@ public class PointTester {// extends URLClassLoader {
 	{
 		Logs.log("Hello there", PointTester.class);
 		playWithUpdater();
+		System.out.println(OS.isMacOSX());
 	}
 	
 	public static void playWithUpdater()
 	{
-		
+		String s = "JEX-0.0.4-SNAPSHOT-all.zip";
+		String[] s1 = s.split("\\-");
+		for(String x : s1)
+		{
+			Logs.log(""+x, PointTester.class);
+		}
+		String[] s2 = s1[1].split("\\.");
+		for(String x : s2)
+		{
+			Logs.log(""+x, PointTester.class);
+		}
 	}
 	
 	public static TreeMap<DimensionMap,String> getTiffs(String path, ImageJ ij) throws IOException, FormatException, loci.formats.FormatException
