@@ -1096,6 +1096,7 @@ public class JEXperiment extends JFrame implements ActionListener, WindowListene
 			{
 				Logs.log("Found '-fromJar' arg or detected running from jar... setting error to print to std out of console.", JEXperiment.class);
 				System.setErr(System.out);
+				Updater.setRunningFromJar(true);
 			}
 		}
 		Runnable runner = new Runnable() {
