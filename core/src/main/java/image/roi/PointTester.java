@@ -28,6 +28,7 @@ import java.awt.Point;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.JarURLConnection;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
@@ -43,12 +44,14 @@ import java.util.Vector;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import jex.JEXperiment;
+import jex.statics.JEXDialog;
+import jex.statics.JEXStatics;
 import jex.utilities.ROIUtility;
 import loci.common.DataTools;
 import logs.Logs;
 import miscellaneous.DirectoryManager;
 import miscellaneous.FileUtility;
-import miscellaneous.Pair;
 import miscellaneous.StatisticsUtility;
 import miscellaneous.StringUtility;
 import net.imagej.ChannelCollection;
@@ -83,7 +86,12 @@ public class PointTester {// extends URLClassLoader {
 	public static void main(String[] args) throws Exception
 	{
 		Logs.log("Hello there", PointTester.class);
-		testAutoImport();
+		playWithUpdater();
+	}
+	
+	public static void playWithUpdater()
+	{
+		
 	}
 	
 	public static TreeMap<DimensionMap,String> getTiffs(String path, ImageJ ij) throws IOException, FormatException, loci.formats.FormatException
