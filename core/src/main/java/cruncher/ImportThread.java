@@ -27,6 +27,15 @@ public class ImportThread implements Callable<Object> {
 		this.dataArray = dataArray;
 	}
 	
+	public ImportThread(JEXEntry entry, String objectName, Type objectType, String objectInfo, TreeMap<DimensionMap,String> dataArray)
+	{
+		this.objectName = objectName;
+		this.objectType = objectType;
+		this.objectInfo = objectInfo;
+		this.dataArray = new TreeMap<JEXEntry,TreeMap<DimensionMap,String>>();
+		this.dataArray.put(entry, dataArray);
+	}
+	
 	public ImportThread call() throws Exception
 	{
 		JEXStatics.statusBar.setStatusText("Importing new object named: " + objectName);

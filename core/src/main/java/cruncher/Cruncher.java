@@ -141,12 +141,25 @@ public class Cruncher {
 		if(successful)
 		{
 			JEXStatics.statusBar.setStatusText("Objects imported successfully");
+			JEXStatics.jexManager.saveCurrentDatabase();
 		}
 		else
 		{
 			JEXStatics.statusBar.setStatusText("Import failed or created no objects. No changes made.");
 			Logs.log(str, 0, this);
 		}
+	}
+	
+	public synchronized void finishExportThread(ExportThread exportThread)
+	{
+		String str = "Export canceled, failed, or no objects created. No changes made.";
+		if(exportThread == null)
+		{
+			JEXStatics.statusBar.setStatusText(str);
+			Logs.log(str, 0, this);
+			return;
+		}
+		JEXStatics.statusBar.setStatusText("Objects exported successfully");
 	}
 	
 }

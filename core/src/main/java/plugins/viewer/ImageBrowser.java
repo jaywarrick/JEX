@@ -35,6 +35,7 @@ import javax.swing.KeyStroke;
 
 import jex.JEXManager;
 import jex.statics.DisplayStatics;
+import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import logs.Logs;
 import miscellaneous.FileUtility;
@@ -50,11 +51,12 @@ import Database.DBObjects.JEXEntry;
 import Database.DBObjects.JEXLabel;
 import Database.DataReader.ImageReader;
 import Database.DataReader.RoiReader;
-import Database.DataWriter.ImageWriter;
 import Database.DataWriter.RoiWriter;
 import Database.Definition.Type;
 import Database.Definition.TypeName;
 import Database.SingleUserDatabase.JEXWriter;
+import cruncher.ExportThread;
+import cruncher.ImportThread;
 
 public class ImageBrowser implements PlugInController {
 	
@@ -404,86 +406,21 @@ public class ImageBrowser implements PlugInController {
 		this.statusBar.setText("Saved " + numChanges + " changed rois.");
 	}
 	
-	private String _exportToDirectory(TreeMap<JEXEntry,TreeMap<DimensionMap,String>> exportMap)
-	{
-		Java2.setSystemLookAndFeel();
-		JFileChooser fc = new JFileChooser();
-		fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-		int returnVal = fc.showOpenDialog(this.dialog);
-		String directory = null;
-		if(returnVal == JFileChooser.APPROVE_OPTION)
-		{
-			try
-			{
-				directory = fc.getSelectedFile().getCanonicalPath();
-			}
-			catch (IOException e)
-			{
-				e.printStackTrace();
-				return null;
-			}
-			if(directory == null)
-			{
-				return null;
-			}
-			for (JEXEntry e : exportMap.keySet())
-			{
-				File eDir = new File(directory + File.separator + e.getEntryExperiment());
-				eDir.mkdir();
-				TreeMap<DimensionMap,String> files = exportMap.get(e);
-				for (DimensionMap map : files.keySet())
-				{
-					String source = files.get(map);
-					if(source == null)
-					{
-						continue;
-					}
-					String mapString = map.toString().replaceAll("\\,", "_");
-					mapString = mapString.replace("=", "");
-					String fileName = e.getTrayX() + "_" + e.getTrayY() + "_" + FileUtility.getFileNameWithExtension(source);
-					try
-					{
-						JEXWriter.copy(new File(source), new File(eDir.getCanonicalPath() + File.separator + fileName));
-					}
-					catch (IOException e1)
-					{
-						e1.printStackTrace();
-						return null;
-					}
-				}
-			}
-		}
-		return directory;
-		
-	}
-	
 	public void export()
 	{
 		// Custom button text
 		JCheckBox checkbox = new JCheckBox("Delete Singleton Dimensions?");
 		Object[] options = { checkbox, "Database", "Folder", "Cancel" };
-		int n = JOptionPane.showOptionDialog(this.dialog, "Export to Database or Folder?", "Export Images", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[2]);
+		int n = JOptionPane.showOptionDialog(this.dialog, "Export to Database or Folder?\n(Cmd+G or Ctrl+G to cancel during export)", "Export Images", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[2]);
 		if(n == 1)
 		{
-			//this._queueImports(checkbox.isSelected())
-			JEXStatics.jexDBManager.saveDataListInEntries(this._queueImports(checkbox.isSelected()), false);
-			Logs.log("Exported new Image based on " + this.imageTN.getName() + " into the database.", 0, this);
-			this.statusBar.setText("Exported sub-image.");
+			this._queueImports(checkbox.isSelected());
 		}
 		else if(n == 2)
 		{
-			String directory = this._exportToDirectory(this._getPathsForFileCopy());
-			
-			if(directory != null)
-			{
-				Logs.log("Exported new Image based on " + this.imageTN.getName() + " to folder " + directory, 0, this);
-				this.statusBar.setText("Exported sub-image.");
-			}
-			else
-			{
-				Logs.log("Export canceled or error occured during export.", 0, this);
-				this.statusBar.setText("Export cancelled or error occured during export.");
-			}
+			String directory = JEXDialog.fileChooseDialog(true);
+			ExportThread export = new ExportThread(directory, this._getPathsForFileCopy());
+			JEXStatics.cruncher.runGuiTask(export);
 		}
 	}
 	
@@ -514,7 +451,7 @@ public class ImageBrowser implements PlugInController {
 		return exportMap;
 	}
 	
-	private TreeMap<JEXEntry,Set<JEXData>> _queueImports(boolean deleteSingletonDims)
+	private void _queueImports(boolean deleteSingletonDims)
 	{
 		TypeName newTN = new TypeName(this.imageTN.getType(), this.imageTN.getName() + " Exported");
 		String newName = JEXStatics.jexManager.getNextAvailableTypeNameInEntries(newTN, this.entries).getName();
@@ -524,8 +461,6 @@ public class ImageBrowser implements PlugInController {
 		this.dataBrowser.storeDimState();
 		List<Object[]> state = this.dataBrowser.getStoredDimState();
 		JEXData imageData;
-		TreeMap<JEXEntry,Set<JEXData>> exportMap = new TreeMap<JEXEntry,Set<JEXData>>();
-		HashSet<JEXData> tempSet;
 		for (JEXEntry e : smashedEntries)
 		{
 			temp.setDimTable(this.getImageDimTable(e));
@@ -567,32 +502,10 @@ public class ImageBrowser implements PlugInController {
 					smashedTable.removeDimWithName(d);
 				}
 			}
-			//			// CREATE WORKFLOW AND RUN
-			//			try
-			//			{
-			//				JEXFunction function = new JEXFunction("Import images");
-			//				((ImportImages) ((JEXCrunchablePlugin) function.getCrunch()).plugin).setImagesToCopy(newFileTable);
-			//				((ImportImages) ((JEXCrunchablePlugin) function.getCrunch()).plugin).setOptionalDimTable(smashedTable);
-			//				function.setExpectedOutputName(0, newName);
-			//				JEXWorkflow wf = new JEXWorkflow("Import images");
-			//				TreeSet<JEXEntry> singleEntry = new TreeSet<JEXEntry>();
-			//				singleEntry.add(e);
-			//				wf.add(function);
-			//				JEXStatics.cruncher.runWorkflow(wf, singleEntry, true);
-			//			}
-			//			catch (InstantiationException e1)
-			//			{
-			//				e1.printStackTrace();
-			//		}
 			
-			
-			JEXData newImageData = ImageWriter.makeImageStackFromPaths(newName, newFileTable);
-			newImageData.setDimTable(smashedTable);
-			tempSet = new HashSet<JEXData>();
-			tempSet.add(newImageData);
-			exportMap.put(e, tempSet);
+			ImportThread exportToDB = new ImportThread(e, newName, JEXData.IMAGE, "Exported from " + this.imageTN.getName(), newFileTable);
+			JEXStatics.cruncher.runGuiTask(exportToDB);			
 		}
-		return exportMap;
 	}
 	
 	/**
