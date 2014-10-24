@@ -62,6 +62,11 @@ public class Updater {
 		}
 		// Force update to ensure latest version is being used.
 		int version = JEXDialog.getChoice("Update JEX...", "Which version would you like?", new String[]{"Development Version","Last Official Release"}, 0);
+		if(version < 0)
+		{
+			// Operation was canceled
+			return;
+		}
 		Logs.log("Forcing update to latest download from sourceforge file repository.\n\n", Updater.class);
 		JEXStatics.statusBar.setStatusText("Updating. Step 1 of 1 - Downloading...");
 		TreeMap<String,Object> connectionResults = connectToServerFile(version == 0);
