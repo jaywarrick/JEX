@@ -184,10 +184,13 @@ public class MeasureSecretion extends JEXPlugin {
 					{
 						outputPlotMap.put(dataMap, result.get("plot").toString());
 					}
-					outputDataMap.put(dataMap.copyAndSet("Measurement=Ratio"), (Double) result.get("ratio"));
-					if(haveCell)
+					for(String key : result.keySet())
 					{
-						outputDataMap.put(dataMap.copyAndSet("Measurement=cellCount"), ((Number) result.get("cellCount")).doubleValue());
+						Object val = result.get(key);
+						if(val instanceof Number)
+						{
+							outputDataMap.put(dataMap.copyAndSet("Measurement=" + key), ((Number) result.get(key)).doubleValue());
+						}						
 					}
 				}
 				else

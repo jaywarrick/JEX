@@ -16,6 +16,29 @@ import rtools.R;
 public class MicrowellAnalyzer {
 	
 	
+	/**
+	 * Quantify secretion intensity (1 color) and bead intensity (a different color) along with cell counts for microwells.
+	 * 
+	 * Most pixels in a microwell are background, thus we can use median to get the background. We can optionally refine this somewhat by 
+	 * saying that background pixels are also dark in the "enhanced brightfield" image of the microwells. Pixels used to calculate the "background" means
+	 * and thresholds are plotted as black dots. We get the median and mad of the "background" pixels to determine a 4 std dev's threshold for each color.
+	 * These black dots are plotted over the red dots which is the entire population of pixels in the microwell. The brightfield is able to 
+	 * provide a fluroescence independent method of refining what we call background. 
+	 * 
+	 * Next, we want to quantify anything that is a bead, so we only use the threshold of the bead color to determine which pixels in the microwell
+	 * to quantify for secretion and bead signals, as we are typically interested in secretion signal per bead signal per microwell.
+	 * 
+	 * @param image1
+	 * @param image2
+	 * @param cells
+	 * @param microwell
+	 * @param template
+	 * @param plot
+	 * @param bfIm
+	 * @param bfThresh
+	 * @param bfRoiScale
+	 * @return
+	 */
 	public static TreeMap<String,Object> getSecretionData(ImageProcessor image1, ImageProcessor image2, ROIPlus cells, IdPoint microwell, ROIPlus template, boolean plot, ImageProcessor bfIm, double bfThresh, double bfRoiScale) 
 	{
 		PointList pl = template.getPointList();
@@ -85,8 +108,10 @@ public class MicrowellAnalyzer {
 		TreeMap<String,Object> results = new TreeMap<String,Object>();
 		if(xFiltered.length > 10)
 		{
-			double rise = StatisticsUtility.mean(yFiltered) - yMed;
-			double run = StatisticsUtility.mean(xFiltered) - xMed;
+			double ySig = StatisticsUtility.mean(yFiltered);
+			double rise = ySig - yMed;
+			double xSig = StatisticsUtility.mean(xFiltered);
+			double run = xSig - xMed;
 			double slope = rise/run;
 			double yint = yMed - slope*xMed;
 			double[] fit = new double[]{yint, slope};
@@ -98,6 +123,14 @@ public class MicrowellAnalyzer {
 			}
 			
 			results.put("plot", path);
+			results.put("secretionMed", yMed);
+			results.put("secretionMad", yMad);
+			results.put("secretionThresh", yThresh);
+			results.put("secretionSig", ySig);
+			results.put("beadMed", xMed);
+			results.put("beadMad", xMad);
+			results.put("beadThresh", xThresh);
+			results.put("beadSig", xSig);
 			results.put("ratio", fit[1]);
 			
 			if(cells != null)
