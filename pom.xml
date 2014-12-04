@@ -22,6 +22,10 @@
 		<module>jex</module>
 	</modules>
 
+	<properties>
+		<enforcer.skip>true</enforcer.skip>
+	</properties>
+
 	<repositories>
 		<repository>
 			<id>imagej.public</id>
