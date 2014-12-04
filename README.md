@@ -5,7 +5,7 @@ JEX
 
 Java-based software and GUI to automatically manage/database large numbers of files (e.g., images) in a transparent file structure and perform batch processing with standard tools (ImageJ, R, Octave, Weka).
 
-#### "Downloading the JEX Executable Version"
+#### Downloading the JEX Executable Version
 
 Executable jars and simple exectuable scripts to run those jars with specific java heap space arguments for increasing the amount of RAM that can be used are available for download at [sourceforge](http://sourceforge.net/projects/jextools/). Simply save and unzip the file anywhere you would like (except maybe your root directory of your hard drive such as 'C:/' as that is often weirdly write protected and can cause issues) and double-click the "JEX for Mac" or "JEX for Windows" exectubale script depending on your operating system (Linux users can double-click the jar directly or run the jar from the command line to change the memory settings). This will start a terminal window that will show information regarding any actions that JEX is taking as well as error information that would be very useful for debugging issues you might run into :-).
 
