@@ -106,7 +106,7 @@ public class PointTester {// extends URLClassLoader {
 		}
 	}
 	
-	public static TreeMap<DimensionMap,String> getTiffs(String path, ImageJ ij) throws IOException, FormatException, loci.formats.FormatException
+	public static TreeMap<DimensionMap,String> getTiffs(String path, ImageJ ij) throws IOException, FormatException
 	{
 		final String outPath = "/Users/jaywarrick/Desktop/NewFolder";
 		final SCIFIO scifio = new SCIFIO(ij.getContext());
