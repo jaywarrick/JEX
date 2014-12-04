@@ -64,6 +64,8 @@ Simply drag an appropriate database object onto the input icon of the function's
 
 Click the "Run" button on of a particular function to only run that function. Click the "Run" button to the right of the "Workflow" to run the entire sequence of functions. This also automatically results in the saving of a "Workflow" object into the database. This "Workflow" object is a saved version of the entire workflow, complete with selections made for inputs/outputs and parameters. Double-clicking the "Workflow" object in the left panel, "loads" the workflow into the upper-middle panel, appending the functions to the end of what already might exist in this panel. In this way, workflows can be easily re-run with exactly the same parameters if necessary. Likewise, with the ability to save and load "Workflows" using the "Save" and "Load" button of tab \#5 allows for easy sharing of batch processing workflows between individuals and databases.
 
+ * Side note: There are three types of toolboxes, those for "Old" JEX functions that don't use java annotation processing and a different formation for defining function inputs, outputs, and parameters; those for "ImageJ" functions which are automatically converted versions of existing ImageJ plugins (potentially useful but not completely supported in every way yet); and those for "New" JEX functions which leverage java annotation processing to simplify the writing of new functions. The ImageJ toolboxes begin with "ImageJ". The new JEX toolboxes begin with "JEX" while the old JEX toolboxes do not have a common prefix.
+
 Those are the basics. For now, try things out from there. Hopefully we'll get more documentation on all the other features of JEX including some of the useful "Plugins" on tab \#7.
 
 #### Using Eclipse to run or edit/develop the JEX and JEX functions...
@@ -79,6 +81,7 @@ The project is structured as a Maven project which is automatically recognized b
   * Set the project to the project you just created that relates to the JEX/pom.xml
   * Set the "Main Class" to jex.Main (this class essentially runs the main class within the core/pom.xml related project containing most of the classes of JEX).
   * Under the "Arguments" tab of this same dialog window, add (without the surrounding quotes) "-Xmx1024m" to the "VM arguments:" text box to allow JEX to use up to 1024 MB of memory. Change accordingly as desired or needed for your application.
+  * Choose to run the configuration to run JEX.
 
 #### Cloning the JEX git repository
 
@@ -104,5 +107,11 @@ After making a saving edits to your forked version of the JEX repository (see "C
 To keep your forked repository up-to-date with changes to the original JEX, termed the "upstream" repository, you need to use the command line git tools. See [here](https://help.github.com/articles/syncing-a-fork/) for updating your fork.
 
 If you are an experienced programmer that would like to be part of the team that develops JEX in a more direct manner, please contact us by creating and "issue" and we'll see if we can't set you up as a "developer" on this repository so you can sync changes directly to the source-code.
+
+#### How to create a JEX Function
+
+See [AdjustImage.java](https://github.com/jaywarrick/JEX/blob/master/core/src/main/java/function/plugin/plugins/imageProcessing/AdjustImage.java) for a current template on how to write a JEX funciton. In general, we use annotation processing to mark these classes as JEX functions or, more precisely, as classes that implement the JEXPlugin interface. Annotations are anything with the "@" symbol preceding them. The four types of annotations we use are @Plugin, @InputMarker, @ParameterMarker, @OutputMarker. @Plugin provides information about the function's name, description, and the toolbox is should be placed in. @InputMarker's and @OutputMarkers define the default names and types of database object that are used as inputs and outputs to the function. @ParameterMarker's defines the name, description, order in the user interface, and type of "widget" that should be used to allow the user to enter a value for the parameter. The type of the parameter (i.e., a String, Boolean, or Number) is defined by the type of variable (e.g., "String pathToFile;")that is listed in the line directly below the annotation. This way of doing things provides a very explicit, compact, and simple way to define function inputs, outputs, and parameters and enables automatic generation of user interfaces for each function. Search other functions in folders adjacent to the AdjustImage.java file for examples on different widgets that are available. Bascially, there are single-line text boxes, dropdowns, check boxes, file-choosers, and multi-line text boxes/editors intended for entering scripting commands to pass to functions (e.g., for functions that leverage R or Octave).
+
+Typically to develop such functions, it is easiest to just clone the repository and run JEX from source-code using a java IDE such as eclipse. We would suggest creating a folder adjacent to the folder used for the AdjustImage.java function or to add to one of the existing adjacent folders.
 
 ##### Happy JEXing :-)
