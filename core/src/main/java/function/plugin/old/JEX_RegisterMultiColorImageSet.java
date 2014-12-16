@@ -208,6 +208,11 @@ public class JEX_RegisterMultiColorImageSet extends JEXCrunchable {
 		String colorDimName = this.parameters.getValueOfParameter("Color Dim Name");
 		String timeDimName = this.parameters.getValueOfParameter("Time Dim Name");
 		Dim colorDim = data.getDimTable().getDimWithName(colorDimName);
+		int colorDimSize = 1;
+		if(colorDim != null)
+		{
+			colorDimSize = colorDim.size();
+		}
 		String referenceColor = this.parameters.getValueOfParameter("Reference Color");
 		boolean cropResults = Boolean.parseBoolean(this.parameters.getValueOfParameter("Remove Black Borders?"));
 		boolean firstTimer = Boolean.parseBoolean(this.parameters.getValueOfParameter("Align To First Timepoint?"));
@@ -216,6 +221,11 @@ public class JEX_RegisterMultiColorImageSet extends JEXCrunchable {
 		// reference color and time point 1)
 		DimTable imageLocationDimTable = data.getDimTable().getSubTable(new DimensionMap(colorDimName + "=" + referenceColor));
 		Dim timeDim = imageLocationDimTable.getDimWithName(timeDimName);
+		int timeDimSize = 1;
+		if(timeDim != null)
+		{
+			timeDimSize = timeDim.size();
+		}
 		imageLocationDimTable = imageLocationDimTable.getSubTable(new DimensionMap(timeDimName + "=" + timeDim.dimValues.get(0)));
 		
 		// Run the function
@@ -240,7 +250,7 @@ public class JEX_RegisterMultiColorImageSet extends JEXCrunchable {
 		DimensionMap ptsMap = null;
 		Rectangle cropRoiDims = null;
 		
-		int total = imageLocationDimTable.mapCount() * (timeDim.dimValues.size()) * (colorDim.dimValues.size() + 1);
+		int total = imageLocationDimTable.mapCount() * (timeDimSize) * (colorDimSize + 1);
 		JEXStatics.statusBar.setProgressPercentage(0);
 		for (DimensionMap map : imageLocationDimTable.getMapIterator())
 		{
@@ -358,7 +368,8 @@ public class JEX_RegisterMultiColorImageSet extends JEXCrunchable {
 				}
 				newMap.put(timeDimName, tVal);
 				
-				for (String cVal : colorDim.dimValues) // Loop through each
+				for (int i = 0; i < colorDimSize; i++) // Loop through each color and perform the same transformation
+				//for (String cVal : colorDim.dimValues) // Loop through each
 				// color and perform
 				// the same
 				// transformation
@@ -367,7 +378,10 @@ public class JEX_RegisterMultiColorImageSet extends JEXCrunchable {
 					{
 						return false;
 					}
-					newMap.put(colorDimName, cVal);
+					if(colorDim != null)
+					{
+						newMap.put(colorDimName, colorDim.dimValues.get(i));
+					}
 					source = new ImagePlus(images.get(newMap));
 					Logs.log("Applying alignment to " + newMap.toString(), 0, this);
 					reg.sourcePoints = sourcePts.get(newMap);
