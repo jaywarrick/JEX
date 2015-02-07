@@ -1,8 +1,0 @@
-\documentclass[12pt]{article}
-
-\begin{document}
-This is a guide describing all of the steps being used in the JEX workflow.
-
-\section{Import CTC Images From NIS Folder}
-This imports the raw image files in .nd2 format
-\end{document}
