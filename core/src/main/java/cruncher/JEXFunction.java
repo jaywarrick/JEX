@@ -253,6 +253,8 @@ public class JEXFunction {
 		}
 		
 		Logs.log("Function " + this.getFunctionName() + " returned " + result, 1, this);
+		
+		// Data output is what is actually output by the function (vs what is shown in the gui of the function)
 		HashSet<JEXData> dataOutput = crunch.getRealOutputs();
 		
 		// Save only data which has been selected to be saved.
@@ -261,11 +263,23 @@ public class JEXFunction {
 		for(JEXData d : dataOutput)
 		{
 			// Have to iterate through all outputs multiple times to match names and selection because the HashSet is not ordered
-			for(Integer i : this.outputs.keySet())
+			// "this.outputs" only refers to outputs that are shown in the gui
+			if(this.outputs.size() == 0)
 			{
-				if(this.outputs.get(i).equals(d.getTypeName()))
+				savedOutput.add(d);
+			}
+			else
+			{
+				for(Integer i : this.outputs.keySet())
 				{
-					if(this.savingSelections.get(i))
+					if(this.outputs.get(i).equals(d.getTypeName()))
+					{
+						if(this.savingSelections.get(i))
+						{
+							savedOutput.add(d);
+						}
+					}
+					else
 					{
 						savedOutput.add(d);
 					}
