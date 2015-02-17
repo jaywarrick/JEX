@@ -12,23 +12,38 @@ import miscellaneous.Copiable;
 import miscellaneous.StringUtility;
 import weka.core.Attribute;
 
+/**
+ * @author Jay Warrick, commented by Mengcheng
+ *
+ */
 public class Dim implements Copiable<Dim> {
 	
+	// dimName, e.g. imRow, imCol, color
 	public final String dimName;
+	// dimValues, a string vector, e.g. {0, 1, 2, 3} if imRow = 4 means 4 rows.
 	public final Vector<String> dimValues;
+	// dimValueSet, a string TreeSet, e.g. {0, 1, 2, 3} if imRow = 4 means 4 rows.
 	public TreeSet<String> dimValueSet;
 	
+	
+	/**
+	 * Class constructor specifying dimName and dimValues (array of string)
+	 * 
+	 * @param dimName the name of the dimension
+	 * @param dimValues the value set of the dimension
+	 */
 	public Dim(String dimName, String[] dimValues)
 	{
+		// call class constructor below, convert dimValues into a List
 		this(dimName, Arrays.asList(dimValues));
 	}
 	
-	private void updateDimValueSet()
-	{
-		this.dimValueSet = new TreeSet<String>(new StringUtility());
-		this.dimValueSet.addAll(this.dimValues);
-	}
-	
+	/**
+	 * Class constructor specifying dimName and dimValues (collection of string)
+	 * 
+	 * @param dimName the name of the dimension
+	 * @param values 
+	 */
 	public Dim(String dimName, Collection<String> values)
 	{
 		this.dimName = dimName;
@@ -37,6 +52,22 @@ public class Dim implements Copiable<Dim> {
 		this.updateDimValueSet();
 	}
 	
+	
+	/**
+	 * Add new dimValues to dimValueSet
+	 */
+	private void updateDimValueSet()
+	{
+		this.dimValueSet = new TreeSet<String>(new StringUtility());
+		this.dimValueSet.addAll(this.dimValues);
+	}
+	
+	/**
+	 * Class constructor specifying attribute
+	 * note - weka.core.Attribute
+	 * 
+	 * @param att an Attribute object
+	 */
 	public Dim(Attribute att)
 	{
 		this.dimName = att.name();
@@ -48,6 +79,11 @@ public class Dim implements Copiable<Dim> {
 		this.updateDimValueSet();
 	}
 	
+	/**
+	 * Class constructor specifying csvString
+	 * 
+	 * @param csvString
+	 */
 	public Dim(String csvString)
 	{
 		CSVList csv = new CSVList(csvString);
@@ -57,11 +93,26 @@ public class Dim implements Copiable<Dim> {
 		this.updateDimValueSet();
 	}
 	
+	/**
+	 * Class constructor specifying dimName, dimValue max
+	 * create dimValues from 1 to max increment by 1
+	 * 
+	 * @param name
+	 * @param max integer
+	 */
 	public Dim(String name, int max)
 	{
 		this(name, 1, max);
 	}
 	
+	/**
+	 * Class constructor specifying dimName, dimValue max and min
+	 * create dimValues from min to max increment by 1
+	 * 
+	 * @param name
+	 * @param min integer
+	 * @param max integer
+	 */
 	public Dim(String name, int min, int max)
 	{
 		this.dimName = name;
@@ -74,6 +125,15 @@ public class Dim implements Copiable<Dim> {
 		this.updateDimValueSet();
 	}
 	
+	/**
+	 * Class constructor specifying dimName, dimValue max, min, and steps
+	 * create dimValues from min to max by specified steps
+	 * 
+	 * @param name
+	 * @param min double
+	 * @param max double
+	 * @param steps integer
+	 */
 	public Dim(String name, double min, double max, int steps)
 	{
 		DecimalFormat format = new DecimalFormat("0.00");
@@ -88,6 +148,13 @@ public class Dim implements Copiable<Dim> {
 		this.updateDimValueSet();
 	}
 	
+	/**
+	 * Class constructor specifying dimName, dimValues
+	 * create dimValues as a CSVList
+	 * 
+	 * @param dimName
+	 * @param csvValues a CSV string
+	 */
 	public Dim(String dimName, String csvValues)
 	{
 		this.dimName = dimName;
@@ -95,16 +162,31 @@ public class Dim implements Copiable<Dim> {
 		this.updateDimValueSet();
 	}
 	
+	/**
+	 * returned dim name
+	 * 
+	 * @return dim name
+	 */
 	public String name()
 	{
 		return this.dimName;
 	}
 	
+	/**
+	 * returned dim values
+	 * 
+	 * @return dim values, a string vector
+	 */
 	public List<String> values()
 	{
 		return new Vector<String>(this.dimValues);
 	}
 	
+	/**
+	 * returned dim values
+	 * 
+	 * @return dim values, a double vector
+	 */
 	public Vector<Double> doubleValues()
 	{
 		Vector<Double> ret = new Vector<Double>();
@@ -116,7 +198,8 @@ public class Dim implements Copiable<Dim> {
 	}
 	
 	/**
-	 * index is exclusive
+	 * returned a sublist of dim values [0:index]
+	 * index is inclusive
 	 * 
 	 * @param index
 	 * @return
@@ -131,10 +214,12 @@ public class Dim implements Copiable<Dim> {
 		{
 			index = 0;
 		}
+		// subList includes 0, excludes index+1
 		return this.dimValues.subList(0, index + 1);
 	}
 	
 	/**
+	 * returned a sublist of dim values [index:end]
 	 * index is inclusive
 	 * 
 	 * @param index
@@ -153,32 +238,64 @@ public class Dim implements Copiable<Dim> {
 		return this.dimValues.subList(index, this.size());
 	}
 	
+	/**
+	 * returned dim values as an string array 
+	 * 
+	 * @return
+	 */
 	public String[] valueArray()
 	{
 		String[] result = this.dimValues.toArray(new String[0]);
 		return result;
 	}
 	
+	/**
+	 * returned dimValue at specified index (vector index)
+	 * 
+	 * @param index integer
+	 * @return dim value string
+	 */
 	public String valueAt(int index)
 	{
 		return this.dimValues.get(index);
 	}
 	
+	/**
+	 * returned index of given dim value
+	 * 
+	 * @param value string
+	 * @return index integer
+	 */
 	public int index(String value)
 	{
 		return this.dimValues.indexOf(value);
 	}
 	
+	/**
+	 * returned minimum dim value
+	 * 
+	 * @return min dim value string
+	 */
 	public String min()
 	{
 		return this.dimValues.get(0);
 	}
 	
+	/**
+	 * returned maximum dim value
+	 * 
+	 * @return max dim value string
+	 */
 	public String max()
 	{
 		return this.dimValues.get(this.size() - 1);
 	}
 	
+	/**
+	 * returned the total number of dim values
+	 * 
+	 * @return size of dimValues integer
+	 */
 	public int size()
 	{
 		return this.dimValues.size();
@@ -186,6 +303,7 @@ public class Dim implements Copiable<Dim> {
 	
 	/**
 	 * returned Dim contains no references to dim1 and dim2 or their values. (deep copy)
+	 * a union dimValues of dim1 and dim2
 	 * 
 	 * @param dim1
 	 * @param dim2
@@ -213,6 +331,7 @@ public class Dim implements Copiable<Dim> {
 	
 	/**
 	 * returned Dim contains no references to dim1 and dim2 or their values. (deep copy)
+	 * a intersect dimValues of dim1 and dim2
 	 * 
 	 * @param dim1
 	 * @param dim2
@@ -236,12 +355,20 @@ public class Dim implements Copiable<Dim> {
 		return new Dim(dim1.name(), newDimValues);
 	}
 	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
 	@Override
 	public String toString()
 	{
 		return this.toCSVString();
 	}
 	
+	/**
+	 * returned a string contains dim name and dim values separated by comma
+	 * 
+	 * @return CSVList in string
+	 */
 	public String toCSVString()
 	{
 		if(this.dimName == null || this.dimValues == null)
@@ -257,6 +384,9 @@ public class Dim implements Copiable<Dim> {
 		return result;
 	}
 	
+	/* (non-Javadoc)
+	 * @see miscellaneous.Copiable#copy()
+	 */
 	@Override
 	public Dim copy()
 	{
@@ -265,6 +395,9 @@ public class Dim implements Copiable<Dim> {
 		return ret;
 	}
 	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
 	@Override
 	public boolean equals(Object o)
 	{
@@ -280,11 +413,23 @@ public class Dim implements Copiable<Dim> {
 		return this.values().equals(d.values());
 	}
 	
+	/**
+	 * returned true if dimValueSet contains the given value
+	 * TreeSet searching
+	 * 
+	 * @param value string
+	 * @return boolean
+	 */
 	public boolean containsValue(String value)
 	{
 		return this.dimValueSet.contains(value);
 	}
 	
+	/**
+	 * returned an Attribute of CSVList contains dimName and dimValues
+	 * 
+	 * @return
+	 */
 	public Attribute toArffAttribute()
 	{
 		return new Attribute(this.name(), this.values());
