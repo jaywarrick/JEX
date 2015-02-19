@@ -3,7 +3,7 @@ package miscellaneous;
 import java.util.List;
 
 /**
- * This class Separate Variable List (CSVList) 
+ * This class Comma Separate Variable List (CSVList) 
  * separates a collection of variables and save each variable into a String Vector
  * by fixed separators
  * 
