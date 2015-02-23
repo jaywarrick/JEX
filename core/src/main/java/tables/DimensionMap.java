@@ -9,20 +9,35 @@ import miscellaneous.CSVList;
 import miscellaneous.Copiable;
 import miscellaneous.StringUtility;
 
+/**
+ * DimensionMap is a TreeMap that contains <variableName, value>, e.g. <"color", "1">
+ *
+ * @author Jay Warrick, commented by Jay Warrick and Mengcheng
+ *
+ */
 public class DimensionMap extends TreeMap<String,String> implements Comparable<DimensionMap>, Copiable<DimensionMap> {
 	
 	private static final long serialVersionUID = 1L;
 	
+	/**
+	 * super TreeMap constructor
+	 */
 	public DimensionMap()
 	{
 		super(new StringUtility());
 	}
 	
+	/**
+	 * Class constructor specifying a CSV string
+	 * 
+	 * @param csvDimStr input to instance a CSVList
+	 */
 	public DimensionMap(String csvDimStr)
 	{
-		super();
+		super(); // instance a TreeMap<String, String>
 		
 		CSVList csv = new CSVList(csvDimStr);
+		// each csv contains a variable = a certain value
 		for (String s : csv)
 		{
 			String[] dimNameValue = s.split("=");
@@ -35,6 +50,9 @@ public class DimensionMap extends TreeMap<String,String> implements Comparable<D
 		}
 	}
 	
+	/* (non-Javadoc)
+	 * @see java.util.AbstractMap#equals(java.lang.Object)
+	 */
 	@Override
 	public boolean equals(Object o)
 	{
@@ -46,12 +64,18 @@ public class DimensionMap extends TreeMap<String,String> implements Comparable<D
 		return false;
 	}
 	
+	/* (non-Javadoc)
+	 * @see java.util.AbstractMap#hashCode()
+	 */
 	@Override
 	public int hashCode()
 	{
 		return super.hashCode();
 	}
 	
+	/* (non-Javadoc)
+	 * @see java.util.AbstractMap#toString()
+	 */
 	@Override
 	public String toString()
 	{
@@ -63,6 +87,11 @@ public class DimensionMap extends TreeMap<String,String> implements Comparable<D
 		return l.toString();
 	}
 	
+	/**
+	 * Get DimensionMap to array
+	 * 
+	 * @return a string array contains dims
+	 */
 	public String[] getDimensionArray()
 	{
 		String[] result = new String[this.size()];
@@ -76,6 +105,12 @@ public class DimensionMap extends TreeMap<String,String> implements Comparable<D
 		return result;
 	}
 	
+	/**
+	 * Return true if input is a dim included in DimensionMap
+	 * 
+	 * @param dim check whether this is a dim
+	 * @return
+	 */
 	public boolean isDimension(String dim)
 	{
 		Set<String> keys = this.keySet();
@@ -89,6 +124,11 @@ public class DimensionMap extends TreeMap<String,String> implements Comparable<D
 		return false;
 	}
 	
+	/**
+	 * Get DimensionMap to LinkedHashSet
+	 * 
+	 * @return a LinkedHashSet contains dims
+	 */
 	public LinkedHashSet<String> getDimensionSet()
 	{
 		LinkedHashSet<String> result = new LinkedHashSet<String>();
@@ -120,9 +160,10 @@ public class DimensionMap extends TreeMap<String,String> implements Comparable<D
 	}
 	
 	/**
-	 * Return a low level copy of the dimensionhashmap
+	 * Return a low level copy of the dimensionhashmap from a cvsString
 	 * 
-	 * @return dimensionhashmap
+	 * @param csvString
+	 * @return DimensionMap 
 	 */
 	public DimensionMap copyAndSet(String csvString)
 	{
@@ -161,6 +202,9 @@ public class DimensionMap extends TreeMap<String,String> implements Comparable<D
 	 * DimensionMaps with overdefined DimensionMaps. In other words, if we have an array of rois on a single image, we can use the DimensionMap of the rois to access the appropriate image in the imageSet by simply using the get method for a
 	 * TreeMap<DimensionMap,String>.
 	 */
+	/* (non-Javadoc)
+	 * @see java.lang.Comparable#compareTo(java.lang.Object)
+	 */
 	@Override
 	public int compareTo(DimensionMap d)
 	{
@@ -195,6 +239,12 @@ public class DimensionMap extends TreeMap<String,String> implements Comparable<D
 		
 	}
 	
+	/**
+	 * Compare the values of two DimensionMaps 
+	 * 
+	 * @param that
+	 * @return
+	 */
 	private int compareValues(DimensionMap that)
 	{
 		// Otherwise all the keys in d are contained in this and we can compare
@@ -218,6 +268,13 @@ public class DimensionMap extends TreeMap<String,String> implements Comparable<D
 		return 0;
 	}
 	
+	/**
+	 * Compare the keys of two DimensionMaps 
+	 * 
+	 * @param thisMap
+	 * @param thatMap
+	 * @return
+	 */
 	private int compareKeys(DimensionMap thisMap, DimensionMap thatMap)
 	{
 		StringBuffer thisString = new StringBuffer(), thatString = new StringBuffer();

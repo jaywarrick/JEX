@@ -9,6 +9,13 @@ public class DimTableIterator implements Iterator<DimTable> {
 	String dimName;
 	Iterator<String> itr;
 
+	/**
+	 * Class constructor 
+	 * create a String type iterator of dimValues (Vector<String>)
+	 * 
+	 * @param table DimTable 
+	 * @param dimName DimName
+	 */
 	public DimTableIterator(DimTable table, String dimName)
 	{
 		this.table = table;

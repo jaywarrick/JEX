@@ -428,7 +428,7 @@ public class Dim implements Copiable<Dim> {
 	/**
 	 * returned an Attribute of CSVList contains dimName and dimValues
 	 * 
-	 * @return
+	 * @return Attribute
 	 */
 	public Attribute toArffAttribute()
 	{
