@@ -16,6 +16,7 @@ public class DimTableIterable implements Iterable<DimTable>{
 	@Override
 	public Iterator<DimTable> iterator()
 	{
+		// an iterator of DimValues given this DimName in this DimTable
 		return new DimTableIterator(this.table, this.dimName);
 	}
 
