@@ -10,7 +10,7 @@ import miscellaneous.Copiable;
 import miscellaneous.StringUtility;
 
 /**
- * DimensionMap is a TreeMap that contains <variableName, value>, e.g. <"color", "1">
+ * DimensionMap is a TreeMap that contains variableName, value, e.g. "color", "1"
  *
  * @author Jay Warrick, commented by Jay Warrick and Mengcheng
  *
@@ -109,7 +109,7 @@ public class DimensionMap extends TreeMap<String,String> implements Comparable<D
 	 * Return true if input is a dim included in DimensionMap
 	 * 
 	 * @param dim check whether this is a dim
-	 * @return
+	 * @return true if input is a dim included in DimensionMap
 	 */
 	public boolean isDimension(String dim)
 	{
@@ -162,8 +162,8 @@ public class DimensionMap extends TreeMap<String,String> implements Comparable<D
 	/**
 	 * Return a low level copy of the dimensionhashmap from a cvsString
 	 * 
-	 * @param csvString
-	 * @return DimensionMap 
+	 * @param csvString csvString
+	 * @return DimensionMap DimensionMap
 	 */
 	public DimensionMap copyAndSet(String csvString)
 	{
@@ -179,11 +179,11 @@ public class DimensionMap extends TreeMap<String,String> implements Comparable<D
 	}
 	
 	/**
-	 * Returns a string displaying the dimensionshap map with KEYSIZE number of characters for the labels and VALUESIZE number of characters for the values
+	 * Returns a string displaying the dimension map with KEYSIZE number of characters for the labels and VALUESIZE number of characters for the values
 	 * 
-	 * @param keySize
-	 * @param valueSize
-	 * @return string
+	 * @param keySize keySize
+	 * @param valueSize valueSize
+	 * @return string Returns a string displaying the dimension map with KEYSIZE number of characters for the labels and VALUESIZE number of characters for the values
 	 */
 	public String getLine(int keySize, int valueSize)
 	{
@@ -200,7 +200,7 @@ public class DimensionMap extends TreeMap<String,String> implements Comparable<D
 	/**
 	 * Return a comparaison with another DimensionMap. This DimensionMap can be overdefined compared to d and still return 0. Thus, A = B doesn't necessarily mean B = A but having this behavior allows us to access items in maps sorted by
 	 * DimensionMaps with overdefined DimensionMaps. In other words, if we have an array of rois on a single image, we can use the DimensionMap of the rois to access the appropriate image in the imageSet by simply using the get method for a
-	 * TreeMap<DimensionMap,String>.
+	 * TreeMap with DimensionMap key and String value.
 	 */
 	/* (non-Javadoc)
 	 * @see java.lang.Comparable#compareTo(java.lang.Object)

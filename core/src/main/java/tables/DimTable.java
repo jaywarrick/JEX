@@ -49,19 +49,19 @@ public class DimTable extends ArrayList<Dim> implements Copiable<DimTable> {
 	 * Class constructor 
 	 * Load from a SSV-CSV string
 	 * 
-	 * @param csvString dimName followed by dimValues and separated by "\\"
+	 * @param csvString a concatenation of csvStrings separated by semicolon
 	 */
 	public DimTable(String csvString)
 	{
 		this();
 		if(csvString != null && !csvString.equals(""))
 		{
-			// convert csvString to a Vector<String>, dimName at pos 0, dimValues at pos 1 to ...
+			// get a list of csvStrings 
 			SSVList ssvDim = new SSVList(csvString);
-			// ?????????????????? TODO 
+
 			for (String dimStr : ssvDim)
 			{
-				// Dim constructor is able to convert csvString into a Dim object why for loop????
+				// convert each csvString to a Dim including dimName at pos 0, dimValues at pos 1 to ...
 				Dim dim = new Dim(dimStr);
 				this.add(dim);
 			}
@@ -106,10 +106,7 @@ public class DimTable extends ArrayList<Dim> implements Copiable<DimTable> {
 		for (String dimName : dimset.keySet())
 		{
 			TreeSet<String> dimValues = dimset.get(dimName);
-			// convert dimValues from TreeSet<String> to String Array
-			// why not use Dim(String dimName, Collection<String> values) ???????????????????????? TODO
-			String[] dimValueArray = dimValues.toArray(new String[0]);
-			Dim dim = new Dim(dimName, dimValueArray);
+			Dim dim = new Dim(dimName, dimValues);
 			this.add(dim);
 		}
 	}
@@ -271,7 +268,7 @@ public class DimTable extends ArrayList<Dim> implements Copiable<DimTable> {
 
 		
 		// if filter does not match this DimTable then return whole DimTable
-		if(!this.hasDimensionMap(filter))
+		if(!this.hasDimensionMap(filter)) 
 			return this.copy(); 
 		
 		DimTable ret = new DimTable();
@@ -367,7 +364,7 @@ public class DimTable extends ArrayList<Dim> implements Copiable<DimTable> {
 		// WE DO THINGS THIS WAY SO WE DONT HAVE TO SEARCH FOR THE DIM WITH THE MATCHING NAME OF THE DIMENSIONMAP KEY OVER AND OVER
 		// INSTEAD LOOP THROUGH THE DIMS ONLY ONCE AND KEEP TRACK OF THE NUMBER OF MATCHES RETURNING FALSE WHERE THE DIM DOESNT HAVE THE CORRESPONDING DIMENSIONMAP VALUE
 		Set<String> mapKeys = map.keySet();
-		int n = mapKeys.size();
+		int n = mapKeys.size(); // DimensionMap size
 		int count = 0;
 		for (Dim d : this)
 		{
@@ -386,7 +383,7 @@ public class DimTable extends ArrayList<Dim> implements Copiable<DimTable> {
 			} // OTHERWISE SKIP
 		}
 		
-		// check if DimensionMap contains all the DimNames in the DimTable
+		// DimensionMap can be partial DimTable
 		return count == n; // I.E. WE FOUND A DIM THAT CONTAINS THE DIMENSIONMAP VALUE FOR EACH VALUE IN THE DIMENSION MAP
 	}
 	
