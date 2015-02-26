@@ -224,9 +224,11 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 	{
 		try
 		{
-			// Collect the inputs
+			/* COLLECT DATA INPUTS */
 			boolean roiProvided = false;
 			JEXData imageData = inputs.get("Image");
+			// if/else to figure out whether or not valid image data has been given;
+			// ends run if not
 			if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
 			{
 				return false;
@@ -237,7 +239,9 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 				roiProvided = true;
 			}
 			
-			// Gather parameters
+			
+			
+			/* GATHER PARAMETERS */
 			double despeckleR = Double.parseDouble(this.parameters.getValueOfParameter("Pre-Despeckle Radius"));
 			double smoothR = Double.parseDouble(this.parameters.getValueOfParameter("Pre-Smoothing Radius"));
 			String colorDimName = this.parameters.getValueOfParameter("Color Dim Name");
@@ -251,8 +255,12 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 			boolean lightBackground = !Boolean.parseBoolean(this.parameters.getValueOfParameter("Particles Are White?"));
 			boolean maximaOnly = Boolean.parseBoolean(this.parameters.getValueOfParameter("Output Maxima Only?"));
 			
+			
+			
+			/* RUN THE FUNCTION */
+			
+			// check for an valid and existant roiMap (if provided)
 			TreeMap<DimensionMap,ROIPlus> roiMap;
-			// Run the function
 			if(roiProvided)
 			{
 				roiMap = RoiReader.readObjectToRoiMap(roiData);
@@ -261,16 +269,33 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 			{
 				roiMap = new TreeMap<DimensionMap,ROIPlus>();
 			}
+			
+			// Read all the images in the IMAGE data object into imageMap
 			TreeMap<DimensionMap,String> imageMap = ImageReader.readObjectToImagePathTable(imageData);
+			// copy the DimTable from imageData
+			/*
+			 * Why are we getting a copy of imageData and assigning it to
+			 * filteredTable but then replacing it with a subTable if the
+			 * nuclearDimValue parameter is present? Would it be more efficient
+			 * to check for a nuclearDimValue first then populate the
+			 * filteredTable if none exists?
+			 */
 			DimTable filteredTable = imageData.getDimTable().copy();
+			// if maxima color dimension value is null
 			if(!nuclearDimValue.equals(""))
 			{
 				filteredTable = imageData.getDimTable().getSubTable(new DimensionMap(colorDimName + "=" + nuclearDimValue));
 			}
+			
+			
+			
+			// Declare outputs
 			TreeMap<DimensionMap,ROIPlus> outputRoiMap = new TreeMap<DimensionMap,ROIPlus>();
 			TreeMap<DimensionMap,String> outputImageMap = new TreeMap<DimensionMap,String>();
 			TreeMap<DimensionMap,String> outputFileMap = new TreeMap<DimensionMap,String>();
 			TreeMap<DimensionMap,Double> outputCountMap = new TreeMap<DimensionMap,Double>();
+			
+			
 			int count = 0, percentage = 0;
 			int total = filteredTable.mapCount() * 4; // if maximaOnly
 			if(!maximaOnly & !segDimValue.equals(nuclearDimValue))

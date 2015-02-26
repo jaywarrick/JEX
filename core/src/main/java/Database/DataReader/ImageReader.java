@@ -140,8 +140,10 @@ public class ImageReader {
 	 */
 	public static TreeMap<DimensionMap,String> readObjectToImagePathTable(JEXData data)
 	{
-		if(!data.getDataObjectType().equals(JEXData.IMAGE))
-			return null;
+		// if Type is an image, then return null
+		if(!data.getDataObjectType().equals(JEXData.IMAGE)) return null;
+		
+		
 		TreeMap<DimensionMap,String> result = new TreeMap<DimensionMap,String>();
 		for (DimensionMap map : data.getDataMap().keySet())
 		{

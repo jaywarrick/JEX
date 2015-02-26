@@ -252,17 +252,23 @@ public class DimTable extends ArrayList<Dim> implements Copiable<DimTable> {
 	}
 	
 	/**
-	 * returned a subTable of DimTable by a given DimensionMap filter
+	 * Return a subTable of DimTable by a given DimensionMap filter
 	 * 
-	 * @param filter DimensionMap
-	 * @return returned a subTable of DimTable by a given DimensionMap filter
+	 * @param filter DimensionMap the filter being used
+	 * @return A subTable of DimTable by a given DimensionMap filter
 	 */
 	public DimTable getSubTable(DimensionMap filter)
 	{
 		
-//		Since this is a filter, (i.e., choose all that match) if the filter dim doesn't exist, we have to choose
-//		what to do. In functions that require a dimension name, and the dimension name doesn't exist
-//		it would be nice if the filtering didn't result in a null dim table. So, we'll return a copy.
+		/*
+		 * Since this is a filter, (i.e., choose all that match) if the filter
+		 * dim doesn't exist, we have to choose what to do. In functions that
+		 * require a dimension name, and the dimension name doesn't exist, then
+		 * it would be nice if the filtering didn't result in a null dim table,
+		 * so returns a copy.
+		 */
+		
+
 		
 		// if filter does not match this DimTable then return whole DimTable
 		if(!this.hasDimensionMap(filter))

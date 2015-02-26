@@ -28,11 +28,8 @@ import logs.Logs;
 import tables.DimensionMap;
 
 /**
- * This is a JEXperiment function template To use it follow the following instructions
- * 
- * 1. Fill in all the required methods according to their specific instructions 2. Place the file in the Functions/SingleDataPointFunctions folder 3. Compile and run JEX!
- * 
- * JEX enables the use of several data object types The specific API for these can be found in the main JEXperiment folder. These API provide methods to retrieve data from these objects, create new objects and handle the data they contain.
+ * Subtract background of image and correct for uneven illumination using
+ * calibration images.
  * 
  * @author erwinberthier
  * 
