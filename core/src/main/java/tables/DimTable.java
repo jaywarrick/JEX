@@ -249,7 +249,8 @@ public class DimTable extends ArrayList<Dim> implements Copiable<DimTable> {
 	}
 	
 	/**
-	 * Return a subTable of DimTable by a given DimensionMap filter
+	 * Return a subTable of DimTable by a given DimensionMap filter. If filter
+	 * dim does not exist, then return whole DimTable.
 	 * 
 	 * @param filter DimensionMap the filter being used
 	 * @return A subTable of DimTable by a given DimensionMap filter

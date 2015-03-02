@@ -258,35 +258,25 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 			
 			
 			/* RUN THE FUNCTION */
-			
-			// check for an valid and existant roiMap (if provided)
+			// validate roiMap (if provided)
 			TreeMap<DimensionMap,ROIPlus> roiMap;
-			if(roiProvided)
-			{
-				roiMap = RoiReader.readObjectToRoiMap(roiData);
-			}
-			else
-			{
-				roiMap = new TreeMap<DimensionMap,ROIPlus>();
-			}
+			if(roiProvided)	roiMap = RoiReader.readObjectToRoiMap(roiData);
+			else roiMap = new TreeMap<DimensionMap,ROIPlus>();
 			
-			// Read all the images in the IMAGE data object into imageMap
+			// Read the images in the IMAGE data object into imageMap
 			TreeMap<DimensionMap,String> imageMap = ImageReader.readObjectToImagePathTable(imageData);
-			// copy the DimTable from imageData
-			/*
-			 * Why are we getting a copy of imageData and assigning it to
-			 * filteredTable but then replacing it with a subTable if the
-			 * nuclearDimValue parameter is present? Would it be more efficient
-			 * to check for a nuclearDimValue first then populate the
-			 * filteredTable if none exists?
-			 */
-			DimTable filteredTable = imageData.getDimTable().copy();
-			// if maxima color dimension value is null
+			
+			
+			DimTable filteredTable = null;// imageData.getDimTable().copy();
+			// if a maxima color dimension is given
 			if(!nuclearDimValue.equals(""))
 			{
 				filteredTable = imageData.getDimTable().getSubTable(new DimensionMap(colorDimName + "=" + nuclearDimValue));
 			}
-			
+			else {
+				// copy the DimTable from imageData
+				filteredTable = imageData.getDimTable().copy();
+			}
 			
 			
 			// Declare outputs
