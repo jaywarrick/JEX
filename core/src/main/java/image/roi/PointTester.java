@@ -28,7 +28,6 @@ import java.awt.Point;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.net.JarURLConnection;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
@@ -44,9 +43,6 @@ import java.util.Vector;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-import jex.JEXperiment;
-import jex.statics.JEXDialog;
-import jex.statics.JEXStatics;
 import jex.utilities.ROIUtility;
 import loci.common.DataTools;
 import logs.Logs;
@@ -63,13 +59,13 @@ import net.imagej.display.OverlayView;
 import net.imagej.options.OptionsChannels;
 import net.imagej.overlay.Overlay;
 import net.imagej.overlay.RectangleOverlay;
+import net.imagej.patcher.LegacyInjector;
 import net.imglib2.meta.CalibratedAxis;
 import net.imglib2.meta.ImgPlus;
 
 import org.scijava.command.CommandInfo;
 import org.scijava.util.ConversionUtils;
 
-import preferences.OS;
 import rtools.R;
 import tables.Dim;
 import tables.DimTable;
@@ -79,16 +75,16 @@ import weka.core.converters.JEXTableWriter;
 
 public class PointTester {// extends URLClassLoader {
 	
-	//	static
-	//	{
-	//		LegacyInjector.preinit();
-	//	}
+		static
+		{
+			LegacyInjector.preinit();
+		}
 	
 	public static void main(String[] args) throws Exception
 	{
 		Logs.log("Hello there", PointTester.class);
-		playWithUpdater();
-		System.out.println(OS.isMacOSX());
+		getTiffs("/Users/jaywarrick/Downloads/Test.nd2", new ImageJ());
+		//System.out.println(OS.isMacOSX());
 	}
 	
 	public static void playWithUpdater()
