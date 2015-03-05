@@ -14,6 +14,8 @@ import ij.process.FloatStatistics;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import ij.process.ShortProcessor;
+import io.scif.Checker;
+import io.scif.Format;
 import io.scif.FormatException;
 import io.scif.ImageMetadata;
 import io.scif.MetaTable;
@@ -39,6 +41,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.Vector;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -83,7 +86,20 @@ public class PointTester {// extends URLClassLoader {
 	public static void main(String[] args) throws Exception
 	{
 		Logs.log("Hello there", PointTester.class);
-		getTiffs("/Users/jaywarrick/Downloads/Test.nd2", new ImageJ());
+		ImageJ ij = new ImageJ();
+		String path = "/Users/jaywarrick/Downloads/Test.nd2";
+		TreeSet<Format> formats = (TreeSet<Format>)ij.scifio().format().getAllFormats();
+		for(Format format : formats)
+		{
+			System.out.println(format.getClass().getSimpleName());
+			System.out.println(format.isEnabled());
+			Checker c = format.createChecker();
+			System.out.println(c.isFormat(path));
+			System.out.println(c.isFormat(path, new SCIFIOConfig().checkerSetOpen(true)));
+			System.out.println(format.createChecker().isFormat(path, new SCIFIOConfig().checkerSetOpen(true)));
+		}
+		Reader reader = ij.scifio().initializer().initializeReader(path, new SCIFIOConfig().checkerSetOpen(true));
+		getTiffs(path, ij);
 		//System.out.println(OS.isMacOSX());
 	}
 	
