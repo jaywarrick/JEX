@@ -76,6 +76,13 @@
 			<version>2.6.1</version>
 		</dependency>
 
+		<!-- Thresholding stuff -->
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Auto_Threshold</artifactId>
+			<version>1.16.0</version>
+		</dependency>
+
 		<!-- ImageJ dependencies -->
 		<dependency>
 			<groupId>net.imagej</groupId>
