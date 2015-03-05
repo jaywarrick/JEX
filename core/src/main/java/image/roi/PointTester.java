@@ -14,6 +14,8 @@ import ij.process.FloatStatistics;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import ij.process.ShortProcessor;
+import io.scif.Checker;
+import io.scif.Format;
 import io.scif.FormatException;
 import io.scif.ImageMetadata;
 import io.scif.MetaTable;
@@ -28,7 +30,6 @@ import java.awt.Point;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.net.JarURLConnection;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
@@ -40,13 +41,11 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.Vector;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-import jex.JEXperiment;
-import jex.statics.JEXDialog;
-import jex.statics.JEXStatics;
 import jex.utilities.ROIUtility;
 import loci.common.DataTools;
 import logs.Logs;
@@ -63,13 +62,13 @@ import net.imagej.display.OverlayView;
 import net.imagej.options.OptionsChannels;
 import net.imagej.overlay.Overlay;
 import net.imagej.overlay.RectangleOverlay;
+import net.imagej.patcher.LegacyInjector;
 import net.imglib2.meta.CalibratedAxis;
 import net.imglib2.meta.ImgPlus;
 
 import org.scijava.command.CommandInfo;
 import org.scijava.util.ConversionUtils;
 
-import preferences.OS;
 import rtools.R;
 import tables.Dim;
 import tables.DimTable;
@@ -79,16 +78,29 @@ import weka.core.converters.JEXTableWriter;
 
 public class PointTester {// extends URLClassLoader {
 	
-	//	static
-	//	{
-	//		LegacyInjector.preinit();
-	//	}
+		static
+		{
+			LegacyInjector.preinit();
+		}
 	
 	public static void main(String[] args) throws Exception
 	{
 		Logs.log("Hello there", PointTester.class);
-		playWithUpdater();
-		System.out.println(OS.isMacOSX());
+		ImageJ ij = new ImageJ();
+		String path = "/Users/jaywarrick/Downloads/Test.nd2";
+		TreeSet<Format> formats = (TreeSet<Format>)ij.scifio().format().getAllFormats();
+		for(Format format : formats)
+		{
+			System.out.println(format.getClass().getSimpleName());
+			System.out.println(format.isEnabled());
+			Checker c = format.createChecker();
+			System.out.println(c.isFormat(path));
+			System.out.println(c.isFormat(path, new SCIFIOConfig().checkerSetOpen(true)));
+			System.out.println(format.createChecker().isFormat(path, new SCIFIOConfig().checkerSetOpen(true)));
+		}
+		Reader reader = ij.scifio().initializer().initializeReader(path, new SCIFIOConfig().checkerSetOpen(true));
+		getTiffs(path, ij);
+		//System.out.println(OS.isMacOSX());
 	}
 	
 	public static void playWithUpdater()

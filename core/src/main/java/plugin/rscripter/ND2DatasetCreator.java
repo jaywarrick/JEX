@@ -16,6 +16,7 @@ import java.util.TreeSet;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -63,6 +64,9 @@ public class ND2DatasetCreator implements PlugInController, ActionListener {
 	public JButton cancel = new JButton("Cancel");
 	public JButton fileButton = new JButton("...");
 	
+	// Make the check boxes
+	public JCheckBox transferNames = new JCheckBox();
+	
 	public ND2DatasetCreator()
 	{
 		this.dialog = new PlugIn(this);
@@ -107,6 +111,7 @@ public class ND2DatasetCreator implements PlugInController, ActionListener {
 		this.infos.add(getInfo("Image Name", this.image, false),  "growx");
 		this.infos.add(getInfo("ImRows", this.imRows, false),  "growx");
 		this.infos.add(getInfo("ImCols", this.imCols, false),  "growx");
+		this.infos.add(getCheckBoxPanel("Transfer Color Names", this.transferNames, true),  "growx");
 		
 		// Create the main panel and add elements
 		this.main = new JPanel();
@@ -133,6 +138,20 @@ public class ND2DatasetCreator implements PlugInController, ActionListener {
 		area.setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, null);
 		ret.add(area, "grow, width 0:0:, height 20:0");
 		ret.add(fileButton, "grow, width 40:0, height 20:0");
+		return ret;
+	}
+	
+	private static Component getCheckBoxPanel(String name, JCheckBox checkBox, boolean defaultChoice)
+	{
+		JPanel ret = new JPanel();
+		ret.setBackground(DisplayStatics.lightBackground);
+		ret.setLayout(new MigLayout("flowx, ins 2", "[150:0,left]2[0:0,fill,grow]", "[]"));
+		JLabel label = new JLabel(name);
+		ret.add(label, "");
+		ret.add(checkBox, "grow, width 0:0:, height 20:0");
+		checkBox.setSelected(defaultChoice);
+		checkBox.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, null);
+		checkBox.setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, null);
 		return ret;
 	}
 	
@@ -277,6 +296,7 @@ public class ND2DatasetCreator implements PlugInController, ActionListener {
 					params.setValueOfParameter("File path", path);
 					params.setValueOfParameter("ImRows", this.imRows.getText().trim());
 					params.setValueOfParameter("ImCols", this.imCols.getText().trim());
+					params.setValueOfParameter("Transfer color names?", ""+this.transferNames.isSelected());
 					function.setExpectedOutputName(0, this.image.getText().trim());
 					JEXWorkflow wf = new JEXWorkflow("Import ND2 Files");
 					TreeSet<JEXEntry> singleEntry = new TreeSet<JEXEntry>();

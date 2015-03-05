@@ -231,9 +231,8 @@ public class JEX_MakeCalibrationImageFromObject extends JEXCrunchable {
 			calibrationImage = new ImagePlus("temp", imp);
 		}
 		
-		// JEXData temp = ImageWriter.makeImageObject(outputNames[0].getName(),
-		// "Placeholder");
-		// realOutputs.add(temp);
+		 JEXData temp = ImageWriter.makeImageObject(outputNames[0].getName(), "Placeholder");
+		 realOutputs.add(temp);
 		
 		// Return status
 		return true;

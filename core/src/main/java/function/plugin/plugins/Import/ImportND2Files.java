@@ -3,7 +3,6 @@ package function.plugin.plugins.Import;
 import ij.process.Blitter;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
-import image.roi.PointTester;
 import io.scif.ImageMetadata;
 import io.scif.Metadata;
 import io.scif.Plane;
@@ -16,8 +15,8 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.Vector;
 
+import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import loci.common.DataTools;
 import logs.Logs;
@@ -74,6 +73,9 @@ public class ImportND2Files extends JEXPlugin {
 	@ParameterMarker(uiOrder=3, name="ImCols", description="Number of cols to split each image into.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
 	int imCols;
 	
+	@ParameterMarker(uiOrder=4, name="Transfer color names?", description="Attempt to transfer the names of the associated colors from the image metadata?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
+	boolean transferNames;
+	
 	/////////// Define Outputs ///////////
 	
 	@OutputMarker(name="Image", type=MarkerConstants.TYPE_IMAGE, flavor="", description="The imported image", enabled=true)
@@ -107,7 +109,7 @@ public class ImportND2Files extends JEXPlugin {
 		
 		Metadata meta = reader.getMetadata();
 		
-		DimTable table = getDimTable(meta);
+		DimTable table = getDimTable(meta, this.transferNames);
 		
 		TreeMap<DimensionMap,String> ret = new TreeMap<DimensionMap,String>();
 		Iterator<DimensionMap> itr = table.getMapIterator().iterator();
@@ -152,7 +154,7 @@ public class ImportND2Files extends JEXPlugin {
 						String filename = JEXWriter.saveImage(e.getValue());
 						map.putAll(e.getKey());
 						ret.put(map.copy(),filename);
-						Logs.log(map.toString() + " :: " + filename, PointTester.class);
+						Logs.log(map.toString() + " :: " + filename, this);
 					}
 				}
 				else
@@ -160,7 +162,7 @@ public class ImportND2Files extends JEXPlugin {
 					String filename = JEXWriter.saveImage(p);
 					DimensionMap map = itr.next().copy();
 					ret.put(map,filename);
-					Logs.log(map.toString() + " = " + filename, PointTester.class);
+					Logs.log(map.toString() + " = " + filename, this);
 				}
 				JEXStatics.statusBar.setProgressPercentage((int) (100.0 * count / total));
 				count = count + 1;
@@ -169,6 +171,7 @@ public class ImportND2Files extends JEXPlugin {
 		
 		// Set the output
 		output = ImageWriter.makeImageStackFromPaths("temp", ret);
+		output.setDimTable(table);
 		
 		return true;
 	}
@@ -218,7 +221,7 @@ public class ImportND2Files extends JEXPlugin {
 		return ret;
 	}
 	
-	private static DimTable getDimTable(Metadata meta)
+	private static DimTable getDimTable(Metadata meta, boolean transferNames)
 	{
 		String info = meta.getTable().get("Dimensions").toString();
 		String[] infos = info.split("[ ][x][ ]");
@@ -237,24 +240,44 @@ public class ImportND2Files extends JEXPlugin {
 			}
 		}
 		
-		Vector<String> colors = new Vector<String>();
-		for(Entry<String,Object> e : meta.getTable().entrySet())
+		if(transferNames)
 		{
-			if(e.getKey().contains("Name #"))
+			TreeMap<String,String> colors = new TreeMap<String,String>();
+			for(Entry<String,Object> e : meta.getTable().entrySet())
 			{
-				colors.add(e.getValue().toString().trim());
+				if(e.getKey().contains("Name #"))
+				{
+					colors.put(e.getKey().toString().trim(), e.getValue().toString().trim());
+				}
 			}
-		}
-		Dim newColorDim = new Dim("Color", colors);
-		try
-		{
-			int i = ret.indexOfDimWithName("Color");
-			ret.set(i, newColorDim);
-		}
-		catch (IndexOutOfBoundsException e)
-		{
-			// Just means there is no color dimension
-			// Don't worry about it.
+			try
+			{
+				Dim newColorDim = new Dim("Color", ((String[]) colors.values().toArray(new String[]{}))); // Using a TreeMap and the TreeMap.values() provides and ordered list based on the order of the "Name #x" key from the non-ordered HashMap of the MetaTable
+				int i = ret.indexOfDimWithName("Color");
+				int size = ret.get(i).size();
+				if(newColorDim.size() > size)
+				{
+					int choice = JEXDialog.getChoice("What should I do?", "The number of colors/channels does not match the number of possible channel names.\n\nShould we replace the indices of colors with the supposed names which might not be correct\nor just leave the indices?", new String[]{"Replace Names Anyway","Leave as Indices"}, 0);
+					if(choice == 0)
+					{
+						newColorDim = new Dim("Color", newColorDim.valuesStartingAt(newColorDim.size() - size)); // Best guess appears to be last named color settings
+						ret.set(i, newColorDim);
+					}
+				}
+				else if(newColorDim.size() < size)
+				{
+					JEXDialog.messageDialog("Couldn't find enough color setting names for each color in the image set.\n\nLeaving indices instead of replacing indices with names.");
+				}
+				else
+				{
+					ret.set(i, newColorDim);
+				}
+			}
+			catch (IndexOutOfBoundsException e)
+			{
+				// Just means there is no color dimension
+				// Don't worry about it.
+			}
 		}
 		return ret;
 	}

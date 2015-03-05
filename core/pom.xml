@@ -33,7 +33,7 @@
 		<dependency>
 			<groupId>com.miglayout</groupId>
 			<artifactId>miglayout</artifactId>
-			<version>3.7.4</version>
+			<classifier>swing</classifier>
 		</dependency>
 
 		<dependency>
@@ -89,7 +89,7 @@
 			<groupId>net.imagej</groupId>
 			<artifactId>imagej-ops</artifactId>
 		</dependency>
-		
+
 		<!-- File Formats Support -->
 		<dependency>
 			<groupId>io.scif</groupId>
@@ -98,6 +98,18 @@
 		<dependency>
 			<groupId>io.scif</groupId>
 			<artifactId>scifio-bf-compat</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<!-- The formats-bsd component adds support for open formats. -->
+		<dependency>
+			<groupId>ome</groupId>
+			<artifactId>formats-bsd</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<!-- The formats-gpl component adds support for proprietary formats. -->
+		<dependency>
+			<groupId>ome</groupId>
+			<artifactId>formats-gpl</artifactId>
 			<scope>runtime</scope>
 		</dependency>
 

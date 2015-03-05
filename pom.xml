@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>net.imagej</groupId>
 		<artifactId>pom-imagej</artifactId>
-		<version>5.2.2</version>
+		<version>5.12.0</version>
 	</parent>
 
 	<groupId>io.github.jaywarrick</groupId>
@@ -15,15 +15,77 @@
 	<packaging>pom</packaging>
 
 	<name>JEX Multi-Module Build</name>
+	<description>JEX is Java-based software and GUI to automatically manage/database large numbers of files (e.g., images) in a transparent file structure and perform batch processing with standard tools (ImageJ, R, Octave, Weka).</description>
 	<url>https://github.com/jaywarrick/JEX</url>
+	<inceptionYear>2012</inceptionYear>
+	<licenses>
+		<license>
+			<name>GNU General Public License v2+</name>
+			<url>http://www.gnu.org/licenses/gpl-2.0.txt</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<id>jaywarrick</id>
+			<name>Jay Warrick</name>
+			<email>warrick@wisc.edu</email>
+			<url>http://wid.wisc.edu/profile/jay-warrick/</url>
+			<organization>UW-Madison WID</organization>
+			<organizationUrl>http://wid.wisc.edu/</organizationUrl>
+			<roles>
+				<role>architect</role>
+				<role>developer</role>
+			</roles>
+			<timezone>-6</timezone>
+		</developer>
+		<developer>
+			<id>eberthier</id>
+			<name>Erwin Berthier</name>
+			<email>eberthier@wisc.edu</email>
+			<url>https://www.linkedin.com/pub/erwin-berthier/36/940/98b</url>
+			<roles>
+				<role>developer</role>
+			</roles>
+			<timezone>-6</timezone>
+		</developer>
+	</developers>
+	<contributors>
+		<contributor>
+			<name>Curtis Rueden</name>
+			<email>ctrueden@wisc.edu</email>
+			<url>http://loci.wisc.edu/people/curtis-rueden</url>
+			<organization>UW-Madison LOCI</organization>
+			<organizationUrl>http://loci.wisc.edu/</organizationUrl>
+			<timezone>-6</timezone>
+		</contributor>
+	</contributors>
 
 	<modules>
 		<module>core</module>
 		<module>jex</module>
 	</modules>
 
+	<scm>
+		<connection>scm:git:git://github.com/jaywarrick/JEX</connection>
+		<developerConnection>scm:git:git@github.com:jaywarrick/JEX</developerConnection>
+		<tag>HEAD</tag>
+		<url>http://github.com/jaywarrick/JEX</url>
+	</scm>
+	<issueManagement>
+		<system>GitHub Issues</system>
+		<url>https://github.com/jaywarrick/JEX/issues</url>
+	</issueManagement>
+	<ciManagement>
+		<system>Jenkins</system>
+		<url>http://jenkins.imagej.net/job/JEX/</url>
+	</ciManagement>
+
 	<properties>
 		<enforcer.skip>true</enforcer.skip>
+		<bio-formats.version>5.1.0-SNAPSHOT</bio-formats.version>
+		<scifio-bf-compat.version>1.11.1-SNAPSHOT</scifio-bf-compat.version>
 	</properties>
 
 	<repositories>
@@ -32,7 +94,7 @@
 			<url>http://maven.imagej.net/content/groups/public</url>
 		</repository>
 	</repositories>
-	
+
 	<build>
 		<plugins>
 			<plugin>
@@ -41,6 +103,16 @@
 				<configuration>
 					<source>1.7</source>
 					<target>1.7</target>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>license-maven-plugin</artifactId>
+				<configuration>
+					<licenseName>gpl_v2</licenseName>
+					<organizationName>Board of Regents of the University of
+Wisconsin-Madison.</organizationName>
+					<projectName>Je'Xperiment software package for experimental research.</projectName>
 				</configuration>
 			</plugin>
 		</plugins>
@@ -59,5 +131,4 @@
 			</modules>
 		</profile>
 	</profiles>
-
 </project>
