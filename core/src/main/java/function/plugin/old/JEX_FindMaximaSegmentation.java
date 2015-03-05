@@ -286,8 +286,8 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 			TreeMap<DimensionMap,Double> outputCountMap = new TreeMap<DimensionMap,Double>();
 			
 			
-			int count = 0, percentage = 0;
-			int total = filteredTable.mapCount() * 4; // if maximaOnly
+			// determine value of total	
+			int total;// filteredTable.mapCount() * 4; // if maximaOnly
 			if(!maximaOnly & !segDimValue.equals(nuclearDimValue))
 			{
 				total = filteredTable.mapCount() * 8;
@@ -296,9 +296,14 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 			{
 				total = filteredTable.mapCount() * 5;
 			}
+			else { // if maximaOnly
+				total = filteredTable.mapCount() * 4;
+			}
+			
+			
 			Roi roi;
 			ROIPlus roip;
-			int counter = 0;
+			int count = 0, percentage = 0, counter = 0;
 			MaximumFinder mf = new MaximumFinder();
 			for (DimensionMap map : filteredTable.getMapIterator())
 			{
@@ -307,10 +312,11 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 					return false;
 				}
 				// // Update the display
-				count = count + 1;
+				count ++;
 				percentage = (int) (100 * ((double) (count) / ((double) total)));
 				JEXStatics.statusBar.setProgressPercentage(percentage);
-				counter = counter + 1;
+				counter ++;
+				
 				
 				ImagePlus im = new ImagePlus(imageMap.get(map));
 				FloatProcessor ip = (FloatProcessor) im.getProcessor().convertToFloat();
