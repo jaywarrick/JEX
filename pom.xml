@@ -84,6 +84,8 @@
 
 	<properties>
 		<enforcer.skip>true</enforcer.skip>
+		<bio-formats.version>5.1.0-SNAPSHOT</bio-formats.version>
+		<scifio-bf-compat.version>1.11.1-SNAPSHOT</scifio-bf-compat.version>
 	</properties>
 
 	<repositories>
