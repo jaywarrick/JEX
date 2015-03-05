@@ -32,7 +32,7 @@ import tables.DimensionMap;
  * 
  * JEX enables the use of several data object types The specific API for these can be found in the main JEXperiment folder. These API provide methods to retrieve data from these objects, create new objects and handle the data they contain.
  * 
- * @author erwinberthier
+ * @author erwinberthier, modified by Mengcheng Qi
  * 
  */
 public class JEX_ImageTools_FindImageAlignments extends JEXCrunchable {
@@ -153,8 +153,8 @@ public class JEX_ImageTools_FindImageAlignments extends JEXCrunchable {
 		Parameter p8 = new Parameter("ImCol Dim Name", "Name of the dimension that indicates the cols", "ImCol");
 		Parameter p9 = new Parameter("Color Dim Name", "Name of the dimension that indicates the color (leave black if not applicable)", "Color");
 		Parameter p10 = new Parameter("Color Dim Value", "Value of the color dimension that should be used to guide stitching", "0");
-		Parameter p11 = new Parameter("Horizontal Overlap", "Approximate number of pixels overlapping between columns.", "100");
-		Parameter p12 = new Parameter("Vertical Overlap", "Approximate number of pixels overlapping between row.", "100");
+		Parameter p11 = new Parameter("Horizontal Overlap %", "Approximate percentage of image width overlapping between columns.", "15");
+		Parameter p12 = new Parameter("Vertical Overlap %", "Approximate percentage of image height overlapping between rows.", "15");
 		
 		// Make an array of the parameters and return it
 		ParameterSet parameterArray = new ParameterSet();
@@ -207,8 +207,8 @@ public class JEX_ImageTools_FindImageAlignments extends JEXCrunchable {
 		String imCol = this.parameters.getValueOfParameter("ImCol Dim Name");
 		String colorDim = this.parameters.getValueOfParameter("Color Dim Name");
 		String colorVal = this.parameters.getValueOfParameter("Color Dim Value");
-		Integer hOver = Integer.parseInt(this.parameters.getValueOfParameter("Horizontal Overlap"));
-		Integer vOver = Integer.parseInt(this.parameters.getValueOfParameter("Vertical Overlap"));
+		Double hOverPercent = Double.parseDouble(this.parameters.getValueOfParameter("Horizontal Overlap %"));
+		Double vOverPercent = Double.parseDouble(this.parameters.getValueOfParameter("Vertical Overlap %"));
 		
 		// Run the function
 		// Get the Partial DimTable and iterate through it and stitch.
@@ -227,6 +227,10 @@ public class JEX_ImageTools_FindImageAlignments extends JEXCrunchable {
 		TurboReg_ reg = new TurboReg_();
 		int width = 0;
 		int height = 0;
+		
+		Integer vOver = null;
+		Integer hOver = null;
+		
 		int count = 0, total = imageData.getDimTable().getSubTable(firstMap.copy()).mapCount();
 		for (DimensionMap targetMap : imageData.getDimTable().getMapIterator(firstMap.copy()))
 		{
@@ -245,6 +249,13 @@ public class JEX_ImageTools_FindImageAlignments extends JEXCrunchable {
 				ImagePlus sourceIm = new ImagePlus(images.get(sourceMap));
 				width = targetIm.getWidth();
 				height = targetIm.getHeight();
+				
+				// calculate vOver
+				if(vOver == null)
+				{
+					vOver = (int) (vOverPercent * height / 100.0);
+				}
+				
 				Rectangle targetRect = new Rectangle(0, height - vOver, width - 1, vOver - 1); // Bottom of target image
 				Rectangle sourceRect = new Rectangle(0, 0, width - 1, vOver - 1); // Top of source image
 				ImageProcessor targetImp = targetIm.getProcessor();
@@ -277,6 +288,13 @@ public class JEX_ImageTools_FindImageAlignments extends JEXCrunchable {
 				ImagePlus sourceIm = new ImagePlus(images.get(sourceMap));
 				width = targetIm.getWidth();
 				height = targetIm.getHeight();
+				
+				// calculate hOver
+				if(hOver == null)
+				{
+					hOver = (int)(hOverPercent * width / 100.0);
+				}
+				
 				Rectangle targetRect = new Rectangle(width - hOver, 0, hOver - 1, height - 1); // RHS of target image
 				Rectangle sourceRect = new Rectangle(0, 0, hOver - 1, height - 1); // LHS of source image
 				ImageProcessor targetImp = targetIm.getProcessor();
