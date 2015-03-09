@@ -85,6 +85,7 @@ public class AdjustImage extends JEXPlugin {
 	@Override
 	public boolean run(JEXEntry optionalEntry)
 	{
+		// validate image
 		imageData.getDataMap();
 		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
 		{
