@@ -53,7 +53,7 @@ public class AutoLocalThresholding extends JEXPlugin{
 	String method;
 
 
-	@ParameterMarker(uiOrder=1, name="radius", description="sets the radius of the local domain over which the threshold will be computed", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
+	@ParameterMarker(uiOrder=1, name="radius", description="sets the radius of the local domain over which the threshold will be computed", ui=MarkerConstants.UI_TEXTFIELD, defaultText="15")
 	int radius;
 
 	@ParameterMarker(uiOrder=2, name="White Obj on Black Backgr", description="sets to white the pixels with values above the threshold value (otherwise, it sets to white the values less or equal to the threshold)", ui=MarkerConstants.UI_DROPDOWN, choices={"true","false"})
@@ -130,12 +130,14 @@ public class AutoLocalThresholding extends JEXPlugin{
 			return null;
 		}
 		ImagePlus im = new ImagePlus(imagePath);
-		FloatProcessor imp = (FloatProcessor) im.getProcessor().convertToFloat(); // should be a float processor
+		
 
 		// Adjust the image
 		Auto_Local_Threshold alt = new Auto_Local_Threshold();
 		alt.exec(im, method, radius, par1, par2, doIWhite);
 
+		
+		FloatProcessor imp = (FloatProcessor) im.getProcessor().convertToFloat(); // should be a float processor
 		
 		// Save the results
 		ImagePlus toSave = FunctionUtility.makeImageToSave(imp, "false", bitDepth);
