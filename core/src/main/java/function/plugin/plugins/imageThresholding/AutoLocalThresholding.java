@@ -27,12 +27,24 @@ import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
 
 
+/**
+ * Function that allows you to use various local thresholding methods. 
+ * By 'local' here is meant that the threshold is computed for each pixel 
+ * according to the image characteristics within a window of radius r around it. 
+ * 8-bit images only
+ * 
+ * @author Thoms Huibregtse, Mengcheng Qi
+ *
+ */
+
 @Plugin(
 		type = JEXPlugin.class,
 		name="Auto Local Threshold",
 		menuPath="Image Thresholding > Auto Local Threshold",
 		visible=true,
-		description="Function that allows you to stitch an image ARRAY into a single image using two image alignment objects."
+		description="Function that allows you to use various local thresholding methods. " +
+				"By 'local' here is meant that the threshold is computed for each pixel according " +
+				"to the image characteristics within a window of radius r around it. 8-bit images only"
 		)
 public class AutoLocalThresholding extends JEXPlugin{
 
@@ -48,7 +60,7 @@ public class AutoLocalThresholding extends JEXPlugin{
 
 	/////////// Define Parameters ///////////
 
-	@ParameterMarker(uiOrder=0, name="Method", description="select algorithm to be applied", ui=MarkerConstants.UI_DROPDOWN, choices={"Try All", "Bernsen", "Contrast", "Mean", "Median", "MidGrey", "Niblack", "Otsu", "Phansalkar", "Sauvola"}, defaultChoice=0)
+	@ParameterMarker(uiOrder=0, name="Method", description="select algorithm to be applied", ui=MarkerConstants.UI_DROPDOWN, choices={"Bernsen", "Contrast", "Mean", "Median", "MidGrey", "Niblack", "Otsu", "Phansalkar", "Sauvola"}, defaultChoice=0)
 	static
 	String method;
 
@@ -70,8 +82,6 @@ public class AutoLocalThresholding extends JEXPlugin{
 	static
 	int bitDepth;
 
-	//@ParameterMarker(uiOrder=5, name="Stack", description="can be used to process all the slices of a stack", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
-	//boolean stackProcessing;
 
 	//////////Define Outputs ///////////
 
@@ -88,7 +98,6 @@ public class AutoLocalThresholding extends JEXPlugin{
 	public boolean run(JEXEntry optionalEntry) {
 
 		// validate image
-		//imageData.getDataMap(); // dead code?
 		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
 		{
 			return false;
@@ -99,8 +108,16 @@ public class AutoLocalThresholding extends JEXPlugin{
 		TreeMap<DimensionMap,String> outputImageMap = new TreeMap<DimensionMap,String>();
 		int count = 0, percentage = 0;
 		String tempPath;
+		
+		// iterate through the DimTable to get each DimensionMap
 		for (DimensionMap map : imageMap.keySet())
 		{
+			if(this.isCanceled())
+			{
+				return false;
+			}
+			
+			// call the real local threshold function and save the result
 			tempPath = saveAdjustedImage(imageMap.get(map), method, radius, par1, par2, doIWhite);
 			if(tempPath != null)
 			{
@@ -132,7 +149,7 @@ public class AutoLocalThresholding extends JEXPlugin{
 		ImagePlus im = new ImagePlus(imagePath);
 		
 
-		// Adjust the image
+		// Execute auto local threshold algorithm to the image
 		Auto_Local_Threshold alt = new Auto_Local_Threshold();
 		alt.exec(im, method, radius, par1, par2, doIWhite);
 
