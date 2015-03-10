@@ -1,7 +1,9 @@
 package function.plugin.plugins.imageThresholding;
 
 import ij.ImagePlus;
+import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
+
 import java.io.File;
 import java.util.TreeMap;
 
@@ -9,9 +11,6 @@ import jex.statics.JEXStatics;
 import jex.utilities.FunctionUtility;
 
 import org.scijava.plugin.Plugin;
-
-
-
 
 import tables.DimensionMap;
 import Database.DBObjects.JEXData;
@@ -77,10 +76,25 @@ public class AutoLocalThresholding extends JEXPlugin{
 
 	@ParameterMarker(uiOrder=4, name="Parameter 2", description="See imagej.net/Auto_Local_Threshold for details", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
 	double par2;
+
+	/////////// Define Conversion Parameters for images that are not 8 bit ///////////
+
+	@ParameterMarker(uiOrder=5, name="Pre-adjust?", description="Whether to adjust intensities before converting to 8-bit scale using options below (check the box) or just autoscale (don't check the box)", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	boolean preAdjust;
 	
-	@ParameterMarker(uiOrder=5, name="Output Bit Depth", description="Depth of the outputted image", ui=MarkerConstants.UI_DROPDOWN, choices={ "8", "16", "32" }, defaultChoice=1)
-	static
-	int bitDepth;
+	@ParameterMarker(uiOrder=6, name="Min", description="Intensity to make 0 in 8-bit image", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
+	double oldMin;
+
+	@ParameterMarker(uiOrder=7, name="Max", description="Intensity to make 255 in 8-bit image", ui=MarkerConstants.UI_TEXTFIELD, defaultText="4095.0")
+	double oldMax;
+
+	double newMin = 0;
+
+	double newMax = 255;
+
+	//	@ParameterMarker(uiOrder=5, name="Output Bit Depth", description="Depth of the outputted image", ui=MarkerConstants.UI_DROPDOWN, choices={ "8", "16", "32" }, defaultChoice=1)
+	//	static
+	//	int bitDepth;
 
 
 	//////////Define Outputs ///////////
@@ -108,7 +122,7 @@ public class AutoLocalThresholding extends JEXPlugin{
 		TreeMap<DimensionMap,String> outputImageMap = new TreeMap<DimensionMap,String>();
 		int count = 0, percentage = 0;
 		String tempPath;
-		
+
 		// iterate through the DimTable to get each DimensionMap
 		for (DimensionMap map : imageMap.keySet())
 		{
@@ -116,9 +130,9 @@ public class AutoLocalThresholding extends JEXPlugin{
 			{
 				return false;
 			}
-			
+
 			// call the real local threshold function and save the result
-			tempPath = saveAdjustedImage(imageMap.get(map), method, radius, par1, par2, doIWhite);
+			tempPath = this.saveAdjustedImage(imageMap.get(map), method, radius, par1, par2, doIWhite);
 			if(tempPath != null)
 			{
 				outputImageMap.put(map, tempPath);
@@ -138,7 +152,7 @@ public class AutoLocalThresholding extends JEXPlugin{
 		return true;
 	}
 
-	public static String saveAdjustedImage(String imagePath, String myMethod, int radius,  double par1, double par2, boolean doIwhite )
+	public String saveAdjustedImage(String imagePath, String myMethod, int radius,  double par1, double par2, boolean doIwhite )
 	{
 		// Get image data
 		File f = new File(imagePath);
@@ -146,19 +160,33 @@ public class AutoLocalThresholding extends JEXPlugin{
 		{
 			return null;
 		}
+
+
 		ImagePlus im = new ImagePlus(imagePath);
 		
+		FloatProcessor imp = im.getProcessor().convertToFloatProcessor();
+		ByteProcessor impByte = null;
+		if(preAdjust)
+		{
+			// Adjust the image
+			FunctionUtility.imAdjust(imp, oldMin, oldMax, newMin, newMax, 1);
+			impByte = (ByteProcessor) imp.convertToByte(false);
+		}
+		else
+		{
+			impByte = (ByteProcessor) imp.convertToByte(true);
+		}
+		
+		im.flush();
+		imp = null;
+		im = new ImagePlus("temp", impByte);
 
 		// Execute auto local threshold algorithm to the image
 		Auto_Local_Threshold alt = new Auto_Local_Threshold();
 		alt.exec(im, method, radius, par1, par2, doIWhite);
-
-		
-		FloatProcessor imp = (FloatProcessor) im.getProcessor().convertToFloat(); // should be a float processor
 		
 		// Save the results
-		ImagePlus toSave = FunctionUtility.makeImageToSave(imp, "false", bitDepth);
-		String imPath = JEXWriter.saveImage(toSave);
+		String imPath = JEXWriter.saveImage(im.getProcessor());
 		im.flush();
 
 		// return temp filePath
