@@ -5,7 +5,6 @@ import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import io.scif.FormatException;
 import io.scif.ImageMetadata;
-import io.scif.Metadata;
 import io.scif.Plane;
 import io.scif.Reader;
 import io.scif.SCIFIO;
