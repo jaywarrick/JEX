@@ -1,14 +1,15 @@
 package jex.statics;
 
+import java.awt.SystemColor;
 import java.io.File;
 import java.io.IOException;
 
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
-import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JTextArea;
 
 import logs.Logs;
 import net.miginfocom.swing.MigLayout;
@@ -35,10 +36,13 @@ public class JEXDialog {
 	{
 		JList<String> list = new JList<String>(choices);
 		list.setSelectedIndex(defaultChoice);
-		JLabel questionLabel = new JLabel(question);
+		JTextArea questionLabel = new JTextArea(question);
+		questionLabel.setLineWrap(true);
+		questionLabel.setWrapStyleWord(true);
+		questionLabel.setBackground(SystemColor.window);
 		JPanel panel = new JPanel();
-		panel.setLayout(new MigLayout("flowy","[grow, center]","[]5"));
-		panel.add(questionLabel);
+		panel.setLayout(new MigLayout("flowy","[grow, center]","[grow]5[]"));
+		panel.add(questionLabel, "grow, width 300!, height pref!");
 		panel.add(list);
 		
 		int option = JOptionPane.showConfirmDialog(JEXStatics.main, panel, title, JOptionPane.OK_CANCEL_OPTION);
