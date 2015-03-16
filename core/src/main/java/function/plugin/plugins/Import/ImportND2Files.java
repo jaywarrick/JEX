@@ -3,6 +3,7 @@ package function.plugin.plugins.Import;
 import ij.process.Blitter;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
+import io.scif.FormatException;
 import io.scif.ImageMetadata;
 import io.scif.Metadata;
 import io.scif.Plane;
@@ -11,16 +12,21 @@ import io.scif.SCIFIO;
 import io.scif.config.SCIFIOConfig;
 
 import java.awt.Rectangle;
+import java.io.IOException;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.Vector;
 
 import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import loci.common.DataTools;
 import logs.Logs;
 import miscellaneous.Canceler;
+import net.imagej.axis.Axes;
+import net.imagej.axis.CalibratedAxis;
 
 import org.scijava.plugin.Plugin;
 
@@ -105,11 +111,14 @@ public class ImportND2Files extends JEXPlugin {
 			Logs.log("Couldn't initialize ND2 file reader for file " + path, Logs.ERROR, this);
 			e.printStackTrace();
 			return false;
+		}	
+		
+		DimTable table = getDimTableFromReader(reader, this.transferNames);
+		if(table == null)
+		{
+			JEXDialog.messageDialog("Function canceled manually OR due to issues with determining dimensions of the image.");
+			return false;
 		}
-		
-		Metadata meta = reader.getMetadata();
-		
-		DimTable table = getDimTable(meta, this.transferNames);
 		
 		TreeMap<DimensionMap,String> ret = new TreeMap<DimensionMap,String>();
 		Iterator<DimensionMap> itr = table.getMapIterator().iterator();
@@ -221,29 +230,29 @@ public class ImportND2Files extends JEXPlugin {
 		return ret;
 	}
 	
-	private static DimTable getDimTable(Metadata meta, boolean transferNames)
+	private static DimTable getDimTableFromReader(Reader r, boolean transferNames)
 	{
-		String info = meta.getTable().get("Dimensions").toString();
-		String[] infos = info.split("[ ][x][ ]");
 		DimTable ret = new DimTable();
-		for(String s : infos)
+		try
 		{
-			if(!s.equals("x"))
+			ImageMetadata meta = r.openPlane(0, 0).getImageMetadata();
+			long[] lengths = meta.getAxesLengthsNonPlanar();
+			List<CalibratedAxis> axes = meta.getAxesNonPlanar();
+			for(int i = lengths.length-1; i > -1; i--)
 			{
-				String[] bits = s.split("[(|)]");
-				if(bits[0].equals(LAMBDA1) || bits[0].equals(LAMBDA2))
-				{
-					bits[0] = "Color";
-				}
-				Dim toAdd = new Dim(bits[0], Integer.parseInt(bits[1]));
-				ret.add(toAdd);
+				ret.add(new Dim(axes.get(i).type().getLabel(), (int) lengths[i]));
 			}
+		}
+		catch (FormatException | IOException e)
+		{
+			e.printStackTrace();
+			return null; // Cancels function
 		}
 		
 		if(transferNames)
 		{
 			TreeMap<String,String> colors = new TreeMap<String,String>();
-			for(Entry<String,Object> e : meta.getTable().entrySet())
+			for(Entry<String,Object> e : r.getMetadata().getTable().entrySet())
 			{
 				if(e.getKey().contains("Name #"))
 				{
@@ -252,16 +261,38 @@ public class ImportND2Files extends JEXPlugin {
 			}
 			try
 			{
-				Dim newColorDim = new Dim("Color", ((String[]) colors.values().toArray(new String[]{}))); // Using a TreeMap and the TreeMap.values() provides and ordered list based on the order of the "Name #x" key from the non-ordered HashMap of the MetaTable
-				int i = ret.indexOfDimWithName("Color");
+				String[] colorNames = ((String[]) colors.values().toArray(new String[]{}));
+				Vector<String> colorNamesList = new Vector<String>();
+				int i = ret.indexOfDimWithName(Axes.CHANNEL.getLabel());
 				int size = ret.get(i).size();
+				if(size == colorNames.length-1)
+				{
+					// This is because the first name found in the metadata is usually just the current setting of the scope or something rather than the name of the setting used to capture the first image.
+					for(int j = 1; j < colorNames.length; j++)
+					{
+						colorNamesList.add(colorNames[j]);
+					}
+				}
+				else
+				{ // Just guessing now.
+					for(int j = 0; j < colorNames.length; j++)
+					{
+						colorNamesList.add(colorNames[j]);
+					}
+				}
+				Dim newColorDim = new Dim(Axes.CHANNEL.getLabel(), colorNamesList); // Using a TreeMap and the TreeMap.values() provides and ordered list based on the order of the "Name #x" key from the non-ordered HashMap of the MetaTable
+
 				if(newColorDim.size() > size)
 				{
-					int choice = JEXDialog.getChoice("What should I do?", "The number of colors/channels does not match the number of possible channel names.\n\nShould we replace the indices of colors with the supposed names which might not be correct\nor just leave the indices?", new String[]{"Replace Names Anyway","Leave as Indices"}, 0);
+					int choice = JEXDialog.getChoice("What should I do?", "The number of colors/channels does not match the number of possible channel names. Should we replace the indices of colors with the supposed names which might not be correct or just leave the indices?", new String[]{"Replace Names Anyway","Leave as Indices"}, 0);
 					if(choice == 0)
 					{
 						newColorDim = new Dim("Color", newColorDim.valuesStartingAt(newColorDim.size() - size)); // Best guess appears to be last named color settings
 						ret.set(i, newColorDim);
+					}
+					else if(choice == -1)
+					{
+						return null; // Cancels function
 					}
 				}
 				else if(newColorDim.size() < size)
@@ -281,4 +312,26 @@ public class ImportND2Files extends JEXPlugin {
 		}
 		return ret;
 	}
+	
+//	private static DimTable getDimTable(Metadata meta, boolean transferNames)
+//	{
+//		String info = meta.getTable().get("Dimensions").toString();
+//		String[] infos = info.split("[ ][x][ ]");
+//		DimTable ret = new DimTable();
+//		for(String s : infos)
+//		{
+//			if(!s.equals("x"))
+//			{
+//				String[] bits = s.split("[(|)]");
+//				if(bits[0].equals(LAMBDA1) || bits[0].equals(LAMBDA2))
+//				{
+//					bits[0] = "Color";
+//				}
+//				Dim toAdd = new Dim(bits[0], Integer.parseInt(bits[1]));
+//				ret.add(toAdd);
+//			}
+//		}
+//		
+//		return ret;
+//	}
 }
