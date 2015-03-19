@@ -40,7 +40,7 @@ import tables.DimensionMap;
 /*
  * This is a conversion of the old JEX_CTC_ImportImagesFromNISFolder.java
  * function to the new JEXPlugin style. The majority of the code is copied from
- * that class with the exception of input/output/parameter handling.
+ * that class with the exception of input, output, and parameter handling.
  * 
  * @author converted by Tom Huibregtse
  */
@@ -52,8 +52,7 @@ public class ConvertTIFsToImageObject extends JEXPlugin {
 	/////////// Define Inputs ///////////
 
 	/*
-	 * None necessary; Input Directory is classified as a parameter but could
-	 * still be considered an input.
+	 * None necessary; Input Directory is classified as a parameter.
 	 */
 
 	/////////// Define Parameters ///////////
