@@ -266,6 +266,8 @@ public class JEX_ConvertNISElementsTiffs extends JEXCrunchable {
 						{
 							splitImages = splitRowsAndCols(im.getProcessor(), imRows, imCols);
 						}
+						// TODO Use JEXWriter.saveImage(  imp   ), this will return a path. Save the path in a TreeMap<DimensionMap,String>
+						// Keep this around for later
 						FileSaver fs = new FileSaver(new ImagePlus("temp", splitImages.get(map)));
 						Logs.log("Writing " + pathToSaveTo, this);
 						fs.saveAsTiff(pathToSaveTo);
@@ -285,7 +287,8 @@ public class JEX_ConvertNISElementsTiffs extends JEXCrunchable {
 		}
 		
 		
-		
+		// TODO Use ImageWriter.makeImageObject(TreeMap<DM,String), this give you back a JEXData.
+		// Look at AdjustImage to 
 		JEXData output0 = ValueWriter.makeValueObject(this.outputNames[0].getName(), "TRUE");
 		
 		// Set the outputs
