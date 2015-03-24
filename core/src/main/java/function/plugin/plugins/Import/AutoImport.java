@@ -2,6 +2,8 @@ package function.plugin.plugins.Import;
 
 import java.io.File;
 
+import miscellaneous.FileUtility;
+
 import org.scijava.plugin.Plugin;
 
 import tables.DimensionMap;
@@ -62,11 +64,46 @@ public class AutoImport extends JEXPlugin {
 		return false;
 	}
 
-	/*
-	 * TODO for Mengcheng to fill in
+	/**
+	 * Create DimensionMap of a given image 
+	 * The image name should be in certain format, ex. Image_x001_y002_z004.tif
+	 * 
+	 * @param filePath image Path and Name
+	 * @param separator separator of the image Name
+	 * @return
 	 */
-	public DimensionMap getMapFromPath(String filePath) {
-		return null; // so that it compiles
+	public DimensionMap getMapFromPath(String filePath, String separator) {
+		String name = FileUtility.getFileNameWithoutExtension(filePath);
+		String[] names = name.split(separator);
+		
+		DimensionMap dimMap = new DimensionMap();
+		String dimValue, dimName, temp;
+		int splitIndex = 0;
+		
+		for (int i = 0; i < names.length; i++){
+			temp = names[i];
+			
+			// find the first Digit in the string in order to separate dimName and dimValue
+			for (int j = 0; j < temp.length(); j++){
+				if (Character.isDigit(temp.charAt(j))){
+					splitIndex = j;
+					break;
+				}
+				else
+					splitIndex = 0;
+			}
+			
+			// if the string is not a dimName followed by a dimValue then skip it.
+			if (splitIndex != 0) {
+				dimName = temp.substring(0, splitIndex);
+				dimValue = temp.substring(splitIndex);
+				
+				dimMap.put(dimName, dimValue);
+			}
+		}
+		
+		return dimMap;
+		
 	}
 	
 }
