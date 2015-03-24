@@ -1,4 +1,4 @@
-package function.plugin.plugins.dataImporting;
+package function.plugin.plugins.Import;
 
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
@@ -31,7 +31,7 @@ import tables.DimensionMap;
 @Plugin(
 		type = JEXPlugin.class,
 		name="Import TIF Images as Image Object",
-		menuPath="Data Importing",
+		menuPath="Import",
 		visible=true,
 		description="Import images from a NIS Elements ND Acquisition ("
 				+ "multiple, colors, times, locations, large image arrays... no"
