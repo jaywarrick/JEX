@@ -1,8 +1,12 @@
 package function.plugin.plugins.imageThresholding;
 
 import ij.ImagePlus;
+import ij.ImageStack;
+import ij.plugin.CanvasResizer;
+import ij.plugin.MontageMaker;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
+import ij.process.ImageProcessor;
 
 import java.io.File;
 import java.util.TreeMap;
@@ -59,7 +63,7 @@ public class AutoLocalThresholding extends JEXPlugin{
 
 	/////////// Define Parameters ///////////
 
-	@ParameterMarker(uiOrder=0, name="Method", description="select algorithm to be applied", ui=MarkerConstants.UI_DROPDOWN, choices={"Bernsen", "Contrast", "Mean", "Median", "MidGrey", "Niblack", "Otsu", "Phansalkar", "Sauvola"}, defaultChoice=0)
+	@ParameterMarker(uiOrder=0, name="Method", description="select algorithm to be applied", ui=MarkerConstants.UI_DROPDOWN, choices={"Try all", "Bernsen", "Contrast", "Mean", "Median", "MidGrey", "Niblack", "Otsu", "Phansalkar", "Sauvola"}, defaultChoice=0)
 	static
 	String method;
 
@@ -123,6 +127,7 @@ public class AutoLocalThresholding extends JEXPlugin{
 		int count = 0, percentage = 0;
 		String tempPath;
 
+
 		// iterate through the DimTable to get each DimensionMap
 		for (DimensionMap map : imageMap.keySet())
 		{
@@ -132,7 +137,8 @@ public class AutoLocalThresholding extends JEXPlugin{
 			}
 
 			// call the real local threshold function and save the result
-			tempPath = this.saveAdjustedImage(imageMap.get(map), method, radius, par1, par2, doIWhite);
+			tempPath = this.saveAdjustedImage(imageMap.get(map));
+
 			if(tempPath != null)
 			{
 				outputImageMap.put(map, tempPath);
@@ -140,6 +146,9 @@ public class AutoLocalThresholding extends JEXPlugin{
 			count = count + 1;
 			percentage = (int) (100 * ((double) (count) / ((double) imageMap.size())));
 			JEXStatics.statusBar.setProgressPercentage(percentage);
+			
+			if (method.equals("Try all")) //single image try all
+				break;
 		}
 		if(outputImageMap.size() == 0)
 		{
@@ -152,7 +161,7 @@ public class AutoLocalThresholding extends JEXPlugin{
 		return true;
 	}
 
-	public String saveAdjustedImage(String imagePath, String myMethod, int radius,  double par1, double par2, boolean doIwhite )
+	public String saveAdjustedImage(String imagePath )
 	{
 		// Get image data
 		File f = new File(imagePath);
@@ -183,11 +192,57 @@ public class AutoLocalThresholding extends JEXPlugin{
 
 		// Execute auto local threshold algorithm to the image
 		Auto_Local_Threshold alt = new Auto_Local_Threshold();
-		alt.exec(im, method, radius, par1, par2, doIWhite);
 		
-		// Save the results
-		String imPath = JEXWriter.saveImage(im.getProcessor());
-		im.flush();
+		String imPath = "";
+		
+		//***************** "Try all" codes are cited from ImageJ function ********************//
+		// AutoLocalThreshold segmentation 
+		// Following the guidelines at http://pacific.mpi-cbg.de/wiki/index.php/PlugIn_Design_Guidelines
+		// ImageJ plugin by G. Landini at bham. ac. uk
+		// 1.0  15/Apr/2009
+		// 1.1  01/Jun/2009
+		// 1.2  25/May/2010
+		// 1.3  1/Nov/2011 added constant offset to Niblack's method (request)
+		// 1.4  2/Nov/2011 Niblack's new constant should be subtracted to match mean,mode and midgrey methods. Midgrey method had the wrong constant sign.
+		// 1.5  18/Nov/2013 added 3 new local thresholding methdos: Constrast, Otsu and Phansalkar
+		// *********************************************************************************//
+		if (method.equals("Try all")){//single image try all
+			ImageProcessor ip = im.getProcessor();
+			int xe = ip.getWidth();
+			int ye = ip.getHeight();
+			String [] methods={"Try all", "Bernsen", "Contrast", "Mean", "Median", "MidGrey", "Niblack","Otsu", "Phansalkar", "Sauvola"};
+			int ml = methods.length;
+			ImagePlus imp2, imp3;
+			ImageStack tstack=null, stackNew;
+		
+			
+			tstack= new ImageStack(xe,ye);
+			for (int k=1; k<ml;k++)
+				tstack.addSlice(methods[k], ip.duplicate());
+			imp2 = new ImagePlus("Auto Threshold", tstack);
+			imp2.updateAndDraw();
+	
+			for (int k=1; k<ml;k++){
+				imp2.setSlice(k);
+				//IJ.log("analyzing slice with "+methods[k]);
+				alt.exec(imp2, methods[k], radius, par1, par2, doIWhite );
+			}
+			//imp2.setSlice(1);
+			CanvasResizer cr= new CanvasResizer();
+			stackNew = cr.expandStack(tstack, (xe+2), (ye+18), 1, 1);
+			imp3 = new ImagePlus("Auto Threshold", stackNew);
+			MontageMaker mm= new MontageMaker();
+			ImagePlus ret = mm.makeMontage2( imp3, 3, 3, 1.0, 1, (ml-1), 1, 0, true);
+			imPath = JEXWriter.saveImage(ret.getProcessor());
+			im.flush();
+		}
+		else{ // apply the required method to all images
+			alt.exec(im, method, radius, par1, par2, doIWhite);
+			// Save the results
+			imPath = JEXWriter.saveImage(im.getProcessor());
+			im.flush();
+		}
+
 
 		// return temp filePath
 		return imPath;
