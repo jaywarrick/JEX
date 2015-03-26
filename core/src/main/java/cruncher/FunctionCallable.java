@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
+import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import logs.Logs;
 import Database.DBObjects.JEXData;
@@ -64,8 +65,13 @@ public class FunctionCallable implements Callable<Integer> {
 		}
 		catch (Exception e)
 		{
-			JEXStatics.statusBar.setStatusText("Error running " + this.function.getFunctionName() + " on entry " + this.entry.getEntryExperiment() + ": " + this.entry.getTrayX() + "," + this.entry.getTrayY());
+			JEXStatics.statusBar.setStatusText("Exception running " + this.function.getFunctionName() + " on entry " + this.entry.getEntryExperiment() + ": " + this.entry.getTrayX() + "," + this.entry.getTrayY());
 			e.printStackTrace();
+			return 0;
+		}
+		catch (OutOfMemoryError e2)
+		{
+			JEXDialog.messageDialog("Out of memory! Restart! Potentially try increasing java heap space option (-Xmx####m) in the start script (i.e., either the 'JEX for Windows.bat' or 'JEX for Mac.command' file).");
 			return 0;
 		}
 		
