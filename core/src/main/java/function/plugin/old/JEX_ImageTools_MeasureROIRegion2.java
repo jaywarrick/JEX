@@ -1,24 +1,17 @@
 package function.plugin.old;
 
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DataReader.ImageReader;
-import Database.DataReader.RoiReader;
-import Database.DataWriter.FileWriter;
-import Database.Definition.Parameter;
-import Database.Definition.ParameterSet;
-import Database.Definition.TypeName;
-import function.JEXCrunchable;
 import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.measure.Measurements;
 import ij.process.Blitter;
 import ij.process.FloatProcessor;
+import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import image.roi.IdPoint;
 import image.roi.PointList;
 import image.roi.ROIPlus;
 
+import java.awt.Rectangle;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -32,6 +25,15 @@ import tables.DimTable;
 import tables.DimensionMap;
 import tables.Table;
 import weka.core.converters.JEXTableWriter;
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DataReader.ImageReader;
+import Database.DataReader.RoiReader;
+import Database.DataWriter.FileWriter;
+import Database.Definition.Parameter;
+import Database.Definition.ParameterSet;
+import Database.Definition.TypeName;
+import function.JEXCrunchable;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions
@@ -155,7 +157,7 @@ public class JEX_ImageTools_MeasureROIRegion2 extends JEXCrunchable {
 	@Override
 	public ParameterSet requiredParameters()
 	{
-		Parameter p0 = new Parameter("Measurement", "Type of measurement to perform", Parameter.DROPDOWN, new String[] { "All", "Mean", "Min,Max", "Median", "Std Dev", "Mean Dev", "x,y", "Area" }, 0);
+		Parameter p0 = new Parameter("Measurement", "Type of measurement to perform", Parameter.DROPDOWN, new String[] { "All", "Mean", "Min,Max", "Median", "Std Dev", "Mean Dev", "x,y", "Area", "CM,Moment" }, 0);
 		// Parameter p1 = new Parameter("Old Min","Image Intensity Value","0.0");
 		// Parameter p2 = new Parameter("Old Max","Image Intensity Value","4095.0");
 		// Parameter p3 = new Parameter("New Min","Image Intensity Value","0.0");
@@ -334,6 +336,17 @@ public class JEX_ImageTools_MeasureROIRegion2 extends JEXCrunchable {
 						resultsTreeMap.put(newNewMap.copy(), (double) center.y);
 						newNewMap.put("Measurement", "area");
 						resultsTreeMap.put(newNewMap.copy(), stats.area);
+						
+						TreeMap<String,Double> inertialResults = getInertiaStuff(im, roi);
+						newNewMap.put("Measurement", "centerOfMassX");
+						resultsTreeMap.put(newNewMap.copy(), inertialResults.get("centerOfMassX"));
+						newNewMap.put("Measurement", "centerOfMassY");
+						resultsTreeMap.put(newNewMap.copy(), inertialResults.get("centerOfMassY"));
+						newNewMap.put("Measurement", "momentZ");
+						resultsTreeMap.put(newNewMap.copy(), inertialResults.get("momentZ"));
+						newNewMap.put("Measurement", "mass");
+						resultsTreeMap.put(newNewMap.copy(), inertialResults.get("mass"));
+						
 					}
 					else if(measure.equals("Mean"))
 					{
@@ -381,6 +394,18 @@ public class JEX_ImageTools_MeasureROIRegion2 extends JEXCrunchable {
 						newNewMap.put("Measurement", "y");
 						resultsTreeMap.put(newNewMap.copy(), (double) center.y);
 					}
+					else if(measure.equals("CM,Moment"))
+					{
+						TreeMap<String,Double> inertialResults = getInertiaStuff(im, roi);
+						newNewMap.put("Measurement", "centerOfMassX");
+						resultsTreeMap.put(newNewMap.copy(), inertialResults.get("centerOfMassX"));
+						newNewMap.put("Measurement", "centerOfMassY");
+						resultsTreeMap.put(newNewMap.copy(), inertialResults.get("centerOfMassY"));
+						newNewMap.put("Measurement", "momentZ");
+						resultsTreeMap.put(newNewMap.copy(), inertialResults.get("momentZ"));
+						newNewMap.put("Measurement", "mass");
+						resultsTreeMap.put(newNewMap.copy(), inertialResults.get("mass"));
+					}
 					
 					patternCount = patternCount + 1;
 				}
@@ -393,7 +418,7 @@ public class JEX_ImageTools_MeasureROIRegion2 extends JEXCrunchable {
 		}
 		DimTable resultsDimTable = new DimTable();
 		resultsDimTable.addAll(roiTable);
-		resultsDimTable.add(new Dim("Measurement", new String[] { "mean", "area", "min", "max", "stddev", "meandev", "median", "x", "y" }));
+		resultsDimTable.add(new Dim("Measurement", new String[] { "mean", "area", "min", "max", "stddev", "meandev", "median", "x", "y", "centerOfMassX", "centerOfMassY", "momentZ", "mass" }));
 		if(atLeastOneHasPattern)
 		{
 			Dim d = new Dim(patternDimName, 1, maxPatternSize);
@@ -430,5 +455,46 @@ public class JEX_ImageTools_MeasureROIRegion2 extends JEXCrunchable {
 			}
 		}
 		return curName;
+	}
+	
+	private TreeMap<String,Double> getInertiaStuff(ImagePlus im, ROIPlus roi)
+	{
+		ImageProcessor ip = im.getProcessor();
+		IdPoint center = PointList.getCenter(roi.getPointList().getBounds());
+		Rectangle r = roi.pointList.getBounds();
+		Roi ijRoi = roi.getRoi();
+		double moment = 0;
+		double CMX = 0;
+		double CMY = 0;
+		double mass = 0;
+		for(int x = r.x; x < r.x + r.width; x++)
+		{
+			for(int y = r.y; y < r.y + r.height; y++)
+			{
+				if(ijRoi.contains(x, y))
+				{
+					double m = (double)ip.getPixelValue(x, y);
+					mass = mass + m;
+					
+					// Calc Mom
+					moment = moment + (m)*(Math.pow(center.x-x,2) + Math.pow(center.y-y, 2));
+					
+					// Calc CMX
+					CMX = CMX + (m)*((double)(center.x-x));
+					
+					// Calc CMY
+					CMY = CMY + (m)*((double)(center.y-y));
+				}
+			}
+		}
+		CMX = CMX / mass;
+		CMY = CMY / mass;
+		
+		TreeMap<String,Double> ret = new TreeMap<String,Double>();
+		ret.put("centerOfMassX", CMX);
+		ret.put("centerOfMassY", CMY);
+		ret.put("momentZ", moment);
+		ret.put("mass", mass);
+		return ret;
 	}
 }
