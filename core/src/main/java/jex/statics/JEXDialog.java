@@ -41,7 +41,7 @@ public class JEXDialog {
 		questionLabel.setWrapStyleWord(true);
 		questionLabel.setBackground(SystemColor.window);
 		JPanel panel = new JPanel();
-		panel.setLayout(new MigLayout("flowy","[grow, center]","[grow]5[]"));
+		panel.setLayout(new MigLayout("flowy","[grow, center]","[grow]5"));
 		panel.add(questionLabel, "grow, width 300!, height pref!");
 		panel.add(list);
 		
