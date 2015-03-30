@@ -1,16 +1,5 @@
 package function.plugin.IJ2;
 
-import Database.DBObjects.JEXData;
-import Database.DataReader.ImageReader;
-import Database.DataReader.RoiReader;
-import Database.DataWriter.FileWriter;
-import Database.DataWriter.ImageWriter;
-import Database.DataWriter.RoiWriter;
-import Database.Definition.Parameter;
-import Database.Definition.ParameterSet;
-import Database.Definition.Type;
-import Database.Definition.TypeName;
-import Database.SingleUserDatabase.JEXWriter;
 import image.roi.ROIPlus;
 
 import java.io.File;
@@ -38,6 +27,17 @@ import org.scijava.util.ColorRGB;
 
 import tables.DimensionMap;
 import weka.core.converters.JEXTableWriter;
+import Database.DBObjects.JEXData;
+import Database.DataReader.ImageReader;
+import Database.DataReader.RoiReader;
+import Database.DataWriter.FileWriter;
+import Database.DataWriter.ImageWriter;
+import Database.DataWriter.RoiWriter;
+import Database.Definition.Parameter;
+import Database.Definition.ParameterSet;
+import Database.Definition.Type;
+import Database.Definition.TypeName;
+import Database.SingleUserDatabase.JEXWriter;
 
 public class IJ2PluginUtility {
 	
