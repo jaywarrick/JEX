@@ -53,7 +53,7 @@ public class FunctionListPanel implements MouseWheelListener {
 	private JEXFunctionPanel parent;
 	private JPanel blocksPanel;
 	// private FunctionParameterPanel paramPanel;
-	private FunctionLoadSaveAddRunPanel editPanel;
+	private FunctionLoadSaveAndRunPanel editPanel;
 	protected JScrollPane scroll;
 	private FunctionBlockPanel selectedFunction;
 	
@@ -75,7 +75,7 @@ public class FunctionListPanel implements MouseWheelListener {
 		this.panel.setLayout(new MigLayout("flowx,ins 0 0 0 0", "[0:0,fill,grow]-1[0:0,fill,100]", "[0:0,fill,grow]"));
 		
 		// Create the add button
-		this.editPanel = new FunctionLoadSaveAddRunPanel(this);
+		this.editPanel = new FunctionLoadSaveAndRunPanel(this);
 		
 		// Create the panel to hold the FunctionBlockPanels
 		this.blocksPanel = new JPanel();
