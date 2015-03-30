@@ -12,7 +12,7 @@ import javax.swing.JPanel;
 import jex.statics.DisplayStatics;
 import net.miginfocom.swing.MigLayout;
 
-public class FunctionLoadSaveAddRunPanel implements ActionListener {
+public class FunctionLoadSaveAndRunPanel implements ActionListener {
 	
 	// GUI variables
 	private JPanel panel;
@@ -25,7 +25,7 @@ public class FunctionLoadSaveAddRunPanel implements ActionListener {
 	private JButton runButton = new JButton();
 	private JCheckBox autoSave = new JCheckBox();
 	
-	public FunctionLoadSaveAddRunPanel(FunctionListPanel parent)
+	public FunctionLoadSaveAndRunPanel(FunctionListPanel parent)
 	{
 		this.parent = parent;
 		this.initialize();
