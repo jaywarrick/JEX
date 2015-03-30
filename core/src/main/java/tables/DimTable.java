@@ -1,7 +1,6 @@
 package tables;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
@@ -249,7 +248,9 @@ public class DimTable extends ArrayList<Dim> implements Copiable<DimTable> {
 	}
 	
 	/**
-	 * Return a subTable of DimTable by a given DimensionMap filter. If filter
+	 * Return a subTable of DimTable defined by a given DimensionMap filter. 
+	 * For example, if the table has X, Y, and Z dimensions, a filter of X=1
+	 * will produce a single subtable of all Y and Z values with X=1. If filter
 	 * dim does not exist, then return whole DimTable.
 	 * 
 	 * @param filter DimensionMap the filter being used
@@ -281,6 +282,33 @@ public class DimTable extends ArrayList<Dim> implements Copiable<DimTable> {
 				ret.add(toAdd);
 			}
 			else // if the values of this Dim need not to be filtered, then copy whole Dim
+			{
+				ret.add(d.copy());
+			}
+		}
+		return ret;
+	}
+	
+	/**
+	 * Return a subTable of DimTable that excludes the Dim with the name dimName. 
+	 * For example, if the table has X, Y, and Z dimensions, a dimName of "X"
+	 * will produce a single subtable with only the Y and Z Dims. If Dim with
+	 * the name dimName dim does not exist, then return whole DimTable.
+	 * 
+	 * @param filter DimensionMap the filter being used
+	 * @return A subTable of DimTable by a given DimensionMap filter
+	 */
+	public DimTable getSubTable(String dimName)
+	{
+		
+		// if filter does not match this DimTable then return whole DimTable
+		if(this.getDimWithName(dimName) == null) 
+			return this.copy(); 
+		
+		DimTable ret = new DimTable();
+		for (Dim d : this)
+		{
+			if(!d.name().equals(dimName)) // if the values of this Dim need to be filtered
 			{
 				ret.add(d.copy());
 			}
