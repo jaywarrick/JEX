@@ -157,7 +157,7 @@ public class JEX_ImageTools_MeasureROIRegion2 extends JEXCrunchable {
 	@Override
 	public ParameterSet requiredParameters()
 	{
-		Parameter p0 = new Parameter("Measurement", "Type of measurement to perform", Parameter.DROPDOWN, new String[] { "All", "Mean", "Min,Max", "Median", "Std Dev", "Mean Dev", "x,y", "Area", "CM,Moment" }, 0);
+		Parameter p0 = new Parameter("Measurement", "Type of measurement to perform", Parameter.DROPDOWN, new String[] { "All", "Mean", "Min,Max", "Median", "Mode", "Std Dev", "Mean Dev", "x,y", "Area", "CM,Moment" }, 0);
 		// Parameter p1 = new Parameter("Old Min","Image Intensity Value","0.0");
 		// Parameter p2 = new Parameter("Old Max","Image Intensity Value","4095.0");
 		// Parameter p3 = new Parameter("New Min","Image Intensity Value","0.0");
@@ -308,7 +308,7 @@ public class JEX_ImageTools_MeasureROIRegion2 extends JEXCrunchable {
 					IdPoint center = PointList.getCenter(roi.getPointList().getBounds());
 					imageJRoi = roi.getRoi();
 					im.setRoi(imageJRoi);
-					stats = im.getStatistics(Measurements.MEAN + Measurements.AREA + Measurements.MIN_MAX + Measurements.STD_DEV + Measurements.MEDIAN);
+					stats = im.getStatistics(Measurements.MEAN + Measurements.AREA + Measurements.MIN_MAX + Measurements.STD_DEV + Measurements.MEDIAN + Measurements.MODE);
 					
 					DimensionMap newMap = map.copy();
 					if(hasPattern)
@@ -330,6 +330,8 @@ public class JEX_ImageTools_MeasureROIRegion2 extends JEXCrunchable {
 						resultsTreeMap.put(newNewMap.copy(), stats.stdDev);
 						newNewMap.put("Measurement", "median");
 						resultsTreeMap.put(newNewMap.copy(), stats.median);
+						newNewMap.put("Measurement", "mode");
+						resultsTreeMap.put(newNewMap.copy(), stats.dmode);
 						newNewMap.put("Measurement", "x");
 						resultsTreeMap.put(newNewMap.copy(), (double) center.x);
 						newNewMap.put("Measurement", "y");
@@ -364,6 +366,11 @@ public class JEX_ImageTools_MeasureROIRegion2 extends JEXCrunchable {
 					{
 						newNewMap.put("Measurement", "median");
 						resultsTreeMap.put(newNewMap.copy(), stats.median);
+					}
+					else if(measure.equals("Median"))
+					{
+						newNewMap.put("Measurement", "mode");
+						resultsTreeMap.put(newNewMap.copy(), stats.dmode);
 					}
 					else if(measure.equals("Std Dev"))
 					{
@@ -418,7 +425,7 @@ public class JEX_ImageTools_MeasureROIRegion2 extends JEXCrunchable {
 		}
 		DimTable resultsDimTable = new DimTable();
 		resultsDimTable.addAll(roiTable);
-		resultsDimTable.add(new Dim("Measurement", new String[] { "mean", "area", "min", "max", "stddev", "meandev", "median", "x", "y", "centerOfMassX", "centerOfMassY", "momentZ", "mass" }));
+		resultsDimTable.add(new Dim("Measurement", new String[] { "mean", "area", "min", "max", "stddev", "meandev", "median", "mode", "x", "y", "centerOfMassX", "centerOfMassY", "momentZ", "mass" }));
 		if(atLeastOneHasPattern)
 		{
 			Dim d = new Dim(patternDimName, 1, maxPatternSize);

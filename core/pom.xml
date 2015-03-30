@@ -32,8 +32,8 @@
 		</dependency>
 		<dependency>
 			<groupId>com.miglayout</groupId>
-			<artifactId>miglayout</artifactId>
-			<classifier>swing</classifier>
+			<artifactId>miglayout-swing</artifactId>
+			<version>4.3-SNAPSHOT</version>
 		</dependency>
 
 		<dependency>
