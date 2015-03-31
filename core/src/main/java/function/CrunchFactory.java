@@ -1,18 +1,9 @@
 package function;
 
-import function.plugin.IJ2.IJ2CrunchablePlugin;
-import function.plugin.IJ2.IJ2PluginUtility;
-import function.plugin.mechanism.JEXCrunchablePlugin;
-import function.plugin.mechanism.JEXPlugin;
-import function.plugin.mechanism.JEXPluginInfo;
-import function.plugin.plugins.imageProcessing.AdjustImage;
-import function.plugin.plugins.imageTools.ImageStitcher;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.JarURLConnection;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -27,85 +18,179 @@ import java.util.jar.JarFile;
 import jex.JEXperiment;
 import jex.statics.PrefsUtility;
 import logs.Logs;
+import miscellaneous.SSVList;
 import miscellaneous.StringUtility;
 
+import org.scijava.command.Command;
+import org.scijava.command.CommandInfo;
+import org.scijava.plugin.DefaultPluginFinder;
 import org.scijava.plugin.PluginInfo;
+
+import updates.Updater;
+import function.plugin.IJ2.IJ2CrunchablePlugin;
+import function.plugin.IJ2.IJ2PluginUtility;
+import function.plugin.mechanism.JEXCrunchablePlugin;
+import function.plugin.mechanism.JEXPlugin;
+import function.plugin.mechanism.JEXPluginInfo;
 
 public class CrunchFactory extends URLClassLoader {
 	
-	public Vector<String> internalPluginNames = new Vector<String>();
-	public Vector<String> externalPluginNames = new Vector<String>();
-	static TreeMap<String,JEXCrunchable> listOfCrunchers = getExperimentalDataCrunchers();
+	static TreeMap<String,JEXCrunchable> jexCrunchables = new TreeMap<String,JEXCrunchable>();
+	
+	private Vector<String> internalOldJEXCrunchableNames = new Vector<String>();
+	private String jarPath = null;
+	private List<PluginInfo<?>> allSciJavaPlugins = new Vector<PluginInfo<?>>();
+	
+	static
+	{
+		loadJEXCrunchables();
+	}
 	
 	public CrunchFactory()
 	{
 		super(new URL[0], JEXperiment.class.getClassLoader());
 	}
 	
-	public void loadPluginsFromFolder(String path)
+	/**
+	 * Return a map of all loadable functions
+	 * 
+	 * @return
+	 */
+	public static void loadJEXCrunchables()
 	{
-		// find all JAR files on the path and subdirectories
+		// Create and instance of CrunchFactory to keep track of things and for loading classes.
+		CrunchFactory loader = new CrunchFactory();
+		
+		loader.findOldJEXCrunchables();
+		loader.loadOldJEXCrunchables();
+		loader.findSciJavaPlugins();
+		loader.loadSciJavaPlugins();
+		
+		try
+		{
+			loader.close();
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * Find internally defined JEXCrunchables (old-style) determining whether or not we are running from
+	 * a jar file along the way. Return the jar file path if found. Else null.
+	 */
+	private void findOldJEXCrunchables()
+	{
+		Logs.log("Finding old internally defined JEXCrunchables.", CrunchFactory.class);
+		URL classLoaderURL = JEXCrunchable.class.getResource("JEXCrunchable.class");
+		if(classLoaderURL == null)
+		{
+			Logs.log("ClassLoaderURL was null", CrunchFactory.class);
+		}
+		else
+		{
+			Logs.log("Source code URL for finding internally defined JEX functions: " + classLoaderURL.toString(), CrunchFactory.class);
+		}
+		
+		if(Updater.runningFromJar())
+		{
+			// We are running from a jar
+			try
+			{
+				URL jarFile = new URL(classLoaderURL.toString().substring(0, classLoaderURL.toString().indexOf("!") + 2)); // jar file that JEX is packaged in
+				jarPath = classLoaderURL.toString().substring(0, classLoaderURL.toString().indexOf("!") + 2);
+				Logs.log("JEX Jar URL: " + jarPath, CrunchFactory.class);
+				this.findOldJEXCrunchablePluginNamesInJar(jarFile);
+			}
+			catch (MalformedURLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			// We are running JEX from Eclipse, in which case the classes are not stored in a jar and so we need to get the function class names using File-based methods...
+			File root;
+			try
+			{
+				root = new File(classLoaderURL.toURI().getPath());
+				root = new File(root.getParentFile() + File.separator + "plugin" + File.separator + "old");
+				File[] l = root.listFiles();
+				
+				for (int i = 0; i < l.length; i++)
+				{
+					String name = l[i].getName();
+					if(name.length() > 4 && name.startsWith("JEX_") && name.endsWith(".class") && !name.contains("$")) // Need to check for $ because those represent class files that are extra created by Eclipse that won't work
+					{
+						Logs.log("Found JEXCrunchable: " + name, CrunchFactory.class);
+						this.internalOldJEXCrunchableNames.add(name.substring(0, name.length() - 6));
+					}
+				}
+			}
+			catch (URISyntaxException e)
+			{
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	private void loadOldJEXCrunchables()
+	{
+		// Create and store internally defined ExperimentalDataCrunch Objects
+		for (String pluginName : this.internalOldJEXCrunchableNames)
+		{
+			JEXCrunchable c = getInstanceOfJEXCrunchable(pluginName);
+			if(c == null)
+			{
+				continue;
+			}
+			if(c.showInList())
+			{
+				jexCrunchables.put(c.getName(), c);
+			}
+		}
+	}
+	
+	/**
+	 * Plugins are required to be in jar form in the folder or subfolders described by path.
+	 * This puts all jars in the folder (and subfolder) on the path of the classloader (i.e., the CrunchFactory instance).
+	 * @param path
+	 */
+	private void findJarsInFolder(String path)
+	{
 		if(path != null && !path.equals(""))
 		{
 			File f = new File(path);
 			if(f.exists() && f.isDirectory())
 			{
-				try
+				File[] list = f.listFiles();
+				if(list == null)
 				{
-					// Add plugin directory to search path
-					this.addURL(f.toURI().toURL());
-					String[] list = f.list();
-					if(list == null)
+					return;
+				}
+				else
+				{
+					for(File f2 : list)
 					{
-						return;
-					}
-					for (int i = 0; i < list.length; i++)
-					{
-						if(list[i].equals(".rsrc"))
-						{
-							continue;
-						}
-						f = new File(path, list[i]);
-						if(f.isDirectory())
+						if(f2.getName().endsWith(".jar"))
 						{
 							try
-							{
-								// Add first level subdirectories to search path
-								this.addURL(f.toURI().toURL());
+							{	
+								this.addURL(f2.toURI().toURL());			
 							}
-							catch (MalformedURLException e)
+							catch (MalformedURLException e1)
 							{
-								Logs.log("PluginClassLoader: Error", this);
-								e.printStackTrace();
+								Logs.log("Couldn't convert file path to URI to URL: " + f2, this);
+								e1.printStackTrace();
 							}
-							String[] innerlist = f.list();
-							if(innerlist == null)
-							{
-								continue;
-							}
-							for (int j = 0; j < innerlist.length; j++)
-							{
-								File g = new File(f, innerlist[j]);
-								if(g.isFile())
-								{
-									this.add(g, f.getName());
-								}
-							}
-						}
-						else
-						{
-							this.add(f, null);
 						}
 					}
-				}
-				catch (MalformedURLException e)
-				{
-					Logs.log("Couldn't establish a URL from the given path: " + path + ". Check location and/or fix JEX preferences to point to the external plugins folder (button in top right of window).", CrunchFactory.class);
 				}
 			}
 			else
 			{
-				Logs.log("Couldn't find the external plugins folder at " + path + ". Check location and/or fix JEX preferences to point to the external plugins folder (button in top right of window).", CrunchFactory.class);
+				Logs.log("Couldn't find external plugins folder at " + path + ". Check location and/or fix JEX preferences to point to the external plugins folder (button in top right of window).", CrunchFactory.class);
 			}
 		}
 		else
@@ -114,61 +199,90 @@ public class CrunchFactory extends URLClassLoader {
 		}
 	}
 	
-	private static TreeMap<String,JEXCrunchable> loadJEXCrunchablePlugins()
-	{
-		TreeMap<String,JEXCrunchable> ret = new TreeMap<String,JEXCrunchable>();
-		List<PluginInfo<JEXPlugin>> jexPlugins = IJ2PluginUtility.ij.plugin().getPluginsOfType(JEXPlugin.class);
-		Logs.log("Number of JEXPlugins: " + jexPlugins.size(), CrunchFactory.class);
-		for(PluginInfo<JEXPlugin> info : jexPlugins)
+	/**
+	 * Use the DefaultPluginFinder from the scijava framework to find all scijava plugins.
+	 * Thus, this includes new JEX plugins and ImageJ Plugins
+	 */
+	private void findSciJavaPlugins()
+	{		
+		String pathsToLoad = PrefsUtility.getExternalPluginsFolder();
+		
+		// Add paths from the preferences for finding JEXPlugins in externally defined jar files
+		SSVList pathSVList = new SSVList(pathsToLoad);
+		// Add the default plugins folder that is distributed with the jar'd JEX software
+		if(this.jarPath != null)
 		{
-			Logs.log("Found new JEXPlugin: " + info.getName() + " - "+ info.getClassName(), CrunchFactory.class);
-			try
+			pathSVList.insertElementAt(this.jarPath + File.separator + "plugins", 0);
+		}
+		for(String pathToLoad : pathSVList)
+		{
+			File folderToLoad = new File(pathToLoad);
+			if(folderToLoad.exists())
 			{
-				JEXPluginInfo fullInfo = new JEXPluginInfo(info);
-				JEXCrunchablePlugin crunchable = new JEXCrunchablePlugin(fullInfo);
-				ret.put(crunchable.getName(), crunchable);
-			}
-			catch(java.lang.NoClassDefFoundError e1)
-			{
-				// Just skip this because I think the EclipseHelper is messing up the accumulation of the annotation index
-				Logs.log("Remember to figure out why annotation index in Eclipse helper gets called sometimes (when legacy called first) and not others (when ImageJ2 called first).", CrunchFactory.class);
-			}
-			catch(Exception e)
-			{
-				e.printStackTrace();
-				// Just skip this because I think the EclipseHelper is messing up the accumulation of the annotation index
-				Logs.log("Couldn't load " + info.getName() + ". Check error and see if an @Parameter, @Input, or @Output annotation isn't perfectly correct.", CrunchFactory.class);
+				// Add any jars we find on these paths to the class path of loader
+				this.findJarsInFolder(pathToLoad);
 			}
 		}
-		return ret;
+		
+		DefaultPluginFinder pf = new DefaultPluginFinder(this);
+		allSciJavaPlugins.clear();
+		pf.findPlugins(allSciJavaPlugins);
 	}
 	
-	private void add(File f, String packageName)
+	private void loadSciJavaPlugins()
 	{
-		if(f.getName().endsWith(".jar") || f.getName().endsWith(".zip"))
+		// First load the ImageJ plugins (just commands)
+		for(PluginInfo<?> pi : allSciJavaPlugins)
 		{
-			try
+			if(pi.getPluginType() == Command.class)
 			{
-				this.addURL(f.toURI().toURL());
+				@SuppressWarnings("unchecked")
+				CommandInfo command = new CommandInfo((PluginInfo<Command>) pi);
+				if(IJ2PluginUtility.isValidForJEX(command))
+				{
+					IJ2CrunchablePlugin p = new IJ2CrunchablePlugin(command);
+					if(p != null)
+					{
+						Logs.log("Loaded ImageJ Plugin: " + command.getTitle(), CrunchFactory.class);
+						jexCrunchables.put(command.getTitle(), p);
+					}
+				}
 			}
-			catch (MalformedURLException e)
+			
+		}
+		
+		// Then try to set all the JEXPlugins that are internal (best guess is that their package is functions.plugin.plugins)
+		for(PluginInfo<?> pi : allSciJavaPlugins)
+		{
+			if(pi.getPluginType() == JEXPlugin.class && pi.getClassName().startsWith("function.plugin.plugins"))
 			{
-				ij.IJ.log("PluginClassLoader: " + e);
+				@SuppressWarnings("unchecked")
+				JEXPluginInfo fullInfo = new JEXPluginInfo((PluginInfo<JEXPlugin>) pi);
+				JEXCrunchablePlugin crunchable = new JEXCrunchablePlugin(fullInfo);
+				jexCrunchables.put(crunchable.getName(), crunchable);
+				Logs.log("Loaded internal JEXPlugin: " + pi.getName() + " - "+ pi.getClassName(), CrunchFactory.class);
+			}
+			
+		}
+		
+		// Then finally load the externally defined plugins so they "overwrite" the ones previously defined of the same name
+		for(PluginInfo<?> pi : allSciJavaPlugins)
+		{
+			if(pi.getPluginType() == JEXPlugin.class && !pi.getClassName().startsWith("function.plugin.plugins"))
+			{
+				@SuppressWarnings("unchecked")
+				JEXPluginInfo fullInfo = new JEXPluginInfo((PluginInfo<JEXPlugin>) pi);
+				JEXCrunchablePlugin crunchable = new JEXCrunchablePlugin(fullInfo);
+				jexCrunchables.put(crunchable.getName(), crunchable);
+				Logs.log("Loaded external JEXPlugin: " + pi.getName() + " - "+ pi.getClassName(), CrunchFactory.class);
 			}
 		}
-		else if(f.getName().endsWith(".class") && !f.getName().contains("$"))
+		
+		for(PluginInfo<?> pi : allSciJavaPlugins)
 		{
-			String temp = f.getName().substring(0, f.getName().length() - 6);
-			if(!this.externalPluginNames.contains(temp))
+			if(pi.getPluginType() == JEXPlugin.class)
 			{
-				if(packageName != null)
-				{
-					this.externalPluginNames.add(packageName + "." + temp);
-				}
-				else
-				{
-					this.externalPluginNames.add(temp);
-				}
+				Logs.log("Found JEXPlugin: " + pi.getName() + " - "+ pi.getClassName(), CrunchFactory.class);
 			}
 		}
 	}
@@ -179,12 +293,12 @@ public class CrunchFactory extends URLClassLoader {
 	 * @param functionName
 	 * @return An experimental data cruncher
 	 */
-	public static JEXCrunchable getExperimentalDataCrunch(String functionName)
+	public static JEXCrunchable getJEXCrunchable(String functionName)
 	{
 		try
 		{
 			// Get the native ExperimentalDataCrunch
-			JEXCrunchable result = listOfCrunchers.get(functionName);
+			JEXCrunchable result = jexCrunchables.get(functionName);
 			
 			if(result == null)
 			{
@@ -215,180 +329,7 @@ public class CrunchFactory extends URLClassLoader {
 		return null;
 	}
 	
-	/**
-	 * Return a map of all loadable functions
-	 * 
-	 * @return
-	 */
-	public static TreeMap<String,JEXCrunchable> getExperimentalDataCrunchers()
-	{
-		// Create a structure to store all the ExperimentalDataCrunch Objects
-		TreeMap<String,JEXCrunchable> result = new TreeMap<String,JEXCrunchable>();
-		
-		Logs.log("Getting ImageJ Plugins.", CrunchFactory.class);
-		TreeMap<String,IJ2CrunchablePlugin> ij2Plugins = IJ2PluginUtility.ijCommands;
-		result.putAll(ij2Plugins);
-		
-		Logs.log("Getting external JEXCrunchables.", CrunchFactory.class);
-		// Find externally defined plugin class names
-		String prefsPluginsPath = PrefsUtility.getExternalPluginsFolder();
-		String jarPath = null;
-		CrunchFactory loader = new CrunchFactory(); // constructor does the storing of the class names in the "externalPluginNames" vector field
-		
-		Logs.log("Getting internal JEXCrunchables.", CrunchFactory.class);
-		// Find internally defined plugin class names
-		URL classLoaderURL = JEXCrunchable.class.getResource("JEXCrunchable.class");		
-		if(classLoaderURL == null)
-		{
-			Logs.log("ClassLoaderURL was null", CrunchFactory.class);
-		}
-		else
-		{
-			Logs.log("Source code URL for finding internally defined JEX functions: " + classLoaderURL.toString(), CrunchFactory.class);
-		}
-		
-		if(!classLoaderURL.toString().startsWith("file:"))
-		{
-			if(classLoaderURL.toString().startsWith("rsrc:"))
-			{
-				// Then we are running JEX from the JEX.jar created using the Eclipse export Runnable Jar plugin (jarinjar rsrc URL) and we need to find the function class names this way...
-				try
-				{
-					URI jarFolderURI = ClassLoader.getSystemClassLoader().getResource(".").toURI();
-					jarPath = jarFolderURI.getPath();
-					// Logs.log("Normalizing jar path... " + systemJarPath.toString(), CrunchFactory.class);
-					// File jarPath = new File(systemJarPath); // Need to do this because Windows might put a leading slash but...
-					// systemJarPath = jarPath.getAbsolutePath(); // the File class knows how to deal with this and remove it.
-					URL jarURL = new URL("jar:" + jarFolderURI + "JEX.jar!/");
-					Logs.log("System JEX.jar path... " + jarURL.toString(), CrunchFactory.class);
-					loader.getInternalPluginNamesFromJar(jarURL);
-				}
-				catch (Exception e)
-				{
-					e.printStackTrace();
-				}
-			}
-			else if(classLoaderURL.toString().startsWith("jar:"))
-			{
-				// We are running from JEX created using the export App Bundle plugin of eclipse
-				try
-				{
-					URL jarFile = new URL(classLoaderURL.toString().substring(0, classLoaderURL.toString().indexOf("!") + 2)); // jar file that JEX is packaged in
-					String jarURLPath = classLoaderURL.toString().substring(0, classLoaderURL.toString().indexOf("!") + 2);
-					Logs.log("JEX Jar URL: " + jarURLPath, CrunchFactory.class);
-					loader.getInternalPluginNamesFromJar(jarFile);
-				}
-				catch (MalformedURLException e)
-				{
-					e.printStackTrace();
-				}
-			}
-		}
-		else
-		{
-			// We are running JEX from Eclipse, in which case the classes are not stored in a jar and so we need to get the function class names using File-based methods...
-			File root;
-			try
-			{
-				root = new File(classLoaderURL.toURI().getPath());
-				root = new File(root.getParentFile() + File.separator + "plugin" + File.separator + "old");
-				File[] l = root.listFiles();
-				
-				for (int i = 0; i < l.length; i++)
-				{
-					String name = l[i].getName();
-					if(name.length() > 4 && name.startsWith("JEX_") && name.endsWith(".class") && !name.contains("$")) // Need to check for $ because those represent class files that are extra created by Eclipse that won't work
-					{
-						Logs.log("Found function definition: " + name, CrunchFactory.class);
-						loader.internalPluginNames.add(name.substring(0, name.length() - 6));
-					}
-				}
-			}
-			catch (URISyntaxException e)
-			{
-				e.printStackTrace();
-			}
-		}
-		
-		// Create and store internally defined ExperimentalDataCrunch Objects
-		for (String pluginName : loader.internalPluginNames)
-		{
-			JEXCrunchable c = getInstanceOfExperimentalDataCrunch(pluginName);
-			if(c == null)
-			{
-				continue;
-			}
-			if(c.showInList())
-			{
-				result.put(c.getName(), c);
-			}
-		}
-		
-		// Create and store externally defined ExperimentalDataCruch Objects
-		// Do external ones second so that external functions with the same name as an internal function will be kept only (i.e. external overrides internal)
-		String pathToLoad = null;
-		if(jarPath != null)
-		{
-			pathToLoad = jarPath + File.separator + "plugins";
-		}
-		else
-		{
-			pathToLoad = prefsPluginsPath;
-		}
-		File folderToLoad = new File(pathToLoad);
-		if(folderToLoad.exists())
-		{
-			/* This the load.externalPluginNames list of the CrunchFactory and also sets the internal URLs inside which to search for the class objects and now we can ask loader to load a class for us */
-			loader.loadPluginsFromFolder(pathToLoad);
-			
-			// For each function class name we found, load it
-			for (String pluginName : loader.externalPluginNames)
-			{
-				String[] names = pluginName.split("\\.");
-				String name = names[names.length - 1];
-				if(name.startsWith("JEX_"))
-				{
-					try
-					{
-						Class<?> functionClass = loader.loadClass(pluginName);
-						Object function = functionClass.newInstance();
-						if(function instanceof JEXCrunchable)
-						{
-							JEXCrunchable temp = (JEXCrunchable) function;
-							if(temp.showInList())
-							{
-								result.put(temp.getName(), temp);
-							}
-						}
-					}
-					catch (Exception e)
-					{
-						Logs.log("Couldn't load plugin: " + pluginName, CrunchFactory.class);
-						e.printStackTrace();
-					}
-				}
-			}
-		}
-		
-		try
-		{
-			loader.close();
-		}
-		catch (IOException e)
-		{
-			e.printStackTrace();
-		}
-		
-		// Load these last in case there is a name conflict, we take the newer version instead as JEXPlugin style is the newer style
-		Logs.log("Getting new JEXPlugins.", CrunchFactory.class);
-		//		loadMissing();
-		TreeMap<String,JEXCrunchable> jexPlugins = loadJEXCrunchablePlugins();
-		result.putAll(jexPlugins);
-		
-		return result;
-	}
-	
-	public void getInternalPluginNamesFromJar(URL jarFile)
+	private void findOldJEXCrunchablePluginNamesInJar(URL jarFile)
 	{
 		if(jarFile == null)
 		{
@@ -410,8 +351,8 @@ public class CrunchFactory extends URLClassLoader {
 					if(packageName.equals("old") && name.length() >= 4 && name.startsWith("JEX_") && name.endsWith(".class") && !name.contains("$"))
 					{
 						// Need to check for $ because those represent class files that are extra created by Eclipse that won't work
-						Logs.log("Found function definition: " + name, CrunchFactory.class);
-						this.internalPluginNames.add(name.substring(0, name.length() - 6));
+						Logs.log("Found JEXCrunchable: " + name, CrunchFactory.class);
+						this.internalOldJEXCrunchableNames.add(name.substring(0, name.length() - 6));
 					}
 				}
 			}
@@ -429,7 +370,7 @@ public class CrunchFactory extends URLClassLoader {
 	 * @param name
 	 * @return instance of ExperimentalDataCrunch of name NAME
 	 */
-	public static JEXCrunchable getInstanceOfExperimentalDataCrunch(String name)
+	public static JEXCrunchable getInstanceOfJEXCrunchable(String name)
 	{
 		// Class toInstantiate;
 		try
@@ -464,7 +405,7 @@ public class CrunchFactory extends URLClassLoader {
 		TreeSet<String> result = new TreeSet<String>(new StringUtility());
 		// listOfCrunchers = getExperimentalDataCrunchers();
 		
-		for (JEXCrunchable c : listOfCrunchers.values())
+		for (JEXCrunchable c : jexCrunchables.values())
 		{
 			String tb = c.getToolbox();
 			result.add(tb);
@@ -478,13 +419,13 @@ public class CrunchFactory extends URLClassLoader {
 	 * @param toolbox
 	 * @return Sub set of function matching a toolbox name
 	 */
-	public static TreeMap<String,JEXCrunchable> getFunctionsFromToolbox(String toolbox)
+	public static TreeMap<String,JEXCrunchable> getJEXCrunchablesInToolbox(String toolbox)
 	{
 		// HashMap<String,ExperimentalDataCrunch> result = new
 		// HashMap<String,ExperimentalDataCrunch>();
 		TreeMap<String,JEXCrunchable> result = new TreeMap<String,JEXCrunchable>();
 		
-		for (JEXCrunchable c : listOfCrunchers.values())
+		for (JEXCrunchable c : jexCrunchables.values())
 		{
 			if(c.getToolbox().equals(toolbox))
 			{
@@ -493,16 +434,5 @@ public class CrunchFactory extends URLClassLoader {
 		}
 		
 		return result;
-	}
-	
-	public static void loadMissing()
-	{
-		Object o = new AdjustImage();
-		Logs.log(o.toString(), CrunchFactory.class);
-		o = new ImageStitcher();
-		Logs.log(o.toString(), CrunchFactory.class);
-		return;
-		
-	}
-	
+	}	
 }

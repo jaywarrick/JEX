@@ -10,7 +10,6 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.Vector;
 
-import logs.Logs;
 import net.imagej.ChannelCollection;
 import net.imagej.Dataset;
 import net.imagej.ImageJ;
@@ -47,7 +46,7 @@ public class IJ2PluginUtility {
 	
 	public static ImageJ ij = new ImageJ();
 	
-	public static TreeMap<String,IJ2CrunchablePlugin> ijCommands = getIJ2Commands();
+	//	public static TreeMap<String,IJ2CrunchablePlugin> ijCommands = getIJ2Commands();
 	
 	static
 	{
@@ -58,28 +57,28 @@ public class IJ2PluginUtility {
 		opts.setBgValues(new ChannelCollection(black));
 	}
 	
-	public static TreeMap<String,IJ2CrunchablePlugin> getIJ2Commands()
-	{
-		List<CommandInfo> commands = ij.command().getCommands();
-		TreeMap<String,IJ2CrunchablePlugin> commandTree = new TreeMap<String,IJ2CrunchablePlugin>();
-		for (final CommandInfo command : commands)
-		{
-			if(isValidForJEX(command))
-			{
-				if(command.getTitle().equals("Image Calculator..."))
-				{
-					Logs.log("Found it.", IJ2PluginUtility.class);
-				}
-				IJ2CrunchablePlugin p = new IJ2CrunchablePlugin(command);
-				if(p != null)
-				{
-					Logs.log("Successfully incorporated ImageJ Plugin: " + command.getTitle(), IJ2CrunchablePlugin.class);
-					commandTree.put(command.getTitle(), p);
-				}
-			}
-		}
-		return commandTree;
-	}
+	//	public static TreeMap<String,IJ2CrunchablePlugin> getIJ2Commands()
+	//	{
+	//		List<CommandInfo> commands = ij.command().getCommands();
+	//		TreeMap<String,IJ2CrunchablePlugin> commandTree = new TreeMap<String,IJ2CrunchablePlugin>();
+	//		for (final CommandInfo command : commands)
+	//		{
+	//			if(isValidForJEX(command))
+	//			{
+	//				if(command.getTitle().equals("Image Calculator..."))
+	//				{
+	//					Logs.log("Found it.", IJ2PluginUtility.class);
+	//				}
+	//				IJ2CrunchablePlugin p = new IJ2CrunchablePlugin(command);
+	//				if(p != null)
+	//				{
+	//					Logs.log("Successfully incorporated ImageJ Plugin: " + command.getTitle(), IJ2CrunchablePlugin.class);
+	//					commandTree.put(command.getTitle(), p);
+	//				}
+	//			}
+	//		}
+	//		return commandTree;
+	//	}
 	
 	public static ParameterSet getDefaultJEXParameters(CommandInfo command)
 	{

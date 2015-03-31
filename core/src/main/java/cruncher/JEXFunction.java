@@ -50,7 +50,7 @@ public class JEXFunction {
 	
 	public JEXFunction(String functionName) throws InstantiationException
 	{
-		this.cruncher = CrunchFactory.getExperimentalDataCrunch(functionName);
+		this.cruncher = CrunchFactory.getJEXCrunchable(functionName);
 		
 		if(this.cruncher == null)
 		{

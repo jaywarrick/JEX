@@ -265,7 +265,7 @@ class FunctionTree extends JTree implements TreeSelectionListener {
 		{
 			this.removeAllChildren();
 			
-			TreeMap<String,JEXCrunchable> availableFunctions = CrunchFactory.getFunctionsFromToolbox(this.toolbox);
+			TreeMap<String,JEXCrunchable> availableFunctions = CrunchFactory.getJEXCrunchablesInToolbox(this.toolbox);
 			for (JEXCrunchable c : availableFunctions.values())
 			{
 				//				if(c.showInList())

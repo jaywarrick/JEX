@@ -1,7 +1,5 @@
 package image.roi;
 
-import function.CrunchFactory;
-import function.singleCellAnalysis.SingleCellUtility;
 import ij.ImagePlus;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
@@ -14,6 +12,8 @@ import ij.process.FloatStatistics;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import ij.process.ShortProcessor;
+import io.scif.Checker;
+import io.scif.Format;
 import io.scif.FormatException;
 import io.scif.ImageMetadata;
 import io.scif.MetaTable;
@@ -32,12 +32,14 @@ import java.net.JarURLConnection;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.text.DecimalFormat;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Random;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.Vector;
 import java.util.jar.JarEntry;
@@ -65,6 +67,9 @@ import net.imglib2.meta.CalibratedAxis;
 import net.imglib2.meta.ImgPlus;
 
 import org.scijava.command.CommandInfo;
+import org.scijava.plugin.DefaultPluginFinder;
+import org.scijava.plugin.Plugin;
+import org.scijava.plugin.PluginInfo;
 import org.scijava.util.ConversionUtils;
 
 import rtools.R;
@@ -73,13 +78,18 @@ import tables.DimTable;
 import tables.DimensionMap;
 import updates.Updater;
 import weka.core.converters.JEXTableWriter;
+import function.CrunchFactory;
+import function.plugin.mechanism.JEXCrunchablePlugin;
+import function.plugin.mechanism.JEXPlugin;
+import function.plugin.mechanism.JEXPluginInfo;
+import function.singleCellAnalysis.SingleCellUtility;
 
 public class PointTester {// extends URLClassLoader {
 	
-		static
-		{
-			LegacyInjector.preinit();
-		}
+	static
+	{
+		LegacyInjector.preinit();
+	}
 	
 	public static void main(String[] args) throws Exception
 	{
@@ -89,6 +99,112 @@ public class PointTester {// extends URLClassLoader {
 	public static void playWithChoiceDialog()
 	{
 		JEXDialog.getChoice("Title", "Which Becaus this is a really long question that I can't figure out and I really need help or else I won't know what to do. choice do you want? Which Becaus this is a really long question that I can't figure out and I really need help or else I won't know what to do. choice do you want? Which Becaus this is a really long question that I can't figure out and I really need help or else I won't know what to do. choice do you want? Which Becaus this is a really long question that I can't figure out and I really need help or else I won't know what to do. choice do you want? Which Becaus this is a really long question that I can't figure out and I really need help or else I won't know what to do. choice do you want?", new String[]{"Choice 1", "Choice 2"}, 0);
+		Logs.log("Hello there", PointTester.class);
+	}
+	
+	public static void tryPluginFinder()
+	{
+		InputStream iStream = null;
+		try
+		{
+			String pathToJar = "/Users/jaywarrick/Public/DropBox/GitHub/JEX-CTCPlugins/target/pom-ctc-0.0.1-SNAPSHOT.jar"; //JEXDialog.fileChooseDialog(true);
+			URL[] urls = { new URL("jar:file:" + pathToJar+"!/") };
+			URLClassLoader cl = URLClassLoader.newInstance(urls);
+			
+			//iStream = cl.getResourceAsStream("org.scijava.plugin.Plugin");
+			
+			
+			DefaultPluginFinder pf = new DefaultPluginFinder();
+			List<PluginInfo<?>> ret = new Vector<PluginInfo<?>>();
+			pf.findPlugins(ret);
+			for(PluginInfo<?> pi : ret)
+			{
+				if(pi.getClassName().startsWith("function.") || pi.getClassName().startsWith("plugins."))
+				{
+					System.out.println(pi);
+				}
+				
+			}
+			
+			Logs.log("Yay!", PointTester.class);
+		}
+		catch (MalformedURLException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		finally
+		{
+			if(iStream != null)
+			{
+				try
+				{
+					iStream.close();
+				}
+				catch (IOException e)
+				{
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+		
+		
+	}
+	
+	public static void checkImportPlugin() throws Exception
+	{
+		ImageJ ij = new ImageJ();
+		
+		String pathToJar = "/Users/jaywarrick/Public/DropBox/GitHub/JEX-CTCPlugins/target/pom-ctc-0.0.1-SNAPSHOT.jar"; //JEXDialog.fileChooseDialog(true);
+		JarFile jarFile = new JarFile(pathToJar);
+		Enumeration<JarEntry> e = jarFile.entries();
+		
+		URL[] urls = { new URL("jar:file:" + pathToJar+"!/") };
+		URLClassLoader cl = URLClassLoader.newInstance(urls);
+		
+		while (e.hasMoreElements()) {
+			JarEntry je = (JarEntry) e.nextElement();
+			if(je.isDirectory() || !je.getName().endsWith(".class")){
+				continue;
+			}
+			// -6 because of .class
+			String className = je.getName().substring(0,je.getName().length()-6);
+			className = className.replace('/', '.');
+			Class<?> c = cl.loadClass(className);
+			if(JEXPlugin.class.isAssignableFrom(c))
+			{
+				//		    	JEXPlugin jp = (JEXPlugin) c.newInstance();
+				final Plugin p = c.getAnnotation(Plugin.class);
+				@SuppressWarnings("unchecked")
+				PluginInfo<JEXPlugin> pi = new PluginInfo(c, JEXPlugin.class, p);
+				ij.plugin().addPlugin(pi);
+				JEXPluginInfo jpi = new JEXPluginInfo(pi);
+				JEXCrunchablePlugin crunchable = new JEXCrunchablePlugin(jpi);
+				Logs.log(crunchable.toString(), PointTester.class);
+				Logs.log("Yay!", PointTester.class);
+			}
+			
+		}
+	}
+	
+	public static void checkScifioStuff() throws Exception
+	{
+		ImageJ ij = new ImageJ();
+		String path = "/Users/jaywarrick/Downloads/Test.nd2";
+		Set<Format> formats = (Set<Format>)ij.scifio().format().getAllFormats();
+		for(Format format : formats)
+		{
+			System.out.println(format.getClass().getSimpleName());
+			System.out.println(format.isEnabled());
+			Checker c = format.createChecker();
+			System.out.println(c.isFormat(path));
+			System.out.println(c.isFormat(path, new SCIFIOConfig().checkerSetOpen(true)));
+			System.out.println(format.createChecker().isFormat(path, new SCIFIOConfig().checkerSetOpen(true)));
+		}
+		Reader reader = ij.scifio().initializer().initializeReader(path, new SCIFIOConfig().checkerSetOpen(true));
+		getTiffs(path, ij);
+		//System.out.println(OS.isMacOSX());
 	}
 	
 	public static void playWithUpdater()
@@ -148,7 +264,7 @@ public class PointTester {// extends URLClassLoader {
 	public static String WAVELENGTH="Name #", X_POSITION="Z position", Y_POSITION="Z position", Z_POSITION="Z position", TIMESTAMP="timestamp", LAMBDA1="λ", LAMBDA2="� ";
 	
 	public static void testAutoImport() throws Exception {
-
+		
 		final String filePath = "/Users/jaywarrick/Google Drive/example.nd2";
 		final String sampleImage = "/Users/jaywarrick/Google Drive/example.nd2";
 		final String outPath = "/Users/jaywarrick/Desktop/NewFolder";
