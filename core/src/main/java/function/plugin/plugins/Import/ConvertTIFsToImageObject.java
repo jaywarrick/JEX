@@ -1,4 +1,4 @@
-package function.plugin.plugins.dataImporting;
+package function.plugin.plugins.Import;
 
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
@@ -31,8 +31,8 @@ import tables.DimensionMap;
 @Plugin(
 		type = JEXPlugin.class,
 		name="Import TIF Images as Image Object",
-		menuPath="Data Importing",
-		visible=true,
+		menuPath="Import",
+		visible=false,
 		description="Import images from a NIS Elements ND Acquisition ("
 				+ "multiple, colors, times, locations, large image arrays... no"
 				+ " Z stacks yet) from tif stacks to individual images"
@@ -59,12 +59,16 @@ public class ConvertTIFsToImageObject extends JEXPlugin {
 
 	@ParameterMarker(uiOrder=0, name="Input Directory", description="Location of the multicolor TIFF images", ui=MarkerConstants.UI_FILECHOOSER, defaultText="")
 	String inDir;
+	
+	@ParameterMarker(uiOrder=1, name="Name Separator", description="Charactor that separates dimension names in the image name", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
+	String separator;
 
 	/////////// Define Outputs ///////////
 
 	@OutputMarker(name="Multicolor TIF Image", type=MarkerConstants.TYPE_IMAGE, flavor="", description="The converted image object", enabled=true)
 	JEXData output;
 
+	
 	@Override
 	public int getMaxThreads()
 	{
@@ -98,7 +102,7 @@ public class ConvertTIFsToImageObject extends JEXPlugin {
 				return false;
 			}
 			ImagePlus im = new ImagePlus(f.getAbsolutePath());
-			DimensionMap baseMap = this.getMapFromPath(f.getAbsolutePath());
+			DimensionMap baseMap = this.getMapFromPath(f.getAbsolutePath(), separator);
 			for (int s = 1; s < im.getStackSize() + 1; s++)
 			{
 				if(this.isCanceled())
@@ -134,15 +138,53 @@ public class ConvertTIFsToImageObject extends JEXPlugin {
 		return true;
 	}
 	
-	public DimensionMap getMapFromPath(String filePath)
+	/**
+	 * Create DimensionMap of a given image 
+	 * The image name should be in certain format, ex. Image_x001_y002_z004.tif
+	 * 
+	 * @param filePath image Path and Name
+	 * @param separator separator of the image Name
+	 * @return
+	 */
+	public DimensionMap getMapFromPath(String filePath, String separator)
 	{
+//		String name = FileUtility.getFileNameWithoutExtension(filePath);
+//		String[] names = name.split("_");
+//		String x = names[1].substring(1);
+//		String y = names[2].substring(1);
+//		x = Integer.valueOf(x).toString();
+//		y = Integer.valueOf(y).toString();
+//		return new DimensionMap("ImRow=" + y + ",ImCol=" + x);
 		String name = FileUtility.getFileNameWithoutExtension(filePath);
-		String[] names = name.split("_");
-		String x = names[1].substring(1);
-		String y = names[2].substring(1);
-		x = Integer.valueOf(x).toString();
-		y = Integer.valueOf(y).toString();
-		return new DimensionMap("ImRow=" + y + ",ImCol=" + x);
+		String[] names = name.split(separator);
+		
+		DimensionMap dimMap = new DimensionMap();
+		String dimValue, dimName, temp;
+		int splitIndex = 0;
+		
+		for (int i = 0; i < names.length; i++){
+			temp = names[i];
+			
+			// find the first Digit in the string in order to separate dimName and dimValue
+			for (int j = 0; j < temp.length(); j++){
+				if (Character.isDigit(temp.charAt(j))){
+					splitIndex = j;
+					break;
+				}
+				else
+					splitIndex = 0;
+			}
+			
+			// if the string is not a dimName followed by a dimValue then skip it.
+			if (splitIndex != 0) {
+				dimName = temp.substring(0, splitIndex);
+				dimValue = temp.substring(splitIndex);
+				
+				dimMap.put(dimName, dimValue);
+			}
+		}
+		
+		return dimMap;
 	}
 	
 	public static String saveAdjustedImage(String imagePath, double oldMin, double oldMax, double newMin, double newMax, double gamma, int bitDepth)

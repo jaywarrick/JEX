@@ -57,7 +57,7 @@ import function.plugin.mechanism.ParameterMarker;
 		type = JEXPlugin.class,
 		name="Import ND2 Files",
 		menuPath="Import",
-		visible=true,
+		visible=false,
 		description="Import image sets saved as a single multi-dimensional ND2 file."
 		)
 public class ImportND2Files extends JEXPlugin {
