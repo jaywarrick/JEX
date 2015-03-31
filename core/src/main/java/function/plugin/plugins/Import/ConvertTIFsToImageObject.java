@@ -32,7 +32,7 @@ import tables.DimensionMap;
 		type = JEXPlugin.class,
 		name="Import TIF Images as Image Object",
 		menuPath="Import",
-		visible=true,
+		visible=false,
 		description="Import images from a NIS Elements ND Acquisition ("
 				+ "multiple, colors, times, locations, large image arrays... no"
 				+ " Z stacks yet) from tif stacks to individual images"
