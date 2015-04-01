@@ -66,6 +66,7 @@ import net.imagej.patcher.LegacyInjector;
 import net.imglib2.meta.CalibratedAxis;
 import net.imglib2.meta.ImgPlus;
 
+import org.apache.commons.math3.stat.StatUtils;
 import org.scijava.command.CommandInfo;
 import org.scijava.plugin.DefaultPluginFinder;
 import org.scijava.plugin.Plugin;
@@ -93,7 +94,23 @@ public class PointTester {// extends URLClassLoader {
 	
 	public static void main(String[] args) throws Exception
 	{
-		playWithChoiceDialog();
+		double[] ret = calculateModes(new int[]{12,13,14});
+		for(double d : ret)
+		{
+			System.out.println(d);
+		}
+	}
+	
+	public static double[] calculateModes(final int[] n)
+	{
+	    
+		double[] d = new double[n.length];
+		for(int i=0; i < n.length; i++)
+		{
+			d[i] = n[i];
+		}
+	    double[] modes = StatUtils.mode(d);
+	    return modes;
 	}
 	
 	public static void playWithChoiceDialog()

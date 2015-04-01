@@ -10,13 +10,13 @@ import java.util.List;
 
 import logs.Logs;
 
-import org.apache.commons.math.MathException;
-import org.apache.commons.math.distribution.NormalDistributionImpl;
-import org.apache.commons.math.distribution.TDistributionImpl;
-import org.apache.commons.math.stat.descriptive.moment.Mean;
-import org.apache.commons.math.stat.descriptive.moment.StandardDeviation;
-import org.apache.commons.math.stat.descriptive.moment.Variance;
-import org.apache.commons.math.stat.descriptive.rank.Median;
+import org.apache.commons.math3.distribution.NormalDistribution;
+import org.apache.commons.math3.distribution.TDistribution;
+import org.apache.commons.math3.stat.StatUtils;
+import org.apache.commons.math3.stat.descriptive.moment.Mean;
+import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
+import org.apache.commons.math3.stat.descriptive.moment.Variance;
+import org.apache.commons.math3.stat.descriptive.rank.Median;
 
 /*************************************************************************
  *  Compilation:  javac StdRandom.java
@@ -851,16 +851,8 @@ public class StatisticsUtility {
 	 */
 	public static Double tDistCDF(double x, int dof)
 	{
-		TDistributionImpl tdist = new TDistributionImpl(dof);
-		try
-		{
-			return tdist.cumulativeProbability(x);
-		}
-		catch (MathException e)
-		{
-			e.printStackTrace();
-		}
-		return null;
+		TDistribution tdist = new TDistribution(dof);
+		return tdist.cumulativeProbability(x);
 	}
 	
 	/**
@@ -868,16 +860,8 @@ public class StatisticsUtility {
 	 */
 	public static Double tDistInverseCDF(double p_value, int dof)
 	{
-		TDistributionImpl tdist = new TDistributionImpl(dof);
-		try
-		{
-			return tdist.inverseCumulativeProbability(p_value);
-		}
-		catch (MathException e)
-		{
-			e.printStackTrace();
-		}
-		return null;
+		TDistribution tdist = new TDistribution(dof);
+		return tdist.inverseCumulativeProbability(p_value);
 	}
 	
 	/**
@@ -1120,6 +1104,39 @@ public class StatisticsUtility {
 		return median(v);
 	}
 	
+	public static int[] modes(int[] values)
+	{
+		double[] d = new double[values.length];
+		for(int i=0; i < values.length; i++)
+		{
+			d[i] = values[i];
+		}
+	    double[] modes = StatUtils.mode(d);
+	    int[] ret = new int[modes.length];
+	    for(int i=0; i < modes.length; i++)
+		{
+			ret[i] = (int) modes[i];
+		}
+	    return ret;
+	}
+	
+	public static double[] modes(double[] values)
+	{
+		return StatUtils.mode(values);
+	}
+	
+	public static double[] modes(Collection<Double> values)
+	{
+		double[] v = new double[values.size()];
+		int count = 0;
+		for (Double d : values)
+		{
+			v[count] = d;
+			count++;
+		}
+		return StatUtils.mode(v);
+	}
+	
 	public static Double mad(double median, double[] values)
 	{
 		double med = median;
@@ -1203,21 +1220,21 @@ public class StatisticsUtility {
 		return variance(v);
 	}
 	
-	public static double normalCDF(double x, double mean, double sigma) throws MathException
+	public static double normalCDF(double x, double mean, double sigma)
 	{
-		NormalDistributionImpl normDist = new NormalDistributionImpl(mean, sigma);
+		NormalDistribution normDist = new NormalDistribution(mean, sigma);
 		double ret = normDist.cumulativeProbability(x);
 		return ret;
 	}
 	
-	public static double normalInverseCDF(double pValue, double mean, double sigma) throws MathException
+	public static double normalInverseCDF(double pValue, double mean, double sigma)
 	{
-		NormalDistributionImpl normDist = new NormalDistributionImpl(mean, sigma);
+		NormalDistribution normDist = new NormalDistribution(mean, sigma);
 		double ret = normDist.inverseCumulativeProbability(pValue);
 		return ret;
 	}
 	
-	public static double normalPDF(double x, double mean, double sigma) throws MathException
+	public static double normalPDF(double x, double mean, double sigma)
 	{
 		double A = 1 / (sigma * Math.sqrt(2 * Math.PI));
 		double B = -1 * Math.pow((x - mean), 2) / (2 * Math.pow(sigma, 2));
