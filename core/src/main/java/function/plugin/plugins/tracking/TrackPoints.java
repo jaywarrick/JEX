@@ -80,7 +80,7 @@ public class TrackPoints extends JEXPlugin {
 	
 	/////////// Define Inputs ///////////
 	
-	@InputMarker(name="Maxima", type=MarkerConstants.TYPE_ROI, description="PointRois over time to be linked/tracked.", optional=false)
+	@InputMarker(uiOrder=1, name="Maxima", type=MarkerConstants.TYPE_ROI, description="PointRois over time to be linked/tracked.", optional=false)
 	JEXData roiData;
 	
 	/////////// Define Parameters ///////////
@@ -102,10 +102,10 @@ public class TrackPoints extends JEXPlugin {
 	
 	/////////// Define Outputs ///////////
 	
-	@OutputMarker(name="Maxima (tracked)", type=MarkerConstants.TYPE_ROI, flavor="", description="The resultant maxima roi with id's linked from image frame to image frame.", enabled=true)
+	@OutputMarker(uiOrder=1, name="Maxima (tracked)", type=MarkerConstants.TYPE_ROI, flavor="", description="The resultant maxima roi with id's linked from image frame to image frame.", enabled=true)
 	JEXData trackedMaximaData;
 	
-	@OutputMarker(name="Tracks", type=MarkerConstants.TYPE_ROI, flavor="", description="Inidividual point rois for each track with ids matching the maxima (tracked) output.", enabled=true)
+	@OutputMarker(uiOrder=2, name="Tracks", type=MarkerConstants.TYPE_ROI, flavor="", description="Inidividual point rois for each track with ids matching the maxima (tracked) output.", enabled=true)
 	JEXData trackRoiData;
 	
 	@Override

@@ -53,16 +53,16 @@ public class MeasureSecretion extends JEXPlugin {
 	
 	/////////// Define Inputs ///////////
 	
-	@InputMarker(name="Image", type=MarkerConstants.TYPE_IMAGE, description="Image to be quantified.", optional=false)
+	@InputMarker(uiOrder=1, name="Image", type=MarkerConstants.TYPE_IMAGE, description="Image to be quantified.", optional=false)
 	JEXData imageData;
 	
-	@InputMarker(name="Microwell Locations", type=MarkerConstants.TYPE_ROI, description="ROI of microwell locations.", optional=false)
+	@InputMarker(uiOrder=2, name="Microwell Locations", type=MarkerConstants.TYPE_ROI, description="ROI of microwell locations.", optional=false)
 	JEXData roiData;
 	
-	@InputMarker(name="Enhanced BF Image", type=MarkerConstants.TYPE_IMAGE, description="Brightfield image that can help determine which image items are beads and not random fluorescent particles", optional=true)
+	@InputMarker(uiOrder=3, name="Enhanced BF Image", type=MarkerConstants.TYPE_IMAGE, description="Brightfield image that can help determine which image items are beads and not random fluorescent particles", optional=true)
 	JEXData bfData;
 	
-	@InputMarker(name="Cells", type=MarkerConstants.TYPE_ROI, description="Locations of cells in the microwell array images.", optional=true)
+	@InputMarker(uiOrder=4, name="Cells", type=MarkerConstants.TYPE_ROI, description="Locations of cells in the microwell array images.", optional=true)
 	JEXData cellData;
 	
 	/////////// Define Parameters ///////////
@@ -93,10 +93,10 @@ public class MeasureSecretion extends JEXPlugin {
 	
 	/////////// Define Outputs ///////////
 	
-	@OutputMarker(name="Microwell Plots", type=MarkerConstants.TYPE_IMAGE, flavor="", description="Plots of secretion to bead signal ratios for each microwell.", enabled=true)
+	@OutputMarker(uiOrder=1, name="Microwell Plots", type=MarkerConstants.TYPE_IMAGE, flavor="", description="Plots of secretion to bead signal ratios for each microwell.", enabled=true)
 	JEXData plots;
 	
-	@OutputMarker(name="Ratio Data", type=MarkerConstants.TYPE_FILE, flavor="", description="Table of secretion to bead signal ratios for each microwell.", enabled=true)
+	@OutputMarker(uiOrder=2, name="Ratio Data", type=MarkerConstants.TYPE_FILE, flavor="", description="Table of secretion to bead signal ratios for each microwell.", enabled=true)
 	JEXData ratios;
 	
 	@Override

@@ -47,19 +47,19 @@ public class CallRScript extends JEXPlugin {
 	
 	/////////// Define Inputs ///////////
 	
-	@InputMarker(name="data1", type=MarkerConstants.TYPE_ANY, description="JEXData to be passed as a data.frame and called data1 for use in the provided R command.", optional=true)
+	@InputMarker(uiOrder=1, name="data1", type=MarkerConstants.TYPE_ANY, description="JEXData to be passed as a data.frame and called data1 for use in the provided R command.", optional=true)
 	JEXData data1;
 	
-	@InputMarker(name="data2", type=MarkerConstants.TYPE_ANY, description="JEXData to be passed as a data.frame and called data2 for use in the provided R command.", optional=true)
+	@InputMarker(uiOrder=2, name="data2", type=MarkerConstants.TYPE_ANY, description="JEXData to be passed as a data.frame and called data2 for use in the provided R command.", optional=true)
 	JEXData data2;
 	
-	@InputMarker(name="data3", type=MarkerConstants.TYPE_ANY, description="JEXData to be passed as a data.frame and called data3 for use in the provided R command.", optional=true)
+	@InputMarker(uiOrder=3, name="data3", type=MarkerConstants.TYPE_ANY, description="JEXData to be passed as a data.frame and called data3 for use in the provided R command.", optional=true)
 	JEXData data3;
 	
-	@InputMarker(name="data4", type=MarkerConstants.TYPE_ANY, description="JEXData to be passed as a data.frame and called data4 for use in the provided R command.", optional=true)
+	@InputMarker(uiOrder=4, name="data4", type=MarkerConstants.TYPE_ANY, description="JEXData to be passed as a data.frame and called data4 for use in the provided R command.", optional=true)
 	JEXData data4;
 	
-	@InputMarker(name="data5", type=MarkerConstants.TYPE_ANY, description="JEXData to be passed as a data.frame and called data5 for use in the provided R command.", optional=true)
+	@InputMarker(uiOrder=5, name="data5", type=MarkerConstants.TYPE_ANY, description="JEXData to be passed as a data.frame and called data5 for use in the provided R command.", optional=true)
 	JEXData data5;
 	
 	/////////// Define Parameters ///////////
@@ -127,16 +127,16 @@ public class CallRScript extends JEXPlugin {
 	
 	/////////// Define Outputs ///////////
 	
-	@OutputMarker(name="fileList1", type=MarkerConstants.TYPE_FILE, flavor="", description="File object output populated by collecting the variable named 'fileList1' from the R workspace after the script.", enabled=true)
+	@OutputMarker(uiOrder=1, name="fileList1", type=MarkerConstants.TYPE_FILE, flavor="", description="File object output populated by collecting the variable named 'fileList1' from the R workspace after the script.", enabled=true)
 	JEXData fileList1;
 	
-	@OutputMarker(name="fileList2", type=MarkerConstants.TYPE_FILE, flavor="", description="File object output populated by collecting the variable named 'fileList2' from the R workspace after the script.", enabled=true)
+	@OutputMarker(uiOrder=2, name="fileList2", type=MarkerConstants.TYPE_FILE, flavor="", description="File object output populated by collecting the variable named 'fileList2' from the R workspace after the script.", enabled=true)
 	JEXData fileList2;
 	
-	@OutputMarker(name="imageList1", type=MarkerConstants.TYPE_IMAGE, flavor="", description="Image object output populated by collecting the variable named 'imageList1' from the R workspace after the script.", enabled=true)
+	@OutputMarker(uiOrder=3, name="imageList1", type=MarkerConstants.TYPE_IMAGE, flavor="", description="Image object output populated by collecting the variable named 'imageList1' from the R workspace after the script.", enabled=true)
 	JEXData imageList1;
 	
-	@OutputMarker(name="imageList2", type=MarkerConstants.TYPE_IMAGE, flavor="", description="Image object output populated by collecting the variable named 'imageList2' from the R workspace after the script.", enabled=true)
+	@OutputMarker(uiOrder=4, name="imageList2", type=MarkerConstants.TYPE_IMAGE, flavor="", description="Image object output populated by collecting the variable named 'imageList2' from the R workspace after the script.", enabled=true)
 	JEXData imageList2;
 	
 	@Override

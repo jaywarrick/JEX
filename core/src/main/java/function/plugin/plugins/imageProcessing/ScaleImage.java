@@ -49,7 +49,7 @@ public class ScaleImage extends JEXPlugin {
 	
 	/////////// Define Inputs ///////////
 	
-	@InputMarker(name="Image", type=MarkerConstants.TYPE_IMAGE, description="Image to be adjusted.", optional=false)
+	@InputMarker(uiOrder=1, name="Image", type=MarkerConstants.TYPE_IMAGE, description="Image to be adjusted.", optional=false)
 	JEXData imageData;
 	
 	/////////// Define Parameters ///////////
@@ -62,7 +62,7 @@ public class ScaleImage extends JEXPlugin {
 	
 	/////////// Define Outputs ///////////
 	
-	@OutputMarker(name="Adjusted Image", type=MarkerConstants.TYPE_IMAGE, flavor="", description="The resultant adjusted image", enabled=true)
+	@OutputMarker(uiOrder=1, name="Adjusted Image", type=MarkerConstants.TYPE_IMAGE, flavor="", description="The resultant adjusted image", enabled=true)
 	JEXData output;
 	
 	@Override

@@ -45,7 +45,7 @@ public class MakeCalibrationImage_Folder extends JEXPlugin {
 	 */
 	/////////// Define Inputs ///////////
 	
-	@InputMarker(name="Image", type=MarkerConstants.TYPE_IMAGE, description="Image to use to generate calibration image.", optional=false)
+	@InputMarker(uiOrder=1, name="Image", type=MarkerConstants.TYPE_IMAGE, description="Image to use to generate calibration image.", optional=false)
 	JEXData imageData;
 	
 	/////////// Define Parameters ///////////
@@ -127,7 +127,7 @@ public class MakeCalibrationImage_Folder extends JEXPlugin {
 	
 	/////////// Define Outputs ///////////
 	
-	@OutputMarker(name="Calibration Image", type=MarkerConstants.TYPE_IMAGE, flavor="", description="The resultant calibration image", enabled=true)
+	@OutputMarker(uiOrder=1, name="Calibration Image", type=MarkerConstants.TYPE_IMAGE, flavor="", description="The resultant calibration image", enabled=true)
 	JEXData output;
 	
 	@Override

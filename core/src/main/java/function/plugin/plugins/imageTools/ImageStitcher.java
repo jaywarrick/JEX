@@ -60,13 +60,13 @@ public class ImageStitcher extends JEXPlugin {
 	
 	/////////// Define Inputs ///////////
 	
-	@InputMarker(name="H-Alignment", type=MarkerConstants.TYPE_VALUE, description="Horizontal alignment (L to R adjacent images) object obtained from the image aligner plugin on the plugins tab of JEX.", optional=false)
+	@InputMarker(uiOrder=1, name="H-Alignment", type=MarkerConstants.TYPE_VALUE, description="Horizontal alignment (L to R adjacent images) object obtained from the image aligner plugin on the plugins tab of JEX.", optional=false)
 	JEXData hData;
 	
-	@InputMarker(name="V-Alignment", type=MarkerConstants.TYPE_VALUE, description="Vertical alignment (Top to Bottom adjeacent images) object obtained from the image aligner plugin on the plugins tab of JEX.", optional=false)
+	@InputMarker(uiOrder=2, name="V-Alignment", type=MarkerConstants.TYPE_VALUE, description="Vertical alignment (Top to Bottom adjeacent images) object obtained from the image aligner plugin on the plugins tab of JEX.", optional=false)
 	JEXData vData;
 	
-	@InputMarker(name="Images", type=MarkerConstants.TYPE_IMAGE, description="Image to be adjusted.", optional=false)
+	@InputMarker(uiOrder=3, name="Images", type=MarkerConstants.TYPE_IMAGE, description="Image to be adjusted.", optional=false)
 	JEXData imageData;
 	
 	
@@ -103,7 +103,7 @@ public class ImageStitcher extends JEXPlugin {
 	
 	////////// Define Outputs ///////////
 	
-	@OutputMarker(name="Stitched Image", type=MarkerConstants.TYPE_IMAGE, flavor="", description="The resultant stitched image", enabled=true)
+	@OutputMarker(uiOrder=1, name="Stitched Image", type=MarkerConstants.TYPE_IMAGE, flavor="", description="The resultant stitched image", enabled=true)
 	JEXData output;
 
 	public ImageStitcher()

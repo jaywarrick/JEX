@@ -56,7 +56,7 @@ public class AutoFindImageAlignments extends JEXPlugin {
 	
 	/////////// Define Inputs ///////////
 		
-	@InputMarker(name="Images", type=MarkerConstants.TYPE_IMAGE, description="Images to be aligned.", optional=false)
+	@InputMarker(uiOrder=1, name="Images", type=MarkerConstants.TYPE_IMAGE, description="Images to be aligned.", optional=false)
 	JEXData imageData;
 	
 	/////////// Define Parameters ///////////
@@ -81,10 +81,10 @@ public class AutoFindImageAlignments extends JEXPlugin {
 	
 	/////////// Define Outputs ///////////
 	
-	@OutputMarker(name="Hor. Alignment", type=MarkerConstants.TYPE_VALUE, flavor="", description="The horizontal alignment data", enabled=true)
+	@OutputMarker(uiOrder=1, name="Hor. Alignment", type=MarkerConstants.TYPE_VALUE, flavor="", description="The horizontal alignment data", enabled=true)
 	JEXData horData;
 	
-	@OutputMarker(name="Ver. Alignment", type=MarkerConstants.TYPE_VALUE, flavor="", description="The vertical alignment data", enabled=true)
+	@OutputMarker(uiOrder=2, name="Ver. Alignment", type=MarkerConstants.TYPE_VALUE, flavor="", description="The vertical alignment data", enabled=true)
 	JEXData verData;
 	
 	@Override

@@ -45,7 +45,7 @@ public class TransformROI extends JEXPlugin {
 	
 	/////////// Define Inputs ///////////
 	
-	@InputMarker(name="Roi", type=MarkerConstants.TYPE_IMAGE, description="Image to be adjusted.", optional=false)
+	@InputMarker(uiOrder=1, name="Roi", type=MarkerConstants.TYPE_IMAGE, description="Image to be adjusted.", optional=false)
 	JEXData roiData;
 	
 	/////////// Define Parameters ///////////
@@ -67,7 +67,7 @@ public class TransformROI extends JEXPlugin {
 	
 	/////////// Define Outputs ///////////
 	
-	@OutputMarker(name="Adjusted ROI", type=MarkerConstants.TYPE_ROI, flavor="", description="The resultant adjusted roi.", enabled=true)
+	@OutputMarker(uiOrder=1, name="Adjusted ROI", type=MarkerConstants.TYPE_ROI, flavor="", description="The resultant adjusted roi.", enabled=true)
 	JEXData output;
 	
 	@Override

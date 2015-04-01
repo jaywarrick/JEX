@@ -83,7 +83,7 @@ public class ImportND2Files extends JEXPlugin {
 	
 	/////////// Define Outputs ///////////
 	
-	@OutputMarker(name="Image", type=MarkerConstants.TYPE_IMAGE, flavor="", description="The imported image", enabled=true)
+	@OutputMarker(uiOrder=1, name="Image", type=MarkerConstants.TYPE_IMAGE, flavor="", description="The imported image", enabled=true)
 	JEXData output;
 	
 	@Override

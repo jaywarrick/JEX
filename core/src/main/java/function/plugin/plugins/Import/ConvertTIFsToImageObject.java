@@ -65,7 +65,7 @@ public class ConvertTIFsToImageObject extends JEXPlugin {
 
 	/////////// Define Outputs ///////////
 
-	@OutputMarker(name="Multicolor TIF Image", type=MarkerConstants.TYPE_IMAGE, flavor="", description="The converted image object", enabled=true)
+	@OutputMarker(uiOrder=1, name="Multicolor TIF Image", type=MarkerConstants.TYPE_IMAGE, flavor="", description="The converted image object", enabled=true)
 	JEXData output;
 
 	

@@ -45,16 +45,16 @@ public class MakeSpectralUnmixingMatrix extends JEXPlugin {
 	 */
 	/////////// Define Inputs ///////////
 	
-	@InputMarker(name="Background Image (optional)", type=MarkerConstants.TYPE_IMAGE, description="Image with representative background intensities in the imaging channels of interest. Must match those in 'Isolated Fluor Images'.", optional=true)
+	@InputMarker(uiOrder=1, name="Background Image (optional)", type=MarkerConstants.TYPE_IMAGE, description="Image with representative background intensities in the imaging channels of interest. Must match those in 'Isolated Fluor Images'.", optional=true)
 	JEXData bgData;
 	
-	@InputMarker(name="Background Roi (optional)", type=MarkerConstants.TYPE_ROI, description="ROI to localize analysis of background within the 'Background Image' or the 'Isolated Fluor Images' if no background image is provided.", optional=true)
+	@InputMarker(uiOrder=2, name="Background Roi (optional)", type=MarkerConstants.TYPE_ROI, description="ROI to localize analysis of background within the 'Background Image' or the 'Isolated Fluor Images' if no background image is provided.", optional=true)
 	JEXData bgRoiData;
 	
-	@InputMarker(name="Isolated Fluor Images", type=MarkerConstants.TYPE_IMAGE, description="Images of each isolated fluorophore in each imaging channel.", optional=false)
+	@InputMarker(uiOrder=3, name="Isolated Fluor Images", type=MarkerConstants.TYPE_IMAGE, description="Images of each isolated fluorophore in each imaging channel.", optional=false)
 	JEXData calData;
 	
-	@InputMarker(name="Isolated Fluor Image Masks (optional)", type=MarkerConstants.TYPE_IMAGE, description="Mask to localize analysis of fluorescent intensities in the 'Isolated Fluor Images'.", optional=true)
+	@InputMarker(uiOrder=4, name="Isolated Fluor Image Masks (optional)", type=MarkerConstants.TYPE_IMAGE, description="Mask to localize analysis of fluorescent intensities in the 'Isolated Fluor Images'.", optional=true)
 	JEXData calMaskData;
 	
 	/////////// Define Parameters ///////////
@@ -62,18 +62,18 @@ public class MakeSpectralUnmixingMatrix extends JEXPlugin {
 	@ParameterMarker(uiOrder=1, name="Channel Dim Name", description="Name of the dimension describing the imaging channels", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Channel")
 	String channelDimName;
 	
-	@ParameterMarker(uiOrder=1, name="Fluor Dim Name", description="Name of the dimension describing the fluorophores", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Fluor")
+	@ParameterMarker(uiOrder=2, name="Fluor Dim Name", description="Name of the dimension describing the fluorophores", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Fluor")
 	String fluorDimName;
 	
 	/////////// Define Outputs ///////////
 	
-	@OutputMarker(name="Background Matrix (BG)", type=MarkerConstants.TYPE_FILE, flavor="", description="The mean background intensities ", enabled=true)
+	@OutputMarker(uiOrder=1, name="Background Matrix (BG)", type=MarkerConstants.TYPE_FILE, flavor="", description="The mean background intensities ", enabled=true)
 	JEXData bgMatrix;
 	
-	@OutputMarker(name="Signal Matrix (SIG)", type=MarkerConstants.TYPE_FILE, flavor="", description="The full signal cross-talk/mixing matrix", enabled=true)
+	@OutputMarker(uiOrder=2, name="Signal Matrix (SIG)", type=MarkerConstants.TYPE_FILE, flavor="", description="The full signal cross-talk/mixing matrix", enabled=true)
 	JEXData calMatrix;
 	
-	@OutputMarker(name="Mixing Matrix (A=SIG-BG in p=Ax)", type=MarkerConstants.TYPE_FILE, flavor="", description="The background corrected cross-talk/mixing matrix", enabled=true)
+	@OutputMarker(uiOrder=3, name="Mixing Matrix (A=SIG-BG in p=Ax)", type=MarkerConstants.TYPE_FILE, flavor="", description="The background corrected cross-talk/mixing matrix", enabled=true)
 	JEXData unmixingMatrix;
 	
 	@Override

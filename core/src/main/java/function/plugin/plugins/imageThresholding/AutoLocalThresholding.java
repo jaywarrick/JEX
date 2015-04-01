@@ -43,7 +43,7 @@ import function.plugin.mechanism.ParameterMarker;
 @Plugin(
 		type = JEXPlugin.class,
 		name="Auto Local Threshold",
-		menuPath="Image Thresholding > Auto Local Threshold",
+		menuPath="Image Thresholding",
 		visible=true,
 		description="Function that allows you to use various local thresholding methods. " +
 				"By 'local' here is meant that the threshold is computed for each pixel according " +
@@ -58,7 +58,7 @@ public class AutoLocalThresholding extends JEXPlugin{
 
 	/////////// Define Inputs ///////////
 
-	@InputMarker(name="Images", type=MarkerConstants.TYPE_IMAGE, description="Image to be thresholded.", optional=false)
+	@InputMarker(uiOrder=1, name="Images", type=MarkerConstants.TYPE_IMAGE, description="Image to be thresholded.", optional=false)
 	JEXData imageData;
 
 	/////////// Define Parameters ///////////
@@ -103,7 +103,7 @@ public class AutoLocalThresholding extends JEXPlugin{
 
 	//////////Define Outputs ///////////
 
-	@OutputMarker(name="Thresholded Image", type=MarkerConstants.TYPE_IMAGE, flavor="", description="The resultant thresholded image", enabled=true)
+	@OutputMarker(uiOrder=1, name="Thresholded Image", type=MarkerConstants.TYPE_IMAGE, flavor="", description="The resultant thresholded image", enabled=true)
 	JEXData output;
 
 	@Override

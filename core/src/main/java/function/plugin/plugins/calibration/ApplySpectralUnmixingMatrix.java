@@ -50,10 +50,10 @@ public class ApplySpectralUnmixingMatrix extends JEXPlugin {
 	 */
 	/////////// Define Inputs ///////////
 	
-	@InputMarker(name="Image", type=MarkerConstants.TYPE_IMAGE, description="Image to use to generate calibration image.", optional=true)
+	@InputMarker(uiOrder=1, name="Image", type=MarkerConstants.TYPE_IMAGE, description="Image to use to generate calibration image.", optional=true)
 	JEXData imageData;
 	
-	@InputMarker(name="Matrix", type=MarkerConstants.TYPE_FILE, description="Spectral unmixing matrix,", optional=true)
+	@InputMarker(uiOrder=2, name="Matrix", type=MarkerConstants.TYPE_FILE, description="Spectral unmixing matrix,", optional=true)
 	JEXData matrixData;
 	
 	/////////// Define Parameters ///////////
@@ -61,15 +61,15 @@ public class ApplySpectralUnmixingMatrix extends JEXPlugin {
 	@ParameterMarker(uiOrder=1, name="Channel Dim Name", description="After unmixing, how much to scale the result", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Channel")
 	String channelDimName;
 	
-	@ParameterMarker(uiOrder=1, name="Fluor Dim Name", description="After unmixing, how much to scale the result", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Fluor")
+	@ParameterMarker(uiOrder=2, name="Fluor Dim Name", description="After unmixing, how much to scale the result", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Fluor")
 	String fluorDimName;
 	
-	@ParameterMarker(uiOrder=1, name="Intensity Scaling Factor", description="After unmixing, how much to scale the result", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1.0")
+	@ParameterMarker(uiOrder=3, name="Intensity Scaling Factor", description="After unmixing, how much to scale the result", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1.0")
 	double scalingFactor;
 	
 	/////////// Define Outputs ///////////
 	
-	@OutputMarker(name="Unmixed Image", type=MarkerConstants.TYPE_FILE, flavor="", description="The result of unmixing the channels. The resulting intensities (with a scaling factor of 1) represent intensities relative to the calibration images used to create the unmixing matrix and do not account for changes in exposure times etc.", enabled=true)
+	@OutputMarker(uiOrder=1, name="Unmixed Image", type=MarkerConstants.TYPE_FILE, flavor="", description="The result of unmixing the channels. The resulting intensities (with a scaling factor of 1) represent intensities relative to the calibration images used to create the unmixing matrix and do not account for changes in exposure times etc.", enabled=true)
 	JEXData outputImage;
 	
 	@Override
