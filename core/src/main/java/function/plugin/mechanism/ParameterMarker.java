@@ -49,7 +49,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface ParameterMarker {
 	
-	/** Defines a label for the parameter. */
+	/** Defines the order of the parameter in the UI. */
 	int uiOrder() default 0;
 
 	/** Defines a label for the parameter. */
@@ -58,7 +58,7 @@ public @interface ParameterMarker {
 	/** Defines a description for the parameter. */
 	String description() default "";
 	
-	/** Defines a description for the parameter. */
+	/** Defines the type of UI for the parameter. */
 	int ui() default MarkerConstants.UI_TEXTFIELD;
 	
 	/** Defines the default value for a UI_TEXTFIELD, UI_FILECHOOSER, & UI_PASSWORD*/
