@@ -61,6 +61,9 @@ public @interface InputMarker {
 	/** A human-readable description of the input. */
 	String description() default "";
 	
+	/** The order in which the input is listed in the UI. */
+	int uiOrder() default 0;
+	
 	/** Defines whether the parameter value must be non-null. */
 	boolean optional() default false;
 

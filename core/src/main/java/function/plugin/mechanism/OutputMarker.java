@@ -61,6 +61,9 @@ public @interface OutputMarker {
 	/** A human-readable description of the input. */
 	String description() default "";
 	
+	/** The order in which the output is listed in the UI. */
+	int uiOrder() default 0;
+	
 	/** Defines whether the parameter value will be output by default or must be checked to be output. */
 	boolean enabled() default true;
 

@@ -47,7 +47,7 @@ public class JEXCrunchablePlugin extends JEXCrunchable {
 		// Create an empty JEXData with the right type and name in case you want that information within the function during run.
 		for(String outputName : this.info.outputs.keySet())
 		{
-			Field outputField = this.info.oField.get(outputName);
+			Field outputField = this.info.oFields.get(outputName);
 			JEXData emptyJEXData = new JEXData(this.info.outputs.get(outputName));
 			outputField.setAccessible(true);
 			ClassUtils.setValue(outputField, this.plugin, emptyJEXData);
@@ -114,8 +114,9 @@ public class JEXCrunchablePlugin extends JEXCrunchable {
 	public TypeName[] getInputNames()
 	{
 		Vector<TypeName> ret = new Vector<TypeName>();
-		for(String inputName : this.info.inputs.keySet())
+		for(String inputKey : this.info.iOrder.keySet())
 		{
+			String inputName = this.info.iOrder.get(inputKey);
 			ret.add(this.info.inputs.get(inputName));
 		}
 		return ret.toArray(new TypeName[ret.size()]);
@@ -137,8 +138,9 @@ public class JEXCrunchablePlugin extends JEXCrunchable {
 	public TypeName[] getOutputs()
 	{
 		Vector<TypeName> ret = new Vector<TypeName>();
-		for(String outputName : this.info.outputs.keySet())
+		for(String outputKey : this.info.oOrder.keySet())
 		{
+			String outputName = this.info.oOrder.get(outputKey);
 			ret.add(this.info.outputs.get(outputName));
 		}
 		return ret.toArray(new TypeName[ret.size()]);
@@ -193,7 +195,7 @@ public class JEXCrunchablePlugin extends JEXCrunchable {
 		HashSet<JEXData> ret = new HashSet<JEXData>();
 		for(String outputName : this.info.outputs.keySet())
 		{
-			Field outputField = this.info.oField.get(outputName);
+			Field outputField = this.info.oFields.get(outputName);
 			int i = this.getIndexOfOutput(outputName);
 			Object output = ClassUtils.getValue(outputField, this.plugin);
 			if(output instanceof JEXData)

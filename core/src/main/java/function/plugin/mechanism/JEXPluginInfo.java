@@ -29,6 +29,7 @@ public class JEXPluginInfo {
 	public SortedMap<String,TypeName> inputs;
 	public SortedMap<String,Field> iFields;
 	public SortedMap<String,String> iDescriptions;
+	public SortedMap<String,String> iOrder;
 	public SortedMap<String,Boolean> iOptionals;
 	
 	public SortedMap<String,Parameter> parameters;
@@ -37,8 +38,9 @@ public class JEXPluginInfo {
 	public SortedMap<String,Boolean> pOptional;
 	
 	public SortedMap<String,TypeName> outputs;
-	public SortedMap<String,Field> oField;
-	public SortedMap<String,String> oDescription;
+	public SortedMap<String,Field> oFields;
+	public SortedMap<String,String> oDescriptions;
+	public SortedMap<String,String> oOrder;
 	public SortedMap<String,Boolean> oEnabled;
 	
 	
@@ -101,6 +103,7 @@ public class JEXPluginInfo {
 		this.inputs = new TreeMap<String,TypeName>(new StringUtility());
 		this.iFields = new TreeMap<String,Field>(new StringUtility());
 		this.iDescriptions = new TreeMap<String,String>(new StringUtility());
+		this.iOrder = new TreeMap<String,String>(new StringUtility());
 		this.iOptionals = new TreeMap<String,Boolean>(new StringUtility());
 		for (final Field f : inputFields)
 		{
@@ -122,15 +125,18 @@ public class JEXPluginInfo {
 			String name = input.name();
 			boolean optional = input.optional();
 			String description = input.description();
+			int order = input.uiOrder();
 			
 			this.inputs.put(name, new TypeName(new Type(type, flavor), name));
 			this.iFields.put(name, f);
 			this.iDescriptions.put(name, description);
+			this.iOrder.put("" + order + "_" + name, name);
 			this.iOptionals.put(name, optional);
 		}
 		this.inputs = Collections.unmodifiableSortedMap(this.inputs);
 		this.iFields = Collections.unmodifiableSortedMap(this.iFields);
 		this.iDescriptions = Collections.unmodifiableSortedMap(this.iDescriptions);
+		this.iOrder = Collections.unmodifiableSortedMap(this.iOrder);
 		this.iOptionals = Collections.unmodifiableSortedMap(this.iOptionals);
 	}
 	
@@ -189,8 +195,9 @@ public class JEXPluginInfo {
 	private void setOutputs(List<Field> outputFields)
 	{
 		this.outputs = new TreeMap<String,TypeName>(new StringUtility());
-		this.oField = new TreeMap<String,Field>(new StringUtility());
-		this.oDescription = new TreeMap<String,String>(new StringUtility());
+		this.oFields = new TreeMap<String,Field>(new StringUtility());
+		this.oDescriptions = new TreeMap<String,String>(new StringUtility());
+		this.oOrder = new TreeMap<String,String>(new StringUtility());
 		this.oEnabled = new TreeMap<String,Boolean>(new StringUtility());
 		for (final Field f : outputFields)
 		{
@@ -212,16 +219,19 @@ public class JEXPluginInfo {
 			String name = output.name();
 			boolean enabled = output.enabled();
 			String description = output.description();
+			int order = output.uiOrder();
 			
 			this.outputs.put(name, new TypeName(new Type(type, flavor), name));
-			this.oField.put(name, f);
-			this.oDescription.put(name, description);
+			this.oFields.put(name, f);
+			this.oDescriptions.put(name, description);
+			this.oOrder.put("" + order + "_" + name, name);
 			this.oEnabled.put(name, enabled);
 		}
-		this.inputs = Collections.unmodifiableSortedMap(this.inputs);
-		this.iFields = Collections.unmodifiableSortedMap(this.iFields);
-		this.iDescriptions = Collections.unmodifiableSortedMap(this.iDescriptions);
-		this.iOptionals = Collections.unmodifiableSortedMap(this.iOptionals);
+		this.outputs = Collections.unmodifiableSortedMap(this.outputs);
+		this.oFields = Collections.unmodifiableSortedMap(this.oFields);
+		this.oDescriptions = Collections.unmodifiableSortedMap(this.oDescriptions);
+		this.oOrder = Collections.unmodifiableSortedMap(this.oOrder);
+		this.oEnabled = Collections.unmodifiableSortedMap(this.oEnabled);
 	}
 	
 	private Boolean isValid(Field f)
