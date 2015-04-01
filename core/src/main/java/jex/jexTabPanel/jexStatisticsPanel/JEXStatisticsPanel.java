@@ -1,11 +1,5 @@
 package jex.jexTabPanel.jexStatisticsPanel;
 
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DataReader.ValueReader;
-import Database.Definition.DimensionGroupMap;
-import Database.Definition.TypeName;
-
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -32,9 +26,14 @@ import jex.statics.DisplayStatics;
 import jex.statics.JEXStatics;
 import logs.Logs;
 
-import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 import signals.SSCenter;
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DataReader.ValueReader;
+import Database.Definition.DimensionGroupMap;
+import Database.Definition.TypeName;
 
 public class JEXStatisticsPanel extends JPanel implements ListSelectionListener {
 	

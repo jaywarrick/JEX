@@ -11,9 +11,8 @@ package miscellaneous;
 import java.util.List;
 import java.util.Vector;
 
-import org.apache.commons.math.MathException;
-import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
-import org.apache.commons.math.stat.inference.TestUtils;
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+import org.apache.commons.math3.stat.inference.TestUtils;
 
 public class Calculator {
 	
@@ -169,18 +168,7 @@ public class Calculator {
 		double[] sample1 = stringVectToDouble(data1);
 		double[] sample2 = stringVectToDouble(data2);
 		double pValue = 0d;
-		try
-		{
-			pValue = TestUtils.tTest(sample1, sample2);
-		}
-		catch (MathException e)
-		{
-			System.out.println("*** Calculator: Mathematical error in calculating PValue ");
-		}
-		catch (java.lang.IllegalArgumentException e)
-		{
-			System.out.println("*** Calculator: Erronerous input for calculating PValue ");
-		}
+		pValue = TestUtils.tTest(sample1, sample2);
 		System.out.println("  Calculator: P-value found: " + pValue);
 		return pValue;
 	}
