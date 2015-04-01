@@ -262,7 +262,6 @@ public class CrunchFactory extends URLClassLoader {
 				jexCrunchables.put(crunchable.getName(), crunchable);
 				Logs.log("Loaded internal JEXPlugin: " + pi.getName() + " - "+ pi.getClassName(), CrunchFactory.class);
 			}
-			
 		}
 		
 		// Then finally load the externally defined plugins so they "overwrite" the ones previously defined of the same name
@@ -272,17 +271,18 @@ public class CrunchFactory extends URLClassLoader {
 			{
 				@SuppressWarnings("unchecked")
 				JEXPluginInfo fullInfo = new JEXPluginInfo((PluginInfo<JEXPlugin>) pi);
-				JEXCrunchablePlugin crunchable = new JEXCrunchablePlugin(fullInfo);
-				jexCrunchables.put(crunchable.getName(), crunchable);
-				Logs.log("Loaded external JEXPlugin: " + pi.getName() + " - "+ pi.getClassName(), CrunchFactory.class);
-			}
-		}
-		
-		for(PluginInfo<?> pi : allSciJavaPlugins)
-		{
-			if(pi.getPluginType() == JEXPlugin.class)
-			{
-				Logs.log("Found JEXPlugin: " + pi.getName() + " - "+ pi.getClassName(), CrunchFactory.class);
+				try
+				{
+					JEXCrunchablePlugin crunchable = new JEXCrunchablePlugin(fullInfo);
+					jexCrunchables.put(crunchable.getName(), crunchable);
+					Logs.log("Loaded external JEXPlugin: " + pi.getName() + " - "+ pi.getClassName(), CrunchFactory.class);
+				}
+				catch (Error e2)
+				{
+					// If the plugin is malformed, don't hinder the rest of the plugins
+					Logs.log("(Error not Exception!) Couldn't instantiate plugin: " + pi.getName() + " - " + pi.getClassName(), Logs.ERROR, this);
+					e2.printStackTrace();
+				}
 			}
 		}
 	}
