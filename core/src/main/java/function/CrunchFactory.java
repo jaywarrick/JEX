@@ -159,6 +159,7 @@ public class CrunchFactory extends URLClassLoader {
 	 */
 	private void findJarsInFolder(String path)
 	{
+		Logs.log("Looking for jar files in: " + path, this);
 		if(path != null && !path.equals(""))
 		{
 			File f = new File(path);
@@ -177,6 +178,7 @@ public class CrunchFactory extends URLClassLoader {
 						{
 							try
 							{	
+								Logs.log("Found jar file that potentially contains JEXPlugins: " + f2, this);
 								this.addURL(f2.toURI().toURL());			
 							}
 							catch (MalformedURLException e1)
@@ -221,6 +223,10 @@ public class CrunchFactory extends URLClassLoader {
 			{
 				// Add any jars we find on these paths to the class path of loader
 				this.findJarsInFolder(pathToLoad);
+			}
+			else
+			{
+				Logs.log("Couldn't locate folder '" + pathToLoad + "' specified as an 'External Plugins Folder' in the JEX preferences.", this);
 			}
 		}
 		
