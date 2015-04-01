@@ -367,7 +367,7 @@ public class JEX_ImageTools_MeasureROIRegion2 extends JEXCrunchable {
 						newNewMap.put("Measurement", "median");
 						resultsTreeMap.put(newNewMap.copy(), stats.median);
 					}
-					else if(measure.equals("Median"))
+					else if(measure.equals("Mode"))
 					{
 						newNewMap.put("Measurement", "mode");
 						resultsTreeMap.put(newNewMap.copy(), stats.dmode);
