@@ -467,7 +467,7 @@ public class ImageUtility {
 	public static void invert(ImageProcessor ip)
 	{
 		float[] cTable = ip.getCalibrationTable();
-		ip = ip.duplicate();
+		//ip = ip.duplicate();
 		if(cTable == null)
 		{
 			// invert image for finding minima of uncalibrated images
