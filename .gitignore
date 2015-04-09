@@ -2,5 +2,6 @@
 .project
 *.versionsBackup
 .settings/
+.metadata/
 bin/
 target/
