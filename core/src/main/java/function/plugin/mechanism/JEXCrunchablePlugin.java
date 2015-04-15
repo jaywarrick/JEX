@@ -1,8 +1,12 @@
 package function.plugin.mechanism;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Type;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Vector;
 
 import jex.statics.JEXStatics;
@@ -12,6 +16,7 @@ import miscellaneous.Canceler;
 import org.scijava.InstantiableException;
 import org.scijava.util.ClassUtils;
 import org.scijava.util.ConversionUtils;
+import org.scijava.util.GenericUtils;
 
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
@@ -141,7 +146,14 @@ public class JEXCrunchablePlugin extends JEXCrunchable {
 		for(String outputKey : this.info.oOrder.keySet())
 		{
 			String outputName = this.info.oOrder.get(outputKey);
-			ret.add(this.info.outputs.get(outputName));
+			if(JEXData.class.isAssignableFrom(this.info.oFields.get(outputName).getType()))
+			{
+				ret.add(this.info.outputs.get(outputName));
+			}
+			else
+			{
+				Logs.log("Found output but not a single JEXData. Could be a collection or map of JEXDatas...", this);
+			}
 		}
 		return ret.toArray(new TypeName[ret.size()]);
 	}
@@ -203,6 +215,38 @@ public class JEXCrunchablePlugin extends JEXCrunchable {
 				JEXData dataOutput = (JEXData) output;
 				dataOutput.setDataObjectName(this.outputNames[i].getName());
 				ret.add(dataOutput);
+			}
+			if(output instanceof Collection && ((Collection<?>) output).size() > 0)
+			{
+				int j = 1;
+				for(Object o : ((Collection<?>) output))
+				{
+					if(o instanceof JEXData)
+					{
+						JEXData dataOutput = (JEXData) o;
+						if(this.outputNames.length >= i && (dataOutput.getDataObjectName() == null || dataOutput.getDataObjectName().equals("")))
+						{
+							dataOutput.setDataObjectName(this.outputNames[i].getName() + " - " + j);
+						}
+						ret.add(dataOutput);
+					}
+					j = j + 1;
+				}
+			}
+			if(output instanceof Map && ((Map<?,?>) output).size() > 0)
+			{
+				for(Entry<?,?> o : ((Map<?,?>) output).entrySet())
+				{
+					if(o.getValue() instanceof JEXData)
+					{
+						JEXData dataOutput = (JEXData) o.getValue();
+						if(this.outputNames.length >= i && (dataOutput.getDataObjectName() == null || dataOutput.getDataObjectName().equals("")))
+						{
+							dataOutput.setDataObjectName(this.outputNames[i].getName() + " - " + o.getKey());
+						}
+						ret.add(dataOutput);
+					}
+				}
 			}
 		}
 		return ret;
