@@ -275,7 +275,7 @@ public class JEXCrunchablePlugin extends JEXCrunchable {
 	public int getIndexOfOutput(String pluginOutputName)
 	{
 		int i = 0;
-		for(String outputName : this.info.outputs.keySet())
+		for(String outputName : this.info.oOrder.values())
 		{
 			if(outputName.equals(pluginOutputName))
 			{
