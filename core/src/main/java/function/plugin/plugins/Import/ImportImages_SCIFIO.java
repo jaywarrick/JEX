@@ -165,9 +165,15 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 				return false;
 			}
 			
+			if(reader.getImageCount() > 1)
+			{
+				Dim loc = new Dim("Location",reader.getImageCount());
+				table.add(0, loc);
+			}
 			Iterator<DimensionMap> itr = table.getMapIterator().iterator();
 			double total = reader.getImageCount() * reader.getPlaneCount(0);
 			double count = 0;
+			
 			JEXStatics.statusBar.setProgressPercentage(0);
 			for (int i = 0; i < reader.getImageCount(); i++) {
 				for (int j = 0; j < reader.getPlaneCount(i); j++) {
