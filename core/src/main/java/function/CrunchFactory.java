@@ -2,6 +2,7 @@ package function;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.JarURLConnection;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
@@ -179,12 +180,18 @@ public class CrunchFactory extends URLClassLoader {
 							try
 							{	
 								Logs.log("Found jar file that potentially contains JEXPlugins: " + f2, this);
-								this.addURL(f2.toURI().toURL());			
+								this.addURL(f2.toURI().toURL());
+								ClassPathHack.addURL(f2.toURI().toURL()); // Add the jar to the system class path so we can find any other classes this jar requires.
 							}
 							catch (MalformedURLException e1)
 							{
 								Logs.log("Couldn't convert file path to URI to URL: " + f2, this);
 								e1.printStackTrace();
+							}
+							catch (IOException e)
+							{
+								Logs.log("Couldn't add the jar to the general class path of the application: " + f2, this);
+								e.printStackTrace();
 							}
 						}
 					}
@@ -441,4 +448,35 @@ public class CrunchFactory extends URLClassLoader {
 		
 		return result;
 	}	
+}
+
+class ClassPathHack {
+    private static final Class<?>[] parameters = new Class[] {URL.class};
+
+    public static void addFile(String s) throws IOException
+    {
+        File f = new File(s);
+        addFile(f);
+    }
+
+    public static void addFile(File f) throws IOException
+    {
+        addURL(f.toURI().toURL());
+    }
+
+    public static void addURL(URL u) throws IOException
+    {
+        URLClassLoader sysloader = (URLClassLoader) ClassLoader.getSystemClassLoader();
+        Class<?> sysclass = URLClassLoader.class;
+
+        try {
+            Method method = sysclass.getDeclaredMethod("addURL", parameters);
+            method.setAccessible(true);
+            method.invoke(sysloader, new Object[] {u});
+        } catch (Throwable t) {
+            t.printStackTrace();
+            throw new IOException("Error, could not add URL to system classloader");
+        }
+
+    }
 }
