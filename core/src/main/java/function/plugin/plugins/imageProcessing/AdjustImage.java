@@ -30,8 +30,6 @@ import tables.DimensionMap;
  * 
  * JEX enables the use of several data object types The specific API for these can be found in the main JEXperiment folder. These API provide methods to retrieve data from these objects, create new objects and handle the data they contain.
  * 
- * @author erwinberthier
- * 
  */
 
 @Plugin(
@@ -39,7 +37,7 @@ import tables.DimensionMap;
 		name="Adjust Image Intensities",
 		menuPath="Image Processing",
 		visible=true,
-		description="Test of new plugin interface for JEX using the SciJavaPlugin mechanism."
+		description="Adjust defined intensities in the original image to be new defined intensities, scaling all other intensities accordingly."
 		)
 public class AdjustImage extends JEXPlugin {
 
@@ -85,8 +83,7 @@ public class AdjustImage extends JEXPlugin {
 	@Override
 	public boolean run(JEXEntry optionalEntry)
 	{
-		// validate image
-		// imageData.getDataMap();
+		// Validate the input data
 		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
 		{
 			return false;
@@ -99,6 +96,7 @@ public class AdjustImage extends JEXPlugin {
 		String tempPath;
 		for (DimensionMap map : imageMap.keySet())
 		{
+			// Call helper method
 			tempPath = saveAdjustedImage(imageMap.get(map), oldMin, oldMax, newMin, newMax, gamma, bitDepth);
 			if(tempPath != null)
 			{
@@ -138,7 +136,7 @@ public class AdjustImage extends JEXPlugin {
 		String imPath = JEXWriter.saveImage(toSave);
 		im.flush();
 		
-		// return temp filePath
+		// return the filepath
 		return imPath;
 	}
 }
