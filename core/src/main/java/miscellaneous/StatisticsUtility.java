@@ -522,6 +522,47 @@ public class StatisticsUtility {
 	}
 	
 	/**
+	 * Based on windowFraction2 but returns sum of signal and fraction (instead of sum and fraction*sum)
+	 * @param sig
+	 * @param window
+	 * @return
+	 */
+	public static Pair<Double,Double> windowFraction3(double[] sig, double[] window)
+	{
+		double[] truncSig = new double[sig.length];
+		double[] truncWindow = new double[window.length];
+		for (int i = 0; i < sig.length; i++)
+		{
+			if(sig[i] < 0)
+			{
+				truncSig[i] = 0.0;
+			}
+			else
+			{
+				truncSig[i] = sig[i];
+			}
+			if(window[i] < 0)
+			{
+				truncWindow[i] = 0.0;
+			}
+			else
+			{
+				truncWindow[i] = window[i];
+			}
+		}
+		double[] sigNorm = multiply(truncSig, 1 / max(truncSig));
+		double[] windowNorm = multiply(truncWindow, 1 / max(truncWindow));
+		double[] min = min(sigNorm, windowNorm);
+		double frac = sum(min) / sum(sigNorm);
+		double sum = sum(sig);
+		
+		// Return the total signal and the portion of the signal within the window
+		Pair<Double,Double> ret = new Pair<Double,Double>(sum, frac);
+		
+		return ret;
+	}
+	
+	/**
 	 * Return the element-wise absolute value of a list of numbers (|a|)
 	 * 
 	 * 
