@@ -99,7 +99,7 @@ public class ImportND2Files extends JEXPlugin {
 		String nd2File = path;
 		
 		// Get the tiffs according to stuff in PointTester (need to modify to split ImRows and ImCols)
-		final SCIFIO scifio = new SCIFIO(IJ2PluginUtility.ij.getContext());
+		final SCIFIO scifio = new SCIFIO(IJ2PluginUtility.ij().getContext());
 		Reader reader;
 		try
 		{

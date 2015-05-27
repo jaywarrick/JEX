@@ -174,13 +174,13 @@ public class JEXWriter {
 		}
 		
 		// Save the image
-		boolean canSave = IJ2PluginUtility.ij.dataset().canSave(fullPath);
+		boolean canSave = IJ2PluginUtility.ij().dataset().canSave(fullPath);
 		if(canSave)
 		{
 			Logs.log("Saving image to: " + fullPath, 1, JEXWriter.class);
 			try
 			{
-				IJ2PluginUtility.ij.dataset().save(im, fullPath);
+				IJ2PluginUtility.ij().dataset().save(im, fullPath);
 			}
 			catch (IOException e)
 			{
