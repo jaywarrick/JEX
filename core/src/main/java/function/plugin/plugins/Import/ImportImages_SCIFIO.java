@@ -367,6 +367,21 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 						colorNamesList.add(colorNames[j]);
 					}
 				}
+				
+				// Check if there are any duplicate names and add something to the name to make it not a duplicate...
+				Vector<String> newColorNamesList = new Vector<String>();
+				for(int j = 0; j < colorNamesList.size(); j++)
+				{
+					String newName = colorNamesList.get(j);
+					List<String> subList = colorNamesList.subList(j+1, colorNamesList.size());
+					while(subList.contains(newName))
+					{
+						newName = newName + "_copy";
+					}
+					newColorNamesList.add(newName);
+				}
+				colorNamesList = newColorNamesList;
+				
 				Dim newColorDim = new Dim(Axes.CHANNEL.getLabel(), colorNamesList); // Using a TreeMap and the TreeMap.values() provides and ordered list based on the order of the "Name #x" key from the non-ordered HashMap of the MetaTable
 				
 				if(newColorDim.size() > size)
