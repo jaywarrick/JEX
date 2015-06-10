@@ -96,6 +96,7 @@
 		<dependency>
 			<groupId>net.imagej</groupId>
 			<artifactId>imagej-ops</artifactId>
+			<version>0.12.1-SNAPSHOT</version>
 		</dependency>
 
 		<!-- File Formats Support -->
