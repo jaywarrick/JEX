@@ -13,11 +13,32 @@ import miscellaneous.DirectoryManager;
 
 public class ScriptRepository {
 	
-	public static void startRServe()
+	public static void runRScript(String[] expressions)
 	{
+		String[] cmds = new String[2*expressions.length + 1];
+		cmds[0] = "Rscript";
+		int j = 0;
+		for(int i = 1; i < cmds.length; i++)
+		{
+			if(i % 2 == 1)
+			{
+				cmds[i] = "-e";
+			}
+			else
+			{
+				cmds[i] = expressions[j];
+				j++;
+			}
+		}
+		runSysCommand(cmds);
+	}
+	
+	private static File getScriptFile(String resourcePath)
+	{
+		// e.g., resourcePath = "rtools/StartRserve.R";
+		String resource = resourcePath;
 		ScriptRepository rep = new ScriptRepository();
 		File scriptfile = null;
-		String resource = "rtools/StartRserve.R";
 		URL res = rep.getClass().getClassLoader().getResource(resource);
 		if(res.toString().startsWith("jar:"))
 		{ // Need to copy the script out of the jar to create a useable file path for the system command.
@@ -36,11 +57,13 @@ public class ScriptRepository {
 				
 				out.close();
 				scriptfile.deleteOnExit();
+				return scriptfile;
 			}
 			catch (IOException ex)
 			{
 				ex.printStackTrace();
 			}
+			return null;
 		}
 		else
 		// there is a useable file path already for use in the system command
@@ -48,14 +71,19 @@ public class ScriptRepository {
 			try
 			{
 				scriptfile = new File(res.toURI());
+				return scriptfile;
 			}
 			catch (URISyntaxException e)
 			{
 				e.printStackTrace();
 			}
-			
+			return null;
 		}
-		
+	}
+	
+	public static void startRServe()
+	{
+		File scriptfile = getScriptFile("rtools/StartRserve.R");
 		if(scriptfile != null && scriptfile.exists())
 		{
 			runSysCommand(new String[] { "R", "CMD", "Rscript", scriptfile.getAbsolutePath() });

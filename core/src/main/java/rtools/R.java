@@ -33,28 +33,14 @@ public class R {
 	public static int numRetries = 0;
 	public static int numRetriesLimit = 2;
 	
-	private static boolean connect()
+	private static RConnection connectNew()
 	{
+		RConnection ret = null;
 		try
 		{
-			if(!R.isConnected())
-			{
-				// If this is a restart of JEX and RServe is already started\
-				// We should try to reconnect to the RServe that is already
-				// going if possible
-				// We do this by creating a new RConnection object which
-				// searches for the already running process
-				// We then check to see if it is connected. If not, start RServe
-				// and try again.
-				// If that doesn't work give up.
-				rConnection = new RConnection(); // Throws an exception if it
-				// doesn't connect
-				return true;
-			}
-			else
-			{
-				return true;
-			}
+			ret = new RConnection(); // Throws an exception if it
+			// doesn't connect
+			return ret;
 			
 		}
 		catch (Exception e)
@@ -64,22 +50,59 @@ public class R {
 			try
 			{
 				ScriptRepository.startRServe();
-				rConnection = new RConnection();
-				return (R.isConnected());
+				ret = new RConnection();
+				if(isConnected(ret))
+				{
+					return ret;
+				}
+				else
+				{
+					return null;
+				}
 			}
 			catch (Exception e2)
 			{
 				// If we are here we should give up because we tries to start a
 				// new RServe process and failed
 				e.printStackTrace();
-				return false;
+				return null;
 			}
 		}
 	}
 	
+	private static boolean connect()
+	{
+		rConnection = R.connectNew(); // Throws an exception if it
+		if(rConnection == null)
+		{
+			return false;
+		}
+		return true;
+	}
+	
+	private static boolean isConnected(RConnection c)
+	{
+		if(c != null && c.isConnected())
+		{
+			// the connection might still be compromised for some reason so check we can perform a simple operation
+			try
+			{
+				c.eval("MyTempVariable12346ewefq2341et <- 0");
+				return true;
+			}
+			catch(RserveException e)
+			{
+				// If this fails then try (as best we can) to shut it down and return false, instigating an attempt at establishing a new server.
+				c.close();
+				return false;
+			}
+		}
+		return false;
+	}
+	
 	public static boolean isConnected()
 	{
-		return (R.rConnection != null && R.rConnection.isConnected());
+		return isConnected(R.rConnection);
 	}
 	
 	public static void close()
