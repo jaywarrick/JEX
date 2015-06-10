@@ -1,5 +1,11 @@
 package image.roi;
 
+import function.CrunchFactory;
+import function.plugin.IJ2.IJ2PluginUtility;
+import function.plugin.mechanism.JEXCrunchablePlugin;
+import function.plugin.mechanism.JEXPlugin;
+import function.plugin.mechanism.JEXPluginInfo;
+import function.singleCellAnalysis.SingleCellUtility;
 import ij.ImagePlus;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
@@ -22,6 +28,9 @@ import io.scif.Plane;
 import io.scif.Reader;
 import io.scif.SCIFIO;
 import io.scif.config.SCIFIOConfig;
+import io.scif.img.ImgIOException;
+import io.scif.img.ImgOpener;
+import io.scif.img.SCIFIOImgPlus;
 
 import java.awt.Desktop;
 import java.awt.Point;
@@ -59,12 +68,32 @@ import net.imagej.ImageJ;
 import net.imagej.display.DataView;
 import net.imagej.display.ImageDisplay;
 import net.imagej.display.OverlayView;
+import net.imagej.ops.OpRef;
+import net.imagej.ops.features.sets.FirstOrderStatFeatureSet;
 import net.imagej.options.OptionsChannels;
 import net.imagej.overlay.Overlay;
 import net.imagej.overlay.RectangleOverlay;
-import net.imagej.patcher.LegacyInjector;
+import net.imglib2.Cursor;
+import net.imglib2.IterableInterval;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.img.Img;
+import net.imglib2.img.ImgFactory;
+import net.imglib2.img.array.ArrayCursor;
+import net.imglib2.img.array.ArrayImg;
+import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.img.array.ArrayImgs;
+import net.imglib2.img.basictypeaccess.array.ByteArray;
+import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.meta.CalibratedAxis;
 import net.imglib2.meta.ImgPlus;
+import net.imglib2.roi.EllipseRegionOfInterest;
+import net.imglib2.type.NativeType;
+import net.imglib2.type.logic.BitType;
+import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.integer.UnsignedByteType;
+import net.imglib2.type.numeric.integer.UnsignedShortType;
+import net.imglib2.type.numeric.real.DoubleType;
+import net.imglib2.view.Views;
 
 import org.apache.commons.math3.stat.StatUtils;
 import org.scijava.command.CommandInfo;
@@ -79,38 +108,217 @@ import tables.DimTable;
 import tables.DimensionMap;
 import updates.Updater;
 import weka.core.converters.JEXTableWriter;
-import function.CrunchFactory;
-import function.plugin.mechanism.JEXCrunchablePlugin;
-import function.plugin.mechanism.JEXPlugin;
-import function.plugin.mechanism.JEXPluginInfo;
-import function.singleCellAnalysis.SingleCellUtility;
 
 public class PointTester {// extends URLClassLoader {
 	
-	static
-	{
-		LegacyInjector.preinit();
-	}
+	//	static
+	//	{
+	//		LegacyInjector.preinit();
+	//	}
+	
+//	public PointTester() throws ImgIOException
+//	{
+//		ImageJ ij = new ImageJ();
+//		
+//		ij.ui().showUI();
+//		// open file as float with ImgOpener
+//		Img< FloatType > img =
+//				new ImgOpener(ij.getContext()).openImgs( "/Users/jaywarrick/Downloads/Dot_Blot.tif", new FloatType() ).get(0);
+//		
+//		// display image
+//		ImageJFunctions.show( img );
+//		
+//		// use a View to define an interval (min and max coordinate, inclusive) to display
+//		RandomAccessibleInterval< FloatType > view =
+//				Views.interval( img, new long[] { 200, 200 }, new long[]{ 500, 350 } );
+//		
+//		// display only the part of the Img
+//		ImageJFunctions.show( view );
+//		
+//		// or the same area rotated by 90 degrees (x-axis (0) and y-axis (1) switched)
+//		ImageJFunctions.show( Views.rotate( view, 0, 1 ) );
+//	}
+	
+	protected static final long SEED = 1234567890L;
 	
 	public static void main(String[] args) throws Exception
-	{
-		double[] ret = calculateModes(new int[]{12,13,14});
-		for(double d : ret)
-		{
-			System.out.println(d);
-		}
+	{		
+		tryShinyApp();
 	}
+	
+	public static void tryShinyApp()
+	{
+		R.eval("ddflkjsldkjf <- 0");
+		R.serverEval("source('/Users/jaywarrick/Public/DropBox/GitHub/R-CTCApp/Images/ui.R')");
+		R.serverEval("source('/Users/jaywarrick/Public/DropBox/GitHub/R-CTCApp/Images/server.R')");
+		R.serverEval("runApp(shinyApp(ui=getUI(), server=getServer()), launch.browser=TRUE)");
+		//ScriptRepository.runRScript(new String[]{"source('/Users/jaywarrick/Public/DropBox/GitHub/R-CTCApp/Images/ui.R');","source('/Users/jaywarrick/Public/DropBox/GitHub/R-CTCApp/Images/server.R');","runApp(shinyApp(ui=getUI(), server=getServer()), launch.browser=TRUE);"});
+		Logs.log("Yo", PointTester.class);
+	}
+	
+//	public static <T extends RealType<T> & NativeType<T>> void Example1d() throws ImgIOException
+//	{
+//		ImageJ ij = new ImageJ();
+//		
+//		ImgOpener imgOpener = new ImgOpener(IJ2PluginUtility.ij.getContext());
+//		
+//		// open with ImgOpener. The type (e.g. ArrayImg, PlanarImg, CellImg) is
+//		// automatically determined. For a small image that fits in memory, this
+//		// should open as an ArrayImg.
+//		List<SCIFIOImgPlus < UnsignedShortType >> images = imgOpener.openImgs("/Users/jaywarrick/Pictures/TIFFS/PC3_001_8bit.tif", new UnsignedShortType());
+//		
+//		ImgFactory< UnsignedByteType > factory = new ArrayImgFactory< UnsignedByteType >();
+//		
+//		final Labeling< Long > LABELING = new NativeImgLabeling< Long, UnsignedShortType >( images.get(0)  );
+//		final Collection<Long> labels = LABELING.firstElement().getMapping().getLabels();
+//		final ArrayList<long[]> centroidsList = new ArrayList<long[]>();
+//		for (final Long i : labels)
+//		{
+////			final IterableInterval<BitType> ii =
+////					LABELING.getIterableRegionOfInterest(i).getIterableIntervalOverROI(src);
+////			
+////			@SuppressWarnings("unchecked")
+////			FirstOrderStatFeatureSet<Img<UnsignedShortType>> op = IJ2PluginUtility.ij.op().op(FirstOrderStatFeatureSet.class, view);
+////			
+////			for (final Entry<? extends OpRef,DoubleType> result : op.compute(images.get(0)).entrySet())
+////			{
+////				System.out.println(result.getKey().getType().getSimpleName() + " " + result.getValue().get());
+////			}
+////			Logs.log("\n\n", PointTester.class);
+//			
+//		}
+//		
+//	}
+	
+	public static < T extends RealType< T > & NativeType< T > > void tryOps2() throws ImgIOException
+	{
+		ImgOpener imgOpener = new ImgOpener(IJ2PluginUtility.ij.getContext());
+		
+		// open with ImgOpener. The type (e.g. ArrayImg, PlanarImg, CellImg) is
+		// automatically determined. For a small image that fits in memory, this
+		// should open as an ArrayImg.
+		List<SCIFIOImgPlus < UnsignedShortType >> images = imgOpener.openImgs("/Users/jaywarrick/Pictures/TIFFS/PC3_001_8bit.tif", new UnsignedShortType());
+		
+		ImgFactory< UnsignedByteType > factory = new ArrayImgFactory< UnsignedByteType >();
+		ImagePlus im = new ImagePlus("/Users/jaywarrick/Pictures/TIFFS/PC3_001 copy.tif");
+		
+		ByteProcessor fp = im.getProcessor().convertToByteProcessor();
+		fp.setRoi(20, 20, 20, 30);
+		ByteProcessor ip = (ByteProcessor) fp.crop();
+		ArrayImg<UnsignedByteType, ByteArray> temp = ArrayImgs.unsignedBytes((byte[]) ip.getPixels(), ip.getWidth(), ip.getHeight());
+		ImageJFunctions.show(temp);
+		
+		// use a View to define an interval (min and max coordinate, inclusive) to display
+		RandomAccessibleInterval< UnsignedShortType > view =
+				Views.interval( images.get(0), new long[] { 200, 200 }, new long[]{ 500, 350 } );
+		
+		@SuppressWarnings("unchecked")
+		FirstOrderStatFeatureSet<Img<UnsignedShortType>> op = IJ2PluginUtility.ij.op().op(FirstOrderStatFeatureSet.class, view);
+		
+		for (final Entry<? extends OpRef,DoubleType> result : op.compute(images.get(0)).entrySet())
+		{
+			System.out.println(result.getKey().getType().getSimpleName() + " " + result.getValue().get());
+		}
+		Logs.log("\n\n", PointTester.class);
+		
+	}
+	
+	//	public static void tryOps()
+	//	{
+	//		ImageJ ij = new ImageJ();
+	//		/**
+	//		 * Some random images
+	//		 */
+	//		Img<UnsignedByteType> empty;
+	//		Img<UnsignedByteType> constant;
+	//		Img<UnsignedByteType> random;
+	//		Img<UnsignedByteType> ellipse;
+	//		Img<UnsignedByteType> rotatedEllipse;
+	//		
+	//		OutputOpBuilderService fs;
+	//		
+	//		Context context = ij.getContext();
+	//
+	//		
+	//		List<PluginInfo<Op>> opIs = ij.op().getPlugins();
+	//		for(PluginInfo<Op> op : opIs)
+	//		{
+	//			if(op.getClassName().startsWith("net.imagej.ops.features.sets"))
+	//			{
+	//				Logs.log(op.toString(), PointTester.class);
+	//			}
+	//		}
+	//		
+	//		// SETUP //
+	//		ImageGenerator dataGenerator = new ImageGenerator(SEED);
+	//		long[] dim = new long[] { 100, 100 };
+	//
+	//		empty = dataGenerator.getEmptyUnsignedByteImg(dim);
+	//		constant = dataGenerator.getConstantUnsignedByteImg(dim, 15);
+	//		random = dataGenerator.getRandomUnsignedByteImg(dim);
+	//
+	//		double[] offset = new double[] { 0.0, 0.0 };
+	//		double[] radii = new double[] { 20, 40 };
+	//		ellipse = dataGenerator.getEllipsedBitImage(dim, radii, offset);
+	//
+	//		// translate and rotate ellipse
+	//		offset = new double[] { 10.0, -10.0 };
+	//		radii = new double[] { 40, 20 };
+	//		rotatedEllipse = dataGenerator.getEllipsedBitImage(dim, radii, offset);
+	//
+	//		fs = context.getService(OutputOpBuilderService.class);
+	//		
+	//		// END SETUP // 
+	//		
+	//		// Test first order features
+	//		
+	//		@SuppressWarnings("unchecked")
+	//		FirstOrderStatFeatureSet<Img<UnsignedByteType>> op = ij.op().op(FirstOrderStatFeatureSet.class, random);
+	//		
+	//		for (final Entry<? extends OpRef,DoubleType> result : op.compute(random).entrySet())
+	//		{
+	//			System.out.println(result.getKey().getType().getSimpleName() + " " + result.getValue().get());
+	//		}
+	//		Logs.log("\n\n", PointTester.class);
+	//		for (final Entry<? extends OpRef,DoubleType> result : op.compute(constant).entrySet())
+	//		{
+	//			System.out.println(result.getKey().getType().getSimpleName() + " " + result.getValue().get());
+	//		}
+	//		Logs.log("\n\n", PointTester.class);
+	//		for (final Entry<? extends OpRef,DoubleType> result : op.compute(empty).entrySet())
+	//		{
+	//			System.out.println(result.getKey().getType().getSimpleName() + " " + result.getValue().get());
+	//		}
+	//		
+	//		// Test zernicke features
+	//		// test on image with constant filling
+	//        Map<? extends OpRef, DoubleType[]> res = ij.op().op(ZernikeFeatureSet.class, constant, true, true, 1, 3).compute(constant);
+	//        for(Entry<? extends OpRef,DoubleType[]> x : res.entrySet())
+	//        {
+	//        	Logs.log(""+x.getKey().getType().getSimpleName(), PointTester.class);
+	//        	System.out.println("");
+	//        	for(DoubleType d : (DoubleType[]) x.getValue())
+	//        	{
+	//        		System.out.println(d);
+	//        	}
+	//        }
+	//	}
 	
 	public static double[] calculateModes(final int[] n)
 	{
-	    
+		//		double[] ret = calculateModes(new int[]{12,13,14});
+		//		for(double d : ret)
+		//		{
+		//			System.out.println(d);
+		//		}
+		
 		double[] d = new double[n.length];
 		for(int i=0; i < n.length; i++)
 		{
 			d[i] = n[i];
 		}
-	    double[] modes = StatUtils.mode(d);
-	    return modes;
+		double[] modes = StatUtils.mode(d);
+		return modes;
 	}
 	
 	public static void playWithChoiceDialog()
@@ -892,4 +1100,128 @@ public class PointTester {// extends URLClassLoader {
 	// return result;
 	// }
 	
+}
+
+/**
+ * 
+ * Simple class to generate empty, randomly filled or constantly filled
+ * images of various types.
+ * 
+ * @author Daniel Seebacher, University of Konstanz.
+ * @author Andreas Graumann, University of Konstanz
+ */
+class ImageGenerator {
+	
+	private Random rand;
+	
+	/**
+	 * Create the image generator with a predefined seed.
+	 * 
+	 * @param seed
+	 *            a seed which is used by the random generator.
+	 */
+	public ImageGenerator(long seed) {
+		this.rand = new Random(seed);
+	}
+	
+	/**
+	 * Default constructor, initialize with random seed.
+	 */
+	public ImageGenerator() {
+		this.rand = new Random();
+	}
+	
+	/**
+	 * 
+	 * @param dim
+	 *            a long array with the desired dimensions of the image
+	 * @return an empty {@link Img} of {@link UnsignedByteType}.
+	 */
+	public Img<UnsignedByteType> getEmptyUnsignedByteImg(long[] dim) {
+		return ArrayImgs.unsignedBytes(dim);
+	}
+	
+	/**
+	 * 
+	 * @param dim
+	 *            a long array with the desired dimensions of the image
+	 * @return an {@link Img} of {@link UnsignedByteType} filled with random
+	 *         values.
+	 */
+	public Img<UnsignedByteType> getRandomUnsignedByteImg(long[] dim) {
+		ArrayImg<UnsignedByteType, ByteArray> img = ArrayImgs
+				.unsignedBytes(dim);
+		
+		UnsignedByteType type = img.firstElement();
+		
+		ArrayCursor<UnsignedByteType> cursor = img.cursor();
+		while (cursor.hasNext()) {
+			cursor.next().set(rand.nextInt((int) type.getMaxValue()));
+		}
+		
+		return (Img<UnsignedByteType>) img;
+	}
+	
+	/**
+	 * 
+	 * @param dim
+	 *            a long array with the desired dimensions of the image
+	 * @return an {@link Img} of {@link UnsignedByteType} filled with a
+	 *         constant value.
+	 */
+	public Img<UnsignedByteType> getConstantUnsignedByteImg(long[] dim,
+			int constant) {
+		ArrayImg<UnsignedByteType, ByteArray> img = ArrayImgs
+				.unsignedBytes(dim);
+		
+		UnsignedByteType type = img.firstElement();
+		if (constant < type.getMinValue() || constant >= type.getMaxValue()) {
+			throw new IllegalArgumentException(
+					"Can't create image for constant [" + constant + "]");
+		}
+		
+		ArrayCursor<UnsignedByteType> cursor = img.cursor();
+		while (cursor.hasNext()) {
+			cursor.next().set(constant);
+		}
+		
+		return (Img<UnsignedByteType>) img;
+	}
+	
+	/**
+	 * 
+	 * @param dim
+	 * @param radii
+	 * @return an {@link Img} of {@link BitType} filled with a ellipse
+	 */
+	public Img<UnsignedByteType> getEllipsedBitImage(long[] dim,
+			double[] radii, double[] offset) {
+		
+		// create empty bittype image with desired dimensions
+		ArrayImg<UnsignedByteType, ByteArray> img = ArrayImgs
+				.unsignedBytes(dim);
+		
+		// create ellipse
+		EllipseRegionOfInterest ellipse = new EllipseRegionOfInterest();
+		ellipse.setRadii(radii);
+		
+		// set origin in the center of image
+		double[] origin = new double[dim.length];
+		for (int i = 0; i < dim.length; i++)
+			origin[i] = dim[i] / 2;
+		ellipse.setOrigin(origin);
+		
+		// get iterable intervall and cursor of ellipse
+		IterableInterval<UnsignedByteType> ii = ellipse
+				.getIterableIntervalOverROI(img);
+		Cursor<UnsignedByteType> cursor = ii.cursor();
+		
+		// fill image with ellipse
+		while (cursor.hasNext()) {
+			cursor.next();
+			cursor.get().set(255);
+		}
+		
+		return (Img<UnsignedByteType>) img;
+	}
 }
