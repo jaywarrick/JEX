@@ -5,6 +5,7 @@ import function.plugin.IJ2.IJ2PluginUtility;
 import function.plugin.mechanism.JEXCrunchablePlugin;
 import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.JEXPluginInfo;
+import function.plugin.plugins.featureExtraction.FeatureUtils;
 import function.singleCellAnalysis.SingleCellUtility;
 import ij.ImagePlus;
 import ij.gui.PolygonRoi;
@@ -54,7 +55,10 @@ import java.util.Vector;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import jex.JEXManager;
+import jex.StatusBar;
 import jex.statics.JEXDialog;
+import jex.statics.JEXStatics;
 import jex.utilities.ROIUtility;
 import loci.common.DataTools;
 import logs.Logs;
@@ -77,22 +81,26 @@ import net.imglib2.Cursor;
 import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
-import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayCursor;
 import net.imglib2.img.array.ArrayImg;
-import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.img.basictypeaccess.array.ByteArray;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.meta.CalibratedAxis;
 import net.imglib2.meta.ImgPlus;
 import net.imglib2.roi.EllipseRegionOfInterest;
+import net.imglib2.roi.Regions;
+import net.imglib2.roi.labeling.ImgLabeling;
+import net.imglib2.roi.labeling.LabelRegion;
+import net.imglib2.roi.labeling.LabelRegionCursor;
+import net.imglib2.roi.labeling.LabelRegions;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.logic.BitType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.DoubleType;
+import net.imglib2.util.Pair;
 import net.imglib2.view.Views;
 
 import org.apache.commons.math3.stat.StatUtils;
@@ -108,44 +116,92 @@ import tables.DimTable;
 import tables.DimensionMap;
 import updates.Updater;
 import weka.core.converters.JEXTableWriter;
+import Database.DBObjects.JEXData;
+import Database.DataReader.ImageReader;
+import Database.DataReader.RoiReader;
+import Database.DataWriter.FileWriter;
+import Database.SingleUserDatabase.JEXDataIO;
 
 public class PointTester {// extends URLClassLoader {
-	
+
 	//	static
 	//	{
 	//		LegacyInjector.preinit();
 	//	}
-	
-//	public PointTester() throws ImgIOException
-//	{
-//		ImageJ ij = new ImageJ();
-//		
-//		ij.ui().showUI();
-//		// open file as float with ImgOpener
-//		Img< FloatType > img =
-//				new ImgOpener(ij.getContext()).openImgs( "/Users/jaywarrick/Downloads/Dot_Blot.tif", new FloatType() ).get(0);
-//		
-//		// display image
-//		ImageJFunctions.show( img );
-//		
-//		// use a View to define an interval (min and max coordinate, inclusive) to display
-//		RandomAccessibleInterval< FloatType > view =
-//				Views.interval( img, new long[] { 200, 200 }, new long[]{ 500, 350 } );
-//		
-//		// display only the part of the Img
-//		ImageJFunctions.show( view );
-//		
-//		// or the same area rotated by 90 degrees (x-axis (0) and y-axis (1) switched)
-//		ImageJFunctions.show( Views.rotate( view, 0, 1 ) );
-//	}
-	
+
+	//	public PointTester() throws ImgIOException
+	//	{
+	//		ImageJ ij = new ImageJ();
+	//		
+	//		ij.ui().showUI();
+	//		// open file as float with ImgOpener
+	//		Img< FloatType > img =
+	//				new ImgOpener(ij.getContext()).openImgs( "/Users/jaywarrick/Downloads/Dot_Blot.tif", new FloatType() ).get(0);
+	//		
+	//		// display image
+	//		ImageJFunctions.show( img );
+	//		
+	//		// use a View to define an interval (min and max coordinate, inclusive) to display
+	//		RandomAccessibleInterval< FloatType > view =
+	//				Views.interval( img, new long[] { 200, 200 }, new long[]{ 500, 350 } );
+	//		
+	//		// display only the part of the Img
+	//		ImageJFunctions.show( view );
+	//		
+	//		// or the same area rotated by 90 degrees (x-axis (0) and y-axis (1) switched)
+	//		ImageJFunctions.show( Views.rotate( view, 0, 1 ) );
+	//	}
+
 	protected static final long SEED = 1234567890L;
-	
+
 	public static void main(String[] args) throws Exception
 	{		
-		tryShinyApp();
+		tryOps3();
 	}
-	
+
+	public static void tryCCA() throws ImgIOException
+	{
+		ImgOpener imgOpener = new ImgOpener(IJ2PluginUtility.ij.getContext());
+		List<SCIFIOImgPlus < UnsignedByteType >> images = imgOpener.openImgs("/Users/jaywarrick/Pictures/TIFFS/MM/0_0_x0_y0_Channel395 X 455M_ImCol0_ImRow1_Z1.tif", new UnsignedByteType());
+		ImgLabeling<Integer, UnsignedShortType> labeling = FeatureUtils.getConnectedComponents(images.get(0), true);
+		LabelRegions<Integer> regions = new LabelRegions<Integer>(labeling);
+		double[] pos = new double[images.get(0).numDimensions()];
+
+		for(LabelRegion<Integer> region : regions)
+		{
+			int id = region.getLabel();
+			region.getCenterOfMass().localize(pos);
+
+			Logs.log("" + id + " at " + pos[0] + "," + pos[1] + " - Size: " + region.size(), PointTester.class);
+			Logs.log("Contains? " + contains(region, new Point(101,180)), PointTester.class);
+
+		}
+		Logs.log("Seems to have worked", PointTester.class);
+
+		//		Img<UnsignedShortType> test = FeatureUtils.getConnectedComponentsImage(images.get(0), true);
+		//		
+		//		IJ2PluginUtility.ij.legacy().uiService().show(test);
+		//		
+		//		Logs.log("Seems to have worked again", PointTester.class);
+		//		
+	}
+
+	public static boolean contains(LabelRegion<?> region, Point p)
+	{
+		LabelRegionCursor c = region.localizingCursor();
+		do
+		{
+			if(c.getIntPosition(0) == p.x && c.getIntPosition(1) == p.y)
+			{
+				return true;
+			}
+			c.next();
+		} 
+		while(c.hasNext());
+
+		return false;
+	}
+
 	public static void tryShinyApp()
 	{
 		R.eval("ddflkjsldkjf <- 0");
@@ -155,74 +211,195 @@ public class PointTester {// extends URLClassLoader {
 		//ScriptRepository.runRScript(new String[]{"source('/Users/jaywarrick/Public/DropBox/GitHub/R-CTCApp/Images/ui.R');","source('/Users/jaywarrick/Public/DropBox/GitHub/R-CTCApp/Images/server.R');","runApp(shinyApp(ui=getUI(), server=getServer()), launch.browser=TRUE);"});
 		Logs.log("Yo", PointTester.class);
 	}
-	
-//	public static <T extends RealType<T> & NativeType<T>> void Example1d() throws ImgIOException
-//	{
-//		ImageJ ij = new ImageJ();
-//		
-//		ImgOpener imgOpener = new ImgOpener(IJ2PluginUtility.ij.getContext());
-//		
-//		// open with ImgOpener. The type (e.g. ArrayImg, PlanarImg, CellImg) is
-//		// automatically determined. For a small image that fits in memory, this
-//		// should open as an ArrayImg.
-//		List<SCIFIOImgPlus < UnsignedShortType >> images = imgOpener.openImgs("/Users/jaywarrick/Pictures/TIFFS/PC3_001_8bit.tif", new UnsignedShortType());
-//		
-//		ImgFactory< UnsignedByteType > factory = new ArrayImgFactory< UnsignedByteType >();
-//		
-//		final Labeling< Long > LABELING = new NativeImgLabeling< Long, UnsignedShortType >( images.get(0)  );
-//		final Collection<Long> labels = LABELING.firstElement().getMapping().getLabels();
-//		final ArrayList<long[]> centroidsList = new ArrayList<long[]>();
-//		for (final Long i : labels)
-//		{
-////			final IterableInterval<BitType> ii =
-////					LABELING.getIterableRegionOfInterest(i).getIterableIntervalOverROI(src);
-////			
-////			@SuppressWarnings("unchecked")
-////			FirstOrderStatFeatureSet<Img<UnsignedShortType>> op = IJ2PluginUtility.ij.op().op(FirstOrderStatFeatureSet.class, view);
-////			
-////			for (final Entry<? extends OpRef,DoubleType> result : op.compute(images.get(0)).entrySet())
-////			{
-////				System.out.println(result.getKey().getType().getSimpleName() + " " + result.getValue().get());
-////			}
-////			Logs.log("\n\n", PointTester.class);
-//			
-//		}
-//		
-//	}
-	
-	public static < T extends RealType< T > & NativeType< T > > void tryOps2() throws ImgIOException
+
+	//	public static <T extends RealType<T> & NativeType<T>> void Example1d() throws ImgIOException
+	//	{
+	//		ImageJ ij = new ImageJ();
+	//		
+	//		ImgOpener imgOpener = new ImgOpener(IJ2PluginUtility.ij.getContext());
+	//		
+	//		// open with ImgOpener. The type (e.g. ArrayImg, PlanarImg, CellImg) is
+	//		// automatically determined. For a small image that fits in memory, this
+	//		// should open as an ArrayImg.
+	//		List<SCIFIOImgPlus < UnsignedShortType >> images = imgOpener.openImgs("/Users/jaywarrick/Pictures/TIFFS/PC3_001_8bit.tif", new UnsignedShortType());
+	//		
+	//		ImgFactory< UnsignedByteType > factory = new ArrayImgFactory< UnsignedByteType >();
+	//		
+	//		final Labeling< Long > LABELING = new NativeImgLabeling< Long, UnsignedShortType >( images.get(0)  );
+	//		final Collection<Long> labels = LABELING.firstElement().getMapping().getLabels();
+	//		final ArrayList<long[]> centroidsList = new ArrayList<long[]>();
+	//		for (final Long i : labels)
+	//		{
+	////			final IterableInterval<BitType> ii =
+	////					LABELING.getIterableRegionOfInterest(i).getIterableIntervalOverROI(src);
+	////			
+	////			@SuppressWarnings("unchecked")
+	////			FirstOrderStatFeatureSet<Img<UnsignedShortType>> op = IJ2PluginUtility.ij.op().op(FirstOrderStatFeatureSet.class, view);
+	////			
+	////			for (final Entry<? extends OpRef,DoubleType> result : op.compute(images.get(0)).entrySet())
+	////			{
+	////				System.out.println(result.getKey().getType().getSimpleName() + " " + result.getValue().get());
+	////			}
+	////			Logs.log("\n\n", PointTester.class);
+	//			
+	//		}
+	//		
+	//	}
+
+	public static void tryLabels() throws ImgIOException
 	{
 		ImgOpener imgOpener = new ImgOpener(IJ2PluginUtility.ij.getContext());
-		
 		// open with ImgOpener. The type (e.g. ArrayImg, PlanarImg, CellImg) is
 		// automatically determined. For a small image that fits in memory, this
 		// should open as an ArrayImg.
-		List<SCIFIOImgPlus < UnsignedShortType >> images = imgOpener.openImgs("/Users/jaywarrick/Pictures/TIFFS/PC3_001_8bit.tif", new UnsignedShortType());
-		
-		ImgFactory< UnsignedByteType > factory = new ArrayImgFactory< UnsignedByteType >();
-		ImagePlus im = new ImagePlus("/Users/jaywarrick/Pictures/TIFFS/PC3_001 copy.tif");
-		
+
+		// Get the black and white image
+		List<SCIFIOImgPlus < UnsignedShortType >> images = imgOpener.openImgs("/Users/jaywarrick/Pictures/TIFFS/MM/x0_y0_Channel395 X 455M_ImCol0_ImRow1_Z1.tif", new UnsignedShortType());
+
+		// Get the ROIs from the BW image.
+	}
+
+	public static < T extends RealType< T > & NativeType< T > > void tryOps2() throws ImgIOException
+	{
+		ImgOpener imgOpener = new ImgOpener(IJ2PluginUtility.ij.getContext());
+
+		// open with ImgOpener. The type (e.g. ArrayImg, PlanarImg, CellImg) is
+		// automatically determined. For a small image that fits in memory, this
+		// should open as an ArrayImg.
+		List<SCIFIOImgPlus < UnsignedShortType >> images = imgOpener.openImgs("/Users/jaywarrick/Pictures/TIFFS/MM/x0_y0_Channel395 X 455M_ImCol0_ImRow1_Z1.tif", new UnsignedShortType());
+
+		ImagePlus im = new ImagePlus("/Users/jaywarrick/Pictures/TIFFS/MM/x0_y0_Channel395 X 455M_ImCol0_ImRow1_Z1.tif");
 		ByteProcessor fp = im.getProcessor().convertToByteProcessor();
 		fp.setRoi(20, 20, 20, 30);
 		ByteProcessor ip = (ByteProcessor) fp.crop();
 		ArrayImg<UnsignedByteType, ByteArray> temp = ArrayImgs.unsignedBytes((byte[]) ip.getPixels(), ip.getWidth(), ip.getHeight());
 		ImageJFunctions.show(temp);
-		
+
 		// use a View to define an interval (min and max coordinate, inclusive) to display
 		RandomAccessibleInterval< UnsignedShortType > view =
 				Views.interval( images.get(0), new long[] { 200, 200 }, new long[]{ 500, 350 } );
-		
+
 		@SuppressWarnings("unchecked")
 		FirstOrderStatFeatureSet<Img<UnsignedShortType>> op = IJ2PluginUtility.ij.op().op(FirstOrderStatFeatureSet.class, view);
-		
+
 		for (final Entry<? extends OpRef,DoubleType> result : op.compute(images.get(0)).entrySet())
 		{
 			System.out.println(result.getKey().getType().getSimpleName() + " " + result.getValue().get());
 		}
 		Logs.log("\n\n", PointTester.class);
-		
+
 	}
 	
+	public static TreeMap<String,JEXData> getJEXData()
+	{
+		JEXData maskData = new JEXData(JEXData.IMAGE, "Mask");
+		JEXDataIO.loadJXD(maskData, "/Users/jaywarrick/Documents/JEX/Feature Extraction/Dataset Name/Cell_x0_y0/Image-Mask/x0_y0.jxd");
+		JEXData imageData = new JEXData(JEXData.IMAGE, "Image");
+		JEXDataIO.loadJXD(imageData, "/Users/jaywarrick/Documents/JEX/Feature Extraction/Dataset Name/Cell_x0_y0/Image-Image/x0_y0.jxd");
+		JEXData roiData = new JEXData(JEXData.ROI, "Maxima");
+		JEXDataIO.loadJXD(roiData, "/Users/jaywarrick/Documents/JEX/Feature Extraction/Dataset Name/Cell_x0_y0/Roi-Maxima/x0_y0.jxd");
+		
+		TreeMap<String,JEXData> ret = new TreeMap<String,JEXData>();
+		ret.put("Mask", maskData);
+		ret.put("Image", imageData);
+		ret.put("Maxima", roiData);
+		
+		return ret;
+	}
+
+	public static void tryOps3()
+	{
+		JEXStatics.statusBar = new StatusBar();
+		
+		TreeMap<String,JEXData> data = getJEXData();
+		
+		TreeMap<DimensionMap,String> imageMap = ImageReader.readObjectToImagePathTable(data.get("Image"));
+		TreeMap<DimensionMap,String> maskMap = ImageReader.readObjectToImagePathTable(data.get("Mask"));
+		TreeMap<DimensionMap,ROIPlus> roiMap = RoiReader.readObjectToRoiMap(data.get("Maxima"));
+		TreeMap<DimensionMap,String> outputImageMap = new TreeMap<DimensionMap,String>();
+		TreeMap<DimensionMap,Double> outputStatMap = new TreeMap<DimensionMap,Double>();
+		TreeMap<Integer,Integer> idToLabelMap = new TreeMap<Integer,Integer>();
+		int count = 0, percentage = 0;
+
+		ImgOpener imgOpener = new ImgOpener(IJ2PluginUtility.ij.getContext());
+
+		DirectoryManager.setHostDirectory("/Users/jaywarrick/Documents/JEX/Test");
+		
+		try
+		{						
+			// Loop through the items in the n-Dimensional object
+			for (DimensionMap mapM : maskMap.keySet())
+			{
+				List<SCIFIOImgPlus<UnsignedByteType>> masks = imgOpener.openImgs(maskMap.get(mapM), new UnsignedByteType());
+				
+				for(Img<UnsignedByteType> mask : masks)
+				{
+					ImageJFunctions.show(mask);
+					
+					// Get the full labeling for the mask
+					ImgLabeling<Integer, UnsignedShortType> labeling = FeatureUtils.getConnectedComponents(mask, true);
+					LabelRegions<Integer> regions = new LabelRegions<Integer>(labeling);
+					
+					// Determine which labelings are the ones we want to keep by testing if our maxima of interest are contained.
+					ROIPlus maxima = roiMap.get(mapM);
+					for(LabelRegion<Integer> region : regions)
+					{
+						for(IdPoint p : maxima.pointList)
+						{
+							if(contains(region, p))
+							{
+								idToLabelMap.put(p.id, region.getLabel());
+							}
+						}
+						
+					}
+					
+					// Now we have the regions we want to quantify
+					
+					
+					// For now just try to get the first order stats of the MASK image
+					if(true)
+					{
+						@SuppressWarnings("unchecked")
+						FirstOrderStatFeatureSet<IterableInterval<UnsignedByteType>> op = IJ2PluginUtility.ij.op().op(FirstOrderStatFeatureSet.class, (IterableInterval<UnsignedByteType>) mask);
+						
+						for(IdPoint p : maxima.pointList)
+						{
+							LabelRegion<Integer> region = regions.getLabelRegion(idToLabelMap.get(p.id));
+							List<Pair<String, DoubleType>> results = op.getFeatureList(Regions.sample(region, mask));
+							for(Pair<String, DoubleType> result : results)
+							{
+								DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getA());
+								newMap.put("Id", ""+p.id);
+								outputStatMap.put(newMap.copy(), result.getB().get());
+								newMap.put("Measurement", "Area");
+								outputStatMap.put(newMap, (double) 	region.size());
+							}
+						}
+						
+						
+					}
+					
+				}
+				
+			}
+			
+			String tablePath = JEXTableWriter.writeTable("FirstOrderStats", outputStatMap);
+			
+			try {
+				FileUtility.openFileDefaultApplication(tablePath);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+		}
+		catch (ImgIOException e)
+		{
+			e.printStackTrace();
+		}
+	}
+
 	//	public static void tryOps()
 	//	{
 	//		ImageJ ij = new ImageJ();
@@ -303,7 +480,7 @@ public class PointTester {// extends URLClassLoader {
 	//        	}
 	//        }
 	//	}
-	
+
 	public static double[] calculateModes(final int[] n)
 	{
 		//		double[] ret = calculateModes(new int[]{12,13,14});
@@ -311,7 +488,7 @@ public class PointTester {// extends URLClassLoader {
 		//		{
 		//			System.out.println(d);
 		//		}
-		
+
 		double[] d = new double[n.length];
 		for(int i=0; i < n.length; i++)
 		{
@@ -320,13 +497,13 @@ public class PointTester {// extends URLClassLoader {
 		double[] modes = StatUtils.mode(d);
 		return modes;
 	}
-	
+
 	public static void playWithChoiceDialog()
 	{
 		JEXDialog.getChoice("Title", "Which Becaus this is a really long question that I can't figure out and I really need help or else I won't know what to do. choice do you want? Which Becaus this is a really long question that I can't figure out and I really need help or else I won't know what to do. choice do you want? Which Becaus this is a really long question that I can't figure out and I really need help or else I won't know what to do. choice do you want? Which Becaus this is a really long question that I can't figure out and I really need help or else I won't know what to do. choice do you want? Which Becaus this is a really long question that I can't figure out and I really need help or else I won't know what to do. choice do you want?", new String[]{"Choice 1", "Choice 2"}, 0);
 		Logs.log("Hello there", PointTester.class);
 	}
-	
+
 	public static void tryPluginFinder()
 	{
 		InputStream iStream = null;
@@ -335,10 +512,10 @@ public class PointTester {// extends URLClassLoader {
 			String pathToJar = "/Users/jaywarrick/Public/DropBox/GitHub/JEX-CTCPlugins/target/pom-ctc-0.0.1-SNAPSHOT.jar"; //JEXDialog.fileChooseDialog(true);
 			URL[] urls = { new URL("jar:file:" + pathToJar+"!/") };
 			URLClassLoader cl = URLClassLoader.newInstance(urls);
-			
+
 			//iStream = cl.getResourceAsStream("org.scijava.plugin.Plugin");
-			
-			
+
+
 			DefaultPluginFinder pf = new DefaultPluginFinder();
 			List<PluginInfo<?>> ret = new Vector<PluginInfo<?>>();
 			pf.findPlugins(ret);
@@ -348,9 +525,9 @@ public class PointTester {// extends URLClassLoader {
 				{
 					System.out.println(pi);
 				}
-				
+
 			}
-			
+
 			Logs.log("Yay!", PointTester.class);
 		}
 		catch (MalformedURLException e)
@@ -373,21 +550,21 @@ public class PointTester {// extends URLClassLoader {
 				}
 			}
 		}
-		
-		
+
+
 	}
-	
+
 	public static void checkImportPlugin() throws Exception
 	{
 		ImageJ ij = new ImageJ();
-		
+
 		String pathToJar = "/Users/jaywarrick/Public/DropBox/GitHub/JEX-CTCPlugins/target/pom-ctc-0.0.1-SNAPSHOT.jar"; //JEXDialog.fileChooseDialog(true);
 		JarFile jarFile = new JarFile(pathToJar);
 		Enumeration<JarEntry> e = jarFile.entries();
-		
+
 		URL[] urls = { new URL("jar:file:" + pathToJar+"!/") };
 		URLClassLoader cl = URLClassLoader.newInstance(urls);
-		
+
 		while (e.hasMoreElements()) {
 			JarEntry je = (JarEntry) e.nextElement();
 			if(je.isDirectory() || !je.getName().endsWith(".class")){
@@ -409,10 +586,10 @@ public class PointTester {// extends URLClassLoader {
 				Logs.log(crunchable.toString(), PointTester.class);
 				Logs.log("Yay!", PointTester.class);
 			}
-			
+
 		}
 	}
-	
+
 	public static void checkScifioStuff() throws Exception
 	{
 		ImageJ ij = new ImageJ();
@@ -431,7 +608,7 @@ public class PointTester {// extends URLClassLoader {
 		getTiffs(path, ij);
 		//System.out.println(OS.isMacOSX());
 	}
-	
+
 	public static void playWithUpdater()
 	{
 		String s = "JEX-0.0.4-SNAPSHOT-all.zip";
@@ -446,17 +623,17 @@ public class PointTester {// extends URLClassLoader {
 			Logs.log(""+x, PointTester.class);
 		}
 	}
-	
+
 	public static TreeMap<DimensionMap,String> getTiffs(String path, ImageJ ij) throws IOException, FormatException
 	{
 		final String outPath = "/Users/jaywarrick/Desktop/NewFolder";
 		final SCIFIO scifio = new SCIFIO(ij.getContext());
 		final Reader reader = scifio.initializer().initializeReader(path, new SCIFIOConfig().checkerSetOpen(true));
 		Metadata meta = reader.getMetadata();
-		
+
 		DimTable table = getDataSetDimTable(meta);
 		Logs.log(table.toString(), PointTester.class);
-		
+
 		String baseName = "Image_";
 		String ext = ".tif";
 		File outdir = new File(outPath);
@@ -485,23 +662,23 @@ public class PointTester {// extends URLClassLoader {
 		}
 		return ret;
 	}
-	
+
 	public static String WAVELENGTH="Name #", X_POSITION="Z position", Y_POSITION="Z position", Z_POSITION="Z position", TIMESTAMP="timestamp", LAMBDA1="λ", LAMBDA2="� ";
-	
+
 	public static void testAutoImport() throws Exception {
-		
+
 		final String filePath = "/Users/jaywarrick/Google Drive/example.nd2";
 		final String sampleImage = "/Users/jaywarrick/Google Drive/example.nd2";
 		final String outPath = "/Users/jaywarrick/Desktop/NewFolder";
-		
+
 		ImageJ ij = new ImageJ();
-		
+
 		TreeMap<DimensionMap,String> filenames = getTiffs(filePath, ij);
-		
+
 		Logs.log(filenames.toString(), PointTester.class);
-		
+
 	}
-	
+
 	private static DimTable getDataSetDimTable(Metadata meta)
 	{
 		String info = meta.getTable().get("Dimensions").toString();
@@ -520,7 +697,7 @@ public class PointTester {// extends URLClassLoader {
 				ret.add(toAdd);
 			}
 		}
-		
+
 		Vector<String> colors = new Vector<String>();
 		for(Entry<String,Object> e : meta.getTable().entrySet())
 		{
@@ -533,7 +710,7 @@ public class PointTester {// extends URLClassLoader {
 		ret.set(ret.indexOfDimWithName("Color"), newColorDim);
 		return ret;
 	}
-	
+
 	/**
 	 * Returns the plane number and the value of the information for that basename
 	 */
@@ -552,8 +729,8 @@ public class PointTester {// extends URLClassLoader {
 		}
 		return ret;
 	}
-	
-	
+
+
 	private static void dumpInfo(final ImgPlus<?> img) {
 		for (int d = 0; d < img.numDimensions(); d++) {
 			final CalibratedAxis axis = img.axis(d);
@@ -561,7 +738,7 @@ public class PointTester {// extends URLClassLoader {
 					axis.type());
 		}
 	}
-	
+
 	public static void testConversionUtils()
 	{
 		String s = "5.1";
@@ -569,7 +746,7 @@ public class PointTester {// extends URLClassLoader {
 		Object o = ConversionUtils.convert(s, int.class);
 		Logs.log("" + o.getClass().getSimpleName(), PointTester.class);
 	}
-	
+
 	//	public static void testSciJava()
 	//	{
 	//		ImageJ ij = new ImageJ();
@@ -591,7 +768,7 @@ public class PointTester {// extends URLClassLoader {
 	//			}
 	//		}
 	//	}
-	
+
 	public static void testTableWriter()
 	{
 		DirectoryManager.setHostDirectory("/Users/jaywarrick/Desktop/Temp2");
@@ -621,9 +798,9 @@ public class PointTester {// extends URLClassLoader {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 	}
-	
+
 	public static void testGetMask()
 	{
 		String imagePath = "/Users/jaywarrick/Documents/My Pictures/TIFFS/x0_y0_Color0_Time2.tif";
@@ -647,7 +824,7 @@ public class PointTester {// extends URLClassLoader {
 			temp.add((double) f);
 		}
 		double mean = StatisticsUtility.mean(temp);
-		
+
 		im2.show();
 		im3.show();
 		FloatProcessor fp = new FloatProcessor(50, 100, pixels);
@@ -657,7 +834,7 @@ public class PointTester {// extends URLClassLoader {
 		im4.show();
 		Logs.log("Size = " + pixels.length + ", Mean = " + mean, PointTester.class);
 	}
-	
+
 	public static void checkOpenWebpage()
 	{
 		if(Desktop.isDesktopSupported())
@@ -683,17 +860,17 @@ public class PointTester {// extends URLClassLoader {
 			}
 		}
 	}
-	
+
 	public static void checkJavaVersion()
 	{
 		Logs.log(System.getProperty("java.version"), PointTester.class);
 		Logs.log("" + Updater.javaVersionIsAtLeast("1.7.0_46"), PointTester.class);
 	}
-	
+
 	public static void checkOverlay()
 	{
 		String imagePath = "/Users/jaywarrick/Documents/My Pictures/TIFFS/x0_y0_Color0_Time2.tif";
-		
+
 		ImageJ ij = new ImageJ();
 		List<CommandInfo> commands = ij.command().getCommands();
 		CommandInfo info = null;
@@ -717,11 +894,11 @@ public class PointTester {// extends URLClassLoader {
 				r.setOrigin(0, 1);
 				r.setExtent(100, 0);
 				r.setExtent(100, 1);
-				
+
 				List<Overlay> overlays = new Vector<Overlay>();
 				overlays.add(r);
 				ij.overlay().addOverlays(display, overlays);
-				
+
 				for (DataView view : display)
 				{
 					if(view instanceof OverlayView)
@@ -730,7 +907,7 @@ public class PointTester {// extends URLClassLoader {
 						break;
 					}
 				}
-				
+
 				OptionsChannels opts = ij.options().getOptions(OptionsChannels.class);
 				ChannelCollection fg = opts.getFgValues();
 				ij.ui().show(display);
@@ -739,7 +916,7 @@ public class PointTester {// extends URLClassLoader {
 				// ij.overlay().fillOverlay(r, display, fg);
 				// ij.ui().show(display);
 				ij.ui().show(display);
-				
+
 			}
 		}
 		catch (IOException e)
@@ -748,12 +925,12 @@ public class PointTester {// extends URLClassLoader {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public static void checkStatisticsUtility()
 	{
 		Vector<Double> test = new Vector<Double>();
 	}
-	
+
 	public static void checkHungarianDistance()
 	{
 		Random r = new Random();
@@ -771,9 +948,9 @@ public class PointTester {// extends URLClassLoader {
 		Logs.log("B2:\n\t" + b2.toString(), PointTester.class);
 		Logs.log("Before: " + StatisticsUtility.getMappingDistance(a, b), PointTester.class);
 		Logs.log("After: " + StatisticsUtility.getMappingDistance(a, b2), PointTester.class);
-		
+
 	}
-	
+
 	public static void checkWandRoi()
 	{
 		ImagePlus im = new ImagePlus("/Users/jaywarrick/Documents/Yin_Lab/JEX Database/Test 1/CTC Test Set/Cell_x0_y0/Image-CELL CROPS/x0_y0_Color1_Id0.tif");
@@ -788,9 +965,9 @@ public class PointTester {// extends URLClassLoader {
 		ImageStatistics stats = ImageStatistics.getStatistics(imp, ImageStatistics.AREA, null);
 		Logs.log(stats.area + ", " + wand.npoints + ", " + roi.getLength(), PointTester.class);
 		Logs.log("Yo", PointTester.class);
-		
+
 	}
-	
+
 	public static void checkCopyBits()
 	{
 		ImagePlus im = new ImagePlus("/Users/jaywarrick/Documents/Yin_Lab/JEX Database/Test 1/CTC Test Set/Cell_x0_y0/Image-GREEN/x0_y0_ImCol1_ImRow1.tif");
@@ -809,9 +986,9 @@ public class PointTester {// extends URLClassLoader {
 		stitch.resetDisplayRange();
 		stitch.show();
 		Logs.log("Yo", PointTester.class);
-		
+
 	}
-	
+
 	public static void checkStackRead()
 	{
 		String filePath = "/Users/jaywarrick/Desktop/CTC/20130806 MSK samples/10-3060 Cell save/tile_x001_y001.tif";
@@ -819,13 +996,13 @@ public class PointTester {// extends URLClassLoader {
 		im.show();
 		Logs.log("Hello2", PointTester.class);
 	}
-	
+
 	public static void checkOS()
 	{
 		String os = System.getProperty("os.name").toLowerCase();
 		Logs.log(os, PointTester.class);
 	}
-	
+
 	public static void testBackslashStuff()
 	{
 		String test = "\\C:\\My Documents";
@@ -838,7 +1015,7 @@ public class PointTester {// extends URLClassLoader {
 		}
 		Logs.log(test.substring(1, test.length()), PointTester.class);
 	}
-	
+
 	public static void testJarStuff()
 	{
 		try
@@ -866,7 +1043,7 @@ public class PointTester {// extends URLClassLoader {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public static void convertImages()
 	{
 		File dir = new File("/Volumes/NO NAME/Iyer scope test images/Originals");
@@ -879,7 +1056,7 @@ public class PointTester {// extends URLClassLoader {
 			}
 		}
 		StringUtility.sortStringList(fileList);
-		
+
 		DecimalFormat format = new DecimalFormat("0000000000");
 		String baseName = "Image_";
 		int counter = 0;
@@ -896,7 +1073,7 @@ public class PointTester {// extends URLClassLoader {
 			}
 		}
 	}
-	
+
 	public static void testIterator()
 	{
 		DimTable t = new DimTable();
@@ -904,36 +1081,36 @@ public class PointTester {// extends URLClassLoader {
 		Dim b = new Dim("B", 0, 2);
 		Dim c = new Dim("C", 0, 3);
 		Dim d = new Dim("D", 0, 4);
-		
+
 		t.add(a);
 		t.add(b);
 		t.add(c);
 		t.add(d);
-		
+
 		Logs.log("getMapIterator(filter)", PointTester.class);
 		for (DimensionMap map : t.getMapIterator(new DimensionMap("A=0,B=2")))
 		{
 			Logs.log(map.toString(), PointTester.class);
 		}
-		
+
 		Logs.log("getSubTable and getMapIterator", PointTester.class);
 		for (DimensionMap map : t.getSubTable(new DimensionMap("A=0,B=2")).getMapIterator())
 		{
 			Logs.log(map.toString(), PointTester.class);
 		}
-		
+
 		Logs.log("SubTableIterator", PointTester.class);
 		for (DimTable map : t.getSubTableIterator("A"))
 		{
 			Logs.log(map.toString(), PointTester.class);
 		}
 	}
-	
+
 	public static void testR()
 	{
 		R.eval("x <- 0");
 	}
-	
+
 	public static void testLinePlot()
 	{
 		double xAxisTransition = 5, xLinLogRatio = 10, yAxisTransition = 2, yLinLogRatio = 10;
@@ -961,10 +1138,10 @@ public class PointTester {// extends URLClassLoader {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public static double showHistogram(FloatProcessor imp, double histMin, double histMax, int nBins, boolean showHist)
 	{
-		
+
 		// Make the histogram
 		if(nBins < 0)
 		{
@@ -978,7 +1155,7 @@ public class PointTester {// extends URLClassLoader {
 		{
 			bins[i] = histMin + i * stats.binSize;
 		}
-		
+
 		if(showHist)
 		{
 			// Draw the histogram
@@ -988,7 +1165,7 @@ public class PointTester {// extends URLClassLoader {
 			R._startPlot(new File(path), 4, 3, 300, 10, null, null);
 			R.eval("plot(binCenters,binCounts,cex=0.4)");
 			R.endPlot();
-			
+
 			// Open the histogram plot
 			try
 			{
@@ -999,7 +1176,7 @@ public class PointTester {// extends URLClassLoader {
 				e.printStackTrace();
 			}
 		}
-		
+
 		int nMax = 0;
 		int max = Integer.MIN_VALUE;
 		for (int i = 0; i < stats.histogram.length - 1; i++)
@@ -1012,7 +1189,7 @@ public class PointTester {// extends URLClassLoader {
 		}
 		return bins[nMax];
 	}
-	
+
 	public static int getIndexOfMax(double[] values)
 	{
 		int ret = 0;
@@ -1027,7 +1204,7 @@ public class PointTester {// extends URLClassLoader {
 		}
 		return ret;
 	}
-	
+
 	public static int getIndexOfMax(int[] values)
 	{
 		int ret = 0;
@@ -1042,7 +1219,7 @@ public class PointTester {// extends URLClassLoader {
 		}
 		return ret;
 	}
-	
+
 	static byte[] readStream(InputStream input) throws IOException
 	{
 		byte[] buffer = new byte[1024];
@@ -1061,7 +1238,7 @@ public class PointTester {// extends URLClassLoader {
 			offset += len;
 		}
 	}
-	
+
 	static byte[] realloc(byte[] buffer, int newLength)
 	{
 		if(newLength == buffer.length)
@@ -1072,7 +1249,7 @@ public class PointTester {// extends URLClassLoader {
 		System.arraycopy(buffer, 0, newBuffer, 0, Math.min(newLength, buffer.length));
 		return newBuffer;
 	}
-	
+
 	// @Override
 	// @SuppressWarnings("unchecked")
 	// public Class<Object> loadClass(String name)
@@ -1099,7 +1276,7 @@ public class PointTester {// extends URLClassLoader {
 	//
 	// return result;
 	// }
-	
+
 }
 
 /**
@@ -1111,9 +1288,9 @@ public class PointTester {// extends URLClassLoader {
  * @author Andreas Graumann, University of Konstanz
  */
 class ImageGenerator {
-	
+
 	private Random rand;
-	
+
 	/**
 	 * Create the image generator with a predefined seed.
 	 * 
@@ -1123,14 +1300,14 @@ class ImageGenerator {
 	public ImageGenerator(long seed) {
 		this.rand = new Random(seed);
 	}
-	
+
 	/**
 	 * Default constructor, initialize with random seed.
 	 */
 	public ImageGenerator() {
 		this.rand = new Random();
 	}
-	
+
 	/**
 	 * 
 	 * @param dim
@@ -1140,7 +1317,7 @@ class ImageGenerator {
 	public Img<UnsignedByteType> getEmptyUnsignedByteImg(long[] dim) {
 		return ArrayImgs.unsignedBytes(dim);
 	}
-	
+
 	/**
 	 * 
 	 * @param dim
@@ -1151,17 +1328,17 @@ class ImageGenerator {
 	public Img<UnsignedByteType> getRandomUnsignedByteImg(long[] dim) {
 		ArrayImg<UnsignedByteType, ByteArray> img = ArrayImgs
 				.unsignedBytes(dim);
-		
+
 		UnsignedByteType type = img.firstElement();
-		
+
 		ArrayCursor<UnsignedByteType> cursor = img.cursor();
 		while (cursor.hasNext()) {
 			cursor.next().set(rand.nextInt((int) type.getMaxValue()));
 		}
-		
+
 		return (Img<UnsignedByteType>) img;
 	}
-	
+
 	/**
 	 * 
 	 * @param dim
@@ -1173,21 +1350,21 @@ class ImageGenerator {
 			int constant) {
 		ArrayImg<UnsignedByteType, ByteArray> img = ArrayImgs
 				.unsignedBytes(dim);
-		
+
 		UnsignedByteType type = img.firstElement();
 		if (constant < type.getMinValue() || constant >= type.getMaxValue()) {
 			throw new IllegalArgumentException(
 					"Can't create image for constant [" + constant + "]");
 		}
-		
+
 		ArrayCursor<UnsignedByteType> cursor = img.cursor();
 		while (cursor.hasNext()) {
 			cursor.next().set(constant);
 		}
-		
+
 		return (Img<UnsignedByteType>) img;
 	}
-	
+
 	/**
 	 * 
 	 * @param dim
@@ -1196,32 +1373,32 @@ class ImageGenerator {
 	 */
 	public Img<UnsignedByteType> getEllipsedBitImage(long[] dim,
 			double[] radii, double[] offset) {
-		
+
 		// create empty bittype image with desired dimensions
 		ArrayImg<UnsignedByteType, ByteArray> img = ArrayImgs
 				.unsignedBytes(dim);
-		
+
 		// create ellipse
 		EllipseRegionOfInterest ellipse = new EllipseRegionOfInterest();
 		ellipse.setRadii(radii);
-		
+
 		// set origin in the center of image
 		double[] origin = new double[dim.length];
 		for (int i = 0; i < dim.length; i++)
 			origin[i] = dim[i] / 2;
 		ellipse.setOrigin(origin);
-		
+
 		// get iterable intervall and cursor of ellipse
 		IterableInterval<UnsignedByteType> ii = ellipse
 				.getIterableIntervalOverROI(img);
 		Cursor<UnsignedByteType> cursor = ii.cursor();
-		
+
 		// fill image with ellipse
 		while (cursor.hasNext()) {
 			cursor.next();
 			cursor.get().set(255);
 		}
-		
+
 		return (Img<UnsignedByteType>) img;
 	}
 }
