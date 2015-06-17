@@ -15,6 +15,7 @@ import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Image;
 import java.io.File;
 import java.io.IOException;
@@ -143,7 +144,7 @@ public class jMontageMaker implements PlugIn {
 		}
 		label = gd.getNextBoolean();
 		useForegroundColor = gd.getNextBoolean();
-		ImagePlus im = makeMontage(result, columns, rows, scale, first, last, inc, borderWidth, label, true);
+		ImagePlus im = makeMontage(result, columns, rows, scale, first, last, inc, borderWidth, label, useForegroundColor, true);
 		return im;
 	}
 	
@@ -207,10 +208,10 @@ public class jMontageMaker implements PlugIn {
 		}
 		label = gd.getNextBoolean();
 		useForegroundColor = gd.getNextBoolean();
-		makeMontage(imp, columns, rows, scale, first, last, inc, borderWidth, label, true);
+		makeMontage(imp, columns, rows, scale, first, last, inc, borderWidth, label, useForegroundColor, null, null, 12, true);
 	}
 	
-	public static ImagePlus makeMontage(File[] imageList, int columns, int rows, double scale, int first, int last, int inc, int borderWidth, boolean labels, boolean quiet)
+	public static ImagePlus makeMontage(File[] imageList, int columns, int rows, double scale, int first, int last, int inc, int borderWidth, boolean labels, boolean useForegroundColor, boolean quiet)
 	{
 		ImagePlus imp = null;
 		try
@@ -342,7 +343,7 @@ public class jMontageMaker implements PlugIn {
 		return imp2;
 	}
 	
-	public static ImagePlus makeMontage(ImagePlus imp, int columns, int rows, double scale, int first, int last, int inc, int borderWidth, boolean labels, boolean quiet)
+	public static ImagePlus makeMontage(ImagePlus imp, int columns, int rows, double scale, int first, int last, int inc, int borderWidth, boolean labels, boolean useForegroundColor, Color foregroundColor, Color backgroundColor, int fontSize, boolean quiet)
 	{
 		int stackWidth = imp.getWidth();
 		int stackHeight = imp.getHeight();
@@ -364,6 +365,11 @@ public class jMontageMaker implements PlugIn {
 		int montageHeight = height * rows;
 		ImageProcessor ip = imp.getProcessor();
 		ImageProcessor montage = ip.createProcessor(montageWidth + borderWidth / 2, montageHeight + borderWidth / 2);
+		if(fontSize < 1)
+		{
+			fontSize = 1;
+		}
+		montage.setFont(new Font("SansSerif", Font.PLAIN, fontSize));
 		Color fgColor = Color.white;
 		Color bgColor = Color.black;
 		if(useForegroundColor)
@@ -371,7 +377,7 @@ public class jMontageMaker implements PlugIn {
 			fgColor = Toolbar.getForegroundColor();
 			bgColor = Toolbar.getBackgroundColor();
 		}
-		else
+		else if(foregroundColor == null || backgroundColor == null)
 		{
 			boolean whiteBackground = false;
 			if((ip instanceof ByteProcessor) || (ip instanceof ColorProcessor))
@@ -386,6 +392,11 @@ public class jMontageMaker implements PlugIn {
 				fgColor = Color.black;
 				bgColor = Color.white;
 			}
+		}
+		else
+		{
+			fgColor = foregroundColor;
+			bgColor = backgroundColor;
 		}
 		montage.setColor(bgColor);
 		montage.fill();
