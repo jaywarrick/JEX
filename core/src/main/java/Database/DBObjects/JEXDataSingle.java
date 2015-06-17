@@ -1,15 +1,15 @@
 package Database.DBObjects;
 
-import Database.Definition.Type;
-import Database.SingleUserDatabase.JEXWriter;
-
 import java.io.File;
 import java.util.Set;
 import java.util.TreeMap;
 
+import miscellaneous.Copiable;
 import tables.DimensionMap;
+import Database.Definition.Type;
+import Database.SingleUserDatabase.JEXWriter;
 
-public class JEXDataSingle {
+public class JEXDataSingle implements Copiable<JEXDataSingle>{
 	
 	public static String NAME         = "Name";
 	public static String RELATIVEPATH = "FileName";
@@ -198,5 +198,19 @@ public class JEXDataSingle {
 		}
 		
 		return result;
+	}
+
+	/**
+	 * Creates a full deep copy of the JEXDataSingle. Shares same JEXData parent! but has copies of the data map and dimension map.
+	 * @return
+	 */
+	@Override
+	public JEXDataSingle copy()
+	{
+		JEXDataSingle ret = new JEXDataSingle();
+		ret.data.putAll(this.data);
+		ret.map = this.map.copy();
+		ret.parent = this.parent;
+		return ret;
 	}
 }
