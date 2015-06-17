@@ -2,6 +2,7 @@ package jex.utilities;
 
 import function.singleCellAnalysis.SingleCellUtility;
 import ij.ImagePlus;
+import ij.ImageStack;
 import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
 import ij.process.FloatStatistics;
@@ -16,10 +17,14 @@ import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.ColorConvertOp;
+import java.util.List;
+import java.util.TreeMap;
 import java.util.Vector;
+import java.util.Map.Entry;
 
 import miscellaneous.FileUtility;
 import rtools.R;
+import tables.DimensionMap;
 
 public class ImageUtility {
 	
@@ -42,6 +47,31 @@ public class ImageUtility {
 		g.dispose();
 		
 		return bimage;
+	}
+	
+	public static ImagePlus makeImagePlusStackFromJEXStack(List<DimensionMap> maps, TreeMap<DimensionMap,String> files)
+	{
+		ImageStack im = null;
+		int i = 1;
+		boolean first = true;
+		ImageProcessor imp = null;
+		for(Entry<DimensionMap,String> e : files.entrySet())
+		{
+			imp = (new ImagePlus(e.getValue())).getProcessor();
+			if(first)
+			{
+				im = new ImageStack(imp.getWidth(), imp.getHeight());
+				first = false;
+			}
+			im.addSlice(imp);
+			im.setSliceLabel(e.getKey().toString(), i);
+			i = i + 1;
+		}
+		
+		ImagePlus temp = new ImagePlus("Montage");
+		temp.setStack(im);
+		
+		return temp;
 	}
 	
 	public static double getHistogramPeakBin(FloatProcessor imp, double histMin, double histMax, int nBins, boolean showHist)
