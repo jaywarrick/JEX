@@ -6,6 +6,7 @@ import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.roi.labeling.ImgLabeling;
 import net.imglib2.type.numeric.IntegerType;
+import net.imglib2.type.numeric.integer.IntType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import function.plugin.plugins.featureExtraction.ConnectedComponents.StructuringElement;
 
@@ -18,7 +19,7 @@ import function.plugin.plugins.featureExtraction.ConnectedComponents.Structuring
  */
 public class FeatureUtils {
 	
-	public static <T extends IntegerType< T >> ImgLabeling<Integer, UnsignedShortType> getConnectedComponents(Img< T > inputImg, boolean fourConnected)
+	public static <T extends IntegerType< T >> ImgLabeling<Integer, IntType> getConnectedComponents(Img< T > inputImg, boolean fourConnected)
 	{
 		StructuringElement se = null;
 		if(fourConnected)
@@ -32,8 +33,8 @@ public class FeatureUtils {
 		
 		long[] dimensions = new long[inputImg.numDimensions()];
 		inputImg.dimensions(dimensions);
-		final Img< UnsignedShortType > indexImg = ArrayImgs.unsignedShorts( dimensions );
-		ImgLabeling<Integer, UnsignedShortType> labeling = new ImgLabeling<Integer, UnsignedShortType>(indexImg);
+		final Img< IntType > indexImg = ArrayImgs.ints( dimensions );
+		ImgLabeling<Integer, IntType> labeling = new ImgLabeling<Integer, IntType>(indexImg);
 		ConnectedComponents.labelAllConnectedComponents(inputImg, labeling, new LabelGenerator(), se);
 		
 		return labeling;

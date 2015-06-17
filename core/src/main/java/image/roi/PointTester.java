@@ -55,7 +55,6 @@ import java.util.Vector;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-import jex.JEXManager;
 import jex.StatusBar;
 import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
@@ -97,6 +96,7 @@ import net.imglib2.roi.labeling.LabelRegions;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.logic.BitType;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.integer.IntType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.DoubleType;
@@ -119,7 +119,6 @@ import weka.core.converters.JEXTableWriter;
 import Database.DBObjects.JEXData;
 import Database.DataReader.ImageReader;
 import Database.DataReader.RoiReader;
-import Database.DataWriter.FileWriter;
 import Database.SingleUserDatabase.JEXDataIO;
 
 public class PointTester {// extends URLClassLoader {
@@ -163,7 +162,7 @@ public class PointTester {// extends URLClassLoader {
 	{
 		ImgOpener imgOpener = new ImgOpener(IJ2PluginUtility.ij.getContext());
 		List<SCIFIOImgPlus < UnsignedByteType >> images = imgOpener.openImgs("/Users/jaywarrick/Pictures/TIFFS/MM/0_0_x0_y0_Channel395 X 455M_ImCol0_ImRow1_Z1.tif", new UnsignedByteType());
-		ImgLabeling<Integer, UnsignedShortType> labeling = FeatureUtils.getConnectedComponents(images.get(0), true);
+		ImgLabeling<Integer, IntType> labeling = FeatureUtils.getConnectedComponents(images.get(0), true);
 		LabelRegions<Integer> regions = new LabelRegions<Integer>(labeling);
 		double[] pos = new double[images.get(0).numDimensions()];
 
@@ -337,7 +336,7 @@ public class PointTester {// extends URLClassLoader {
 					ImageJFunctions.show(mask);
 					
 					// Get the full labeling for the mask
-					ImgLabeling<Integer, UnsignedShortType> labeling = FeatureUtils.getConnectedComponents(mask, true);
+					ImgLabeling<Integer, IntType> labeling = FeatureUtils.getConnectedComponents(mask, true);
 					LabelRegions<Integer> regions = new LabelRegions<Integer>(labeling);
 					
 					// Determine which labelings are the ones we want to keep by testing if our maxima of interest are contained.
