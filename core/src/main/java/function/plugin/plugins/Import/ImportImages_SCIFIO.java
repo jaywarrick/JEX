@@ -191,17 +191,17 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 					ImageMetadata d = plane.getImageMetadata();
 					long[] dims = d.getAxesLengthsPlanar();
 					ImageProcessor ip = null;
-					if(d.getBitsPerPixel() == 8)
+					if(d.getBitsPerPixel() <= 8)
 					{
 						byte[] converted = (byte[]) DataTools.makeDataArray(plane.getBytes(), 1, false, d.isLittleEndian());
 						ip = new ByteProcessor((int)dims[0], (int)dims[1], converted, null);
 					}
-					else if(d.getBitsPerPixel() == 16)
+					else if(d.getBitsPerPixel() >= 9 && d.getBitsPerPixel() <= 16)
 					{
 						short[] converted = (short[]) DataTools.makeDataArray(plane.getBytes(), 2, false, d.isLittleEndian());
 						ip = new ShortProcessor((int)dims[0], (int)dims[1], converted, null);
 					}
-					else if(d.getBitsPerPixel() == 32)
+					else if(d.getBitsPerPixel() >= 17 && d.getBitsPerPixel() <= 32)
 					{
 						float[] converted = (float[]) DataTools.makeDataArray(plane.getBytes(), 4, true, d.isLittleEndian());
 						ip = new FloatProcessor((int)dims[0], (int)dims[1], converted, null);
