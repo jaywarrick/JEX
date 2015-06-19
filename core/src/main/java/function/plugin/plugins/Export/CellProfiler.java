@@ -2,6 +2,8 @@ package function.plugin.plugins.Export;
 
 import java.io.IOException;
 
+import org.scijava.plugin.Plugin;
+
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import function.plugin.mechanism.InputMarker;
@@ -9,6 +11,13 @@ import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.MarkerConstants;
 import function.plugin.mechanism.ParameterMarker;
 
+@Plugin(
+		type = JEXPlugin.class,
+		name="CellProfiler",
+		menuPath="Export",
+		visible=true,
+		description="Process images with CellProfiler"
+		)
 public class CellProfiler extends JEXPlugin {
 
 	public CellProfiler() {}
@@ -46,7 +55,7 @@ public class CellProfiler extends JEXPlugin {
 	public boolean run(JEXEntry optionalEntry) {
 		
 		try {
-			Runtime.getRuntime().exec("cmd /c start C:\\ExampleHuman\\ExampleHuman.bat");
+			Runtime.getRuntime().exec("cmd /c start C:\\Users\\Tom\\Desktop\\ExampleHuman\\ExampleHuman.bat");
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
