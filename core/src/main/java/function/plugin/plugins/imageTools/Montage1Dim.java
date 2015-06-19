@@ -116,7 +116,7 @@ public class Montage1Dim extends JEXPlugin {
 
 		// Run the function
 		// Get the Partial DimTable and iterate through it and stitch.
-		DimTable partialTable = table;
+		DimTable partialTable = table.copy();
 		partialTable.remove(stackDim);
 		TreeMap<DimensionMap,String> outputMap = new TreeMap<DimensionMap,String>();
 		TreeMap<DimensionMap,String> imageMap = ImageReader.readObjectToImagePathTable(imageData);
