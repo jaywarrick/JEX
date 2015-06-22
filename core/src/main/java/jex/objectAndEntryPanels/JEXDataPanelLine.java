@@ -178,35 +178,14 @@ public class JEXDataPanelLine extends JPanel implements ActionListener, MouseLis
 				JEXEntry viewedEntry = JEXStatics.jexManager.getViewedEntry();
 				if(viewedEntry != null)
 				{
-					JEXData data = JEXStatics.jexManager.getDataOfTypeNameInEntry(objectTN, viewedEntry);
-					if(data != null)
+					this.openFileInEntry(viewedEntry);
+				}
+				else
+				{
+					TreeSet<JEXEntry> entries = JEXStatics.jexManager.getSelectedEntries();
+					if(entries.size() > 0)
 					{
-						TreeMap<DimensionMap,String> paths = FileReader.readObjectToFilePathTable(data);
-						String path = paths.firstEntry().getValue();
-						try
-						{
-							if(FileUtility.getFileNameExtension(path).equals("arff"))
-							{
-								ArffViewer viewer = new ArffViewer();
-								viewer.setFile(path);
-								viewer.show();
-							}
-							else
-							{
-								FileUtility.openFileDefaultApplication(path);
-							}
-						}
-						catch (Exception e1)
-						{
-							e1.printStackTrace();
-							JEXStatics.statusBar.setStatusText("Error opening file... Path = " + path);
-							Logs.log("Error opening file... Path = " + path, 1, this);
-						}
-					}
-					else
-					{
-						JEXStatics.statusBar.setStatusText("Object does not exist in this entry.");
-						Logs.log("Object does not exist in this entry.", 1, this);
+						this.openFileInEntry(entries.first());
 					}
 				}
 			}
@@ -266,6 +245,40 @@ public class JEXDataPanelLine extends JPanel implements ActionListener, MouseLis
 		else if(e.getSource() == dataButton)
 		{
 			return;
+		}
+	}
+	
+	private void openFileInEntry(JEXEntry viewedEntry)
+	{
+		JEXData data = JEXStatics.jexManager.getDataOfTypeNameInEntry(objectTN, viewedEntry);
+		if(data != null)
+		{
+			TreeMap<DimensionMap,String> paths = FileReader.readObjectToFilePathTable(data);
+			String path = paths.firstEntry().getValue();
+			try
+			{
+				if(FileUtility.getFileNameExtension(path).equals("arff"))
+				{
+					ArffViewer viewer = new ArffViewer();
+					viewer.setFile(path);
+					viewer.show();
+				}
+				else
+				{
+					FileUtility.openFileDefaultApplication(path);
+				}
+			}
+			catch (Exception e1)
+			{
+				e1.printStackTrace();
+				JEXStatics.statusBar.setStatusText("Error opening file... Path = " + path);
+				Logs.log("Error opening file... Path = " + path, 1, this);
+			}
+		}
+		else
+		{
+			JEXStatics.statusBar.setStatusText("Object does not exist in this entry.");
+			Logs.log("Object does not exist in this entry.", 1, this);
 		}
 	}
 	

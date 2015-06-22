@@ -171,7 +171,7 @@ public class MicrowellFinder implements Comparator<IdPoint> {
 			r = roi.getRoi();
 			imp.setRoi(r);
 		}
-		ROIPlus points = (ROIPlus) mf.findMaxima(imp, tol, threshold, MaximumFinder.ROI, true, false, r, true);
+		ROIPlus points = (ROIPlus) mf.findMaxima(imp, tol, threshold, MaximumFinder.ROI, true, false, r, false);
 		
 		// The findMaxima algorithm treats all ROIs as a rectangle; thus, we have to filter the points
 		// further in case the roi is a polygon or some other non-rectangular shape.

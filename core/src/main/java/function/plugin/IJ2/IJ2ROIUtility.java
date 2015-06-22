@@ -46,7 +46,7 @@ public class IJ2ROIUtility {
 	
 	public static RectangleOverlay getRectangleOverlay(ROIPlus roi)
 	{
-		RectangleOverlay ret = new RectangleOverlay(IJ2PluginUtility.ij.getContext());
+		RectangleOverlay ret = new RectangleOverlay(IJ2PluginUtility.ij().getContext());
 		
 		Rectangle r = roi.getPointList().getBounds();
 		

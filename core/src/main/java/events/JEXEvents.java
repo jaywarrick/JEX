@@ -9,12 +9,12 @@ public class JEXEvents {
 	
 	public static void publish(SciJavaEvent e)
 	{
-		IJ2PluginUtility.ij.event().publish(e);
+		IJ2PluginUtility.ij().event().publish(e);
 	}
 	
 	public static void subscribe(Object o)
 	{
-		IJ2PluginUtility.ij.event().subscribe(o);
+		IJ2PluginUtility.ij().event().subscribe(o);
 	}
 	
 }

@@ -36,20 +36,25 @@ import function.plugin.mechanism.JEXPluginInfo;
 
 public class CrunchFactory extends URLClassLoader {
 	
-	static TreeMap<String,JEXCrunchable> jexCrunchables = new TreeMap<String,JEXCrunchable>();
+	private static TreeMap<String,JEXCrunchable> jexCrunchables = null;
 	
 	private Vector<String> internalOldJEXCrunchableNames = new Vector<String>();
 	private String jarPath = null;
 	private List<PluginInfo<?>> allSciJavaPlugins = new Vector<PluginInfo<?>>();
 	
-	static
-	{
-		loadJEXCrunchables();
-	}
-	
 	public CrunchFactory()
 	{
 		super(new URL[0], JEXperiment.class.getClassLoader());
+	}
+	
+	public static TreeMap<String,JEXCrunchable> jexCrunchables()
+	{
+		if(jexCrunchables == null)
+		{
+			jexCrunchables = new TreeMap<String, JEXCrunchable>();
+			loadJEXCrunchables();
+		}
+		return jexCrunchables;
 	}
 	
 	/**
@@ -148,7 +153,7 @@ public class CrunchFactory extends URLClassLoader {
 			}
 			if(c.showInList())
 			{
-				jexCrunchables.put(c.getName(), c);
+				jexCrunchables().put(c.getName(), c);
 			}
 		}
 	}
@@ -257,7 +262,7 @@ public class CrunchFactory extends URLClassLoader {
 					if(p != null)
 					{
 						Logs.log("Loaded ImageJ Plugin: " + command.getTitle(), CrunchFactory.class);
-						jexCrunchables.put(command.getTitle(), p);
+						jexCrunchables().put(command.getTitle(), p);
 					}
 				}
 			}
@@ -272,7 +277,7 @@ public class CrunchFactory extends URLClassLoader {
 				@SuppressWarnings("unchecked")
 				JEXPluginInfo fullInfo = new JEXPluginInfo((PluginInfo<JEXPlugin>) pi);
 				JEXCrunchablePlugin crunchable = new JEXCrunchablePlugin(fullInfo);
-				jexCrunchables.put(crunchable.getName(), crunchable);
+				jexCrunchables().put(crunchable.getName(), crunchable);
 				Logs.log("Loaded internal JEXPlugin: " + pi.getName() + " - "+ pi.getClassName(), CrunchFactory.class);
 			}
 		}
@@ -287,7 +292,7 @@ public class CrunchFactory extends URLClassLoader {
 				try
 				{
 					JEXCrunchablePlugin crunchable = new JEXCrunchablePlugin(fullInfo);
-					jexCrunchables.put(crunchable.getName(), crunchable);
+					jexCrunchables().put(crunchable.getName(), crunchable);
 					Logs.log("Loaded external JEXPlugin: " + pi.getName() + " - "+ pi.getClassName(), CrunchFactory.class);
 				}
 				catch (Error e2)
@@ -311,7 +316,7 @@ public class CrunchFactory extends URLClassLoader {
 		try
 		{
 			// Get the native ExperimentalDataCrunch
-			JEXCrunchable result = jexCrunchables.get(functionName);
+			JEXCrunchable result = jexCrunchables().get(functionName);
 			
 			if(result == null)
 			{
@@ -418,7 +423,7 @@ public class CrunchFactory extends URLClassLoader {
 		TreeSet<String> result = new TreeSet<String>(new StringUtility());
 		// listOfCrunchers = getExperimentalDataCrunchers();
 		
-		for (JEXCrunchable c : jexCrunchables.values())
+		for (JEXCrunchable c : jexCrunchables().values())
 		{
 			String tb = c.getToolbox();
 			result.add(tb);
@@ -438,7 +443,7 @@ public class CrunchFactory extends URLClassLoader {
 		// HashMap<String,ExperimentalDataCrunch>();
 		TreeMap<String,JEXCrunchable> result = new TreeMap<String,JEXCrunchable>();
 		
-		for (JEXCrunchable c : jexCrunchables.values())
+		for (JEXCrunchable c : jexCrunchables().values())
 		{
 			if(c.getToolbox().equals(toolbox))
 			{

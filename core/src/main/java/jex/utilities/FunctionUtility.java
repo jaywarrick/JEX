@@ -2,9 +2,11 @@ package jex.utilities;
 
 import ij.ImagePlus;
 import ij.measure.Measurements;
+import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
+import ij.process.ShortProcessor;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -224,6 +226,67 @@ public class FunctionUtility {
 		}
 		ip.setPixels(pixels);
 		ip.resetMinAndMax();
+	}
+	
+	/**
+	 * Untested at moment
+	 * @param ip
+	 * @param min
+	 * @param max
+	 */
+	public static void normalizeScaleShort(ShortProcessor ip, double min, double max)
+	{
+		double newMax = Math.pow(2, 16) - 1;
+		double ratio = newMax / (max - min);
+		int size = ip.getWidth() * ip.getHeight();
+		short[] pixels = (short[]) ip.getPixels();
+		double v;
+		for (int i = 0; i < size; i++)
+		{
+			v = pixels[i] - min;
+			if(v < 0.0)
+			{
+				v = 0.0;
+			}
+			v *= ratio;
+			if(v > newMax)
+			{
+				v = newMax;
+			}
+			pixels[i] = (short) v;
+		}
+		ip.setPixels(pixels);
+		ip.resetMinAndMax();
+	}
+	
+	/**
+	 * Untested at moment
+	 * @param ip
+	 * @param newMax
+	 * @param min
+	 * @param max
+	 */
+	public static void normalizeScaleByte(ByteProcessor ip, double newMax, double min, double max)
+	{
+		double ratio = newMax / (max - min);
+		int size = ip.getWidth() * ip.getHeight();
+		byte[] pixels = (byte[]) ip.getPixels();
+		int v;
+		for (int i = 0; i < size; i++)
+		{
+			v = (pixels[i]&0xff) - (int) min;
+			if(v < 0.0)
+			{
+				v = 0;
+			}
+			v *= ratio;
+			if(v > newMax)
+			{
+				v = (int) newMax;
+			}
+			pixels[i] = (byte) v;
+		}
+		ip.setPixels(pixels);
 	}
 	
 	public static void scaleFloat(FloatProcessor ip, double scale)

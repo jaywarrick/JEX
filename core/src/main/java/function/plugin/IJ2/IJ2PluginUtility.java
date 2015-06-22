@@ -10,6 +10,7 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.Vector;
 
+import logs.Logs;
 import net.imagej.ChannelCollection;
 import net.imagej.Dataset;
 import net.imagej.ImageJ;
@@ -44,22 +45,13 @@ public class IJ2PluginUtility {
 	public static final String DATASET = Dataset.class.getSimpleName(), IMAGEDISPLAY = ImageDisplay.class.getSimpleName(), STRING = String.class.getSimpleName(), FILE = String.class.getSimpleName(), OVERLAY = Overlay.class.getSimpleName();
 	public static final String ROISUFFIX = "_ROI";
 	
-	public static ImageJ ij = new ImageJ();
+	private static ImageJ ij = null;
 	
 	//	public static TreeMap<String,IJ2CrunchablePlugin> ijCommands = getIJ2Commands();
 	
-	static
-	{
-		final OptionsChannels opts = ij.options().getOptions(OptionsChannels.class);
-		ColorRGB black = new ColorRGB(0, 0, 0);
-		ColorRGB white = new ColorRGB(255, 255, 255);
-		opts.setFgValues(new ChannelCollection(white));
-		opts.setBgValues(new ChannelCollection(black));
-	}
-	
 	//	public static TreeMap<String,IJ2CrunchablePlugin> getIJ2Commands()
 	//	{
-	//		List<CommandInfo> commands = ij.command().getCommands();
+	//		List<CommandInfo> commands = ij().command().getCommands();
 	//		TreeMap<String,IJ2CrunchablePlugin> commandTree = new TreeMap<String,IJ2CrunchablePlugin>();
 	//		for (final CommandInfo command : commands)
 	//		{
@@ -79,6 +71,28 @@ public class IJ2PluginUtility {
 	//		}
 	//		return commandTree;
 	//	}
+	
+	public static ImageJ ij()
+	{
+		if(ij == null)
+		{
+			try
+			{
+				ij = new ImageJ();
+				final OptionsChannels opts = ij().options().getOptions(OptionsChannels.class);
+				ColorRGB black = new ColorRGB(0, 0, 0);
+				ColorRGB white = new ColorRGB(255, 255, 255);
+				opts.setFgValues(new ChannelCollection(white));
+				opts.setBgValues(new ChannelCollection(black));
+			}
+			catch(Exception e)
+			{
+				Logs.log("Couldn't instantiate the ImageJ instance. For some reason this seems to occur when old ImageJ is used before new ImageJ", IJ2PluginUtility.class);
+				e.printStackTrace();
+			}
+		}
+		return ij;
+	}
 	
 	public static ParameterSet getDefaultJEXParameters(CommandInfo command)
 	{
@@ -307,12 +321,12 @@ public class IJ2PluginUtility {
 					String path = images.get(map);
 					if(path != null)
 					{
-						if(ij.dataset().canOpen(path))
+						if(ij().dataset().canOpen(path))
 						{
 							Dataset d;
 							try
 							{
-								d = ij.dataset().open(path);
+								d = ij().dataset().open(path);
 								ret.add(item.getName());
 								ret.add(d);
 							}
@@ -347,19 +361,19 @@ public class IJ2PluginUtility {
 					}
 					if(path != null)
 					{
-						if(ij.dataset().canOpen(path))
+						if(ij().dataset().canOpen(path))
 						{
 							Dataset d;
 							try
 							{
-								d = ij.dataset().open(path);
-								ImageDisplay display = (ImageDisplay) ij.display().createDisplay(d);
-								ij.display().setActiveDisplay(display);
+								d = ij().dataset().open(path);
+								ImageDisplay display = (ImageDisplay) ij().display().createDisplay(d);
+								ij().display().setActiveDisplay(display);
 								if(ij2Roi != null)
 								{
 									List<Overlay> overlays = new Vector<Overlay>();
 									overlays.add(ij2Roi);
-									ij.overlay().addOverlays(display, overlays);
+									ij().overlay().addOverlays(display, overlays);
 									for (DataView view : display)
 									{
 										if(view instanceof OverlayView)

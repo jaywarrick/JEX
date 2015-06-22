@@ -293,7 +293,7 @@ public class IJ2CrunchablePlugin extends JEXCrunchable {
 		commandItems.addAll(commandInputs);
 		commandItems.addAll(commandParameters);
 		
-		Future<CommandModule> result = IJ2PluginUtility.ij.command().run(command, true, commandItems.toArray(new Object[] {}));
+		Future<CommandModule> result = IJ2PluginUtility.ij().command().run(command, true, commandItems.toArray(new Object[] {}));
 		CommandModule c = result.get();
 		Map<String,Object> cOutputs = c.getOutputs();
 		for (Entry<String,Object> e : cOutputs.entrySet())

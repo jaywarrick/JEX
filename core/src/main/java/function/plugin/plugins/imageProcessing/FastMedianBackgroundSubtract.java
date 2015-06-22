@@ -1,17 +1,9 @@
 package function.plugin.plugins.imageProcessing;
 
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DataReader.ImageReader;
-import Database.DataWriter.ImageWriter;
-import Database.SingleUserDatabase.JEXWriter;
-import function.plugin.mechanism.InputMarker;
-import function.plugin.mechanism.JEXPlugin;
-import function.plugin.mechanism.MarkerConstants;
-import function.plugin.mechanism.OutputMarker;
-import function.plugin.mechanism.ParameterMarker;
 import ij.ImagePlus;
+import ij.process.Blitter;
 import ij.process.FloatProcessor;
+import ij.process.ImageProcessor;
 
 import java.io.File;
 import java.util.TreeMap;
@@ -22,6 +14,17 @@ import jex.utilities.FunctionUtility;
 import org.scijava.plugin.Plugin;
 
 import tables.DimensionMap;
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DataReader.ImageReader;
+import Database.DataWriter.ImageWriter;
+import Database.SingleUserDatabase.JEXWriter;
+import function.plugin.mechanism.InputMarker;
+import function.plugin.mechanism.JEXPlugin;
+import function.plugin.mechanism.MarkerConstants;
+import function.plugin.mechanism.OutputMarker;
+import function.plugin.mechanism.ParameterMarker;
+import function.plugin.plugins.medianFilterHelpers.FastMedian;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions
@@ -34,14 +37,14 @@ import tables.DimensionMap;
 
 @Plugin(
 		type = JEXPlugin.class,
-		name="Adjust Image Intensities",
+		name="Fast Median Background Subtraction",
 		menuPath="Image Processing",
 		visible=true,
-		description="Adjust defined intensities in the original image to be new defined intensities, scaling all other intensities accordingly."
+		description="Fast median filter background subtraction that uses a square shaped kernal instead of round like ImageJ's filters. (~> 20 times faster)"
 		)
-public class AdjustImage extends JEXPlugin {
+public class FastMedianBackgroundSubtract extends JEXPlugin {
 
-	public AdjustImage()
+	public FastMedianBackgroundSubtract()
 	{}
 	
 	/////////// Define Inputs ///////////
@@ -51,23 +54,11 @@ public class AdjustImage extends JEXPlugin {
 	
 	/////////// Define Parameters ///////////
 	
-	@ParameterMarker(uiOrder=1, name="Old Min", description="Image Intensity Value", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
-	double oldMin;
+	@ParameterMarker(uiOrder=1, name="Kernal Width", description="Pixel width of the kernal", ui=MarkerConstants.UI_TEXTFIELD, defaultText="5")
+	int kernalWidth;
 	
-	@ParameterMarker(uiOrder=2, name="Old Max", description="Image Intensity Value", ui=MarkerConstants.UI_TEXTFIELD, defaultText="4095.0")
-	double oldMax;
-	
-	@ParameterMarker(uiOrder=3, name="New Min", description="Image Intensity Value", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
-	double newMin;
-	
-	@ParameterMarker(uiOrder=4, name="New Max", description="Image Intensity Value", ui=MarkerConstants.UI_TEXTFIELD, defaultText="65535.0")
-	double newMax;
-	
-	@ParameterMarker(uiOrder=5, name="Gamma", description="0.1-5.0, value of 1 results in no change", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1.0")
-	double gamma;
-	
-	@ParameterMarker(uiOrder=6, name="Output Bit Depth", description="Depth of the outputted image", ui=MarkerConstants.UI_DROPDOWN, choices={ "8", "16", "32" }, defaultChoice=1)
-	int bitDepth;
+	@ParameterMarker(uiOrder=1, name="Nominal Value to Add Back", description="Nominal value to add to all pixels after background subtraction because some image formats don't allow negative numbers.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="100")
+	double nominal;
 	
 	/////////// Define Outputs ///////////
 	
@@ -97,7 +88,11 @@ public class AdjustImage extends JEXPlugin {
 		for (DimensionMap map : imageMap.keySet())
 		{
 			// Call helper method
-			tempPath = saveAdjustedImage(imageMap.get(map), oldMin, oldMax, newMin, newMax, gamma, bitDepth);
+			ImageProcessor ip = (new ImagePlus(imageMap.get(map))).getProcessor();
+			ImageProcessor ip2 = FastMedian.process(ip, kernalWidth);
+			ip2.subtract(nominal);
+			ip.copyBits(ip2, 0, 0, Blitter.SUBTRACT);
+			tempPath = JEXWriter.saveImage(ip);
 			if(tempPath != null)
 			{
 				outputImageMap.put(map, tempPath);
