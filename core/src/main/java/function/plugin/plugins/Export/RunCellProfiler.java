@@ -14,13 +14,13 @@ import function.plugin.mechanism.ParameterMarker;
 @Plugin(
 		type = JEXPlugin.class,
 		name="CellProfiler",
-		menuPath="Export",
+		menuPath="CellProfiler",
 		visible=true,
 		description="Process images with CellProfiler"
 		)
-public class CellProfiler extends JEXPlugin {
+public class RunCellProfiler extends JEXPlugin {
 
-	public CellProfiler() {}
+	public RunCellProfiler() {}
 
 	/////////// Define Inputs ///////////
 
