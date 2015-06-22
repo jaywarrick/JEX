@@ -50,31 +50,22 @@ public class RunCellProfiler extends JEXPlugin {
 
 	/////////// Define Inputs ///////////
 
-//	@InputMarker(uiOrder=0, name="Images", type=MarkerConstants.TYPE_IMAGE, description="Images to send to CellProfiler.", optional=false)
-//	JEXData imageData;
+	@InputMarker(uiOrder=0, name="Image", type=MarkerConstants.TYPE_IMAGE, description="Image object to send to CellProfiler.", optional=false)
+	JEXData imageData;
 
 	/////////// Define Parameters ///////////
 	
 	@ParameterMarker(uiOrder=0, name="CellProfiler Executable", description="The CellProfiler.exe file", ui=MarkerConstants.UI_FILECHOOSER, defaultText="C:\\Program Files\\CellProfiler\\CellProfiler.exe")
 	String CPExecPath;
 	
-	@ParameterMarker(uiOrder=1, name="Image Directory", description="Directory in which to export image object", ui=MarkerConstants.UI_FILECHOOSER, defaultText="")
+	@ParameterMarker(uiOrder=1, name="Pipeline", description="CellProfiler Pipeline to be used", ui=MarkerConstants.UI_FILECHOOSER, defaultText="")
+	String pipelinePath;
+	
+	@ParameterMarker(uiOrder=2, name="Image Directory", description="Directory in which to export image object", ui=MarkerConstants.UI_FILECHOOSER, defaultText="")
 	String imageDirectory;
 	
-	@ParameterMarker(uiOrder=2, name="Output Directory", description="Location to export data from CellProfiler", ui=MarkerConstants.UI_FILECHOOSER, defaultText="")
+	@ParameterMarker(uiOrder=3, name="Output Directory", description="Location to export data from CellProfiler", ui=MarkerConstants.UI_FILECHOOSER, defaultText="")
 	String outputDirectory;
-
-//	@ParameterMarker(uiOrder=0, name="Pipeline", description="CellProfiler pipeline to be used", ui=MarkerConstants.UI_FILECHOOSER, defaultText="")
-//	String pipelinePath;
-//
-//	@ParameterMarker(uiOrder=1, name="CellProfiler Executable", description="The CellProfiler.exe file", ui=MarkerConstants.UI_FILECHOOSER, defaultText="C:\Program Files\CellProfiler\CellProfiler.exe")
-//	String CellProfilerPath;
-//
-//	@ParameterMarker(uiOrder=2, name="Image Folder", description="Location to export images to", ui=MarkerConstants.UI_FILECHOOSER, defaultText="")
-//	String imagePath;
-//
-//	@ParameterMarker(uiOrder=3, name="Output Folder", description="Where the CellProfiler output goes", ui=MarkerConstants.UI_FILECHOOSER, defaultText="")
-//	double outputPath;
 
 	/////////// Define Outputs ///////////
 
@@ -89,14 +80,17 @@ public class RunCellProfiler extends JEXPlugin {
 	@Override
 	public boolean run(JEXEntry optionalEntry) {
 		
-		try {
-			Runtime.getRuntime().exec("cmd /c start C:\\Users\\Tom\\Desktop\\ExampleHuman\\ExampleHuman.bat");
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		// TODO export image object to user specified folder
 		
-		return false;
+		// TODO generate a list of images from that image object to use for --file-list
+		
+		// TODO figure out where CellProfiler.exe is on system
+		
+		// TODO string together a command to send to cmd
+		
+		// TODO reroute pipeline back to JEX to import those newly generated tables and images
+		
+		return true;
 	}
 
 }
