@@ -55,8 +55,14 @@ public class RunCellProfiler extends JEXPlugin {
 
 	/////////// Define Parameters ///////////
 	
-	@ParameterMarker(uiOrder=0, name="Working Directory", description="Directory in which to export ", ui=MarkerConstants.UI_FILECHOOSER, defaultText="")
-	String workingDirectory;
+	@ParameterMarker(uiOrder=0, name="CellProfiler Executable", description="The CellProfiler.exe file", ui=MarkerConstants.UI_FILECHOOSER, defaultText="C:\\Program Files\\CellProfiler\\CellProfiler.exe")
+	String CPExecPath;
+	
+	@ParameterMarker(uiOrder=1, name="Image Directory", description="Directory in which to export image object", ui=MarkerConstants.UI_FILECHOOSER, defaultText="")
+	String imageDirectory;
+	
+	@ParameterMarker(uiOrder=2, name="Output Directory", description="Location to export data from CellProfiler", ui=MarkerConstants.UI_FILECHOOSER, defaultText="")
+	String outputDirectory;
 
 //	@ParameterMarker(uiOrder=0, name="Pipeline", description="CellProfiler pipeline to be used", ui=MarkerConstants.UI_FILECHOOSER, defaultText="")
 //	String pipelinePath;
