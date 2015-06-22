@@ -11,6 +11,23 @@ import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.MarkerConstants;
 import function.plugin.mechanism.ParameterMarker;
 
+/* HELPFUL CLASSES:
+ * ImageReader
+ * ImageWriter
+ * ScriptRepository.runSysCommand(String[] cmds)
+ */
+
+/*
+ * SPECIFICATIONS:
+ * Export image object to user specified folder
+ * Generate a list of images from that image object to use for --file-list
+ * Figure out where CellProfiler.exe is on system
+ * String together a command to send to cmd
+ * User specifies images path (images exported from JEX)
+ * User specified output path (tables and any images exported from CP)
+ * Reroute pipeline to JEX to import those newly generated tables and images
+ */
+
 @Plugin(
 		type = JEXPlugin.class,
 		name="CellProfiler",
