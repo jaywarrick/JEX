@@ -35,6 +35,15 @@ import function.plugin.mechanism.ParameterMarker;
 		visible=true,
 		description="Process images with CellProfiler"
 		)
+/**
+ * A function that takes a JEX image object and runs it through a CellProfiler 
+ * pipeline. Requires CellProfiler 2.1.2 and later because --file-list 
+ * command-line switch is needed (https://github.com/CellProfiler/CellProfiler/
+ * wiki/Adapting-CellProfiler-to-a-LIMS-environment)
+ * 
+ * @author Tom Huibregtse, June 2015
+ *
+ */
 public class RunCellProfiler extends JEXPlugin {
 
 	public RunCellProfiler() {}
@@ -45,6 +54,9 @@ public class RunCellProfiler extends JEXPlugin {
 //	JEXData imageData;
 
 	/////////// Define Parameters ///////////
+	
+	@ParameterMarker(uiOrder=0, name="Working Directory", description="Directory in which to export ", ui=MarkerConstants.UI_FILECHOOSER, defaultText="")
+	String workingDirectory;
 
 //	@ParameterMarker(uiOrder=0, name="Pipeline", description="CellProfiler pipeline to be used", ui=MarkerConstants.UI_FILECHOOSER, defaultText="")
 //	String pipelinePath;
