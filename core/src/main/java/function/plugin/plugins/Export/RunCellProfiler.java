@@ -1,11 +1,22 @@
 package function.plugin.plugins.Export;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Iterator;
+import java.util.List;
+import java.util.TreeMap;
 
+import jex.statics.JEXStatics;
+import logs.Logs;
+
+import org.apache.commons.io.FileUtils;
 import org.scijava.plugin.Plugin;
 
+import tables.DimensionMap;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
+import Database.DataReader.ImageReader;
 import function.plugin.mechanism.InputMarker;
 import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.MarkerConstants;
@@ -54,16 +65,16 @@ public class RunCellProfiler extends JEXPlugin {
 	JEXData imageData;
 
 	/////////// Define Parameters ///////////
-	
+
 	@ParameterMarker(uiOrder=0, name="CellProfiler Executable", description="The CellProfiler.exe file", ui=MarkerConstants.UI_FILECHOOSER, defaultText="C:\\Program Files\\CellProfiler\\CellProfiler.exe")
 	String CPExecPath;
-	
+
 	@ParameterMarker(uiOrder=1, name="Pipeline", description="CellProfiler Pipeline to be used", ui=MarkerConstants.UI_FILECHOOSER, defaultText="")
 	String pipelinePath;
-	
-	@ParameterMarker(uiOrder=2, name="Image Directory", description="Directory in which to export image object", ui=MarkerConstants.UI_FILECHOOSER, defaultText="")
-	String imageDirectory;
-	
+
+	@ParameterMarker(uiOrder=2, name="Temporary Directory", description="Directory in which to export image object", ui=MarkerConstants.UI_FILECHOOSER, defaultText="")
+	String tempDirectory;
+
 	@ParameterMarker(uiOrder=3, name="Output Directory", description="Location to export data from CellProfiler", ui=MarkerConstants.UI_FILECHOOSER, defaultText="")
 	String outputDirectory;
 
@@ -79,17 +90,68 @@ public class RunCellProfiler extends JEXPlugin {
 
 	@Override
 	public boolean run(JEXEntry optionalEntry) {
+
+		// validate the input data
+		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
+		{
+			return false;
+		}
+
+		// TODO create the file list for --file-list command line switch
+		String[] imageList = ImageReader.readObjectToImagePathStack(imageData);
+
+		int count = 0, percentage = 0;
+
+		// Cancel the function as soon as possible if the user has hit the cancel button
+		// Perform this inside loops to check as often as possible.
+		if(this.isCanceled())
+		{
+			return false;
+		}
+		
+		JEXStatics.statusBar.setProgressPercentage(0);
+		
+		File pathFile = new File(tempDirectory);
+		if(!pathFile.isDirectory())
+		{
+			pathFile = pathFile.getParentFile();
+		}
+		
+		
+		File fileList = new File(pathFile.getAbsolutePath() + File.separator + "FileList.lsp");
+		PrintWriter fileListWriter = null;
+		try
+		{
+			fileListWriter = new PrintWriter(fileList);
+			
+			for (String imagePath: imageList) {
+				fileListWriter.println(imagePath);
+			}
+		}
+		catch (IOException e)
+		{
+			Logs.log("Couldn't copy the files to list.", this);
+			e.printStackTrace();
+		} finally {
+			fileListWriter.close();
+		}
+		
+		JEXStatics.statusBar.setProgressPercentage(100);
+		
+		
 		
 		// TODO export image object to user specified folder
-		
-		// TODO generate a list of images from that image object to use for --file-list
-		
-		// TODO figure out where CellProfiler.exe is on system
-		
+			// NO
+
+		// figure out where CellProfiler.exe is on system
+			// default is C:\Program Files\CellProfiler\CellProfiler.exe
+
 		// TODO string together a command to send to cmd
 		
+			
+
 		// TODO reroute pipeline back to JEX to import those newly generated tables and images
-		
+
 		return true;
 	}
 
