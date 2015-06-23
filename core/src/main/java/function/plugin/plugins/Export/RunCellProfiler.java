@@ -72,11 +72,14 @@ public class RunCellProfiler extends JEXPlugin {
 
 	@ParameterMarker(uiOrder=1, name="Pipeline", description="CellProfiler Pipeline to be used", ui=MarkerConstants.UI_FILECHOOSER, defaultText="C:\\Users\\Tom\\Desktop\\ExampleHuman\\ExampleHuman.cppipe")
 	String pipelinePath;
+	
+	@ParameterMarker(uiOrder=2, name="File List Directory", description="Directory in which to save the file list", ui=MarkerConstants.UI_FILECHOOSER, defaultText="C:\\Users\\Tom\\Desktop\\RunCellProfiler")
+	String fileListPath;
 
-	@ParameterMarker(uiOrder=2, name="Temporary Directory", description="Directory in which to export image object", ui=MarkerConstants.UI_FILECHOOSER, defaultText="C:\\Users\\Tom\\Desktop\\RunCellProfiler\\Temporary Directory")
-	String tempDirectory;
+	@ParameterMarker(uiOrder=3, name="Image Directory", description="Directory in which to export the image object", ui=MarkerConstants.UI_FILECHOOSER, defaultText="C:\\Users\\Tom\\Desktop\\RunCellProfiler\\Image Directory")
+	String imageDirectory;
 
-	@ParameterMarker(uiOrder=3, name="Output Directory", description="Location to export data from CellProfiler", ui=MarkerConstants.UI_FILECHOOSER, defaultText="C:\\Users\\Tom\\Desktop\\RunCellProfiler\\Output Directory")
+	@ParameterMarker(uiOrder=4, name="Output Directory", description="Directory in which to save data exported from CellProfiler", ui=MarkerConstants.UI_FILECHOOSER, defaultText="C:\\Users\\Tom\\Desktop\\RunCellProfiler\\Output Directory")
 	String outputDirectory;
 
 	/////////// Define Outputs ///////////
@@ -110,18 +113,11 @@ public class RunCellProfiler extends JEXPlugin {
 
 		JEXStatics.statusBar.setProgressPercentage(0);
 
-		File pathFile = new File(tempDirectory);
-		if(!pathFile.isDirectory())
-		{
-			pathFile = pathFile.getParentFile();
-		}
-
-
-		File fileList = new File(pathFile.getAbsolutePath() + File.separator + "FileList.lsp");
+		File imageFileList = new File(fileListPath + File.separator + "FileList.lsp");
 		PrintWriter fileListWriter = null;
 		try
 		{
-			fileListWriter = new PrintWriter(fileList);
+			fileListWriter = new PrintWriter(imageFileList);
 
 			for (String imagePath: imageList) {
 				fileListWriter.println(imagePath);
@@ -147,7 +143,7 @@ public class RunCellProfiler extends JEXPlugin {
 
 		// TODO string together a command and send to cmd
 		String [] cmds = {CPExecPath,"-c","-r","--file-list",
-				fileList.getAbsolutePath(),"-o",outputDirectory,"-p",
+				imageFileList.getAbsolutePath(),"-o",outputDirectory,"-p",
 				pipelinePath};
 
 		ScriptRepository.runSysCommand(cmds);
