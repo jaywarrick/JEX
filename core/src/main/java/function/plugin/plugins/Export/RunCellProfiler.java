@@ -13,6 +13,7 @@ import logs.Logs;
 import org.apache.commons.io.FileUtils;
 import org.scijava.plugin.Plugin;
 
+import rtools.ScriptRepository;
 import tables.DimensionMap;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
@@ -69,13 +70,13 @@ public class RunCellProfiler extends JEXPlugin {
 	@ParameterMarker(uiOrder=0, name="CellProfiler Executable", description="The CellProfiler.exe file", ui=MarkerConstants.UI_FILECHOOSER, defaultText="C:\\Program Files\\CellProfiler\\CellProfiler.exe")
 	String CPExecPath;
 
-	@ParameterMarker(uiOrder=1, name="Pipeline", description="CellProfiler Pipeline to be used", ui=MarkerConstants.UI_FILECHOOSER, defaultText="")
+	@ParameterMarker(uiOrder=1, name="Pipeline", description="CellProfiler Pipeline to be used", ui=MarkerConstants.UI_FILECHOOSER, defaultText="C:\\Users\\Tom\\Desktop\\ExampleHuman\\ExampleHuman.cppipe")
 	String pipelinePath;
 
-	@ParameterMarker(uiOrder=2, name="Temporary Directory", description="Directory in which to export image object", ui=MarkerConstants.UI_FILECHOOSER, defaultText="")
+	@ParameterMarker(uiOrder=2, name="Temporary Directory", description="Directory in which to export image object", ui=MarkerConstants.UI_FILECHOOSER, defaultText="C:\\Users\\Tom\\Desktop\\RunCellProfiler\\Temporary Directory")
 	String tempDirectory;
 
-	@ParameterMarker(uiOrder=3, name="Output Directory", description="Location to export data from CellProfiler", ui=MarkerConstants.UI_FILECHOOSER, defaultText="")
+	@ParameterMarker(uiOrder=3, name="Output Directory", description="Location to export data from CellProfiler", ui=MarkerConstants.UI_FILECHOOSER, defaultText="C:\\Users\\Tom\\Desktop\\RunCellProfiler\\Output Directory")
 	String outputDirectory;
 
 	/////////// Define Outputs ///////////
@@ -100,30 +101,28 @@ public class RunCellProfiler extends JEXPlugin {
 		// TODO create the file list for --file-list command line switch
 		String[] imageList = ImageReader.readObjectToImagePathStack(imageData);
 
-		int count = 0, percentage = 0;
-
 		// Cancel the function as soon as possible if the user has hit the cancel button
 		// Perform this inside loops to check as often as possible.
 		if(this.isCanceled())
 		{
 			return false;
 		}
-		
+
 		JEXStatics.statusBar.setProgressPercentage(0);
-		
+
 		File pathFile = new File(tempDirectory);
 		if(!pathFile.isDirectory())
 		{
 			pathFile = pathFile.getParentFile();
 		}
-		
-		
+
+
 		File fileList = new File(pathFile.getAbsolutePath() + File.separator + "FileList.lsp");
 		PrintWriter fileListWriter = null;
 		try
 		{
 			fileListWriter = new PrintWriter(fileList);
-			
+
 			for (String imagePath: imageList) {
 				fileListWriter.println(imagePath);
 			}
@@ -135,22 +134,34 @@ public class RunCellProfiler extends JEXPlugin {
 		} finally {
 			fileListWriter.close();
 		}
-		
-		JEXStatics.statusBar.setProgressPercentage(100);
-		
-		
-		
+
+		JEXStatics.statusBar.setProgressPercentage(50);
+
+
+
 		// TODO export image object to user specified folder
-			// NO
+		// NO
 
-		// figure out where CellProfiler.exe is on system
-			// default is C:\Program Files\CellProfiler\CellProfiler.exe
+		// TODO figure out where CellProfiler.exe is on system
+		// default is C:\Program Files\CellProfiler\CellProfiler.exe
 
-		// TODO string together a command to send to cmd
-		
-			
+		// TODO string together a command and send to cmd
+		String [] cmds = {CPExecPath,"-c","-r","--file-list",
+				fileList.getAbsolutePath(),"-o",outputDirectory,"-p",
+				pipelinePath};
 
+		ScriptRepository.runSysCommand(cmds);
+
+
+		JEXStatics.statusBar.setProgressPercentage(50);
 		// TODO reroute pipeline back to JEX to import those newly generated tables and images
+
+		// Cancel the function as soon as possible if the user has hit the cancel button
+		// Perform this inside loops to check as often as possible.
+		if(this.isCanceled())
+		{
+			return false;
+		}
 
 		return true;
 	}
