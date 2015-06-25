@@ -94,12 +94,18 @@ public class RunCellProfiler extends JEXPlugin {
 
 	@Override
 	public boolean run(JEXEntry optionalEntry) {
+		
+		JEXStatics.statusBar.setProgressPercentage(0);
 
 		// validate the input data
 		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
 		{
 			return false;
 		}
+		
+		// TODO export image object to user specified folder
+//		ImageReader.readObjectToImagePath(imageData);
+//		File imageOut = new File(imageDirectory);
 
 		// TODO create the file list for --file-list command line switch
 		String[] imageList = ImageReader.readObjectToImagePathStack(imageData);
@@ -110,8 +116,6 @@ public class RunCellProfiler extends JEXPlugin {
 		{
 			return false;
 		}
-
-		JEXStatics.statusBar.setProgressPercentage(0);
 
 		File imageFileList = new File(fileListPath + File.separator + "FileList.lsp");
 		PrintWriter fileListWriter = null;
@@ -131,12 +135,7 @@ public class RunCellProfiler extends JEXPlugin {
 			fileListWriter.close();
 		}
 
-		JEXStatics.statusBar.setProgressPercentage(50);
-
-
-
-		// TODO export image object to user specified folder
-		// NO
+		JEXStatics.statusBar.setProgressPercentage(25);
 
 		// TODO figure out where CellProfiler.exe is on system
 		// default is C:\Program Files\CellProfiler\CellProfiler.exe
