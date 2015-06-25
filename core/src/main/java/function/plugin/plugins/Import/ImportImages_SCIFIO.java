@@ -94,7 +94,7 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 	@Override
 	public int getMaxThreads()
 	{
-		return 10;
+		return 1;
 	}
 	
 	@Override
