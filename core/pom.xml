@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>io.github.jaywarrick</groupId>
 		<artifactId>pom-jex</artifactId>
-		<version>0.0.9-SNAPSHOT</version>
+		<version>0.0.9</version>
 	</parent>
 
 	<artifactId>jex-core</artifactId>
