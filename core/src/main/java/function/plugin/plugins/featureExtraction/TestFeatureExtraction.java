@@ -15,7 +15,6 @@ import io.scif.img.ImgOpener;
 import io.scif.img.SCIFIOImgPlus;
 
 import java.awt.Point;
-import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.util.List;
 import java.util.TreeMap;
@@ -159,7 +158,7 @@ public class TestFeatureExtraction extends JEXPlugin {
 		List<Pair<String, DoubleType>> results;
 		int count = 0, percentage = 0;
 
-		ImgOpener imgOpener = new ImgOpener(IJ2PluginUtility.ij.getContext());
+		ImgOpener imgOpener = new ImgOpener(IJ2PluginUtility.ij().getContext());
 
 		FirstOrderStatFeatureSet<IterableInterval<UnsignedShortType>> opFirstOrder = null;
 		GeometricFeatureSet opGeometric = null;
@@ -203,11 +202,11 @@ public class TestFeatureExtraction extends JEXPlugin {
 					{
 						if(zernike)
 						{
-							opZernike = IJ2PluginUtility.ij.op().op(ZernikeFeatureSet.class, (IterableInterval<UnsignedByteType>) mask, zernikeMagnitude, zernikePhase, zernikeMomentMin, zernikeMomentMax);
+							opZernike = IJ2PluginUtility.ij().op().op(ZernikeFeatureSet.class, (IterableInterval<UnsignedByteType>) mask, zernikeMagnitude, zernikePhase, zernikeMomentMin, zernikeMomentMax);
 						}
 						if(geometric)
 						{
-							opGeometric = IJ2PluginUtility.ij.op().op(GeometricFeatureSet.class, LabelRegion.class);
+							opGeometric = IJ2PluginUtility.ij().op().op(GeometricFeatureSet.class, LabelRegion.class);
 						}
 						firstMask = false;
 					}
@@ -252,22 +251,27 @@ public class TestFeatureExtraction extends JEXPlugin {
 
 						if(geometric)
 						{
-							results = opGeometric.getFeatureList(Regions.iterable(reg));
-							for(Pair<String, DoubleType> result : results)
-							{
-								DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getA());
-								newMap.put("Id", ""+p.id);
-								newMap.put("Label", ""+reg.getLabel());
-								outputStatMap.put(newMap, result.getB().get());
-							}
-							//							DimensionMap newMap = mapM.copyAndSet("Measurement=Area");
-							//							newMap.put("Label",""+reg.getLabel());
-							//							outputStatMap.put(newMap.copy(), (double)reg.size());
-							//							newMap.put("Measurement", "CenterOfMass.X");
-							//							outputStatMap.put(newMap.copy(), reg.getCenterOfMass().getDoublePosition(0));
-							//							newMap.put("Measurement", "CenterOfMass.Y");
-							//							outputStatMap.put(newMap, reg.getCenterOfMass().getDoublePosition(1));
-
+							//Polygon p = convertor.convert(reg, Polygon.class);
+							//Polygon poly = IJ2PluginUtility.ij().convert().convert(reg, Polygon.class);
+							//							if(poly.size() > 2)
+							//							{
+								results = opGeometric.getFeatureList(reg);
+								for(Pair<String, DoubleType> result : results)
+								{
+									DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getA());
+									newMap.put("Id", ""+p.id);
+									newMap.put("Label", ""+reg.getLabel());
+									outputStatMap.put(newMap, result.getB().get());
+								}
+								//							DimensionMap newMap = mapM.copyAndSet("Measurement=Area");
+								//							newMap.put("Label",""+reg.getLabel());
+								//							outputStatMap.put(newMap.copy(), (double)reg.size());
+								//							newMap.put("Measurement", "CenterOfMass.X");
+								//							outputStatMap.put(newMap.copy(), reg.getCenterOfMass().getDoublePosition(0));
+								//							newMap.put("Measurement", "CenterOfMass.Y");
+								//							outputStatMap.put(newMap, reg.getCenterOfMass().getDoublePosition(1));
+								//								}
+							
 						}
 						if(zernike)
 						{
@@ -303,26 +307,26 @@ public class TestFeatureExtraction extends JEXPlugin {
 						{
 							if(firstOrder)
 							{
-								opFirstOrder = IJ2PluginUtility.ij.op().op(FirstOrderStatFeatureSet.class, (IterableInterval<UnsignedShortType>) image);
+								opFirstOrder = IJ2PluginUtility.ij().op().op(FirstOrderStatFeatureSet.class, (IterableInterval<UnsignedShortType>) image);
 							}
 							if(haralick2D)
 							{
-								opHaralick2DHor = IJ2PluginUtility.ij.op().op(Haralick2DFeatureSet.class, (IterableInterval<UnsignedShortType>) image, haralickGrayLevels, haralickDistance, "HORIZONTAL");
-								opHaralick2DVer = IJ2PluginUtility.ij.op().op(Haralick2DFeatureSet.class, (IterableInterval<UnsignedShortType>) image, haralickGrayLevels, haralickDistance, "VERTICAL");
+								opHaralick2DHor = IJ2PluginUtility.ij().op().op(Haralick2DFeatureSet.class, (IterableInterval<UnsignedShortType>) image, haralickGrayLevels, haralickDistance, "HORIZONTAL");
+								opHaralick2DVer = IJ2PluginUtility.ij().op().op(Haralick2DFeatureSet.class, (IterableInterval<UnsignedShortType>) image, haralickGrayLevels, haralickDistance, "VERTICAL");
 								if(haralickNumDirections.equals("4"))
 								{
 									Logs.log("Running Haralick features in four directions...", this);
-									opHaralick2DDiag = IJ2PluginUtility.ij.op().op(Haralick2DFeatureSet.class, (IterableInterval<UnsignedShortType>) image, haralickGrayLevels, haralickDistance, "DIAGONAL");
-									opHaralick2DAntiDiag = IJ2PluginUtility.ij.op().op(Haralick2DFeatureSet.class, (IterableInterval<UnsignedShortType>) image, haralickGrayLevels, haralickDistance, "ANTIDIAGONAL");
+									opHaralick2DDiag = IJ2PluginUtility.ij().op().op(Haralick2DFeatureSet.class, (IterableInterval<UnsignedShortType>) image, haralickGrayLevels, haralickDistance, "DIAGONAL");
+									opHaralick2DAntiDiag = IJ2PluginUtility.ij().op().op(Haralick2DFeatureSet.class, (IterableInterval<UnsignedShortType>) image, haralickGrayLevels, haralickDistance, "ANTIDIAGONAL");
 								}							
 							}
 							if(histogram)
 							{
-								opHistogram = IJ2PluginUtility.ij.op().op(HistogramFeatureSet.class, (IterableInterval<UnsignedShortType>) image, histogramBins);
+								opHistogram = IJ2PluginUtility.ij().op().op(HistogramFeatureSet.class, (IterableInterval<UnsignedShortType>) image, histogramBins);
 							}
 							if(moments)
 							{
-								opMoments = IJ2PluginUtility.ij.op().op(ImageMomentsFeatureSet.class, (IterableInterval<UnsignedShortType>) image);
+								opMoments = IJ2PluginUtility.ij().op().op(ImageMomentsFeatureSet.class, (IterableInterval<UnsignedShortType>) image);
 							}
 						}
 
@@ -488,7 +492,7 @@ public class TestFeatureExtraction extends JEXPlugin {
 			if(wand.npoints > 0)
 			{
 				Roi roi = new PolygonRoi(wand.xpoints, wand.ypoints, wand.npoints, Roi.POLYGON); // The roi helps for using getLength() (DON'T USE Roi.TRACED_ROI., IT SCREWS UP THE Polygon OBJECTS!!!! Bug emailed to ImageJ folks)
-				Polygon poly = new Polygon(wand.xpoints, wand.ypoints, wand.npoints); // The polygon helps for using contains()
+				java.awt.Polygon poly = new java.awt.Polygon(wand.xpoints, wand.ypoints, wand.npoints); // The polygon helps for using contains()
 				Rectangle r = roi.getBounds();
 				m1 = new Vector<Double>();
 				pts = new PointList();
