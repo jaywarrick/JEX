@@ -41,6 +41,7 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.Vector;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -83,6 +84,7 @@ import function.CrunchFactory;
 import function.plugin.mechanism.JEXCrunchablePlugin;
 import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.JEXPluginInfo;
+import function.plugin.plugins.adhesion.LogFreqSweep;
 import function.singleCellAnalysis.SingleCellUtility;
 
 public class PointTester {// extends URLClassLoader {
@@ -94,10 +96,18 @@ public class PointTester {// extends URLClassLoader {
 	
 	public static void main(String[] args) throws Exception
 	{
-		double[] ret = calculateModes(new int[]{12,13,14});
-		for(double d : ret)
+		tryLogFreqSweep();
+	}
+	
+	public static void tryLogFreqSweep()
+	{
+		LogFreqSweep l = new LogFreqSweep(0.1, 0.1, 500.0);
+		
+		TreeSet<Integer> trueFrames = l.getTrueFrames(10000.0, 0.050, 30);
+		
+		for(Integer i : trueFrames)
 		{
-			System.out.println(d);
+			System.out.println(i);
 		}
 	}
 	
