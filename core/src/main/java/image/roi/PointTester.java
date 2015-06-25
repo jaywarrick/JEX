@@ -5,6 +5,7 @@ import function.plugin.IJ2.IJ2PluginUtility;
 import function.plugin.mechanism.JEXCrunchablePlugin;
 import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.JEXPluginInfo;
+import function.plugin.plugins.featureExtraction.ConnectedComponentsTest;
 import function.plugin.plugins.featureExtraction.FeatureUtils;
 import function.singleCellAnalysis.SingleCellUtility;
 import ij.ImagePlus;
@@ -72,7 +73,9 @@ import net.imagej.display.DataView;
 import net.imagej.display.ImageDisplay;
 import net.imagej.display.OverlayView;
 import net.imagej.ops.OpRef;
+import net.imagej.ops.features.geometric.helper.polygonhelper.RandomAccessibleIntervalToPolygonConverter;
 import net.imagej.ops.features.sets.FirstOrderStatFeatureSet;
+import net.imagej.ops.geometric.polygon.Polygon;
 import net.imagej.options.OptionsChannels;
 import net.imagej.overlay.Overlay;
 import net.imagej.overlay.RectangleOverlay;
@@ -155,14 +158,20 @@ public class PointTester {// extends URLClassLoader {
 
 	public static void main(String[] args) throws Exception
 	{		
-		tryOps3();
+		testCCA();
 	}
 
+	public static void testCCA()
+	{
+		ConnectedComponentsTest t = new ConnectedComponentsTest();
+		t.testTwoObjects();
+	}
+	
 	public static void tryCCA() throws ImgIOException
 	{
-		ImgOpener imgOpener = new ImgOpener(IJ2PluginUtility.ij.getContext());
+		ImgOpener imgOpener = new ImgOpener(IJ2PluginUtility.ij().getContext());
 		List<SCIFIOImgPlus < UnsignedByteType >> images = imgOpener.openImgs("/Users/jaywarrick/Pictures/TIFFS/MM/0_0_x0_y0_Channel395 X 455M_ImCol0_ImRow1_Z1.tif", new UnsignedByteType());
-		ImgLabeling<Integer, IntType> labeling = FeatureUtils.getConnectedComponents(images.get(0), true);
+		ImgLabeling<Integer, IntType> labeling = FeatureUtils.getConnectedComponents(images.get(0), false);
 		LabelRegions<Integer> regions = new LabelRegions<Integer>(labeling);
 		double[] pos = new double[images.get(0).numDimensions()];
 
@@ -170,8 +179,11 @@ public class PointTester {// extends URLClassLoader {
 		{
 			int id = region.getLabel();
 			region.getCenterOfMass().localize(pos);
-
-			Logs.log("" + id + " at " + pos[0] + "," + pos[1] + " - Size: " + region.size(), PointTester.class);
+			
+			RandomAccessibleIntervalToPolygonConverter convertor = new RandomAccessibleIntervalToPolygonConverter();
+			
+			Polygon poly = IJ2PluginUtility.ij().convert().convert(Regions.iterable(region), Polygon.class);
+			Logs.log("" + id + " at " + pos[0] + "," + pos[1] + " - Size: " + region.size() + " PolygonSize: " + poly.size(), PointTester.class);
 			Logs.log("Contains? " + contains(region, new Point(101,180)), PointTester.class);
 
 		}
@@ -179,7 +191,7 @@ public class PointTester {// extends URLClassLoader {
 
 		//		Img<UnsignedShortType> test = FeatureUtils.getConnectedComponentsImage(images.get(0), true);
 		//		
-		//		IJ2PluginUtility.ij.legacy().uiService().show(test);
+		//		IJ2PluginUtility.ij().legacy().uiService().show(test);
 		//		
 		//		Logs.log("Seems to have worked again", PointTester.class);
 		//		
@@ -215,7 +227,7 @@ public class PointTester {// extends URLClassLoader {
 	//	{
 	//		ImageJ ij = new ImageJ();
 	//		
-	//		ImgOpener imgOpener = new ImgOpener(IJ2PluginUtility.ij.getContext());
+	//		ImgOpener imgOpener = new ImgOpener(IJ2PluginUtility.ij().getContext());
 	//		
 	//		// open with ImgOpener. The type (e.g. ArrayImg, PlanarImg, CellImg) is
 	//		// automatically determined. For a small image that fits in memory, this
@@ -233,7 +245,7 @@ public class PointTester {// extends URLClassLoader {
 	////					LABELING.getIterableRegionOfInterest(i).getIterableIntervalOverROI(src);
 	////			
 	////			@SuppressWarnings("unchecked")
-	////			FirstOrderStatFeatureSet<Img<UnsignedShortType>> op = IJ2PluginUtility.ij.op().op(FirstOrderStatFeatureSet.class, view);
+	////			FirstOrderStatFeatureSet<Img<UnsignedShortType>> op = IJ2PluginUtility.ij().op().op(FirstOrderStatFeatureSet.class, view);
 	////			
 	////			for (final Entry<? extends OpRef,DoubleType> result : op.compute(images.get(0)).entrySet())
 	////			{
@@ -247,7 +259,7 @@ public class PointTester {// extends URLClassLoader {
 
 	public static void tryLabels() throws ImgIOException
 	{
-		ImgOpener imgOpener = new ImgOpener(IJ2PluginUtility.ij.getContext());
+		ImgOpener imgOpener = new ImgOpener(IJ2PluginUtility.ij().getContext());
 		// open with ImgOpener. The type (e.g. ArrayImg, PlanarImg, CellImg) is
 		// automatically determined. For a small image that fits in memory, this
 		// should open as an ArrayImg.
@@ -260,7 +272,7 @@ public class PointTester {// extends URLClassLoader {
 
 	public static < T extends RealType< T > & NativeType< T > > void tryOps2() throws ImgIOException
 	{
-		ImgOpener imgOpener = new ImgOpener(IJ2PluginUtility.ij.getContext());
+		ImgOpener imgOpener = new ImgOpener(IJ2PluginUtility.ij().getContext());
 
 		// open with ImgOpener. The type (e.g. ArrayImg, PlanarImg, CellImg) is
 		// automatically determined. For a small image that fits in memory, this
@@ -279,7 +291,7 @@ public class PointTester {// extends URLClassLoader {
 				Views.interval( images.get(0), new long[] { 200, 200 }, new long[]{ 500, 350 } );
 
 		@SuppressWarnings("unchecked")
-		FirstOrderStatFeatureSet<Img<UnsignedShortType>> op = IJ2PluginUtility.ij.op().op(FirstOrderStatFeatureSet.class, view);
+		FirstOrderStatFeatureSet<Img<UnsignedShortType>> op = IJ2PluginUtility.ij().op().op(FirstOrderStatFeatureSet.class, view);
 
 		for (final Entry<? extends OpRef,DoubleType> result : op.compute(images.get(0)).entrySet())
 		{
@@ -320,7 +332,7 @@ public class PointTester {// extends URLClassLoader {
 		TreeMap<Integer,Integer> idToLabelMap = new TreeMap<Integer,Integer>();
 		int count = 0, percentage = 0;
 
-		ImgOpener imgOpener = new ImgOpener(IJ2PluginUtility.ij.getContext());
+		ImgOpener imgOpener = new ImgOpener(IJ2PluginUtility.ij().getContext());
 
 		DirectoryManager.setHostDirectory("/Users/jaywarrick/Documents/JEX/Test");
 		
@@ -360,7 +372,7 @@ public class PointTester {// extends URLClassLoader {
 					if(true)
 					{
 						@SuppressWarnings("unchecked")
-						FirstOrderStatFeatureSet<IterableInterval<UnsignedByteType>> op = IJ2PluginUtility.ij.op().op(FirstOrderStatFeatureSet.class, (IterableInterval<UnsignedByteType>) mask);
+						FirstOrderStatFeatureSet<IterableInterval<UnsignedByteType>> op = IJ2PluginUtility.ij().op().op(FirstOrderStatFeatureSet.class, (IterableInterval<UnsignedByteType>) mask);
 						
 						for(IdPoint p : maxima.pointList)
 						{
