@@ -83,6 +83,12 @@
 			<artifactId>Auto_Threshold</artifactId>
 			<version>1.16.0</version>
 		</dependency>
+		
+		<!-- ImgLib2 dependencies -->
+		<dependency>
+			<groupId>net.imglib2</groupId>
+			<artifactId>imglib2-roi</artifactId>
+		</dependency>
 
 		<!-- ImageJ dependencies -->
 		<dependency>
