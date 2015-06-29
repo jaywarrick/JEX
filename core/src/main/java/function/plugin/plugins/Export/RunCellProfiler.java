@@ -145,7 +145,12 @@ public class RunCellProfiler extends JEXPlugin {
 				imageFileList.getAbsolutePath(),"-o",outputDirectory,"-p",
 				pipelinePath};
 
-		ScriptRepository.runSysCommand(cmds);
+		try {
+			Process p = Runtime.getRuntime().exec(cmds);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 
 		JEXStatics.statusBar.setProgressPercentage(50);
