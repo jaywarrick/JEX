@@ -76,8 +76,11 @@ public class TestFeatureExtraction extends JEXPlugin {
 	@InputMarker(uiOrder=1, name="Image", type=MarkerConstants.TYPE_IMAGE, description="Intensity images", optional=false)
 	JEXData imageData;
 
-	@InputMarker(uiOrder=1, name="Mask", type=MarkerConstants.TYPE_IMAGE, description="Mask images", optional=false)
-	JEXData maskData;
+	@InputMarker(uiOrder=1, name="Whole Cell Mask", type=MarkerConstants.TYPE_IMAGE, description="Mask images defining the whole cell (should NOT have channel dimension)", optional=false)
+	JEXData cellMaskData;
+	
+	@InputMarker(uiOrder=1, name="Masks to Measure", type=MarkerConstants.TYPE_IMAGE, description="Mask images (SHOULD have channel dimension)", optional=false)
+	JEXData measureMaskData;
 
 	@InputMarker(uiOrder=1, name="Maxima", type=MarkerConstants.TYPE_ROI, description="Maxima ROI", optional=false)
 	JEXData roiData;
@@ -149,7 +152,8 @@ public class TestFeatureExtraction extends JEXPlugin {
 	{
 
 		TreeMap<DimensionMap,String> imageMap = ImageReader.readObjectToImagePathTable(imageData);
-		TreeMap<DimensionMap,String> maskMap = ImageReader.readObjectToImagePathTable(maskData);
+		TreeMap<DimensionMap,String> cellMaskMap = ImageReader.readObjectToImagePathTable(cellMaskData);
+		TreeMap<DimensionMap,String> measureMaskMap = ImageReader.readObjectToImagePathTable(measureMaskData);
 		TreeMap<DimensionMap,ROIPlus> roiMap = RoiReader.readObjectToRoiMap(roiData);
 		TreeMap<DimensionMap,String> outputImageMap = new TreeMap<DimensionMap,String>();
 		TreeMap<DimensionMap,Double> outputStatMap = new TreeMap<DimensionMap,Double>();
@@ -179,7 +183,7 @@ public class TestFeatureExtraction extends JEXPlugin {
 		try
 		{						
 			// Loop over masks to then apply them to images
-			for (DimensionMap mapM : maskMap.keySet())
+			for (DimensionMap mapCell : cellMaskMap.keySet())
 			{
 				if(this.isCanceled())
 				{
@@ -187,9 +191,14 @@ public class TestFeatureExtraction extends JEXPlugin {
 					outputTable = FileWriter.makeFileObject("temp", null, tablePath);
 					return true;
 				}
-				List<SCIFIOImgPlus<UnsignedByteType>> masks = imgOpener.openImgs(maskMap.get(mapM), new UnsignedByteType());
+				
+				
+				
+				SCIFIOImgPlus<UnsignedByteType> cellMask = imgOpener.openImgs(measureMaskMap.get(mapCell), new UnsignedByteType()).get(0);
+				ImgLabeling<Integer,IntType> cellLabeling = FeatureUtils.getConnectedComponents(cellMask, connectedness.equals("4 Connected"));
+				LabelRegions<Integer> cellRegions = new LabelRegions<Integer>(cellLabeling);
 
-				for(Img<UnsignedByteType> mask : masks)
+				for(DimensionMap mapMeasure : measureMaskData.getDimTable().getMapIterator(mapCell))
 				{
 					if(this.isCanceled())
 					{
@@ -202,7 +211,7 @@ public class TestFeatureExtraction extends JEXPlugin {
 					{
 						if(zernike)
 						{
-							opZernike = IJ2PluginUtility.ij().op().op(ZernikeFeatureSet.class, (IterableInterval<UnsignedByteType>) mask, zernikeMagnitude, zernikePhase, zernikeMomentMin, zernikeMomentMax);
+							opZernike = IJ2PluginUtility.ij().op().op(ZernikeFeatureSet.class, (IterableInterval<UnsignedByteType>) cellMask, zernikeMagnitude, zernikePhase, zernikeMomentMin, zernikeMomentMax);
 						}
 						if(geometric)
 						{
@@ -212,12 +221,13 @@ public class TestFeatureExtraction extends JEXPlugin {
 					}
 
 					// Get the full labeling for the mask
-					ImgLabeling<Integer, IntType> labeling = FeatureUtils.getConnectedComponents(mask, true);
-					LabelRegions<Integer> regions = new LabelRegions<Integer>(labeling);
+					Img<UnsignedByteType> measureMask = imgOpener.openImgs(measureMaskMap.get(mapMeasure), new UnsignedByteType()).get(0);
+					ImgLabeling<Integer, IntType> measureLabeling = LabelRegionUtils.intersect(cellRegions, measureMask);
+					LabelRegions<Integer> measureRegions = new LabelRegions<Integer>(measureLabeling);
 
 					// Determine which labelings are the ones we want to keep by testing if our maxima of interest are contained.
-					ROIPlus maxima = roiMap.get(mapM);
-					for(LabelRegion<Integer> region : regions)
+					ROIPlus maxima = roiMap.get(mapCell);
+					for(LabelRegion<Integer> cellRegion : cellRegions)
 					{
 						for(IdPoint p : maxima.pointList)
 						{
@@ -227,9 +237,9 @@ public class TestFeatureExtraction extends JEXPlugin {
 								outputTable = FileWriter.makeFileObject("temp", null, tablePath);
 								return true;
 							}
-							if(contains(region, p))
+							if(contains(cellRegion, p))
 							{
-								idToLabelMap.put(p.id, region.getLabel());
+								idToLabelMap.put(p.id, cellRegion.getLabel());
 							}
 						}
 					}
@@ -243,7 +253,7 @@ public class TestFeatureExtraction extends JEXPlugin {
 							return true;
 						}
 
-						reg = regions.getLabelRegion(idToLabelMap.get(p.id));
+						reg = measureRegions.getLabelRegion(idToLabelMap.get(p.id));
 						if(reg == null)
 						{
 							continue;
@@ -258,7 +268,7 @@ public class TestFeatureExtraction extends JEXPlugin {
 								results = opGeometric.getFeatureList(reg);
 								for(Pair<String, DoubleType> result : results)
 								{
-									DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getA());
+									DimensionMap newMap = mapMeasure.copyAndSet("Measurement=" + result.getA());
 									newMap.put("Id", ""+p.id);
 									newMap.put("Label", ""+reg.getLabel());
 									outputStatMap.put(newMap, result.getB().get());
@@ -275,10 +285,10 @@ public class TestFeatureExtraction extends JEXPlugin {
 						}
 						if(zernike)
 						{
-							results = opZernike.getFeatureList(Regions.sample(reg, mask));
+							results = opZernike.getFeatureList(Regions.sample(reg, measureMask));
 							for(Pair<String, DoubleType> result : results)
 							{
-								DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getA());
+								DimensionMap newMap = mapMeasure.copyAndSet("Measurement=" + result.getA());
 								newMap.put("Id", ""+p.id);
 								newMap.put("Label", ""+reg.getLabel());
 								outputStatMap.put(newMap, result.getB().get());
@@ -339,7 +349,7 @@ public class TestFeatureExtraction extends JEXPlugin {
 								return true;
 							}
 
-							reg = regions.getLabelRegion(idToLabelMap.get(p.id));
+							reg = measureRegions.getLabelRegion(idToLabelMap.get(p.id));
 							if(reg == null)
 							{
 								continue;
@@ -350,7 +360,7 @@ public class TestFeatureExtraction extends JEXPlugin {
 								results = opFirstOrder.getFeatureList(Regions.sample(reg, image));
 								for(Pair<String, DoubleType> result : results)
 								{
-									DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getA());
+									DimensionMap newMap = mapMeasure.copyAndSet("Measurement=" + result.getA());
 									newMap.put("Id", ""+p.id);
 									newMap.put("Label", ""+reg.getLabel());
 									outputStatMap.put(newMap, result.getB().get());
@@ -361,7 +371,7 @@ public class TestFeatureExtraction extends JEXPlugin {
 								results = opHaralick2DHor.getFeatureList(Regions.sample(reg, image));
 								for(Pair<String, DoubleType> result : results)
 								{
-									DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getA() + "_Horizontal");
+									DimensionMap newMap = mapMeasure.copyAndSet("Measurement=" + result.getA() + "_Horizontal");
 									newMap.put("Id", ""+p.id);
 									newMap.put("Label", ""+reg.getLabel());
 									outputStatMap.put(newMap, result.getB().get());
@@ -375,7 +385,7 @@ public class TestFeatureExtraction extends JEXPlugin {
 								results = opHaralick2DVer.getFeatureList(Regions.sample(reg, image));
 								for(Pair<String, DoubleType> result : results)
 								{
-									DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getA() + "_Vertical");
+									DimensionMap newMap = mapMeasure.copyAndSet("Measurement=" + result.getA() + "_Vertical");
 									newMap.put("Id", ""+p.id);
 									newMap.put("Label", ""+reg.getLabel());
 									outputStatMap.put(newMap, result.getB().get());
@@ -391,7 +401,7 @@ public class TestFeatureExtraction extends JEXPlugin {
 									results = opHaralick2DDiag.getFeatureList(Regions.sample(reg, image));
 									for(Pair<String, DoubleType> result : results)
 									{
-										DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getA() + "_Diagonal");
+										DimensionMap newMap = mapMeasure.copyAndSet("Measurement=" + result.getA() + "_Diagonal");
 										newMap.put("Id", ""+p.id);
 										newMap.put("Label", ""+reg.getLabel());
 										outputStatMap.put(newMap, result.getB().get());
@@ -405,7 +415,7 @@ public class TestFeatureExtraction extends JEXPlugin {
 									results = opHaralick2DAntiDiag.getFeatureList(Regions.sample(reg, image));
 									for(Pair<String, DoubleType> result : results)
 									{
-										DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getA() + "_AntiDiagonal");
+										DimensionMap newMap = mapMeasure.copyAndSet("Measurement=" + result.getA() + "_AntiDiagonal");
 										newMap.put("Id", ""+p.id);
 										newMap.put("Label", ""+reg.getLabel());
 										outputStatMap.put(newMap, result.getB().get());
@@ -423,7 +433,7 @@ public class TestFeatureExtraction extends JEXPlugin {
 								List<Pair<String,LongType>> ret = opHistogram.getFeatureList(Regions.sample(reg, image));
 								for(Pair<String, LongType> result : ret)
 								{
-									DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getA());
+									DimensionMap newMap = mapMeasure.copyAndSet("Measurement=" + result.getA());
 									newMap.put("Id", ""+p.id);
 									newMap.put("Label", ""+reg.getLabel());
 									outputStatMap.put(newMap, (double) result.getB().get());
@@ -440,7 +450,7 @@ public class TestFeatureExtraction extends JEXPlugin {
 								results = opMoments.getFeatureList(Regions.sample(reg, image));
 								for(Pair<String, DoubleType> result : results)
 								{
-									DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getA());
+									DimensionMap newMap = mapMeasure.copyAndSet("Measurement=" + result.getA());
 									newMap.put("Id", ""+p.id);
 									newMap.put("Label", ""+reg.getLabel());
 									outputStatMap.put(newMap, result.getB().get());
