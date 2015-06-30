@@ -5,8 +5,9 @@ import function.plugin.IJ2.IJ2PluginUtility;
 import function.plugin.mechanism.JEXCrunchablePlugin;
 import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.JEXPluginInfo;
-import function.plugin.plugins.featureExtraction.ConnectedComponentsTest;
+import function.plugin.plugins.featureExtraction.ConnectedComponents;
 import function.plugin.plugins.featureExtraction.FeatureUtils;
+import function.plugin.plugins.featureExtraction.LabelRegionUtils;
 import function.singleCellAnalysis.SingleCellUtility;
 import ij.ImagePlus;
 import ij.gui.PolygonRoi;
@@ -161,10 +162,47 @@ public class PointTester {// extends URLClassLoader {
 		testCCA();
 	}
 
-	public static void testCCA()
+	public static void testCCA() throws ImgIOException
 	{
-		ConnectedComponentsTest t = new ConnectedComponentsTest();
-		t.testTwoObjects();
+		ImgOpener imgOpener = new ImgOpener(IJ2PluginUtility.ij().getContext());
+		List<SCIFIOImgPlus < UnsignedByteType >> outerImages = imgOpener.openImgs("/Users/jaywarrick/Pictures/TIFFS/Dot_50PixDia.tif", new UnsignedByteType());
+		//ImgLabeling<Integer, IntType> outerLabeling = FeatureUtils.getConnectedComponents(outerImages.get(0), true);
+		List<SCIFIOImgPlus < UnsignedByteType >> innerImages = imgOpener.openImgs("/Users/jaywarrick/Pictures/TIFFS/Dot_2.tif", new UnsignedByteType());
+		ImgLabeling<Integer, IntType> innerLabeling = FeatureUtils.getConnectedComponents(innerImages.get(0), true);
+		List<SCIFIOImgPlus < UnsignedByteType >> intersectionImages = imgOpener.openImgs("/Users/jaywarrick/Pictures/TIFFS/Dot_Intersection.tif", new UnsignedByteType());
+		ImgLabeling<Integer, IntType> intersectionLabeling = FeatureUtils.getConnectedComponents(intersectionImages.get(0), true);
+		
+		ImagePlus outer = new ImagePlus("/Users/jaywarrick/Pictures/TIFFS/Dot_50PixDia.tif");
+		ImagePlus inner = new ImagePlus("/Users/jaywarrick/Pictures/TIFFS/Dot_2.tif");
+		ConnectedComponents cc = new ConnectedComponents();
+		Img<IntType> backing = ArrayImgs.ints(new long[]{outer.getWidth(), outer.getHeight()});
+		Img<UnsignedByteType> outerImg = ImageJFunctions.wrapByte(outer);
+		Img<UnsignedByteType> innerImg = ImageJFunctions.wrapByte(inner);
+		ImageJFunctions.show(outerImg);
+		ImageJFunctions.show(innerImg);
+		ImgLabeling<Integer,IntType> outerLabeling = FeatureUtils.getConnectedComponents(outerImg, true);
+		LabelRegions<Integer> regions = new LabelRegions<Integer>(outerLabeling);
+		for(LabelRegion<Integer> region : regions)
+		{
+			Logs.log(""+region.size(), PointTester.class);
+		}
+		ImgLabeling<Integer,IntType> intersection = LabelRegionUtils.intersect(regions, innerImg);
+		regions = new LabelRegions<Integer>(innerLabeling);
+		for(LabelRegion<Integer> region : regions)
+		{
+			Logs.log(""+region.size(), PointTester.class);
+		}
+		regions = new LabelRegions<Integer>(intersection);
+		for(LabelRegion<Integer> region : regions)
+		{
+			Logs.log(""+region.size(), PointTester.class);
+		}
+		regions = new LabelRegions<Integer>(intersectionLabeling);
+		for(LabelRegion<Integer> region : regions)
+		{
+			Logs.log(""+region.size(), PointTester.class);
+		}
+		Logs.log("No errors anyway...", PointTester.class);
 	}
 	
 	public static void tryCCA() throws ImgIOException
