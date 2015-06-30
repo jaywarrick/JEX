@@ -5,7 +5,6 @@ import function.plugin.IJ2.IJ2PluginUtility;
 import function.plugin.mechanism.JEXCrunchablePlugin;
 import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.JEXPluginInfo;
-import function.plugin.plugins.featureExtraction.ConnectedComponentsTest;
 import function.plugin.plugins.featureExtraction.FeatureUtils;
 import function.singleCellAnalysis.SingleCellUtility;
 import ij.ImagePlus;
@@ -72,6 +71,9 @@ import net.imagej.ImageJ;
 import net.imagej.display.DataView;
 import net.imagej.display.ImageDisplay;
 import net.imagej.display.OverlayView;
+import net.imagej.operator.CalculatorOp;
+import net.imagej.operator.OpMax;
+import net.imagej.operator.OpMin;
 import net.imagej.ops.OpRef;
 import net.imagej.ops.features.geometric.helper.polygonhelper.RandomAccessibleIntervalToPolygonConverter;
 import net.imagej.ops.features.sets.FirstOrderStatFeatureSet;
@@ -81,6 +83,7 @@ import net.imagej.overlay.Overlay;
 import net.imagej.overlay.RectangleOverlay;
 import net.imglib2.Cursor;
 import net.imglib2.IterableInterval;
+import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayCursor;
@@ -90,6 +93,8 @@ import net.imglib2.img.basictypeaccess.array.ByteArray;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.meta.CalibratedAxis;
 import net.imglib2.meta.ImgPlus;
+import net.imglib2.ops.pointset.HyperVolumePointSet;
+import net.imglib2.ops.pointset.PointSetIterator;
 import net.imglib2.roi.EllipseRegionOfInterest;
 import net.imglib2.roi.Regions;
 import net.imglib2.roi.labeling.ImgLabeling;
@@ -158,15 +163,65 @@ public class PointTester {// extends URLClassLoader {
 
 	public static void main(String[] args) throws Exception
 	{		
-		testCCA();
+		testAndOp();
 	}
 
-	public static void testCCA()
+	public static <U extends RealType<U>,V extends RealType<V>> void testAndOp() throws ImgIOException
 	{
-		ConnectedComponentsTest t = new ConnectedComponentsTest();
-		t.testTwoObjects();
+		ImgOpener imgOpener = new ImgOpener(IJ2PluginUtility.ij().getContext());
+		Img<U> img1 = (Img<U>) imgOpener.openImgs("J:\\Test Set\\Test Set 1\\0_0_x0_y0_Channel395 X 455M_ImCol0_ImRow0_Z1.tif").get(0);
+		Img<V> img2 = (Img<V>) imgOpener.openImgs("J:\\Test Set\\Test Set 1\\0_0_x0_y0_Channel560 X 607 M_ImCol0_ImRow0_Z1.tif").get(0);
+		CalculatorOp<U,V> andOp = new OpMin<U,V>();
+		CalculatorOp<U,V> orOp = new OpMax();
+		Img<DoubleType> result = IJ2PluginUtility.ij().calculator().combine(img1, img2, andOp);
+		
+//		ImageJFunctions.show(result);
+
+//		ImagePlus im = ImageJFunctions.wrapFloat(result, "final");
+//		ByteProcessor imp = (ByteProcessor) im.getProcessor().convertToByte(false);
+		//JEXWriter.saveImage(imp);
+//		im.setProcessor(imp);
+//		im.show();
+
+//				Img<U> convertedResults1 = IJ2PluginUtility.ij().convert().convert(result, ((Img<U>)img1)..getType());
+		//		ImageJFunctions.show(convertedResults1);
+		//		
+		long[] dims = new long[result.numDimensions()];
+		result.dimensions(dims);
+		Img<UnsignedByteType> convertedResults2 = ArrayImgs.unsignedBytes(dims);
+		//		ImageJFunctions.
+		////		Plane p = new Plane();
+		//byte[] converted = (byte[]) DataTools.makeDataArray(convertedResults2..getBytes(), 1, false, d.isLittleEndian());
+		//ip = new ByteProcessor((int)dims[0], (int)dims[1], converted, null);
+
+		PointTester.copyDataInto(convertedResults2, result, dims);
+
+		Logs.log("Yay", PointTester.class);
 	}
-	
+
+	private static void copyDataInto(final Img<? extends RealType<?>> out,
+			final Img<? extends RealType<?>> in, final long[] span)
+	{
+		final RandomAccess<? extends RealType<?>> src = in.randomAccess();
+		final RandomAccess<? extends RealType<?>> dst = out.randomAccess();
+		final HyperVolumePointSet ps = new HyperVolumePointSet(span);
+		final PointSetIterator iter = ps.iterator();
+		long[] pos = null;
+		while (iter.hasNext()) {
+			pos = iter.next();
+			src.setPosition(pos);
+			dst.setPosition(pos);
+			final double value = src.get().getRealDouble();
+			dst.get().setReal(value);
+		}
+	}
+
+	//	public static void testCCA()
+	//	{
+	//		ConnectedComponentsTest t = new ConnectedComponentsTest();
+	//		t.testTwoObjects();
+	//	}
+
 	public static void tryCCA() throws ImgIOException
 	{
 		ImgOpener imgOpener = new ImgOpener(IJ2PluginUtility.ij().getContext());
@@ -179,9 +234,9 @@ public class PointTester {// extends URLClassLoader {
 		{
 			int id = region.getLabel();
 			region.getCenterOfMass().localize(pos);
-			
+
 			RandomAccessibleIntervalToPolygonConverter convertor = new RandomAccessibleIntervalToPolygonConverter();
-			
+
 			Polygon poly = IJ2PluginUtility.ij().convert().convert(Regions.iterable(region), Polygon.class);
 			Logs.log("" + id + " at " + pos[0] + "," + pos[1] + " - Size: " + region.size() + " PolygonSize: " + poly.size(), PointTester.class);
 			Logs.log("Contains? " + contains(region, new Point(101,180)), PointTester.class);
@@ -300,7 +355,7 @@ public class PointTester {// extends URLClassLoader {
 		Logs.log("\n\n", PointTester.class);
 
 	}
-	
+
 	public static TreeMap<String,JEXData> getJEXData()
 	{
 		JEXData maskData = new JEXData(JEXData.IMAGE, "Mask");
@@ -309,21 +364,21 @@ public class PointTester {// extends URLClassLoader {
 		JEXDataIO.loadJXD(imageData, "/Users/jaywarrick/Documents/JEX/Feature Extraction/Dataset Name/Cell_x0_y0/Image-Image/x0_y0.jxd");
 		JEXData roiData = new JEXData(JEXData.ROI, "Maxima");
 		JEXDataIO.loadJXD(roiData, "/Users/jaywarrick/Documents/JEX/Feature Extraction/Dataset Name/Cell_x0_y0/Roi-Maxima/x0_y0.jxd");
-		
+
 		TreeMap<String,JEXData> ret = new TreeMap<String,JEXData>();
 		ret.put("Mask", maskData);
 		ret.put("Image", imageData);
 		ret.put("Maxima", roiData);
-		
+
 		return ret;
 	}
 
 	public static void tryOps3()
 	{
 		JEXStatics.statusBar = new StatusBar();
-		
+
 		TreeMap<String,JEXData> data = getJEXData();
-		
+
 		TreeMap<DimensionMap,String> imageMap = ImageReader.readObjectToImagePathTable(data.get("Image"));
 		TreeMap<DimensionMap,String> maskMap = ImageReader.readObjectToImagePathTable(data.get("Mask"));
 		TreeMap<DimensionMap,ROIPlus> roiMap = RoiReader.readObjectToRoiMap(data.get("Maxima"));
@@ -335,22 +390,22 @@ public class PointTester {// extends URLClassLoader {
 		ImgOpener imgOpener = new ImgOpener(IJ2PluginUtility.ij().getContext());
 
 		DirectoryManager.setHostDirectory("/Users/jaywarrick/Documents/JEX/Test");
-		
+
 		try
 		{						
 			// Loop through the items in the n-Dimensional object
 			for (DimensionMap mapM : maskMap.keySet())
 			{
 				List<SCIFIOImgPlus<UnsignedByteType>> masks = imgOpener.openImgs(maskMap.get(mapM), new UnsignedByteType());
-				
+
 				for(Img<UnsignedByteType> mask : masks)
 				{
 					ImageJFunctions.show(mask);
-					
+
 					// Get the full labeling for the mask
 					ImgLabeling<Integer, IntType> labeling = FeatureUtils.getConnectedComponents(mask, true);
 					LabelRegions<Integer> regions = new LabelRegions<Integer>(labeling);
-					
+
 					// Determine which labelings are the ones we want to keep by testing if our maxima of interest are contained.
 					ROIPlus maxima = roiMap.get(mapM);
 					for(LabelRegion<Integer> region : regions)
@@ -362,18 +417,18 @@ public class PointTester {// extends URLClassLoader {
 								idToLabelMap.put(p.id, region.getLabel());
 							}
 						}
-						
+
 					}
-					
+
 					// Now we have the regions we want to quantify
-					
-					
+
+
 					// For now just try to get the first order stats of the MASK image
 					if(true)
 					{
 						@SuppressWarnings("unchecked")
 						FirstOrderStatFeatureSet<IterableInterval<UnsignedByteType>> op = IJ2PluginUtility.ij().op().op(FirstOrderStatFeatureSet.class, (IterableInterval<UnsignedByteType>) mask);
-						
+
 						for(IdPoint p : maxima.pointList)
 						{
 							LabelRegion<Integer> region = regions.getLabelRegion(idToLabelMap.get(p.id));
@@ -387,23 +442,23 @@ public class PointTester {// extends URLClassLoader {
 								outputStatMap.put(newMap, (double) 	region.size());
 							}
 						}
-						
-						
+
+
 					}
-					
+
 				}
-				
+
 			}
-			
+
 			String tablePath = JEXTableWriter.writeTable("FirstOrderStats", outputStatMap);
-			
+
 			try {
 				FileUtility.openFileDefaultApplication(tablePath);
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			
+
 		}
 		catch (ImgIOException e)
 		{
