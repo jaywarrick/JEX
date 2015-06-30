@@ -19,7 +19,7 @@ import function.plugin.plugins.featureExtraction.ConnectedComponents.Structuring
  */
 public class FeatureUtils {
 	
-	public static <T extends IntegerType< T >> ImgLabeling<Integer, IntType> getConnectedComponents(Img< T > inputImg, boolean fourConnected)
+	public static <I extends IntegerType< I >> ImgLabeling<Integer, IntType> getConnectedComponents(Img< I > inputImg, boolean fourConnected)
 	{
 		StructuringElement se = null;
 		if(fourConnected)
@@ -40,7 +40,7 @@ public class FeatureUtils {
 		return labeling;
 	}
 	
-	public static <T extends IntegerType< T >> Img< UnsignedShortType > getConnectedComponentsImage(Img< T > inputImg, boolean fourConnected)
+	public static <I extends IntegerType< I >> Img< UnsignedShortType > getConnectedComponentsImage(Img< I > inputImg, boolean fourConnected)
 	{
 		StructuringElement se = null;
 		if(fourConnected)
@@ -62,30 +62,4 @@ public class FeatureUtils {
 	}
 }
 
-class LabelGenerator implements Iterator<Integer>
-{
-	private int current = -1;
 
-	@Override
-	public boolean hasNext()
-	{
-		if(current < Integer.MAX_VALUE-1)
-		{
-			return true;
-		}
-		return false;
-	}
-	
-	@Override
-	public Integer next()
-	{
-		current = current + 1;
-		return current;
-	}
-	
-	@Override
-	public void remove()
-	{
-		// Do nothing
-	}
-}

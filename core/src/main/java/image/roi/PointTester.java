@@ -5,7 +5,9 @@ import function.plugin.IJ2.IJ2PluginUtility;
 import function.plugin.mechanism.JEXCrunchablePlugin;
 import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.JEXPluginInfo;
+import function.plugin.plugins.featureExtraction.ConnectedComponents;
 import function.plugin.plugins.featureExtraction.FeatureUtils;
+import function.plugin.plugins.featureExtraction.LabelRegionUtils;
 import function.singleCellAnalysis.SingleCellUtility;
 import ij.ImagePlus;
 import ij.gui.PolygonRoi;
@@ -136,29 +138,6 @@ public class PointTester {// extends URLClassLoader {
 	//		LegacyInjector.preinit();
 	//	}
 
-	//	public PointTester() throws ImgIOException
-	//	{
-	//		ImageJ ij = new ImageJ();
-	//		
-	//		ij.ui().showUI();
-	//		// open file as float with ImgOpener
-	//		Img< FloatType > img =
-	//				new ImgOpener(ij.getContext()).openImgs( "/Users/jaywarrick/Downloads/Dot_Blot.tif", new FloatType() ).get(0);
-	//		
-	//		// display image
-	//		ImageJFunctions.show( img );
-	//		
-	//		// use a View to define an interval (min and max coordinate, inclusive) to display
-	//		RandomAccessibleInterval< FloatType > view =
-	//				Views.interval( img, new long[] { 200, 200 }, new long[]{ 500, 350 } );
-	//		
-	//		// display only the part of the Img
-	//		ImageJFunctions.show( view );
-	//		
-	//		// or the same area rotated by 90 degrees (x-axis (0) and y-axis (1) switched)
-	//		ImageJFunctions.show( Views.rotate( view, 0, 1 ) );
-	//	}
-
 	protected static final long SEED = 1234567890L;
 
 	public static void main(String[] args) throws Exception
@@ -214,6 +193,49 @@ public class PointTester {// extends URLClassLoader {
 			final double value = src.get().getRealDouble();
 			dst.get().setReal(value);
 		}
+	}
+	
+	public static void testCCA() throws ImgIOException
+	{
+		ImgOpener imgOpener = new ImgOpener(IJ2PluginUtility.ij().getContext());
+		List<SCIFIOImgPlus < UnsignedByteType >> outerImages = imgOpener.openImgs("/Users/jaywarrick/Pictures/TIFFS/Dot_50PixDia.tif", new UnsignedByteType());
+		//ImgLabeling<Integer, IntType> outerLabeling = FeatureUtils.getConnectedComponents(outerImages.get(0), true);
+		List<SCIFIOImgPlus < UnsignedByteType >> innerImages = imgOpener.openImgs("/Users/jaywarrick/Pictures/TIFFS/Dot_2.tif", new UnsignedByteType());
+		ImgLabeling<Integer, IntType> innerLabeling = FeatureUtils.getConnectedComponents(innerImages.get(0), true);
+		List<SCIFIOImgPlus < UnsignedByteType >> intersectionImages = imgOpener.openImgs("/Users/jaywarrick/Pictures/TIFFS/Dot_Intersection.tif", new UnsignedByteType());
+		ImgLabeling<Integer, IntType> intersectionLabeling = FeatureUtils.getConnectedComponents(intersectionImages.get(0), true);
+		
+		ImagePlus outer = new ImagePlus("/Users/jaywarrick/Pictures/TIFFS/Dot_50PixDia.tif");
+		ImagePlus inner = new ImagePlus("/Users/jaywarrick/Pictures/TIFFS/Dot_2.tif");
+		ConnectedComponents cc = new ConnectedComponents();
+		Img<IntType> backing = ArrayImgs.ints(new long[]{outer.getWidth(), outer.getHeight()});
+		Img<UnsignedByteType> outerImg = ImageJFunctions.wrapByte(outer);
+		Img<UnsignedByteType> innerImg = ImageJFunctions.wrapByte(inner);
+		ImageJFunctions.show(outerImg);
+		ImageJFunctions.show(innerImg);
+		ImgLabeling<Integer,IntType> outerLabeling = FeatureUtils.getConnectedComponents(outerImg, true);
+		LabelRegions<Integer> regions = new LabelRegions<Integer>(outerLabeling);
+		for(LabelRegion<Integer> region : regions)
+		{
+			Logs.log(""+region.size(), PointTester.class);
+		}
+		ImgLabeling<Integer,IntType> intersection = LabelRegionUtils.intersect(regions, innerImg);
+		regions = new LabelRegions<Integer>(innerLabeling);
+		for(LabelRegion<Integer> region : regions)
+		{
+			Logs.log(""+region.size(), PointTester.class);
+		}
+		regions = new LabelRegions<Integer>(intersection);
+		for(LabelRegion<Integer> region : regions)
+		{
+			Logs.log(""+region.size(), PointTester.class);
+		}
+		regions = new LabelRegions<Integer>(intersectionLabeling);
+		for(LabelRegion<Integer> region : regions)
+		{
+			Logs.log(""+region.size(), PointTester.class);
+		}
+		Logs.log("No errors anyway...", PointTester.class);
 	}
 
 	//	public static void testCCA()
