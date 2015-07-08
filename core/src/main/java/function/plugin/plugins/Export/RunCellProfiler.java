@@ -147,6 +147,7 @@ public class RunCellProfiler extends JEXPlugin {
 
 		try {
 			Process p = Runtime.getRuntime().exec(cmds);
+			p.waitFor();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
