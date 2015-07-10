@@ -16,10 +16,12 @@ import java.util.TreeSet;
 import jex.statics.JEXStatics;
 import logs.Logs;
 import miscellaneous.FileUtility;
+import miscellaneous.LSVList;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.Definition.TypeName;
 import Database.SingleUserDatabase.JEXWriter;
+
 
 public class TransferableTypeName implements Transferable {
 	
@@ -61,13 +63,16 @@ public class TransferableTypeName implements Transferable {
 			for(JEXEntry e : entries)
 			{
 				// Get the object with matching type name
+				JEXData d = e.getData(tn); 
 				
-				TypeName typeName = tn; // put right variable in for "typeName"
-				JEXData d = e.getData(typeName); 
-				// Put together the absolute path
+				// Put together the absolute path of the object's database directory
 				String dirPath = FileUtility.getFileParent(JEXWriter.getDatabaseFolder() + File.separator + d.getDetachedRelativePath());
-				// Compile a single string with dir1 + File.pathSeparator + dir2 + File.separator ...
-				CompleteObjectDirList = CompleteObjectDirList + dirPath+ "\n";
+				
+				// Compile a single string with dir1 + File.pathSeparator + dir2 + File.separator ... that includes every file in the directory (including subfolders)
+				File[] files = new File(dirPath).listFiles();
+				LSVList pathList = (LSVList) FileUtility.getAllAbsoluteFilePaths(files, new LSVList());
+				
+				CompleteObjectDirList += pathList.toString() + "\n";
 			}
 			Logs.log("Transfering string value " + tn.toString(), 1, this);
 			String result = CompleteObjectDirList; // Change what we return...
