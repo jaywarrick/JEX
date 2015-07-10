@@ -473,4 +473,27 @@ public class FileUtility implements Comparator<File> {
 		}
 		return (desiredPrefix + count + "_" + currentName);
 	}
+	
+	/**
+	 * Gets the absolute paths of all files within a File array and adds them 
+	 * to a LSVList of absolute paths. Recursively searches through all 
+	 * sub-directories of a directory.
+	 * 
+	 * @param files a File list
+	 * @param list a LSVList of absolute paths
+	 * @return a LSVList of absolute paths
+	 */
+	public static SVList getAllAbsoluteFilePaths(File[] files, SVList list) {
+		for (File file: files) {
+			if (file.isDirectory()) {
+				getAllAbsoluteFilePaths(file.listFiles(), list);
+			}
+			else {
+				list.append(file.getAbsolutePath());
+			}
+		}
+		
+		
+		return list;
+	}
 }
