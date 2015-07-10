@@ -488,7 +488,7 @@ public class FileUtility implements Comparator<File> {
 			if (file.isDirectory()) {
 				getAllAbsoluteFilePaths(file.listFiles(), list);
 			}
-			else {
+			else if (!file.getAbsolutePath().contains(".jxd")){
 				list.append(file.getAbsolutePath());
 			}
 		}
