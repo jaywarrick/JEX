@@ -1,4 +1,4 @@
-package function.plugin.plugins.Export;
+package function.plugin.plugins.CellProfiler;
 
 import java.io.File;
 import java.io.IOException;
