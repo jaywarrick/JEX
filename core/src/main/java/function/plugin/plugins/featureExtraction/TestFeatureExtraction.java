@@ -120,7 +120,7 @@ public class TestFeatureExtraction extends JEXPlugin {
 	@ParameterMarker(uiOrder=7, name="Haralick Co-Occurrence Matrix Distance", description="Distance at which to compute the co-occurrence matrix", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
 	double haralickDistance;
 
-	@ParameterMarker(uiOrder=8, name="Number of Haralick Directions", description="(Orthogonals and Diagonals etc) 2 performs horizontal and vertical. 4 adds the 2 diagonals as well.", ui=MarkerConstants.UI_DROPDOWN, choices={"2", "4"}, defaultChoice=2)
+	@ParameterMarker(uiOrder=8, name="Number of Haralick Directions", description="(Orthogonals and Diagonals etc) 2 performs horizontal and vertical. 4 adds the 2 diagonals as well.", ui=MarkerConstants.UI_DROPDOWN, choices={"2", "4"}, defaultChoice=1)
 	String haralickNumDirections;
 
 	@ParameterMarker(uiOrder=9, name="** Compute Histogram Stats?", description="Whether to quantify histogram statistics", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
