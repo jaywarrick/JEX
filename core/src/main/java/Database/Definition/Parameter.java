@@ -1,5 +1,6 @@
 package Database.Definition;
 
+import logs.Logs;
 import miscellaneous.ArrayUtility;
 
 public class Parameter {
@@ -111,14 +112,19 @@ public class Parameter {
 		this.type = type;
 		this.options = options;
 		this.defaultOption = defaultOption;
-		if(options.length >= defaultOption)
+		if(defaultOption >= options.length)
 		{
-			this.result = options[defaultOption];
+			Logs.log("Default option is an invalid index... Num options = " + options.length + ", Default Index (0 is first index) = " + defaultOption, this);
+			this.result = options[options.length-1];
+		}
+		else if(defaultOption < 0)
+		{
+			Logs.log("Default option is an invalid index... Num options = " + options.length + ", Default Index (0 is first index) = " + defaultOption, this);
+			this.result = options[0];
 		}
 		else
 		{
-			this.defaultOption = 0;
-			this.result = options[0];
+			this.result = options[defaultOption];
 		}
 	}
 	
