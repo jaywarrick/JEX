@@ -228,6 +228,10 @@ public class JEX_StackProjection extends JEXCrunchable {
 			{
 				for (int i = 0; i <= dimToProject.size() - slidingWindowSize; i++)
 				{
+					if(this.isCanceled())
+					{
+						return false;
+					}
 					List<DimensionMap> stackMaps = this.getSomeStackMaps(map, dimToProject, slidingWindowSize, i);
 					ImagePlus stackToProject = ImageReader.readSomeOfObjectToVirtualStack(imageData, stackMaps);
 					bitDepth = stackToProject.getBitDepth();
@@ -243,6 +247,10 @@ public class JEX_StackProjection extends JEXCrunchable {
 			}
 			else
 			{
+				if(this.isCanceled())
+				{
+					return false;
+				}
 				List<DimensionMap> stackMaps = this.getAllStackMaps(map, dimToProject);
 				ImagePlus stackToProject = ImageReader.readSomeOfObjectToVirtualStack(imageData, stackMaps);
 				bitDepth = stackToProject.getBitDepth();
