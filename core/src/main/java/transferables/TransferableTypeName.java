@@ -7,20 +7,13 @@
 //
 package transferables;
 
+import Database.Definition.TypeName;
+
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
-import java.io.File;
-import java.util.TreeSet;
 
-import jex.statics.JEXStatics;
 import logs.Logs;
-import miscellaneous.FileUtility;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DataReader.FileReader;
-import Database.Definition.TypeName;
-import Database.SingleUserDatabase.JEXWriter;
 
 public class TransferableTypeName implements Transferable {
 	
@@ -56,15 +49,6 @@ public class TransferableTypeName implements Transferable {
 		}
 		else if(flavor.equals(DataFlavor.stringFlavor))
 		{
-			// This is where we should get the directories of the selected object in the selected entries.
-			TreeSet<JEXEntry> entries = JEXStatics.jexManager.getSelectedEntries();
-			for(JEXEntry e : entries)
-			{
-				// Get the object with matching type name
-				// JEXData d = e.getData(typeName); // put right variable in for "typeName"
-				String dirPath = FileUtility.getFileParent(JEXWriter.getDatabaseFolder() + File.separator + d.getDetachedRelativePath());
-				// Compile a single string with dir1 + File.pathSeparator + dir2 + File.separator ...
-			}
 			Logs.log("Transfering string value " + tn.toString(), 1, this);
 			String result = tn.toString();
 			return result;
