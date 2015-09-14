@@ -71,15 +71,15 @@ import function.plugin.mechanism.ParameterMarker;
 public class FeatureExtraction extends JEXPlugin {
 
 	public ImgOpener imgOpener = new ImgOpener(IJ2PluginUtility.ij().getContext());
-	public FirstOrderStatFeatureSet<IterableInterval<UnsignedShortType>> opFirstOrder = null;
+	public FirstOrderStatFeatureSet<IterableInterval<T>> opFirstOrder = null;
 	public GeometricFeatureSet opGeometric = null;
-	public Haralick2DFeatureSet<UnsignedShortType> opHaralick2DDiag = null;
-	public Haralick2DFeatureSet<UnsignedShortType> opHaralick2DAntiDiag = null;
-	public Haralick2DFeatureSet<UnsignedShortType> opHaralick2DHor = null;
-	public Haralick2DFeatureSet<UnsignedShortType> opHaralick2DVer = null;
-	public HistogramFeatureSet<UnsignedShortType> opHistogram = null;
-	public ImageMomentsFeatureSet<IterableInterval<UnsignedShortType>> opMoments = null;
-	public ZernikeFeatureSet<UnsignedByteType> opZernike = null;
+	public Haralick2DFeatureSet<T> opHaralick2DDiag = null;
+	public Haralick2DFeatureSet<T> opHaralick2DAntiDiag = null;
+	public Haralick2DFeatureSet<T> opHaralick2DHor = null;
+	public Haralick2DFeatureSet<T> opHaralick2DVer = null;
+	public HistogramFeatureSet<T> opHistogram = null;
+	public ImageMomentsFeatureSet<IterableInterval<T>> opMoments = null;
+	public ZernikeFeatureSet<BitType> opZernike = null;
 
 	public JEXCSVWriter writer;
 	public Set<String> header = null;
@@ -295,8 +295,9 @@ public class FeatureExtraction extends JEXPlugin {
 											continue;
 										}
 
-										Img<UnsignedShortType> image = imgOpener.openImgs(imagePath, new UnsignedShortType()).get(0); // use get(0) because JEX saves all images individually
-
+										@SuppressWarnings("unchecked")
+										// T gets defined here; Use get(0) because JEX saves all images individually
+										Img<T> image = (Img<T>) imgOpener.openImgs(imagePath).get(0);
 										for(IdPoint p : maxima.pointList)
 										{
 											if(this.isCanceled())
@@ -491,9 +492,12 @@ public class FeatureExtraction extends JEXPlugin {
 		{
 			if(opZernike == null)
 			{
-				opZernike = IJ2PluginUtility.ij().op().op(ZernikeFeatureSet.class, (IterableInterval<UnsignedByteType>) mask, zernikeMagnitude, zernikePhase, zernikeMomentMin, zernikeMomentMax);
+				opZernike = IJ2PluginUtility.ij().op().op(ZernikeFeatureSet.class, reg, zernikeMagnitude, zernikePhase, zernikeMomentMin, zernikeMomentMax);
 			}
-			List<Pair<String,DoubleType>> results = opZernike.getFeatureList(Regions.sample(reg, mask));
+
+			IterableInterval<BitType> convert = Converters.convert((IterableInterval<BoolType>) reg, new MyConverter(), new BitType());
+
+			List<Pair<String, DoubleType>> results = opZernike.getFeatureList(convert);
 			for(Pair<String, DoubleType> result : results)
 			{
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getA());
@@ -531,7 +535,7 @@ public class FeatureExtraction extends JEXPlugin {
 	}
 
 	@SuppressWarnings("unchecked")
-	public boolean putFirstOrder(DimensionMap mapM, int id, LabelRegion<Integer> reg, Img<UnsignedShortType>  image)
+	public boolean putFirstOrder(DimensionMap mapM, int id, LabelRegion<Integer> reg, Img<T> image)
 	{
 		if(this.isCanceled())
 		{
@@ -557,7 +561,7 @@ public class FeatureExtraction extends JEXPlugin {
 	}
 
 	@SuppressWarnings("unchecked")
-	public boolean putHaralick2D(DimensionMap mapM, int id, LabelRegion<Integer> reg, Img<UnsignedShortType>  image)
+	public boolean putHaralick2D(DimensionMap mapM, int id, LabelRegion<Integer> reg, Img<T> image)
 	{
 		List<Pair<String, DoubleType>> results;
 
@@ -565,14 +569,14 @@ public class FeatureExtraction extends JEXPlugin {
 		{
 			if(opHaralick2DHor == null || opHaralick2DVer == null)
 			{
-				opHaralick2DHor = IJ2PluginUtility.ij().op().op(Haralick2DFeatureSet.class, (IterableInterval<UnsignedShortType>) image, haralickGrayLevels, haralickDistance, "HORIZONTAL");
-				opHaralick2DVer = IJ2PluginUtility.ij().op().op(Haralick2DFeatureSet.class, (IterableInterval<UnsignedShortType>) image, haralickGrayLevels, haralickDistance, "VERTICAL");
+				opHaralick2DHor = IJ2PluginUtility.ij().op().op(Haralick2DFeatureSet.class, image, haralickGrayLevels, haralickDistance, "HORIZONTAL");
+				opHaralick2DVer = IJ2PluginUtility.ij().op().op(Haralick2DFeatureSet.class, image, haralickGrayLevels, haralickDistance, "VERTICAL");
 				if(haralickNumDirections.equals("4"))
 				{
 					if(opHaralick2DDiag == null || opHaralick2DAntiDiag == null)
 					{
-						opHaralick2DDiag = IJ2PluginUtility.ij().op().op(Haralick2DFeatureSet.class, (IterableInterval<UnsignedShortType>) image, haralickGrayLevels, haralickDistance, "DIAGONAL");
-						opHaralick2DAntiDiag = IJ2PluginUtility.ij().op().op(Haralick2DFeatureSet.class, (IterableInterval<UnsignedShortType>) image, haralickGrayLevels, haralickDistance, "ANTIDIAGONAL");
+						opHaralick2DDiag = IJ2PluginUtility.ij().op().op(Haralick2DFeatureSet.class, image, haralickGrayLevels, haralickDistance, "DIAGONAL");
+						opHaralick2DAntiDiag = IJ2PluginUtility.ij().op().op(Haralick2DFeatureSet.class, image, haralickGrayLevels, haralickDistance, "ANTIDIAGONAL");
 					}
 				}
 			}
@@ -645,7 +649,7 @@ public class FeatureExtraction extends JEXPlugin {
 	}
 
 	@SuppressWarnings("unchecked")
-	public boolean putHistogram(DimensionMap mapM, int id, LabelRegion<Integer> reg, Img<UnsignedShortType>  image)
+	public boolean putHistogram(DimensionMap mapM, int id, LabelRegion<Integer> reg, Img<T> image)
 	{
 		if(this.isCanceled())
 		{
@@ -656,10 +660,10 @@ public class FeatureExtraction extends JEXPlugin {
 		{
 			if(opHistogram == null)
 			{
-				opHistogram = IJ2PluginUtility.ij().op().op(HistogramFeatureSet.class, (IterableInterval<UnsignedShortType>) image, histogramBins);
+				opHistogram = IJ2PluginUtility.ij().op().op(HistogramFeatureSet.class, image, histogramBins);
 			}
-			IterableInterval<UnsignedShortType> itr = Regions.sample(reg, image);
-			List<Pair<String,LongType>> ret = opHistogram.getFeatureList(itr);
+			IterableInterval<T> itr = Regions.sample(reg, image);
+			List<Pair<String, LongType>> ret = opHistogram.getFeatureList(itr);
 			for(Pair<String, LongType> result : ret)
 			{
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getA());
@@ -672,7 +676,7 @@ public class FeatureExtraction extends JEXPlugin {
 	}
 
 	@SuppressWarnings("unchecked")
-	public boolean putMoments(DimensionMap mapM, int id, LabelRegion<Integer> reg, Img<UnsignedShortType>  image)
+	public boolean putMoments(DimensionMap mapM, int id, LabelRegion<Integer> reg, Img<T> image)
 	{
 		if(this.isCanceled())
 		{
@@ -683,7 +687,7 @@ public class FeatureExtraction extends JEXPlugin {
 		{
 			if(opMoments == null)
 			{
-				opMoments = IJ2PluginUtility.ij().op().op(ImageMomentsFeatureSet.class, (IterableInterval<UnsignedShortType>) image);
+				opMoments = IJ2PluginUtility.ij().op().op(ImageMomentsFeatureSet.class, (IterableInterval<T>) image);
 			}
 			List<Pair<String, DoubleType>> results = opMoments.getFeatureList(Regions.sample(reg, image));
 			for(Pair<String, DoubleType> result : results)
@@ -713,38 +717,51 @@ public class FeatureExtraction extends JEXPlugin {
 		return false;
 	}
 
-	public TreeMap<String,Object> getPixelValues(Wand wand, IdPoint p, ByteProcessor impMask, FloatProcessor impImage1, FloatProcessor impImage2)
-	{
-		Vector<Double> m1 = null;
-		PointList pts = null;
-		if(impMask.getPixel(p.x, p.y) == 255) // if we land on a cell that made it through thresholding
+	//	public TreeMap<String, Object> getPixelValues(Wand wand, IdPoint p, ByteProcessor impMask, FloatProcessor impImage1, FloatProcessor impImage2)
+	//	{
+	//		Vector<Double> m1 = null;
+	//		PointList pts = null;
+	//		if(impMask.getPixel(p.x, p.y) == 255) // if we land on a cell that made
+	//		// it through thresholding
+	//		{
+	//			wand.autoOutline(p.x, p.y); // outline it
+	//			if(wand.npoints > 0)
+	//			{
+	//				// The roi helps for using getLength() (DON'T USE Roi.TRACED_ROI., IT SCREWS UP THE Polygon OBJECTS!!!! Bug emailed to ImageJ folks
+	//				Roi roi = new PolygonRoi(wand.xpoints, wand.ypoints, wand.npoints, Roi.POLYGON);
+	//				
+	//				// The polygon helps for using contains()
+	//				java.awt.Polygon poly = new java.awt.Polygon(wand.xpoints, wand.ypoints, wand.npoints); 
+	//				Rectangle r = roi.getBounds();
+	//				m1 = new Vector<Double>();
+	//				pts = new PointList();
+	//				for(int i = r.x; i < r.x + r.width; i++)
+	//				{
+	//					for(int j = r.y; j < r.y + r.height; j++)
+	//					{
+	//						// innerBoundary
+	//						if(poly.contains(i, j) && impMask.getPixelValue(i, j) == 255)
+	//						{
+	//							m1.add((double) impImage1.getPixelValue(i, j));
+	//							pts.add(i, j);
+	//							// Logs.log("In - " + innerT, this);
+	//						}
+	//					}
+	//				}
+	//			}
+	//		}
+	//		TreeMap<String, Object> ret = new TreeMap<String, Object>();
+	//		ret.put("m1", m1);
+	//		ret.put("xy", pts);
+	//		return ret;
+	//	}
+
+	class MyConverter implements Converter<BoolType, BitType> {
+
+		@Override
+		public void convert(BoolType input, BitType output)
 		{
-			wand.autoOutline(p.x, p.y); // outline it
-			if(wand.npoints > 0)
-			{
-				Roi roi = new PolygonRoi(wand.xpoints, wand.ypoints, wand.npoints, Roi.POLYGON); // The roi helps for using getLength() (DON'T USE Roi.TRACED_ROI., IT SCREWS UP THE Polygon OBJECTS!!!! Bug emailed to ImageJ folks)
-				java.awt.Polygon poly = new java.awt.Polygon(wand.xpoints, wand.ypoints, wand.npoints); // The polygon helps for using contains()
-				Rectangle r = roi.getBounds();
-				m1 = new Vector<Double>();
-				pts = new PointList();
-				for (int i = r.x; i < r.x + r.width; i++)
-				{
-					for (int j = r.y; j < r.y + r.height; j++)
-					{
-						// innerBoundary
-						if(poly.contains(i, j) && impMask.getPixelValue(i, j) == 255)
-						{
-							m1.add((double) impImage1.getPixelValue(i, j));
-							pts.add(i, j);
-							// Logs.log("In - " + innerT, this);
-						}
-					}
-				}
-			}
+			output.set(input.get());
 		}
-		TreeMap<String,Object> ret = new TreeMap<String,Object>();
-		ret.put("m1", m1);
-		ret.put("xy", pts);
-		return ret;
 	}
 }
