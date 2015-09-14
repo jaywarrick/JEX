@@ -2,24 +2,16 @@
 package function.plugin.plugins.featureExtraction;
 
 // Import needed classes here 
-import ij.gui.PolygonRoi;
-import ij.gui.Roi;
-import ij.gui.Wand;
-import ij.process.ByteProcessor;
-import ij.process.FloatProcessor;
 import image.roi.IdPoint;
-import image.roi.PointList;
 import image.roi.ROIPlus;
 import io.scif.img.ImgIOException;
 import io.scif.img.ImgOpener;
 import io.scif.img.SCIFIOImgPlus;
 
 import java.awt.Point;
-import java.awt.Rectangle;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.Vector;
 
 import jex.statics.JEXStatics;
 import logs.Logs;
@@ -32,12 +24,17 @@ import net.imagej.ops.features.sets.HistogramFeatureSet;
 import net.imagej.ops.features.sets.ImageMomentsFeatureSet;
 import net.imagej.ops.features.sets.ZernikeFeatureSet;
 import net.imglib2.IterableInterval;
+import net.imglib2.converter.Converter;
+import net.imglib2.converter.Converters;
 import net.imglib2.img.Img;
 import net.imglib2.roi.Regions;
 import net.imglib2.roi.labeling.ImgLabeling;
 import net.imglib2.roi.labeling.LabelRegion;
 import net.imglib2.roi.labeling.LabelRegionCursor;
 import net.imglib2.roi.labeling.LabelRegions;
+import net.imglib2.type.logic.BitType;
+import net.imglib2.type.logic.BoolType;
+import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.IntType;
 import net.imglib2.type.numeric.integer.LongType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
@@ -91,18 +88,18 @@ public class FeatureExtraction extends JEXPlugin {
 	public FeatureExtraction()
 	{}
 
-	/////////// Define Inputs here ///////////
+	// ///////// Define Inputs here ///////////
 
-	@InputMarker(uiOrder=1, name="Image", type=MarkerConstants.TYPE_IMAGE, description="Intensity images", optional=false)
+	@InputMarker(uiOrder = 1, name = "Image", type = MarkerConstants.TYPE_IMAGE, description = "Intensity images", optional = false)
 	JEXData imageData;
 
-	@InputMarker(uiOrder=2, name="Whole Cell Mask", type=MarkerConstants.TYPE_IMAGE, description="Mask images defining the whole cell (should NOT have channel dimension)", optional=false)
+	@InputMarker(uiOrder = 2, name = "Whole Cell Mask", type = MarkerConstants.TYPE_IMAGE, description = "Mask images defining the whole cell (should NOT have channel dimension)", optional = false)
 	JEXData cellMaskData;
 
-	@InputMarker(uiOrder=3, name="Masks to Measure", type=MarkerConstants.TYPE_IMAGE, description="Mask images (SHOULD have channel dimension)", optional=false)
+	@InputMarker(uiOrder = 3, name = "Masks to Measure", type = MarkerConstants.TYPE_IMAGE, description = "Mask images (SHOULD have channel dimension)", optional = false)
 	JEXData measureMaskData;
 
-	@InputMarker(uiOrder=4, name="Maxima", type=MarkerConstants.TYPE_ROI, description="Maxima ROI", optional=false)
+	@InputMarker(uiOrder = 4, name = "Maxima", type = MarkerConstants.TYPE_ROI, description = "Maxima ROI", optional = false)
 	JEXData roiData;
 
 	/////////// Define Parameters here ///////////
@@ -110,56 +107,56 @@ public class FeatureExtraction extends JEXPlugin {
 	@ParameterMarker(uiOrder=1, name="** Compute First Order Stats?", description="Whether to quantify first order statistics", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
 	boolean firstOrder;
 
-	@ParameterMarker(uiOrder=2, name="** Compute Geometric Stats?", description="Whether to quantify geometric statistics", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	@ParameterMarker(uiOrder = 2, name = "** Compute Geometric Stats?", description = "Whether to quantify geometric statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean geometric;
 
-	@ParameterMarker(uiOrder=3, name="** Compute Haralick 2D Stats?", description="Whether to quantify Haralick texture statistics", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	@ParameterMarker(uiOrder = 3, name = "** Compute Haralick 2D Stats?", description = "Whether to quantify Haralick texture statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean haralick2D;
 
-	@ParameterMarker(uiOrder=4, name="** Compute Histogram Stats?", description="Whether to quantify histogram statistics", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	@ParameterMarker(uiOrder = 4, name = "** Compute Histogram Stats?", description = "Whether to quantify histogram statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean histogram;
 
-	@ParameterMarker(uiOrder=5, name="** Compute Moments Stats?", description="Whether to quantify image moment statistics", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	@ParameterMarker(uiOrder = 5, name = "** Compute Moments Stats?", description = "Whether to quantify image moment statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean moments;
 
-	@ParameterMarker(uiOrder=6, name="** Compute Zernike Stats?", description="Whether to quantify Zernike shape statistics", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	@ParameterMarker(uiOrder = 6, name = "** Compute Zernike Stats?", description = "Whether to quantify Zernike shape statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean zernike;
 
-	@ParameterMarker(uiOrder=7, name="** Connectedness of Objects", description="The structuring element or number of neighbors to require to be part of the neighborhood.", ui=MarkerConstants.UI_DROPDOWN, choices={"4 Connected", "8 Connected"}, defaultChoice=0)
+	@ParameterMarker(uiOrder = 7, name = "** Connectedness of Objects", description = "The structuring element or number of neighbors to require to be part of the neighborhood.", ui = MarkerConstants.UI_DROPDOWN, choices = { "4 Connected", "8 Connected" }, defaultChoice = 0)
 	String connectedness;
 
-	@ParameterMarker(uiOrder=8, name="Haralick Gray Levels", description="Number of gray levels for Haralick calculations", ui=MarkerConstants.UI_TEXTFIELD, defaultText="8")
+	@ParameterMarker(uiOrder = 8, name = "Haralick Gray Levels", description = "Number of gray levels for Haralick calculations", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "8")
 	int haralickGrayLevels;
 
-	@ParameterMarker(uiOrder=9, name="Haralick Co-Occurrence Matrix Distance", description="Distance at which to compute the co-occurrence matrix", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
+	@ParameterMarker(uiOrder = 9, name = "Haralick Co-Occurrence Matrix Distance", description = "Distance at which to compute the co-occurrence matrix", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "1")
 	double haralickDistance;
 
-	@ParameterMarker(uiOrder=10, name="Haralick Number of Directions", description="(Orthogonals and Diagonals etc) 2 performs horizontal and vertical. 4 adds the 2 diagonals as well.", ui=MarkerConstants.UI_DROPDOWN, choices={"2", "4"}, defaultChoice=1)
+	@ParameterMarker(uiOrder = 10, name = "Haralick Number of Directions", description = "(Orthogonals and Diagonals etc) 2 performs horizontal and vertical. 4 adds the 2 diagonals as well.", ui = MarkerConstants.UI_DROPDOWN, choices = { "2", "4" }, defaultChoice = 1)
 	String haralickNumDirections;
 
-	@ParameterMarker(uiOrder=11, name="Histogram Number of Bins", description="Number of bins for the histogram created for each cell region", ui=MarkerConstants.UI_TEXTFIELD, defaultText="256")
+	@ParameterMarker(uiOrder = 11, name = "Histogram Number of Bins", description = "Number of bins for the histogram created for each cell region", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "256")
 	int histogramBins;
 
-	@ParameterMarker(uiOrder=12, name="Zernike Magnitudes?", description="Whether to quantify magnitudes of Zernike features", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
+	@ParameterMarker(uiOrder = 12, name = "Zernike Magnitudes?", description = "Whether to quantify magnitudes of Zernike features", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
 	boolean zernikeMagnitude;
 
-	@ParameterMarker(uiOrder=13, name="Zernike Phases?", description="Whether to quantify phase of Zernike features", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
+	@ParameterMarker(uiOrder = 13, name = "Zernike Phases?", description = "Whether to quantify phase of Zernike features", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
 	boolean zernikePhase;
 
-	@ParameterMarker(uiOrder=14, name="Zernike Min Moment", description="Min Zernike moment calculate", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
+	@ParameterMarker(uiOrder = 14, name = "Zernike Min Moment", description = "Min Zernike moment calculate", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "1")
 	int zernikeMomentMin;
 
-	@ParameterMarker(uiOrder=15, name="Zernike Max Moment", description="Max Zernike moment calculate", ui=MarkerConstants.UI_TEXTFIELD, defaultText="3")
+	@ParameterMarker(uiOrder = 15, name = "Zernike Max Moment", description = "Max Zernike moment calculate", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "3")
 	int zernikeMomentMax;
 
 	// Add a primary mask and secondary mask
 
 	/////////// Define Outputs here ///////////
 
-	@OutputMarker(uiOrder=1, name="Output CSV Table", type=MarkerConstants.TYPE_FILE, flavor="", description="Output in csv format (i.e., for Excel etc).", enabled=true)
+	@OutputMarker(uiOrder = 1, name = "Output CSV Table", type = MarkerConstants.TYPE_FILE, flavor = "", description = "Output in csv format (i.e., for Excel etc).", enabled = true)
 	JEXData outputCSV;
-	
-	@OutputMarker(uiOrder=1, name="Output ARFF Table", type=MarkerConstants.TYPE_FILE, flavor="", description="Test table output (i.e., for Weka etc).", enabled=true)
+
+	@OutputMarker(uiOrder = 1, name = "Output ARFF Table", type = MarkerConstants.TYPE_FILE, flavor = "", description = "Test table output (i.e., for Weka etc).", enabled = true)
 	JEXData outputARFF;
 
 	// Define threading capability here (set to 1 if using non-final static variables shared between function instances).
@@ -195,10 +192,10 @@ public class FeatureExtraction extends JEXPlugin {
 			return false;
 		}
 
-		TreeMap<DimensionMap,String> imageMap = ImageReader.readObjectToImagePathTable(imageData);
-		TreeMap<DimensionMap,String> cellMaskMap = ImageReader.readObjectToImagePathTable(cellMaskData);
-		TreeMap<DimensionMap,String> measureMaskMap = cellMaskMap;
-		TreeMap<DimensionMap,ROIPlus> roiMap = RoiReader.readObjectToRoiMap(roiData);
+		TreeMap<DimensionMap, String> imageMap = ImageReader.readObjectToImagePathTable(imageData);
+		TreeMap<DimensionMap, String> cellMaskMap = ImageReader.readObjectToImagePathTable(cellMaskData);
+		TreeMap<DimensionMap, String> measureMaskMap = cellMaskMap;
+		TreeMap<DimensionMap, ROIPlus> roiMap = RoiReader.readObjectToRoiMap(roiData);
 
 		int count = 0, percentage = 0;
 
@@ -214,9 +211,9 @@ public class FeatureExtraction extends JEXPlugin {
 		}
 
 		try
-		{						
+		{
 			// Loop over whole cell masks
-			for (DimensionMap mapCell : cellMaskData.getDimTable().getMapIterator())
+			for(DimensionMap mapCell : cellMaskData.getDimTable().getMapIterator())
 			{
 				if((geometric || zernike) || (imageData != null && imageData.getDimTable().hasDimensionMap(mapCell) && (firstOrder || haralick2D || histogram || moments)))
 				{
@@ -228,9 +225,9 @@ public class FeatureExtraction extends JEXPlugin {
 					}
 
 					SCIFIOImgPlus<UnsignedByteType> cellMask = imgOpener.openImgs(cellMaskMap.get(mapCell), new UnsignedByteType()).get(0);
-					ImgLabeling<Integer,IntType> cellLabeling = FeatureUtils.getConnectedComponents(cellMask, connectedness.equals("4 Connected"));
+					ImgLabeling<Integer, IntType> cellLabeling = FeatureUtils.getConnectedComponents(cellMask, connectedness.equals("4 Connected"));
 					LabelRegions<Integer> cellRegions = new LabelRegions<Integer>(cellLabeling);
-					TreeMap<Integer,Integer> idToLabelMap = new TreeMap<Integer,Integer>();
+					TreeMap<Integer, Integer> idToLabelMap = new TreeMap<Integer, Integer>();
 
 					// Determine which LabelRegions are the ones we want to keep by testing if our maxima of interest are contained.
 					ROIPlus maxima = roiMap.get(mapCell);
@@ -341,7 +338,7 @@ public class FeatureExtraction extends JEXPlugin {
 										percentage = (int) (100 * ((double) (count) / ((double) total)));
 										JEXStatics.statusBar.setProgressPercentage(percentage);
 									}
-								}		
+								}
 
 								if(geometric || zernike)
 								{
@@ -451,7 +448,7 @@ public class FeatureExtraction extends JEXPlugin {
 		this.writer.close();
 		String csvPath = writer.getPath();
 		JEXCSVReader reader = new JEXCSVReader(csvPath, true);
-		
+
 		// In order to write an Arff table we need to build a DimTable
 		// We can't keep all the data in memory as it might be too large so just build DimTable for now.
 		DimTableBuilder builder = new DimTableBuilder();
@@ -467,10 +464,10 @@ public class FeatureExtraction extends JEXPlugin {
 		arffWriter.writeNumericTableHeader(builder.getDimTable());
 		while(!reader.isEOF())
 		{
-			miscellaneous.Pair<DimensionMap,String> result = reader.readRowToDimensionMapString();
+			miscellaneous.Pair<DimensionMap, String> result = reader.readRowToDimensionMapString();
 			arffWriter.writeData(result.p1, Double.parseDouble(result.p2));
 		}
-		
+
 		// Close and save the data.
 		reader.close();
 		String arffPath = arffWriter.getPath();
@@ -480,7 +477,7 @@ public class FeatureExtraction extends JEXPlugin {
 	}
 
 	@SuppressWarnings("unchecked")
-	public boolean putZernike(DimensionMap mapM, int id, LabelRegion<Integer> reg, Img<UnsignedByteType>  mask)
+	public boolean putZernike(DimensionMap mapM, int id, LabelRegion<Integer> reg, Img<UnsignedByteType> mask)
 	{
 		if(this.isCanceled())
 		{
@@ -497,15 +494,15 @@ public class FeatureExtraction extends JEXPlugin {
 			for(Pair<String, DoubleType> result : results)
 			{
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getA());
-				newMap.put("Id", ""+id);
-				newMap.put("Label", ""+reg.getLabel());
+				newMap.put("Id", "" + id);
+				newMap.put("Label", "" + reg.getLabel());
 				this.write(newMap, result.getB().get());
 			}
 		}
 		return true;
 	}
 
-	public boolean putGeometric(DimensionMap mapM, int id, LabelRegion<Integer> reg, Img<UnsignedByteType>  mask)
+	public boolean putGeometric(DimensionMap mapM, int id, LabelRegion<Integer> reg, Img<UnsignedByteType> mask)
 	{
 		if(this.isCanceled())
 		{
@@ -518,14 +515,14 @@ public class FeatureExtraction extends JEXPlugin {
 			{
 				opGeometric = IJ2PluginUtility.ij().op().op(GeometricFeatureSet.class, LabelRegion.class);
 			}
-			List<Pair<String,DoubleType>>results = opGeometric.getFeatureList(reg);
+			List<Pair<String, DoubleType>> results = opGeometric.getFeatureList(reg);
 			for(Pair<String, DoubleType> result : results)
 			{
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getA());
-				newMap.put("Id", ""+id);
-				newMap.put("Label", ""+reg.getLabel());
+				newMap.put("Id", "" + id);
+				newMap.put("Label", "" + reg.getLabel());
 				this.write(newMap, result.getB().get());
-			}			
+			}
 		}
 		return true;
 	}
@@ -544,12 +541,12 @@ public class FeatureExtraction extends JEXPlugin {
 			{
 				opFirstOrder = IJ2PluginUtility.ij().op().op(FirstOrderStatFeatureSet.class, (IterableInterval<UnsignedShortType>) image);
 			}
-			List<Pair<String,DoubleType>>results = opFirstOrder.getFeatureList(Regions.sample(reg, image));
+			List<Pair<String, DoubleType>> results = opFirstOrder.getFeatureList(Regions.sample(reg, image));
 			for(Pair<String, DoubleType> result : results)
 			{
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getA());
-				newMap.put("Id", ""+id);
-				newMap.put("Label", ""+reg.getLabel());
+				newMap.put("Id", "" + id);
+				newMap.put("Label", "" + reg.getLabel());
 				this.write(newMap, result.getB().get());
 			}
 		}
@@ -559,7 +556,7 @@ public class FeatureExtraction extends JEXPlugin {
 	@SuppressWarnings("unchecked")
 	public boolean putHaralick2D(DimensionMap mapM, int id, LabelRegion<Integer> reg, Img<UnsignedShortType>  image)
 	{
-		List<Pair<String,DoubleType>> results;
+		List<Pair<String, DoubleType>> results;
 
 		if(haralick2D)
 		{
@@ -574,7 +571,7 @@ public class FeatureExtraction extends JEXPlugin {
 						opHaralick2DDiag = IJ2PluginUtility.ij().op().op(Haralick2DFeatureSet.class, (IterableInterval<UnsignedShortType>) image, haralickGrayLevels, haralickDistance, "DIAGONAL");
 						opHaralick2DAntiDiag = IJ2PluginUtility.ij().op().op(Haralick2DFeatureSet.class, (IterableInterval<UnsignedShortType>) image, haralickGrayLevels, haralickDistance, "ANTIDIAGONAL");
 					}
-				}							
+				}
 			}
 
 			results = opHaralick2DHor.getFeatureList(Regions.sample(reg, image));
@@ -588,8 +585,8 @@ public class FeatureExtraction extends JEXPlugin {
 			for(Pair<String, DoubleType> result : results)
 			{
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getA() + "_Horizontal");
-				newMap.put("Id", ""+id);
-				newMap.put("Label", ""+reg.getLabel());
+				newMap.put("Id", "" + id);
+				newMap.put("Label", "" + reg.getLabel());
 				this.write(newMap, result.getB().get());
 			}
 
@@ -603,8 +600,8 @@ public class FeatureExtraction extends JEXPlugin {
 			for(Pair<String, DoubleType> result : results)
 			{
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getA() + "_Vertical");
-				newMap.put("Id", ""+id);
-				newMap.put("Label", ""+reg.getLabel());
+				newMap.put("Id", "" + id);
+				newMap.put("Label", "" + reg.getLabel());
 				this.write(newMap, result.getB().get());
 			}
 
@@ -620,8 +617,8 @@ public class FeatureExtraction extends JEXPlugin {
 				for(Pair<String, DoubleType> result : results)
 				{
 					DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getA() + "_Diagonal");
-					newMap.put("Id", ""+id);
-					newMap.put("Label", ""+reg.getLabel());
+					newMap.put("Id", "" + id);
+					newMap.put("Label", "" + reg.getLabel());
 					this.write(newMap, result.getB().get());
 				}
 
@@ -635,8 +632,8 @@ public class FeatureExtraction extends JEXPlugin {
 				for(Pair<String, DoubleType> result : results)
 				{
 					DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getA() + "_AntiDiagonal");
-					newMap.put("Id", ""+id);
-					newMap.put("Label", ""+reg.getLabel());
+					newMap.put("Id", "" + id);
+					newMap.put("Label", "" + reg.getLabel());
 					this.write(newMap, result.getB().get());
 				}
 			}
@@ -663,8 +660,8 @@ public class FeatureExtraction extends JEXPlugin {
 			for(Pair<String, LongType> result : ret)
 			{
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getA());
-				newMap.put("Id", ""+id);
-				newMap.put("Label", ""+reg.getLabel());
+				newMap.put("Id", "" + id);
+				newMap.put("Label", "" + reg.getLabel());
 				this.write(newMap, result.getB().getRealDouble());
 			}
 		}
@@ -685,15 +682,15 @@ public class FeatureExtraction extends JEXPlugin {
 			{
 				opMoments = IJ2PluginUtility.ij().op().op(ImageMomentsFeatureSet.class, (IterableInterval<UnsignedShortType>) image);
 			}
-			List<Pair<String,DoubleType>>results = opMoments.getFeatureList(Regions.sample(reg, image));
+			List<Pair<String, DoubleType>> results = opMoments.getFeatureList(Regions.sample(reg, image));
 			for(Pair<String, DoubleType> result : results)
 			{
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getA());
-				newMap.put("Id", ""+id);
-				newMap.put("Label", ""+reg.getLabel());
+				newMap.put("Id", "" + id);
+				newMap.put("Label", "" + reg.getLabel());
 				this.write(newMap, result.getB().get());
 			}
-		}	
+		}
 		return true;
 	}
 
