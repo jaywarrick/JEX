@@ -102,9 +102,12 @@ public class FeatureExtraction extends JEXPlugin {
 	@InputMarker(uiOrder = 4, name = "Maxima", type = MarkerConstants.TYPE_ROI, description = "Maxima ROI", optional = false)
 	JEXData roiData;
 
-	/////////// Define Parameters here ///////////
+	// ///////// Define Parameters here ///////////
 
-	@ParameterMarker(uiOrder=1, name="** Compute First Order Stats?", description="Whether to quantify first order statistics", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
+	@ParameterMarker(uiOrder = 0, name = "Image intensity offset", description = "Amount the images are offset from zero (will be subtracted before calculation)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "0.0")
+	double offset;
+
+	@ParameterMarker(uiOrder = 1, name = "** Compute First Order Stats?", description = "Whether to quantify first order statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
 	boolean firstOrder;
 
 	@ParameterMarker(uiOrder = 2, name = "** Compute Geometric Stats?", description = "Whether to quantify geometric statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
