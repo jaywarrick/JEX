@@ -221,7 +221,7 @@ public class JEX_ReduceSize extends JEXCrunchable {
 			// f.getName(), "Bin");
 			// String finalPath = localDir + File.separator + newFileName;
 			// FunctionUtility.imSave(imp, "true", depth, finalPath);
-			ImagePlus toSave = FunctionUtility.makeImageToSave(imp, "true", depth);
+			ImagePlus toSave = FunctionUtility.makeImageToSave(imp, "false", depth);
 			String finalPath = JEXWriter.saveImage(toSave);
 			
 			outputMap.put(dim.copy(), finalPath);
