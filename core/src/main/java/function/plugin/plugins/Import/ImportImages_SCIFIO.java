@@ -129,8 +129,9 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 		
 		TreeMap<DimensionMap,String> multiMap = new TreeMap<DimensionMap,String>();
 		boolean fileNotFound = false;
-		for (File f: pendingImageFiles)
+		for (int fi = 0; fi < pendingImageFiles.size(); fi++)
 		{
+			File f = pendingImageFiles.get(fi);
 			if(!f.exists())
 			{
 				fileNotFound = true;
@@ -167,7 +168,7 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 			
 			if(reader.getImageCount() > 1)
 			{
-				Dim loc = new Dim("Location",reader.getImageCount());
+				Dim loc = new Dim("Loc",reader.getImageCount());
 				table.add(0, loc);
 			}
 			Iterator<DimensionMap> itr = table.getMapIterator().iterator();
@@ -232,6 +233,17 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 						{
 							String filename = JEXWriter.saveImage(e.getValue());
 							map.putAll(e.getKey());
+							if(pendingImageFiles.size() > 1)
+							{
+								if(reader.getImageCount() > 1)
+								{
+									map.put("Loc 2", ""+fi);
+								}
+								else
+								{
+									map.put("Loc", ""+fi);
+								}
+							}
 							multiMap.put(map.copy(),filename);
 							Logs.log(map.toString() + " :: " + filename, this);
 						}
@@ -241,6 +253,17 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 						String filename = JEXWriter.saveImage(ip);
 						DimensionMap map = itr.next().copy();
 						map.putAll(baseMap.copy());
+						if(pendingImageFiles.size() > 1)
+						{
+							if(reader.getImageCount() > 1)
+							{
+								map.put("Loc 2", ""+fi);
+							}
+							else
+							{
+								map.put("Loc", ""+fi);
+							}
+						}
 						multiMap.put(map,filename);
 						Logs.log(map.toString() + " = " + filename, this);
 					}					
@@ -271,7 +294,6 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 			output.setDimTable(toSet);
 		}
 		
-		// TODO Auto-generated method stub
 		return true;
 	}
 	
