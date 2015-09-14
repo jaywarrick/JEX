@@ -83,7 +83,7 @@
 			<artifactId>Auto_Threshold</artifactId>
 			<version>1.16.0</version>
 		</dependency>
-		
+
 		<!-- ImgLib2 dependencies -->
 		<dependency>
 			<groupId>net.imglib2</groupId>
@@ -154,10 +154,15 @@
 			<version>0.6-8.1</version>
 		</dependency>
 
-		<dependency>
+		<!-- <dependency> REMOVED AS IT SORT OF DUPILICATES AND BLOWS UP IN SIZE WHAT IS INCLUDED BY weka-dev
 			<groupId>nz.ac.waikato.cms.moa</groupId>
 			<artifactId>weka-package</artifactId>
-			<version>2013.11</version>
+			<version>2014.04</version>
+		</dependency> -->
+		<dependency>
+			<groupId>nz.ac.waikato.cms.weka</groupId>
+			<artifactId>weka-dev</artifactId>
+			<version>3.7.12</version>
 		</dependency>
 
 		<dependency>
