@@ -24,6 +24,7 @@ import java.awt.event.WindowListener;
 import java.io.File;
 
 import javax.swing.AbstractAction;
+import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JComponent;
@@ -252,22 +253,22 @@ public class JEXperiment extends JFrame implements ActionListener, WindowListene
 		this.leftPanel.setPreferredSize(new Dimension(300, 300));
 		
 		// Prepare the right split panel
-		this.centerSplitPane.setBackground(DisplayStatics.background);
-		this.centerSplitPane.setBorder(null);
+		this.centerSplitPane.setBackground(DisplayStatics.lightBackground);
+		this.centerSplitPane.setBorder(BorderFactory.createEmptyBorder());
+		this.centerSplitPane.setLeftComponent(this.centerPane);
+		this.centerSplitPane.setRightComponent(new JPanel());
 		this.centerSplitPane.setDividerLocation(300);
 		this.centerSplitPane.setDividerSize(6);
 		this.centerSplitPane.setResizeWeight(1.0);
-		this.centerSplitPane.setLeftComponent(this.centerPane);
-		this.centerSplitPane.setRightComponent(new JPanel());
 		
 		// Add the right split panel
-		this.menuSplitPane.setBackground(DisplayStatics.background);
-		this.menuSplitPane.setBorder(null);
+		this.menuSplitPane.setBackground(DisplayStatics.lightBackground);
+		this.menuSplitPane.setBorder(BorderFactory.createEmptyBorder());
+		this.menuSplitPane.setLeftComponent(this.leftPanel);
+		this.menuSplitPane.setRightComponent(this.centerSplitPane);
 		this.menuSplitPane.setDividerLocation(200);
 		this.menuSplitPane.setDividerSize(6);
 		this.menuSplitPane.setResizeWeight(0.0);
-		this.menuSplitPane.setLeftComponent(this.leftPanel);
-		this.menuSplitPane.setRightComponent(this.centerSplitPane);
 		contentPane.add(this.menuSplitPane, "grow");
 		
 		// Add the status bar

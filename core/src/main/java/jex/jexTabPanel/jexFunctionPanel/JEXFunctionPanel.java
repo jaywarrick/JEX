@@ -1,10 +1,5 @@
 package jex.jexTabPanel.jexFunctionPanel;
 
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DBObjects.JEXWorkflow;
-import Database.Definition.TypeName;
-import cruncher.JEXFunction;
 import guiObject.DialogGlassPane;
 
 import java.awt.BorderLayout;
@@ -24,6 +19,11 @@ import jex.statics.JEXStatics;
 import logs.Logs;
 import miscellaneous.FileUtility;
 import net.miginfocom.swing.MigLayout;
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DBObjects.JEXWorkflow;
+import Database.Definition.TypeName;
+import cruncher.JEXFunction;
 
 public class JEXFunctionPanel extends JPanel {
 	
@@ -65,7 +65,7 @@ public class JEXFunctionPanel extends JPanel {
 		
 		centerTopHalf = new FunctionListPanel(this);
 		
-		centerPane.setBackground(DisplayStatics.background);
+		centerPane.setBackground(DisplayStatics.lightBackground);
 		centerPane.setBorder(BorderFactory.createEmptyBorder());
 		centerPane.setLeftComponent(centerTopHalf.panel());
 		centerPane.setRightComponent(centerBottomHalf);
