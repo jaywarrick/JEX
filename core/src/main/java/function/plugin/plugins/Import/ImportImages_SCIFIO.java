@@ -229,6 +229,7 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 							return false;
 						}
 						DimensionMap map = itr.next().copy();
+						int imageCounter = 0;
 						for(Entry<DimensionMap,ImageProcessor> e : splitImages.entrySet())
 						{
 							String filename = JEXWriter.saveImage(e.getValue());
@@ -237,11 +238,28 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 							{
 								if(reader.getImageCount() > 1)
 								{
-									map.put("Loc 2", ""+fi);
+									if(separator.equals(""))
+									{
+										map.put("Loc", ""+fi);
+										map.put("Loc 2", ""+imageCounter);
+										imageCounter = imageCounter + 1;
+									}
+									else
+									{
+										map.put("Loc", ""+imageCounter);
+										imageCounter = imageCounter + 1;
+									}
 								}
 								else
 								{
-									map.put("Loc", ""+fi);
+									if(separator.equals(""))
+									{
+										map.put("Loc", ""+fi);
+									}
+									else
+									{
+										// Do nothing, the multi-file "Loc" dimension(s) is/are created through parsing of the file names
+									}
 								}
 							}
 							multiMap.put(map.copy(),filename);
@@ -253,15 +271,33 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 						String filename = JEXWriter.saveImage(ip);
 						DimensionMap map = itr.next().copy();
 						map.putAll(baseMap.copy());
+						int imageCounter = 0;
 						if(pendingImageFiles.size() > 1)
 						{
 							if(reader.getImageCount() > 1)
 							{
-								map.put("Loc 2", ""+fi);
+								if(separator.equals(""))
+								{
+									map.put("Loc", ""+fi);
+									map.put("Loc 2", ""+imageCounter);
+									imageCounter = imageCounter + 1;
+								}
+								else
+								{
+									map.put("Loc", ""+imageCounter);
+									imageCounter = imageCounter + 1;
+								}
 							}
 							else
 							{
-								map.put("Loc", ""+fi);
+								if(separator.equals(""))
+								{
+									map.put("Loc", ""+fi);
+								}
+								else
+								{
+									// Do nothing, the multi-file "Loc" dimension(s) is/are created through parsing of the file names
+								}
 							}
 						}
 						multiMap.put(map,filename);
