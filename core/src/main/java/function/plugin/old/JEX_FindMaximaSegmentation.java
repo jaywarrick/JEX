@@ -397,6 +397,13 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 				}
 				outputRoiMap.put(tempMap, newRoip);
 				
+				// // Count the maxima
+				outputCountMap.put(map, (double) filteredPoints.size());
+				
+				// // Create the file of XY locations
+				String listPath = createXYPointListFile(filteredPoints);
+				outputFileMap.put(map, listPath);
+				
 				if(!maximaOnly)
 				{
 					// // Create the segemented image
@@ -486,13 +493,6 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 						outputImageMap.put(tempMap, segmentedImagePath);
 					}
 					
-					// // Count the maxima
-					outputCountMap.put(map, (double) filteredPoints.size());
-					
-					// // Create the file of XY locations
-					String listPath = createXYPointListFile(filteredPoints);
-					outputFileMap.put(map, listPath);
-					
 				}
 				
 				// // Update the display
@@ -513,15 +513,17 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 			JEXData output0 = RoiWriter.makeRoiObject(this.outputNames[0].getName(), outputRoiMap);
 			this.realOutputs.add(output0);
 			
+			JEXData output1 = FileWriter.makeFileObject(this.outputNames[1].getName(), null, outputFileMap);
+			String countsFile = JEXTableWriter.writeTable(this.outputNames[2].getName(), outputCountMap, "arff");
+			JEXData output2 = FileWriter.makeFileObject(this.outputNames[2].getName(), null, countsFile);
+			
+			this.realOutputs.add(output1);
+			this.realOutputs.add(output2);
+			
 			if(!maximaOnly)
 			{
-				JEXData output1 = FileWriter.makeFileObject(this.outputNames[1].getName(), null, outputFileMap);
-				String countsFile = JEXTableWriter.writeTable(this.outputNames[2].getName(), outputCountMap, "arff");
-				JEXData output2 = FileWriter.makeFileObject(this.outputNames[2].getName(), null, countsFile);
 				JEXData output3 = ImageWriter.makeImageStackFromPaths(this.outputNames[3].getName(), outputImageMap);
 				
-				this.realOutputs.add(output1);
-				this.realOutputs.add(output2);
 				this.realOutputs.add(output3);
 			}
 			
