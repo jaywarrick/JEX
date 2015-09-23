@@ -68,7 +68,7 @@ import function.plugin.mechanism.ParameterMarker;
 		visible=true,
 		description="Function for testing feature extraction using the ImageJ Ops framework."
 		)
-public class FeatureExtraction extends JEXPlugin {
+public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
 	public ImgOpener imgOpener = new ImgOpener(IJ2PluginUtility.ij().getContext());
 	public FirstOrderStatFeatureSet<IterableInterval<T>> opFirstOrder = null;
