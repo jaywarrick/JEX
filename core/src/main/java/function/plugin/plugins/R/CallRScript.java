@@ -44,48 +44,57 @@ public class CallRScript extends JEXPlugin {
 
 	public CallRScript()
 	{}
-	
+
 	/////////// Define Inputs ///////////
-	
+
 	@InputMarker(uiOrder=1, name="data1", type=MarkerConstants.TYPE_ANY, description="JEXData to be passed as a data.frame and called data1 for use in the provided R command.", optional=true)
 	JEXData data1;
-	
+
 	@InputMarker(uiOrder=2, name="data2", type=MarkerConstants.TYPE_ANY, description="JEXData to be passed as a data.frame and called data2 for use in the provided R command.", optional=true)
 	JEXData data2;
-	
+
 	@InputMarker(uiOrder=3, name="data3", type=MarkerConstants.TYPE_ANY, description="JEXData to be passed as a data.frame and called data3 for use in the provided R command.", optional=true)
 	JEXData data3;
-	
+
 	@InputMarker(uiOrder=4, name="data4", type=MarkerConstants.TYPE_ANY, description="JEXData to be passed as a data.frame and called data4 for use in the provided R command.", optional=true)
 	JEXData data4;
-	
+
 	@InputMarker(uiOrder=5, name="data5", type=MarkerConstants.TYPE_ANY, description="JEXData to be passed as a data.frame and called data5 for use in the provided R command.", optional=true)
 	JEXData data5;
-	
+
 	/////////// Define Parameters ///////////
-	
+
 	public final String scriptDefaultValue = "### Some pointers... ###\n\n" + 
-        
+
 		"# jexTempRFolder is a temp folder in which you can save files freely using your\n" +
-        "# own naming convetions (e.g.,\n" +
-        "# copy.file(from='/Users/myName/myFolder/myFile.pdf',\n" +
-        "# 	to=paste(jexTempRFolder, '/myFile.pdf'))\n\n" +
-        
+		"# own naming convetions (e.g.,\n" +
+		"# copy.file(from='/Users/myName/myFolder/myFile.pdf',\n" +
+		"# 	to=paste(jexTempRFolder, '/myFile.pdf'))\n\n" +
+
         "# Use single quotes for all strings in these scripts to avoid parsing issues\n\n" +
-        
+
         "# jexDBFolder is the base folder from with all paths in JEXData objects are relative\n" +
         "# to. Thus, if you read a file path from a data object such as\n" +
         "# '/Cell_x0_y1/File-Results.txt' from within 'data1', the actual\n" +
         "# full file path is '<jexDBFolder>/Cell_x0_y1/File-Results.txt'\n\n" +
-        
+
         "# data1... data5 are special variable names that can be used to pass data from\n" +
         "# JEX to R. These objects are the same as the .jxd objects within the database\n" +
         "# and typically refer to files or contain data such as point information within\n" +
-        "# an ROI. These objects are given to the user as data.frames using the library\n" +
-        "# 'foreign' using the 'read.arff' function. If one of these variables such as 'data1',\n" +
-        "# contains a list of files, you can access them by calling data1$Value[i] where i\n" +
-        "# is you index of interest.\n\n" +
-        
+        "# an ROI. These data are provided as a three part list. The first element\n" +
+        "# (e.g., data1$type) is a string indicating the type of the object. The second \n" +
+        "# element (e.g., data1$name) is a string indicating the name of the object. The\n" +
+        "# third element (e.g., data1$value) contains the information/value/content of the\n" +
+        "# data object from the database. This value element is the .jxd table associated\n" +
+        "# with the object and links to files (e.g., image files) or contains data directly\n" +
+        "# (e.g., the points of an ROI). This table is given as a data.frame using the 'foreign'\n" +
+        "# and its 'read.arff' function. If one of these objects  'data1',\n" +
+        "# contains a list of files, you can access them by calling data1$value$Value[i] where i\n" +
+        "# is you index of interest. Use the 'Array' tab (tab number 2 of JEX) and select and object\n" +
+        "# you wish to view. Double click the .jxd file shown within the array view to open this txt\n" +
+        "# file to see the contents that you would see as a table in R. To do this you must set\n" +
+        "# your default viewer for .jxd files as a text editor.\n\n" +
+
         "# You can also save data back to JEX by providing a list of file names using\n" +
         "# the reserved variable names fileList1, fileList2, imageList1, and imageList2.\n" +
         "# The file lists are for any type of file while the image lists are interpreted as \n" +
@@ -93,52 +102,65 @@ public class CallRScript extends JEXPlugin {
         "# in an image object in JEX that has 1 dimension named 'i' for index with\n" +
         "# filepath1 at i=0 and filepath2 at i=1. These images can then be viewed in\n" +
         "# JEX's built in image viewer.\n\n" +
-        
+
         "# It is also good to make sure that all attempts to plot are 'shut off' before trying \n" +
         "# to do any plotting. Plotting commands can get stranded if the script errors\n" +
         "# before calling 'dev.off()' to close the plot file (e.g. pdf, jpeg, tif) before ending.\n" +
         "# This is accomplished with a single call to graphics.off()\n\n" +
-        
+
         "# library(foreign) is required for passing in the JEX data objects and is part of the\n" +
         "# normal R distribution (at least with RStudio).\n\n" +
-        
+
         "# Happy scripting...\n\n" +
-        
-        "graphics.off()\n\n" +
-        
+
+		"# Here is an example of reading in a data object...\n" +
+		"# (currently commented out so you can run this without passing an object)\n" +
+		"# print(data1$Type)\n" +
+		"# print(data1$Name)\n" +
+		"# The following is typically a data.frame with the contents of the JEXData object\n\n" +
+		"# print(data1$Value)\n\n" +
+		
+		"graphics.off()\n\n" +
+
         "x <- (0:1000)/100\n" +
         "y <- cos(x)\n" +
-        "temp1 <- paste(jexTempRFolder, '/RPlot.jpeg', sep='')\n" +
-        "jpeg(file=temp1)\n" +
+        "temp1 <- paste(jexTempRFolder, '/RPlot.pdf', sep='')\n" +
+        "pdf(file=temp1)\n" +
         "plot(x,y)\n" +
         "dev.off()\n\n" +
-        
+
         "x <- (0:1000)/100\n" +
         "y <- sin(x)\n" +
-        "temp2 <- paste(jexTempRFolder, '/RPlot2.jpeg', sep='')\n" +
-        "jpeg(file=temp2)\n" +
+        "temp2 <- paste(jexTempRFolder, '/RPlot2.pdf', sep='')\n" +
+        "pdf(file=temp2)\n" +
         "plot(x,y)\n" +
         "dev.off()\n\n" +
-        
-        "imageList1 <- c(temp1, temp2)\n";
-	
+
+        "fileList1 <- c(temp1, temp2)\n";
+
 	@ParameterMarker(uiOrder=1, name="Script", description="Script of commands to run in R environment using data1... data5, jexTempRFolder, and jexDBFolder as potential inputs and fileList1, fileList2, imageList1, and imageList2 as specially interpreted objects that can be translated back into JEXData outputs.", ui=MarkerConstants.UI_SCRIPT, defaultText=scriptDefaultValue)
 	String script;
 	
-	/////////// Define Outputs ///////////
+	@ParameterMarker(uiOrder=2, name="Output to console?", description="Output the script (or the output of each line if line-by-line checked) to the console. Sometimes helpful for debuggin but slows computation to transfer console output.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
+	boolean console;
 	
+	@ParameterMarker(uiOrder=3, name="Eval line-by-line?", description="Evaluate script line by line (not good for loops or function defs, i.e., multiline statements, but can help debug).", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	boolean lineByLine;
+
+	/////////// Define Outputs ///////////
+
 	@OutputMarker(uiOrder=1, name="fileList1", type=MarkerConstants.TYPE_FILE, flavor="", description="File object output populated by collecting the variable named 'fileList1' from the R workspace after the script.", enabled=true)
 	JEXData fileList1;
-	
+
 	@OutputMarker(uiOrder=2, name="fileList2", type=MarkerConstants.TYPE_FILE, flavor="", description="File object output populated by collecting the variable named 'fileList2' from the R workspace after the script.", enabled=true)
 	JEXData fileList2;
-	
+
 	@OutputMarker(uiOrder=3, name="imageList1", type=MarkerConstants.TYPE_IMAGE, flavor="", description="Image object output populated by collecting the variable named 'imageList1' from the R workspace after the script.", enabled=true)
 	JEXData imageList1;
-	
+
 	@OutputMarker(uiOrder=4, name="imageList2", type=MarkerConstants.TYPE_IMAGE, flavor="", description="Image object output populated by collecting the variable named 'imageList2' from the R workspace after the script.", enabled=true)
 	JEXData imageList2;
-	
+
 	@Override
 	public int getMaxThreads()
 	{
@@ -154,18 +176,39 @@ public class CallRScript extends JEXPlugin {
 		initializeData(data3, "data3");
 		initializeData(data4, "data4");
 		initializeData(data5, "data5");
-		
-		R.eval(script);
-		
+
+		if(console)
+		{
+			if(lineByLine)
+			{
+				R.evalToConsoleLineByLine(script);
+			}
+			else
+			{
+				R.evalToConsole(script);
+			}
+		}
+		else
+		{
+			if(lineByLine)
+			{
+				R.evalLineByLine(script);
+			}
+			else
+			{
+				R.eval(script);
+			}
+		}
+
 		fileList1 = getOutput("fileList1");
 		fileList2 = getOutput("fileList2");
 		imageList1 = getOutput("imageList1");
 		imageList2 = getOutput("imageList2");
-		
+
 		// Return status
 		return true;
 	}
-	
+
 	public static void initializeWorkspace()
 	{
 		R.eval("temp <- 0"); // Dummy command to get the R connection up an running.
@@ -179,11 +222,11 @@ public class CallRScript extends JEXPlugin {
 			tempFolder.mkdirs();
 		}
 		R.eval("jexTempRFolder <- " + R.quotedPath(tempPath));
-		
+
 		String dbPath = JEXWriter.getDatabaseFolder();
 		R.eval("jexDBFolder <- " + R.quotedPath(dbPath));
 	}
-	
+
 	public static void initializeData(JEXData data, String name)
 	{
 		if(data == null)
@@ -191,19 +234,22 @@ public class CallRScript extends JEXPlugin {
 			return;
 		}
 		String path = JEXWriter.getDatabaseFolder() + File.separator + data.getDetachedRelativePath();
-		R.eval(name + " <- read.arff(" + R.quotedPath(path) + ")");
+		R.eval(name + " <- list()");
+		R.eval(name + "$type <- " + R.sQuote(data.getTypeName().getType().toString()));
+		R.eval(name + "$name <- " + R.sQuote(data.getTypeName().getName()));
+		R.eval(name + "$value <- read.arff(" + R.quotedPath(path) + ")");
 	}
-	
+
 	public static JEXData getOutput(String name)
 	{
 		TreeMap<DimensionMap,String> files = new TreeMap<DimensionMap,String>();
-		
+
 		boolean image = false;
 		if(name.substring(0, 1).equals("i"))
 		{
 			image = true;
 		}
-		
+
 		REXP workspaceVariables = R.eval("ls()");
 		boolean found = false;
 		try
@@ -249,7 +295,7 @@ public class CallRScript extends JEXPlugin {
 			{
 				ret = FileWriter.makeFileObject("dummy", null, files);
 			}
-			
+
 			return ret;
 		}
 		catch (REXPMismatchException e)

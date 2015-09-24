@@ -185,14 +185,14 @@ public class SingleCellUtility {
 		{
 			//			R.evalAsString("xLogicle");
 			//			R.evalAsString("yLogicle");
-			R.evalTry("points(xLogicle,yLogicle,pch=21,cex=" + cexPointSize + "," + bg + ")");
+			R.eval("points(xLogicle,yLogicle,pch=21,cex=" + cexPointSize + "," + bg + ")");
 		}
 		else
 			// Draw a custom background based on measurement values
 		{
 			makeBackgroundColorVector("bgColors", bgColorMeasurementName, bgMin, bgMax, true);
 			//			R.eval("print(bgValues);");
-			R.evalTry("points(xLogicle,yLogicle,pch=21,cex=" + cexPointSize + ", bg=bgColors)");
+			R.eval("points(xLogicle,yLogicle,pch=21,cex=" + cexPointSize + ", bg=bgColors)");
 		}
 	}
 
