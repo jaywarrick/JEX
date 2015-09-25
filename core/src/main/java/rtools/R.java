@@ -10,6 +10,7 @@ import logs.Logs;
 import miscellaneous.CSVList;
 import miscellaneous.DirectoryManager;
 import miscellaneous.FileUtility;
+import miscellaneous.LSVList;
 
 import org.rosuda.REngine.REXP;
 import org.rosuda.REngine.REXPMismatchException;
@@ -33,28 +34,14 @@ public class R {
 	public static int numRetries = 0;
 	public static int numRetriesLimit = 2;
 	
-	private static boolean connect()
+	private static RConnection connectNew()
 	{
+		RConnection ret = null;
 		try
 		{
-			if(!R.isConnected())
-			{
-				// If this is a restart of JEX and RServe is already started\
-				// We should try to reconnect to the RServe that is already
-				// going if possible
-				// We do this by creating a new RConnection object which
-				// searches for the already running process
-				// We then check to see if it is connected. If not, start RServe
-				// and try again.
-				// If that doesn't work give up.
-				rConnection = new RConnection(); // Throws an exception if it
-				// doesn't connect
-				return true;
-			}
-			else
-			{
-				return true;
-			}
+			ret = new RConnection(); // Throws an exception if it
+			// doesn't connect
+			return ret;
 			
 		}
 		catch (Exception e)
@@ -64,22 +51,59 @@ public class R {
 			try
 			{
 				ScriptRepository.startRServe();
-				rConnection = new RConnection();
-				return (R.isConnected());
+				ret = new RConnection();
+				if(isConnected(ret))
+				{
+					return ret;
+				}
+				else
+				{
+					return null;
+				}
 			}
 			catch (Exception e2)
 			{
 				// If we are here we should give up because we tries to start a
 				// new RServe process and failed
 				e.printStackTrace();
-				return false;
+				return null;
 			}
 		}
 	}
 	
+	private static boolean connect()
+	{
+		rConnection = R.connectNew(); // Throws an exception if it
+		if(rConnection == null)
+		{
+			return false;
+		}
+		return true;
+	}
+	
+	private static boolean isConnected(RConnection c)
+	{
+		if(c != null && c.isConnected())
+		{
+			// the connection might still be compromised for some reason so check we can perform a simple operation
+			try
+			{
+				c.eval("MyTempVariable12346ewefq2341et <- 0");
+				return true;
+			}
+			catch(RserveException e)
+			{
+				// If this fails then try (as best we can) to shut it down and return false, instigating an attempt at establishing a new server.
+				c.close();
+				return false;
+			}
+		}
+		return false;
+	}
+	
 	public static boolean isConnected()
 	{
-		return (R.rConnection != null && R.rConnection.isConnected());
+		return isConnected(R.rConnection);
 	}
 	
 	public static void close()
@@ -89,39 +113,42 @@ public class R {
 	
 	public static REXP eval(String command)
 	{
+		return evaluate(command, false, false);
+	}
+	
+	public static REXP evalLineByLine(String command)
+	{
 		return evaluate(command, false, true);
 	}
 	
-	public static REXP evalAsString(String command)
+	public static REXP evalToConsole(String command)
 	{
 		return evaluate(command, true, false);
 	}
 	
-	public static REXP evalTry(String command)
+	public static REXP evalToConsoleLineByLine(String command)
 	{
-		return evaluate(command, false, false);
+		return evaluate(command, true, true);
 	}
 	
 	/**
-	 * Be careful because ";" is not allowed at the end of the command when
-	 * using as evalAsString or evalTry (safe avoids the use of the paste and
-	 * try command to avoid this pitfall generally).
 	 * @param command
-	 * @param asString
-	 * @param safe
+	 * @param toConsole
+	 * @param lineByLine
 	 * @return
 	 */
-	private static REXP evaluate(String command, boolean asString, boolean safe)
+	private static REXP evaluate(String command, boolean toConsole, boolean lineByLine)
 	{
-		if(!safe && command.endsWith(";"))
-		{
-			command = command.substring(0, command.length() - 1);
-		}
-		if(!safe && command.contains(";"))
-		{
-			// Then it is dangerous to use the the other evaluation options.
-			safe = true;
-		}
+//		if(!safe && command.endsWith(";"))
+//		{
+//			command = command.substring(0, command.length() - 1);
+//		}
+//		if(!safe && command.contains(";"))
+//		{
+//			// Then it is dangerous to use the the other evaluation options.
+//			safe = true;
+//		}
+
 		Logs.log("Attemping command: " + command, 0, "R");
 		if(!R.isConnected()) // If not connected start the server and connect
 		{
@@ -132,26 +159,79 @@ public class R {
 			}
 		}
 		REXP ret = null;
+		LSVList commands = new LSVList(command);
 		try
 		{
-			if(!safe && asString)
+			if(toConsole)
 			{
-				ret = rConnection.eval("paste(capture.output(print(" + command + ")),collapse='\\n')");
-				Logs.log(ret.asString(), R.class);
-			}
-			else if(!safe)
-			{
-				ret = rConnection.parseAndEval("try(" + command + ",silent=TRUE)");
-				if(ret.inherits("try-error"))
+				if(lineByLine)
 				{
-					Logs.log(ret.asString(), Logs.ERROR, R.class);
+					for(String s : commands)
+					{
+						Logs.log(s, R.class);
+//						ret = rConnection.eval(s);
+						rConnection.assign(".tmp.", s);
+						ret = rConnection.eval("paste(capture.output(print(try(eval(parse(text=.tmp.)),silent=TRUE))),collapse='\\n')");
+						if(ret.inherits("try-error"))
+					    {
+					    	Logs.log("Error: "+ret.toDebugString(), Logs.ERROR, R.class);
+					    }
+					    else
+					    {
+					    	Logs.log(ret.asString(), R.class);
+					    }
+					}
 				}
 				else
-				{}
+				{
+					rConnection.assign(".tmp.", command);
+					ret = rConnection.eval("paste(capture.output(print(try(eval(parse(text=.tmp.)),silent=TRUE))),collapse='\\n')");
+					if(ret.inherits("try-error"))
+				    {
+				    	Logs.log("Error: "+ret.toDebugString(), Logs.ERROR, R.class);
+				    }
+				    else
+				    {
+				    	Logs.log(ret.asString(), R.class);
+				    }
+				}
+				
 			}
-			else //safe
+			else
 			{
-				ret = rConnection.eval(command);
+				if(lineByLine)
+				{
+					for(String s : commands)
+					{
+						Logs.log(s, R.class);
+						rConnection.assign(".tmp.", s);
+					    ret = rConnection.eval("try(eval(parse(text=.tmp.)),silent=TRUE)");
+					    if(ret.inherits("try-error"))
+					    {
+					    	Logs.log("Printing Error", Logs.ERROR, R.class);
+					    	System.err.println("Error: "+ret.toDebugString());
+					    }
+					    else
+					    {
+					    	// Do nothing, keep the console clean
+					    }
+					}
+				}
+				else
+				{
+					rConnection.assign(".tmp.", command);
+				    ret = rConnection.eval("try(eval(parse(text=.tmp.)),silent=TRUE)");
+				    if(ret.inherits("try-error"))
+				    {
+				    	Logs.log("Printing Error", Logs.ERROR, R.class);
+				    	System.err.println("Error: "+ret.toDebugString());
+				    }
+				    else
+				    {
+				    	// Do nothing, keep the console clean
+				    }
+				}
+				
 			}
 		}
 		catch (RserveException e)
@@ -160,10 +240,6 @@ public class R {
 			Logs.log("Couldn't resolve issue with R evaluation of command '" + command + "'", 0, R.class.getSimpleName());
 		}
 		catch (REXPMismatchException e)
-		{
-			e.printStackTrace();
-		}
-		catch (REngineException e)
 		{
 			e.printStackTrace();
 		}
@@ -272,7 +348,7 @@ public class R {
 	 */
 	public static boolean _startPlot(File file, double width_inches, double height_inches, double res_ppi, double fontsize_pts, String optionalFont, String optionalTifCompression)
 	{
-		R.evalTry("graphics.off()");
+		R.eval("graphics.off()");
 		String extension = FileUtility.getFileNameExtension(file.getAbsolutePath());
 		extension = extension.toLowerCase();
 		String commandStart = extension;
@@ -334,7 +410,7 @@ public class R {
 	 */
 	public static REXP endPlot()
 	{
-		return R.evalTry("graphics.off()");
+		return R.eval("graphics.off()");
 	}
 	
 	/**
