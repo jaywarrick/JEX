@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.TreeMap;
 
 import jex.statics.JEXStatics;
-import jex.utilities.FunctionUtility;
 import logs.Logs;
 import tables.DimensionMap;
 import Database.DBObjects.JEXData;
@@ -81,7 +80,7 @@ public class JEX_BackGroundSubtract extends JEXCrunchable {
 	@Override
 	public boolean showInList()
 	{
-		return true;
+		return false;
 	}
 	
 	/**
