@@ -1,17 +1,7 @@
 package function.plugin.old;
 
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DataReader.ImageReader;
-import Database.DataReader.RoiReader;
-import Database.DataWriter.ImageWriter;
-import Database.Definition.Parameter;
-import Database.Definition.ParameterSet;
-import Database.Definition.TypeName;
-import Database.SingleUserDatabase.JEXWriter;
-import function.JEXCrunchable;
-import function.imageUtility.jBackgroundSubtracter;
 import ij.ImagePlus;
+import ij.plugin.filter.BackgroundSubtracter;
 import ij.plugin.filter.RankFilters;
 import ij.process.FloatBlitter;
 import ij.process.FloatProcessor;
@@ -26,6 +16,16 @@ import jex.utilities.FunctionUtility;
 import jex.utilities.ImageUtility;
 import logs.Logs;
 import tables.DimensionMap;
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DataReader.ImageReader;
+import Database.DataReader.RoiReader;
+import Database.DataWriter.ImageWriter;
+import Database.Definition.Parameter;
+import Database.Definition.ParameterSet;
+import Database.Definition.TypeName;
+import Database.SingleUserDatabase.JEXWriter;
+import function.JEXCrunchable;
 
 /**
  * Subtract background of image and correct for uneven illumination using
@@ -367,15 +367,9 @@ public class JEX_SingleCell_BackGroundCorrectCalibrated extends JEXCrunchable {
 			FloatProcessor impTemp = new FloatProcessor(imp.getFloatArray());
 			RankFilters rF = new RankFilters();
 			rF.rank(impTemp, bgPresmoothRadius, RankFilters.MEAN);
-			ImagePlus imTemp = new ImagePlus("temp", impTemp);
-			jBackgroundSubtracter bS = new jBackgroundSubtracter();
-			bS.setup("", imTemp);
-			jBackgroundSubtracter.radius = bgRadius; // default rolling ball radius
-			jBackgroundSubtracter.lightBackground = bgInverse;
-			jBackgroundSubtracter.createBackground = true;
-			jBackgroundSubtracter.useParaboloid = bgParaboloid; // use "Sliding Paraboloid" instead of rolling ball algorithm
-			jBackgroundSubtracter.doPresmooth = bgPresmooth;
-			bS.run(impTemp);
+			
+			BackgroundSubtracter bS = new BackgroundSubtracter();			
+			bS.rollingBallBackground(impTemp, bgRadius, true, bgInverse, bgParaboloid, bgPresmooth, true);
 			
 			// subtract the calculated background from the image
 			blit.copyBits(impTemp, 0, 0, FloatBlitter.SUBTRACT);
@@ -383,15 +377,6 @@ public class JEX_SingleCell_BackGroundCorrectCalibrated extends JEXCrunchable {
 			// //// Subtract off remaining background because subtraction method
 			// //subtracts off the MINIMUM of the background, we want the mean of
 			// //the background to be zero
-			// FloatProcessor bg = new FloatProcessor(imp.getWidth(),
-			// imp.getHeight(), (float[])imp.getPixelsCopy(), null);
-			// double remainderMean = 0;
-			//
-			// ////// Apply mean filter on BG subtracted (Image-DF)
-			// RankFilters rF = new RankFilters();
-			// rF.rank(bg, 5, RankFilters.MEAN);
-			// remainderMean = ImageStatistics.getStatistics(bg, ImageStatistics.MIN_MAX, null).min; // Get the "min" of the "mean"
-			
 			double remainderMean = ImageUtility.getHistogramPeakBin(imp, -sigma, sigma, -1, false);
 			
 			// try
