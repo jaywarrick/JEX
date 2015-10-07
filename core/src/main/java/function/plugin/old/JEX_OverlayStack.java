@@ -259,7 +259,14 @@ public class JEX_OverlayStack extends JEXCrunchable {
 	{
 		if(imp == null)
 		{
-			return (ByteProcessor) FunctionUtility.makeImageToSave(bfImp, "false", 8).getProcessor();
+			if(bfImp != null)
+			{
+				return (ByteProcessor) FunctionUtility.makeImageToSave(bfImp, "false", 8).getProcessor();
+			}
+			else
+			{
+				return null;
+			}
 		}
 		ByteProcessor ret = null;
 		ImagePlus im = null;
