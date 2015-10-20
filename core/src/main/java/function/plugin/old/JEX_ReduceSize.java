@@ -203,6 +203,7 @@ public class JEX_ReduceSize extends JEXCrunchable {
 			// get the image
 			ImagePlus im = new ImagePlus(path);
 			ij.process.ImageProcessor imProc = im.getProcessor();
+			boolean shouldNormalize = im.getBitDepth() != depth;
 			if(imProc == null)
 				continue;
 			FloatProcessor imp = (FloatProcessor) im.getProcessor().convertToFloat(); // should
@@ -221,7 +222,7 @@ public class JEX_ReduceSize extends JEXCrunchable {
 			// f.getName(), "Bin");
 			// String finalPath = localDir + File.separator + newFileName;
 			// FunctionUtility.imSave(imp, "true", depth, finalPath);
-			ImagePlus toSave = FunctionUtility.makeImageToSave(imp, "true", depth);
+			ImagePlus toSave = FunctionUtility.makeImageToSave(imp, ""+shouldNormalize, depth);
 			String finalPath = JEXWriter.saveImage(toSave);
 			
 			outputMap.put(dim.copy(), finalPath);
