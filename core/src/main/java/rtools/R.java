@@ -171,7 +171,7 @@ public class R {
 						Logs.log(s, R.class);
 //						ret = rConnection.eval(s);
 						rConnection.assign(".tmp.", s);
-						ret = rConnection.parseAndEval("paste(capture.output(print(try(eval(parse(text=.tmp.)),silent=TRUE))),collapse='\\n')");
+						ret = rConnection.eval("paste(capture.output(print(try(eval(parse(text=.tmp.)),silent=TRUE))),collapse='\\n')");
 						if(ret.inherits("try-error"))
 					    {
 					    	Logs.log("Error: "+ret.toDebugString(), Logs.ERROR, R.class);
@@ -185,7 +185,7 @@ public class R {
 				else
 				{
 					rConnection.assign(".tmp.", command);
-					ret = rConnection.parseAndEval("paste(capture.output(print(try(eval(parse(text=.tmp.)),silent=TRUE))),collapse='\\n')");
+					ret = rConnection.eval("paste(capture.output(print(try(eval(parse(text=.tmp.)),silent=TRUE))),collapse='\\n')");
 					if(ret.inherits("try-error"))
 				    {
 				    	Logs.log("Error: "+ret.toDebugString(), Logs.ERROR, R.class);
@@ -205,7 +205,7 @@ public class R {
 					{
 						Logs.log(s, R.class);
 						rConnection.assign(".tmp.", s);
-					    ret = rConnection.parseAndEval("try(eval(parse(text=.tmp.)),silent=TRUE)");
+					    ret = rConnection.eval("try(eval(parse(text=.tmp.)),silent=TRUE)");
 					    if(ret.inherits("try-error"))
 					    {
 					    	Logs.log("Printing Error", Logs.ERROR, R.class);
@@ -220,7 +220,7 @@ public class R {
 				else
 				{
 					rConnection.assign(".tmp.", command);
-				    ret = rConnection.parseAndEval("try(eval(parse(text=.tmp.)),silent=TRUE)");
+				    ret = rConnection.eval("try(eval(parse(text=.tmp.)),silent=TRUE)");
 				    if(ret.inherits("try-error"))
 				    {
 				    	Logs.log("Printing Error", Logs.ERROR, R.class);
@@ -240,10 +240,6 @@ public class R {
 			Logs.log("Couldn't resolve issue with R evaluation of command '" + command + "'", 0, R.class.getSimpleName());
 		}
 		catch (REXPMismatchException e)
-		{
-			e.printStackTrace();
-		}
-		catch (REngineException e)
 		{
 			e.printStackTrace();
 		}
