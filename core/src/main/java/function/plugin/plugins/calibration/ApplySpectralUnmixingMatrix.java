@@ -38,8 +38,6 @@ import function.plugin.mechanism.ParameterMarker;
 		)
 public class ApplySpectralUnmixingMatrix extends JEXPlugin {
 	
-	public static ImagePlus sharedCalibrationImage = null;
-	
 	public ApplySpectralUnmixingMatrix()
 	{}
 	
