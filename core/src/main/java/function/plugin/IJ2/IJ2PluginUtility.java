@@ -45,7 +45,7 @@ public class IJ2PluginUtility {
 	public static final String DATASET = Dataset.class.getSimpleName(), IMAGEDISPLAY = ImageDisplay.class.getSimpleName(), STRING = String.class.getSimpleName(), FILE = String.class.getSimpleName(), OVERLAY = Overlay.class.getSimpleName();
 	public static final String ROISUFFIX = "_ROI";
 	
-	private static ImageJ ij = null;
+	private static ImageJ ij = ij();
 	
 	//	public static TreeMap<String,IJ2CrunchablePlugin> ijCommands = getIJ2Commands();
 	
