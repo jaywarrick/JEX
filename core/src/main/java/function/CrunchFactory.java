@@ -252,20 +252,20 @@ public class CrunchFactory extends URLClassLoader {
 		// First load the ImageJ plugins (just commands)
 		for(PluginInfo<?> pi : allSciJavaPlugins)
 		{
-			if(pi.getPluginType() == Command.class)
-			{
-				@SuppressWarnings("unchecked")
-				CommandInfo command = new CommandInfo((PluginInfo<Command>) pi);
-				if(IJ2PluginUtility.isValidForJEX(command))
-				{
-					IJ2CrunchablePlugin p = new IJ2CrunchablePlugin(command);
-					if(p != null)
-					{
-						Logs.log("Loaded ImageJ Plugin: " + command.getTitle(), CrunchFactory.class);
-						jexCrunchables().put(command.getTitle(), p);
-					}
-				}
-			}
+//			if(pi.getPluginType() == Command.class)
+//			{
+//				@SuppressWarnings("unchecked")
+//				CommandInfo command = new CommandInfo((PluginInfo<Command>) pi);
+//				if(IJ2PluginUtility.isValidForJEX(command))
+//				{
+//					IJ2CrunchablePlugin p = new IJ2CrunchablePlugin(command);
+//					if(p != null)
+//					{
+//						Logs.log("Loaded ImageJ Plugin: " + command.getTitle(), CrunchFactory.class);
+//						jexCrunchables().put(command.getTitle(), p);
+//					}
+//				}
+//			}
 			
 		}
 		
