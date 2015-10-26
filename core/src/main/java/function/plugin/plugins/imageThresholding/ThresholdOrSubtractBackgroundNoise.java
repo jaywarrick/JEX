@@ -129,10 +129,12 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 	@SuppressWarnings("unchecked")
 	public TreeMap<String,Object> calcPerColor()
 	{
+		TreeMap<String,Object> temp = this.calcIndividual();
+		
 		Dim colorDim = imageData.getDimTable().getDimWithName(colorDimName);
 		if(colorDim == null)
 		{
-			return this.calcIndividual();
+			return temp;
 		}
 
 		// Run the function
@@ -143,20 +145,33 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 		TreeMap<DimensionMap,Double> statsMap = new TreeMap<DimensionMap,Double>();
 		TreeMap<DimensionMap,Double> outputThreshMap = new TreeMap<DimensionMap,Double>();
 		boolean success = true;
-		TreeMap<String,Object> temp = null;
+		TreeMap<DimensionMap,Double> thresholds = (TreeMap<DimensionMap,Double>) temp.get("outputThreshMap");
 		for (DimTable subTable : table.getSubTableIterator(colorDimName))
 		{
-			temp = this.calcIndividual();
+			
 			Dim colorSubDim = subTable.getDimWithName(colorDimName);
 
 			// Get the median threshold
-			TreeMap<DimensionMap,Double> thresholds = (TreeMap<DimensionMap,Double>) temp.get("outputThreshMap");
-			Double thresh = StatisticsUtility.median(thresholds.values());
+			TreeMap<DimensionMap,Double> colorThresholds = new TreeMap<DimensionMap,Double>();
+			for(DimensionMap map : subTable.getMapIterator())
+			{
+				Double d = thresholds.get(map);
+				if(d != null)
+				{
+					colorThresholds.put(map, thresholds.get(map));
+				}
+			}
+			Double thresh = StatisticsUtility.median(colorThresholds.values());
 
 			// Threshold all images for this subtable using the threshold
 			for (DimensionMap map : subTable.getMapIterator())
 			{
 				// Get the image
+				String imPath = imageMap.get(map);
+				if(imPath == null)
+				{
+					continue;
+				}
 				ImagePlus im = new ImagePlus(imageMap.get(map));
 				FloatProcessor ip = (FloatProcessor) im.getProcessor().convertToFloat();
 
@@ -204,6 +219,11 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 			}
 
 			// Get the image
+			String imPath = imageMap.get(map);
+			if(imPath == null)
+			{
+				continue;
+			}
 			ImagePlus im = new ImagePlus(imageMap.get(map));
 			bitDepth = im.getBitDepth();
 			FloatProcessor ip = (FloatProcessor) im.getProcessor().convertToFloat();
@@ -235,31 +255,35 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 			double mad = StatisticsUtility.mad(med, pixels); // Multiplier converts the mad to an approximation of the standard deviation without the effects of outliers
 			double threshold = med + nSigma * mad;
 			String path = null;
-			if(this.threshold)
+			
+			if(!threshPerColor)
 			{
-				FunctionUtility.imThresh(ip, threshold, false);
-				if(this.isCanceled())
+				if(this.threshold)
 				{
-					success = false;
-					return this.makeTreeMap("Success", false);
+					FunctionUtility.imThresh(ip, threshold, false);
+					if(this.isCanceled())
+					{
+						success = false;
+						return this.makeTreeMap("Success", false);
+					}
+					path = JEXWriter.saveImage(FunctionUtility.makeImageToSave(ip, "false", 8)); // Creating black and white image
 				}
-				path = JEXWriter.saveImage(FunctionUtility.makeImageToSave(ip, "false", 8)); // Creating black and white image
-			}
-			else
-			{
-				ip.subtract(threshold);
-				if(this.isCanceled())
+				else
 				{
-					success = false;
-					return this.makeTreeMap("Success", false);
+					ip.subtract(threshold);
+					if(this.isCanceled())
+					{
+						success = false;
+						return this.makeTreeMap("Success", false);
+					}
+					path = JEXWriter.saveImage(FunctionUtility.makeImageToSave(ip, ""+false, bitDepth)); // Creating black and white image
 				}
-				path = JEXWriter.saveImage(FunctionUtility.makeImageToSave(ip, ""+false, bitDepth)); // Creating black and white image
+				if(path != null)
+				{
+					outputMap.put(map, path);
+				}
 			}
-
-			if(path != null)
-			{
-				outputMap.put(map, path);
-			}
+			
 			DimensionMap map2 = map.copy();
 			map2.put("Measurement", "Median");
 			statsMap.put(map2.copy(), med);

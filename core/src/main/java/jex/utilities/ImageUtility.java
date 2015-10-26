@@ -57,6 +57,11 @@ public class ImageUtility {
 		ImageProcessor imp = null;
 		for(Entry<DimensionMap,String> e : files.entrySet())
 		{
+			String imPath = e.getValue();
+			if(imPath == null)
+			{
+				continue;
+			}
 			imp = (new ImagePlus(e.getValue())).getProcessor();
 			if(first)
 			{
