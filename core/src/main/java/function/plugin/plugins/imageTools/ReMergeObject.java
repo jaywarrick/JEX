@@ -35,7 +35,7 @@ import function.plugin.mechanism.ParameterMarker;
 @Plugin(
 		type = JEXPlugin.class,
 		name="ReMerge Objects",
-		menuPath="Database",
+		menuPath="Data Editing",
 		visible=true,
 		description="ReMerges Objects that were split with the 'Split Objects' function."
 		)
