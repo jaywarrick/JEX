@@ -1,11 +1,7 @@
 package jex.jexTabPanel.jexFunctionPanel;
 
-import Database.DBObjects.JEXEntry;
-import Database.Definition.ParameterSet;
-import Database.Definition.TypeName;
-import Database.SingleUserDatabase.tnvi;
-import cruncher.JEXFunction;
 import function.JEXCrunchable;
+import function.plugin.mechanism.JEXCrunchablePlugin;
 import guiObject.FlatRoundedButton;
 
 import java.awt.BasicStroke;
@@ -27,6 +23,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.Set;
+import java.util.SortedMap;
 import java.util.TreeMap;
 
 import javax.swing.BorderFactory;
@@ -46,6 +43,11 @@ import logs.Logs;
 import miscellaneous.FontUtility;
 import net.miginfocom.swing.MigLayout;
 import transferables.TransferableTypeName;
+import Database.DBObjects.JEXEntry;
+import Database.Definition.ParameterSet;
+import Database.Definition.TypeName;
+import Database.SingleUserDatabase.tnvi;
+import cruncher.JEXFunction;
 
 public class FunctionBlockPanel implements ActionListener, MouseListener {
 	
@@ -198,9 +200,19 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 		// inputLabel.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 		this.inputList.add(inputLabel, "growx");
 		// inputList.setAlignmentX(JPanel.LEFT_ALIGNMENT);
+		SortedMap<String,String> iDescriptions = null;
+		if(this.function.getCrunch() instanceof JEXCrunchablePlugin)
+		{
+			iDescriptions = ((JEXCrunchablePlugin) this.function.getCrunch()).info.iDescriptions;
+		}
 		for (int i = 0; i < nbInput; i++)
 		{
-			FunctionInputDrop ind = new FunctionInputDrop(this, i, inNames[i]);
+			String description = null;
+			if(iDescriptions != null)
+			{
+				description = iDescriptions.get(inNames[i].getName());
+			}
+			FunctionInputDrop ind = new FunctionInputDrop(this, i, inNames[i], description);
 			// ind.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 			this.inputList.add(ind, "growx");
 			this.inputPanes.put(inNames[i].getName(), ind);
@@ -217,9 +229,19 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 		// outputLabel.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 		this.outputList.add(outputLabel, "growx");
 		// outputList.setAlignmentX(JPanel.LEFT_ALIGNMENT);
+		SortedMap<String,String> oDescriptions = null;
+		if(this.function.getCrunch() instanceof JEXCrunchablePlugin)
+		{
+			oDescriptions = ((JEXCrunchablePlugin) this.function.getCrunch()).info.oDescriptions;
+		}
 		for (int i = 0; i < nbOutput; i++)
 		{
-			FunctionOutputDrag oud = new FunctionOutputDrag(i, function.getSavingSelections().get(i), function.getExpectedOutputTN(i));
+			String description = null;
+			if(iDescriptions != null)
+			{
+				description = oDescriptions.get(function.getExpectedOutputTN(i).getName());
+			}
+			FunctionOutputDrag oud = new FunctionOutputDrag(i, function.getSavingSelections().get(i), function.getExpectedOutputTN(i), description);
 			// oud.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 			this.outputList.add(oud, "growx");
 			this.outputPanes.put(new Integer(i), oud);
@@ -398,17 +420,19 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 		TypeName inputTN;
 		int index;
 		TypeName inname;
+		String toolTip;
 		FunctionBlockPanel parent;
 		
 		JPanel dropArea = new JPanel();
 		JLabel inputTNLabel = new JLabel();
 		JPanel box;
 		
-		FunctionInputDrop(FunctionBlockPanel parent, int index, TypeName inname)
+		FunctionInputDrop(FunctionBlockPanel parent, int index, TypeName inname, String toolTip)
 		{
 			this.parent = parent;
 			this.index = index;
 			this.inname = inname;
+			this.toolTip = toolTip;
 			new InputButtonListener(this);
 			this.initialize();
 		}
@@ -462,7 +486,14 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 			// box.setMinimumSize(new Dimension(20,20));
 			this.box.setBorder(BorderFactory.createLineBorder(Color.black));
 			this.box.setBackground(Color.RED);
-			this.box.setToolTipText(this.inname.getName());
+			if(this.toolTip == null)
+			{
+				this.toolTip = this.inname.toString();
+			}
+			if(this.toolTip != null)
+			{
+				this.box.setToolTipText(this.toolTip);
+			}
 			this.add(this.box, "width 20:20:20, height 20:20:20");
 			this.add(Box.createHorizontalStrut(5));
 			this.add(this.inputTNLabel, "growx");
@@ -556,6 +587,7 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 		
 		TypeName tn;
 		int index;
+		String toolTip;
 		boolean canRun = false;
 		
 		JPanel dragArea = new JPanel();
@@ -563,11 +595,12 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 		JCheckBox saveOutput = new JCheckBox();
 		JPanel box;
 		
-		FunctionOutputDrag(int index, boolean savingSelection, TypeName tn)
+		FunctionOutputDrag(int index, boolean savingSelection, TypeName tn, String toolTip)
 		{
 			this.tn = tn;
 			this.index = index;
 			this.saveOutput.setSelected(savingSelection);
+			this.toolTip = toolTip;
 			this.initialize();
 		}
 		
@@ -620,7 +653,6 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 			// box.setMinimumSize(new Dimension(20,20));
 			this.box.setBorder(BorderFactory.createLineBorder(Color.black));
 			this.box.setBackground(Color.RED);
-			
 			this.saveOutput.setToolTipText("Check this box to set the output to be saved in the database");
 			
 			// Create the drag source
@@ -634,6 +666,11 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 			{
 				this.outputTNLabel.setText(this.tn.getName());
 			}
+			if(this.toolTip != null)
+			{
+				this.outputTNLabel.setToolTipText(this.toolTip);
+			}
+			
 			
 			this.add(this.box, "width 20:20:20, height 20:20:20");
 			this.add(Box.createHorizontalStrut(5));
