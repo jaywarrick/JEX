@@ -1,5 +1,19 @@
 package function.plugin.old;
 
+import ij.ImagePlus;
+import ij.measure.Measurements;
+import ij.measure.ResultsTable;
+import ij.plugin.filter.BackgroundSubtracter;
+import ij.plugin.filter.ParticleAnalyzer;
+import ij.process.ImageProcessor;
+import ij.process.ImageStatistics;
+import image.roi.ROIPlus;
+
+import java.util.HashMap;
+import java.util.TreeMap;
+
+import logs.Logs;
+import tables.DimensionMap;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;
@@ -11,20 +25,6 @@ import Database.Definition.ParameterSet;
 import Database.Definition.TypeName;
 import Database.SingleUserDatabase.JEXWriter;
 import function.JEXCrunchable;
-import function.imageUtility.jBackgroundSubtracter;
-import ij.ImagePlus;
-import ij.measure.Measurements;
-import ij.measure.ResultsTable;
-import ij.plugin.filter.ParticleAnalyzer;
-import ij.process.FloatProcessor;
-import ij.process.ImageStatistics;
-import image.roi.ROIPlus;
-
-import java.util.HashMap;
-import java.util.TreeMap;
-
-import logs.Logs;
-import tables.DimensionMap;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions
@@ -216,25 +216,11 @@ public class JEX_AnalyzeCluster extends JEXCrunchable {
 			ImagePlus im = new ImagePlus(path);
 			
 			// get the image
-			FloatProcessor imp = (FloatProcessor) im.getProcessor().convertToFloat(); // should
-			// be
-			// a
-			// float
-			// processor
+			ImageProcessor imp = im.getProcessor(); // should
 			
 			// Subtract background
-			jBackgroundSubtracter bS = new jBackgroundSubtracter();
-			bS.setup("", im);
-			jBackgroundSubtracter.radius = radius; // default rolling ball
-			// radius
-			jBackgroundSubtracter.lightBackground = false;
-			jBackgroundSubtracter.createBackground = false;
-			jBackgroundSubtracter.useParaboloid = false; // use
-			// "Sliding Paraboloid"
-			// instead of rolling
-			// ball algorithm
-			jBackgroundSubtracter.doPresmooth = false;
-			bS.run(imp);
+			BackgroundSubtracter bS = new BackgroundSubtracter();
+			bS.rollingBallBackground(imp, radius, false, false, false, false, true);
 			
 			// Crop image
 			if(roi != null)
@@ -242,7 +228,7 @@ public class JEX_AnalyzeCluster extends JEXCrunchable {
 				ij.gui.Roi imroi = roi.getRoi();
 				java.awt.Rectangle rect = imroi.getBounds();
 				imp.setRoi(rect);
-				imp = (FloatProcessor) imp.crop();
+				imp = imp.crop();
 			}
 			
 			// Threshold image

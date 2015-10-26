@@ -17,6 +17,8 @@ Please go to [https://github.com/jaywarrick/JEX/issues](https://github.com/jaywa
 
 #### Getting started
 
+Note: There is also a "Test Script" with screen shots created for a specific project, that you can also download and follow [here](https://sourceforge.net/projects/ctciap/files/TestScriptFinal.zip/download).
+
 Upon starting JEX, you will be shown a screen for either...
 
 1. Creating a user profile

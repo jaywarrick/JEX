@@ -1,24 +1,9 @@
 package function.plugin.old;
 
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DataReader.ImageReader;
-import Database.DataReader.RoiReader;
-import Database.DataWriter.ImageWriter;
-import Database.DataWriter.ValueWriter;
-import Database.Definition.Parameter;
-import Database.Definition.ParameterSet;
-import Database.Definition.TypeName;
-import Database.SingleUserDatabase.JEXWriter;
-import function.GraphicalCrunchingEnabling;
-import function.GraphicalFunctionWrap;
-import function.ImagePanel;
-import function.ImagePanelInteractor;
-import function.JEXCrunchable;
-import function.imageUtility.jBackgroundSubtracter;
 import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.measure.ResultsTable;
+import ij.plugin.filter.BackgroundSubtracter;
 import ij.plugin.filter.EDM;
 import ij.plugin.filter.ParticleAnalyzer;
 import ij.process.ByteProcessor;
@@ -37,6 +22,21 @@ import java.util.TreeMap;
 
 import logs.Logs;
 import tables.DimensionMap;
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DataReader.ImageReader;
+import Database.DataReader.RoiReader;
+import Database.DataWriter.ImageWriter;
+import Database.DataWriter.ValueWriter;
+import Database.Definition.Parameter;
+import Database.Definition.ParameterSet;
+import Database.Definition.TypeName;
+import Database.SingleUserDatabase.JEXWriter;
+import function.GraphicalCrunchingEnabling;
+import function.GraphicalFunctionWrap;
+import function.ImagePanel;
+import function.ImagePanelInteractor;
+import function.JEXCrunchable;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions
@@ -527,17 +527,8 @@ class FindNeutrophilsHelperFunction implements GraphicalCrunchingEnabling, Image
 			// Convert to Byte
 			ByteProcessor bimp = (ByteProcessor) imp.convertToByte(true);
 			
-			// Prepare background subtract
-			jBackgroundSubtracter bS = new jBackgroundSubtracter();
-			jBackgroundSubtracter.radius = -radius;
-			jBackgroundSubtracter.lightBackground = false;
-			jBackgroundSubtracter.createBackground = false;
-			jBackgroundSubtracter.useParaboloid = false;
-			jBackgroundSubtracter.doPresmooth = false;
-			
-			// Run the background subtract
-			bS.setup("", im);
-			bS.run(bimp);
+			BackgroundSubtracter bS = new BackgroundSubtracter();			
+			bS.rollingBallBackground(bimp, -radius, false, false, false, false, true);
 			
 			// If the roi is set then crop the outputted image
 			if(roi != null)
@@ -546,26 +537,19 @@ class FindNeutrophilsHelperFunction implements GraphicalCrunchingEnabling, Image
 				bimp.setRoi(rect);
 				bimp = (ij.process.ByteProcessor) bimp.crop();
 			}
-			// FunctionUtility.imSave(bimp, "./quantifyMigration1.tif");
-			JEXWriter.saveImage(bimp);
+			
+			// Appears this saved image was never used (other than for potentially debug)
+			// FunctionUtility.imSave(imp, "./quantifyMigration1.tif");
+			// JEXWriter.saveImage(bimp);;
 			
 			// Place the byte processor in the image to track
 			imp = bimp;
 		}
 		else
 		{
-			jBackgroundSubtracter bS = new jBackgroundSubtracter();
-			bS.setup("", im);
-			jBackgroundSubtracter.radius = radius; // default rolling ball
-			// radius
-			jBackgroundSubtracter.lightBackground = true;
-			jBackgroundSubtracter.createBackground = false;
-			jBackgroundSubtracter.useParaboloid = false; // use
-			// "Sliding Paraboloid"
-			// instead of rolling
-			// ball algorithm
-			jBackgroundSubtracter.doPresmooth = false;
-			bS.run(imp);
+			BackgroundSubtracter bS = new BackgroundSubtracter();	
+			// set lightBackground to true in this case.
+			bS.rollingBallBackground(im.getProcessor(), -radius, false, true, false, false, true);
 			
 			if(roi != null)
 			{
@@ -574,8 +558,9 @@ class FindNeutrophilsHelperFunction implements GraphicalCrunchingEnabling, Image
 				imp = (ij.process.ByteProcessor) imp.crop();
 			}
 			
+			// Appears this saved image was never used (other than for potentially debug)
 			// FunctionUtility.imSave(imp, "./quantifyMigration1.tif");
-			JEXWriter.saveImage(imp);
+			// JEXWriter.saveImage(imp);
 		}
 	}
 	

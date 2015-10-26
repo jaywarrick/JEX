@@ -40,7 +40,7 @@ import function.plugin.mechanism.ParameterMarker;
 @Plugin(
 		type = JEXPlugin.class,
 		name="Montage 1 Dim",
-		menuPath="Stitch",
+		menuPath="Image Tools > Stitching",
 		visible=true,
 		description="Creates a montage for each image along a single dimension of a multi-dimensional image set (e.g., a montage of all the colors for each time in a time series)."
 		)

@@ -37,7 +37,7 @@ import function.plugin.mechanism.ParameterMarker;
 
 @Plugin(
 		type = JEXPlugin.class,
-		name="Scale Image",
+		name="Scale Image Intensity",
 		menuPath="Image Processing",
 		visible=true,
 		description="Scale the image by a scale factor."
@@ -107,7 +107,7 @@ public class ScaleImage extends JEXPlugin {
 			imp.setInterpolationMethod(ImageProcessor.BILINEAR);
 			imp = (FloatProcessor) imp.resize(newWidth);
 			
-			ImagePlus toSave = FunctionUtility.makeImageToSave(imp, "true", bitDepth);
+			ImagePlus toSave = FunctionUtility.makeImageToSave(imp, "false", bitDepth);
 			String finalPath = JEXWriter.saveImage(toSave);
 			
 			outputMap.put(dim.copy(), finalPath);

@@ -1,15 +1,5 @@
 package function.plugin.old;
 
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DataReader.ImageReader;
-import Database.DataWriter.ImageWriter;
-import Database.Definition.Parameter;
-import Database.Definition.ParameterSet;
-import Database.Definition.TypeName;
-import Database.SingleUserDatabase.JEXWriter;
-import Database.SingleUserDatabase.xml.XElement;
-import function.JEXCrunchable;
 import ij.ImagePlus;
 import ij.process.FloatProcessor;
 
@@ -20,6 +10,15 @@ import java.util.TreeMap;
 import jex.statics.JEXStatics;
 import jex.utilities.FunctionUtility;
 import tables.DimensionMap;
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DataReader.ImageReader;
+import Database.DataWriter.ImageWriter;
+import Database.Definition.Parameter;
+import Database.Definition.ParameterSet;
+import Database.Definition.TypeName;
+import Database.SingleUserDatabase.JEXWriter;
+import function.JEXCrunchable;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions
@@ -191,8 +190,6 @@ public class JEX_AdjustImageSimple extends JEXCrunchable {
 	@Override
 	public boolean run(JEXEntry entry, HashMap<String,JEXData> inputs)
 	{
-		XElement l = null;
-		l.setAtt("Hi", "There");
 		// Collect the inputs
 		JEXData imageData = inputs.get("Image");
 		imageData.getDataMap();

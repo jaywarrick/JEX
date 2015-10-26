@@ -41,6 +41,7 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.Vector;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -73,8 +74,6 @@ import org.scijava.plugin.Plugin;
 import org.scijava.plugin.PluginInfo;
 import org.scijava.util.ConversionUtils;
 
-import Database.SingleUserDatabase.JEXWriter;
-import plugin.arffViewer.ArffViewer;
 import rtools.R;
 import tables.Dim;
 import tables.DimTable;
@@ -96,28 +95,29 @@ public class PointTester {// extends URLClassLoader {
 	
 	public static void main(String[] args) throws Exception
 	{
-		//tryReactiveProgramming("1");
-		tryArffViewer();
+		//tryLogFreqSweep();
 	}
 	
-	public static void tryArffViewer()
-	{
-		File f = new File("/Users/jaywarrick/Documents/JEX/Feature Extraction/Dataset Name/Cell_x0_y0/File-Output ARFF Table 2/x0_y0.arff");
-		ArffViewer viewer = null;
-		try
-		{
-			viewer = new ArffViewer();
-		}
-		catch(Exception e)
-		{
-			e.printStackTrace();
-		}
-		if(viewer != null)
-		{
-			viewer.setFile(f.getAbsolutePath());
-			viewer.show();
-		}
-	}
+//	public static void tryLogFreqSweep()
+//	{
+//		LogFreqSweep l = new LogFreqSweep(0.1, 0.1, 500.0);
+//		
+//		TreeSet<Integer> trueFrames = l.getTrueFrames(10000.0, 0.050, 30);
+//		
+//		for(Integer i : trueFrames)
+//		{
+//			System.out.println(i);
+//		}
+//		catch(Exception e)
+//		{
+//			e.printStackTrace();
+//		}
+//		if(viewer != null)
+//		{
+//			viewer.setFile(f.getAbsolutePath());
+//			viewer.show();
+//		}
+//	}
 	
 //	public static void tryReactiveProgramming(String name)
 //	{

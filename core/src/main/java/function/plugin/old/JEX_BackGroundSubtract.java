@@ -1,5 +1,15 @@
 package function.plugin.old;
 
+import ij.ImagePlus;
+import ij.plugin.filter.BackgroundSubtracter;
+import ij.process.ImageProcessor;
+
+import java.util.HashMap;
+import java.util.TreeMap;
+
+import jex.statics.JEXStatics;
+import logs.Logs;
+import tables.DimensionMap;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;
@@ -9,17 +19,6 @@ import Database.Definition.ParameterSet;
 import Database.Definition.TypeName;
 import Database.SingleUserDatabase.JEXWriter;
 import function.JEXCrunchable;
-import function.imageUtility.jBackgroundSubtracter;
-import ij.ImagePlus;
-import ij.process.FloatProcessor;
-
-import java.util.HashMap;
-import java.util.TreeMap;
-
-import jex.statics.JEXStatics;
-import jex.utilities.FunctionUtility;
-import logs.Logs;
-import tables.DimensionMap;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions
@@ -81,7 +80,7 @@ public class JEX_BackGroundSubtract extends JEXCrunchable {
 	@Override
 	public boolean showInList()
 	{
-		return true;
+		return false;
 	}
 	
 	/**
@@ -144,8 +143,6 @@ public class JEX_BackGroundSubtract extends JEXCrunchable {
 		Parameter p3 = new Parameter("Extract background", "Make background image", Parameter.DROPDOWN, new String[] { "true", "false" }, 1);
 		Parameter p4 = new Parameter("Paraboloid", "Use a sliding paraboloid", Parameter.DROPDOWN, new String[] { "true", "false" }, 0);
 		Parameter p5 = new Parameter("Presmoothing", "Do a presmoothing", Parameter.DROPDOWN, new String[] { "true", "false" }, 0);
-		Parameter p6 = new Parameter("Output Bit Depth", "Depth of the outputted image", Parameter.DROPDOWN, new String[] { "8", "16", "32" }, 1);
-		Parameter p7 = new Parameter("Normalize", "Normalize image on save", Parameter.DROPDOWN, new String[] { "true", "false" }, 1);
 		
 		// Make an array of the parameters and return it
 		ParameterSet parameterArray = new ParameterSet();
@@ -154,8 +151,6 @@ public class JEX_BackGroundSubtract extends JEXCrunchable {
 		parameterArray.addParameter(p3);
 		parameterArray.addParameter(p4);
 		parameterArray.addParameter(p5);
-		parameterArray.addParameter(p6);
-		parameterArray.addParameter(p7);
 		return parameterArray;
 	}
 	
@@ -199,9 +194,6 @@ public class JEX_BackGroundSubtract extends JEXCrunchable {
 		boolean extractBackground = Boolean.parseBoolean(this.parameters.getValueOfParameter("Extract background"));
 		boolean paraboloid = Boolean.parseBoolean(this.parameters.getValueOfParameter("Paraboloid"));
 		boolean presmooth = Boolean.parseBoolean(this.parameters.getValueOfParameter("Presmoothing"));
-		int outputDepth = Integer.parseInt(this.parameters.getValueOfParameter("Output Bit Depth"));
-		// boolean normalize =
-		// Boolean.parseBoolean(parameters.getValueOfParameter("Normalize"));
 		
 		// Run the function
 		TreeMap<DimensionMap,String> images = ImageReader.readObjectToImagePathTable(data);
@@ -217,45 +209,19 @@ public class JEX_BackGroundSubtract extends JEXCrunchable {
 				return false;
 			}
 			String path = images.get(dim);
-			// File f = new File(path);
 			
 			// get the image
 			ImagePlus im = new ImagePlus(path);
-			FloatProcessor imp = (FloatProcessor) im.getProcessor().convertToFloat(); // should
-			// be
-			// a
-			// float
-			// processor
+			ImageProcessor imp = im.getProcessor();
 			
 			// //// Begin Actual Function
-			jBackgroundSubtracter bS = new jBackgroundSubtracter();
-			bS.setup("", im);
-			jBackgroundSubtracter.radius = radius; // default rolling ball
-			// radius
-			jBackgroundSubtracter.lightBackground = inverse;
-			jBackgroundSubtracter.createBackground = extractBackground;
-			jBackgroundSubtracter.useParaboloid = paraboloid; // use
-			// "Sliding Paraboloid"
-			// instead of
-			// rolling ball
-			// algorithm
-			jBackgroundSubtracter.doPresmooth = presmooth;
-			// bS.JEX_setup();
-			bS.run(imp);
-			bS.setup("final", im);
+			BackgroundSubtracter bS = new BackgroundSubtracter();
+
+			// apply the function to imp
+			bS.rollingBallBackground(imp, radius, extractBackground, inverse, paraboloid, presmooth, true);
+
 			// //// End Actual Function
-			
-			// //// Save the results
-			// String localDir = JEXWriter.getEntryFolder(entry);
-			// if(localDir == null)
-			// Logs.log("Null local directory returned!!!!!",
-			// 0, this);
-			// String newFileName = FunctionUtility.getNextName(localDir,
-			// f.getName(), "BG");
-			// String finalPath = localDir + File.separator + newFileName;
-			// FunctionUtility.imSave(imp, "false", outputDepth, finalPath);
-			ImagePlus toSave = FunctionUtility.makeImageToSave(imp, "false", outputDepth);
-			String finalPath = JEXWriter.saveImage(toSave);
+			String finalPath = JEXWriter.saveImage(imp);
 			
 			outputMap.put(dim.copy(), finalPath);
 			Logs.log("Finished processing " + count + " of " + total + ".", 1, this);

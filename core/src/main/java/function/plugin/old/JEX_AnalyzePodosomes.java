@@ -1,26 +1,10 @@
 package function.plugin.old;
 
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DataReader.ImageReader;
-import Database.DataReader.RoiReader;
-import Database.DataWriter.RoiWriter;
-import Database.DataWriter.TrackWriter;
-import Database.DataWriter.ValueWriter;
-import Database.Definition.Parameter;
-import Database.Definition.ParameterSet;
-import Database.Definition.TypeName;
-import function.GraphicalCrunchingEnabling;
-import function.GraphicalFunctionWrap;
-import function.ImagePanel;
-import function.ImagePanelInteractor;
-import function.JEXCrunchable;
-import function.imageUtility.jBackgroundSubtracter;
-import function.tracker.TrackExtend;
 import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.measure.Measurements;
 import ij.measure.ResultsTable;
+import ij.plugin.filter.BackgroundSubtracter;
 import ij.plugin.filter.EDM;
 import ij.plugin.filter.ParticleAnalyzer;
 import ij.process.ByteProcessor;
@@ -39,6 +23,22 @@ import java.util.TreeMap;
 
 import logs.Logs;
 import tables.DimensionMap;
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DataReader.ImageReader;
+import Database.DataReader.RoiReader;
+import Database.DataWriter.RoiWriter;
+import Database.DataWriter.TrackWriter;
+import Database.DataWriter.ValueWriter;
+import Database.Definition.Parameter;
+import Database.Definition.ParameterSet;
+import Database.Definition.TypeName;
+import function.GraphicalCrunchingEnabling;
+import function.GraphicalFunctionWrap;
+import function.ImagePanel;
+import function.ImagePanelInteractor;
+import function.JEXCrunchable;
+import function.tracker.TrackExtend;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions
@@ -510,16 +510,8 @@ class FindPodosomeHelperFunction implements GraphicalCrunchingEnabling, ImagePan
 	{
 		orimp = (ByteProcessor) imp.duplicate();
 		orim = new ImagePlus("", orimp);
-		jBackgroundSubtracter bS = new jBackgroundSubtracter();
-		bS.setup("", im);
-		jBackgroundSubtracter.radius = bckradius; // default rolling ball radius
-		jBackgroundSubtracter.lightBackground = false;
-		jBackgroundSubtracter.createBackground = false;
-		jBackgroundSubtracter.useParaboloid = false; // use "Sliding Paraboloid"
-		// instead of rolling ball
-		// algorithm
-		jBackgroundSubtracter.doPresmooth = false;
-		bS.run(imp);
+		BackgroundSubtracter bS = new BackgroundSubtracter();
+		bS.rollingBallBackground(imp, bckradius, false, false, false, false, true);
 		
 		if(roi != null)
 		{
@@ -527,8 +519,6 @@ class FindPodosomeHelperFunction implements GraphicalCrunchingEnabling, ImagePan
 			imp.setRoi(rect);
 			imp = (ij.process.ByteProcessor) imp.crop();
 		}
-		
-		// FunctionUtility.imSave(imp, "./quantifyMigration1.tif");
 	}
 	
 	private void threshold()

@@ -1,16 +1,7 @@
 package function.plugin.old;
 
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DataReader.ImageReader;
-import Database.DataWriter.ImageWriter;
-import Database.Definition.Parameter;
-import Database.Definition.ParameterSet;
-import Database.Definition.TypeName;
-import Database.SingleUserDatabase.JEXWriter;
-import function.JEXCrunchable;
-import function.imageUtility.jBackgroundSubtracter;
 import ij.ImagePlus;
+import ij.plugin.filter.BackgroundSubtracter;
 import ij.process.FloatProcessor;
 import ij.process.ImageStatistics;
 
@@ -21,6 +12,15 @@ import jex.statics.JEXStatics;
 import jex.utilities.FunctionUtility;
 import logs.Logs;
 import tables.DimensionMap;
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DataReader.ImageReader;
+import Database.DataWriter.ImageWriter;
+import Database.Definition.Parameter;
+import Database.Definition.ParameterSet;
+import Database.Definition.TypeName;
+import Database.SingleUserDatabase.JEXWriter;
+import function.JEXCrunchable;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions
@@ -226,35 +226,15 @@ public class JEX_SingleCell_MicrowellEnhanceBorders extends JEXCrunchable {
 			imp.invert();
 			
 			// //// Begin Actual Function
-			jBackgroundSubtracter bS = new jBackgroundSubtracter();
-			bS.setup("", im);
-			jBackgroundSubtracter.radius = radius; // default rolling ball
-			// radius
-			jBackgroundSubtracter.lightBackground = inverse;
-			jBackgroundSubtracter.createBackground = extractBackground;
-			jBackgroundSubtracter.useParaboloid = paraboloid; // use
-			// "Sliding Paraboloid"
-			// instead of
-			// rolling ball
-			// algorithm
-			jBackgroundSubtracter.doPresmooth = presmooth;
-			// bS.JEX_setup();
-			bS.run(imp);
-			bS.setup("final", im);
+			BackgroundSubtracter bS = new BackgroundSubtracter();			
+			bS.rollingBallBackground(imp, radius, extractBackground, inverse, paraboloid, presmooth, true);
+			
 			ImageStatistics stats = ImageStatistics.getStatistics(imp, ImageStatistics.MEDIAN, null);
 			imp.add(-2 * stats.median);
 			// imp.multiply(-1);
 			// //// End Actual Function
 			
 			// //// Save the results
-			// String localDir = JEXWriter.getEntryFolder(entry);
-			// if(localDir == null)
-			// Logs.log("Null local directory returned!!!!!",
-			// 0, this);
-			// String newFileName = FunctionUtility.getNextName(localDir,
-			// f.getName(), "BG");
-			// String finalPath = localDir + File.separator + newFileName;
-			// FunctionUtility.imSave(imp, "false", outputDepth, finalPath);
 			ImagePlus toSave = FunctionUtility.makeImageToSave(imp, "false", outputDepth);
 			String finalPath = JEXWriter.saveImage(toSave);
 			

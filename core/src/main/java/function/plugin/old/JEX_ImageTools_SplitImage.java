@@ -200,6 +200,11 @@ public class JEX_ImageTools_SplitImage extends JEXCrunchable {
 			TreeMap<DimensionMap,String> splitImageMap = new TreeMap<DimensionMap,String>();
 			for (DimensionMap map : subTable.getMapIterator())
 			{
+				String imPath = imageMap.get(map);
+				if(imPath == null)
+				{
+					continue;
+				}
 				String copiedFile = JEXWriter.saveFile(new File(imageMap.get(map)));
 				if(keep)
 				{

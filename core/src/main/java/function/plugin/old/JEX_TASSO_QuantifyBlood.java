@@ -1,21 +1,9 @@
 package function.plugin.old;
 
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DataReader.ImageReader;
-import Database.DataWriter.ValueWriter;
-import Database.Definition.Parameter;
-import Database.Definition.ParameterSet;
-import Database.Definition.TypeName;
-import function.GraphicalCrunchingEnabling;
-import function.GraphicalFunctionWrap;
-import function.ImagePanel;
-import function.ImagePanelInteractor;
-import function.JEXCrunchable;
-import function.imageUtility.jBackgroundSubtracter;
 import ij.ImagePlus;
 import ij.measure.Measurements;
 import ij.measure.ResultsTable;
+import ij.plugin.filter.BackgroundSubtracter;
 import ij.plugin.filter.ParticleAnalyzer;
 import ij.process.ByteProcessor;
 
@@ -24,6 +12,19 @@ import java.util.HashMap;
 import java.util.List;
 
 import logs.Logs;
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DataReader.ImageReader;
+import Database.DataWriter.ValueWriter;
+import Database.Definition.Parameter;
+import Database.Definition.ParameterSet;
+import Database.Definition.TypeName;
+import Database.SingleUserDatabase.JEXWriter;
+import function.GraphicalCrunchingEnabling;
+import function.GraphicalFunctionWrap;
+import function.ImagePanel;
+import function.ImagePanelInteractor;
+import function.JEXCrunchable;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions
@@ -438,36 +439,23 @@ class BloosSpatterHelperFunction implements GraphicalCrunchingEnabling, ImagePan
 			// Convert to Byte
 			ByteProcessor bimp = (ByteProcessor) imp.convertToByte(true);
 			
-			// Prepare background subtract
-			jBackgroundSubtracter bS = new jBackgroundSubtracter();
-			jBackgroundSubtracter.radius = -radius;
-			jBackgroundSubtracter.lightBackground = false;
-			jBackgroundSubtracter.createBackground = false;
-			jBackgroundSubtracter.useParaboloid = false;
-			jBackgroundSubtracter.doPresmooth = false;
+			BackgroundSubtracter bS = new BackgroundSubtracter();			
+			bS.rollingBallBackground(bimp, -radius, false, false, false, false, true);
 			
-			// Run the background subtract
-			bS.setup("", im);
-			bS.run(bimp);
+			// Appears this saved image was never used (other than for potentially debug)
+			// FunctionUtility.imSave(bimp, "./quantifyMigration1.tif");
+			JEXWriter.saveImage(bimp);
 			
 			// Place the byte processor in the image to track
 			imp = bimp;
 		}
 		else
 		{
-			jBackgroundSubtracter bS = new jBackgroundSubtracter();
-			bS.setup("", im);
-			jBackgroundSubtracter.radius = radius; // default rolling ball
-			// radius
-			jBackgroundSubtracter.lightBackground = true;
-			jBackgroundSubtracter.createBackground = false;
-			jBackgroundSubtracter.useParaboloid = false; // use
-			// "Sliding Paraboloid"
-			// instead of rolling
-			// ball algorithm
-			jBackgroundSubtracter.doPresmooth = false;
-			bS.run(imp);
+			BackgroundSubtracter bS = new BackgroundSubtracter();	
+			// set lightBackground to true in this case.
+			bS.rollingBallBackground(im.getProcessor(), -radius, false, true, false, false, true);
 			
+			// Appears this saved image was never used (other than for potentially debug)
 			// JEXWriter.saveImage(imp);
 		}
 	}

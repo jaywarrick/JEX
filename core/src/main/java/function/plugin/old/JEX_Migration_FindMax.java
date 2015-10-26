@@ -1,5 +1,20 @@
 package function.plugin.old;
 
+import ij.ImagePlus;
+import ij.gui.Roi;
+import image.roi.IdPoint;
+import image.roi.PointList;
+import image.roi.ROIPlus;
+
+import java.awt.Point;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.TreeMap;
+
+import jex.statics.JEXStatics;
+import logs.Logs;
+import tables.DimensionMap;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;
@@ -14,20 +29,6 @@ import function.ImagePanel;
 import function.ImagePanelInteractor;
 import function.JEXCrunchable;
 import function.tracker.FindMaxima;
-import ij.ImagePlus;
-import ij.gui.Roi;
-import image.roi.PointList;
-import image.roi.ROIPlus;
-
-import java.awt.Point;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.TreeMap;
-
-import jex.statics.JEXStatics;
-import logs.Logs;
-import tables.DimensionMap;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions
@@ -330,6 +331,15 @@ class FindMaxHelperFunction implements GraphicalCrunchingEnabling, ImagePanelInt
 		ImagePlus im = new ImagePlus(imPath);
 		java.awt.Rectangle rect = (roi == null) ? null : roi.getBounds();
 		PointList result = finder.findMaximum(im, rect);
+		PointList filteredResult = new PointList();
+		for(IdPoint p : result)
+		{
+			if(roi.contains(p.x, p.y))
+			{
+				filteredResult.add(p.copy());
+			}
+		}
+		result = filteredResult;
 		
 		if(pLists == null)
 			pLists = new TreeMap<DimensionMap,PointList>();

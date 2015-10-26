@@ -1,19 +1,11 @@
 package function.plugin.old;
 
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DataReader.ImageReader;
-import Database.DataWriter.ImageWriter;
-import Database.Definition.Parameter;
-import Database.Definition.ParameterSet;
-import Database.Definition.TypeName;
-import Database.SingleUserDatabase.JEXWriter;
-import function.JEXCrunchable;
-import function.imageUtility.jBackgroundSubtracter;
 import ij.ImagePlus;
+import ij.plugin.filter.BackgroundSubtracter;
 import ij.process.Blitter;
 import ij.process.FloatBlitter;
 import ij.process.FloatProcessor;
+import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 
 import java.util.HashMap;
@@ -23,6 +15,15 @@ import jex.statics.JEXStatics;
 import jex.utilities.FunctionUtility;
 import logs.Logs;
 import tables.DimensionMap;
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DataReader.ImageReader;
+import Database.DataWriter.ImageWriter;
+import Database.Definition.Parameter;
+import Database.Definition.ParameterSet;
+import Database.Definition.TypeName;
+import Database.SingleUserDatabase.JEXWriter;
+import function.JEXCrunchable;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions
@@ -80,7 +81,7 @@ public class JEX_BackGroundCorrect extends JEXCrunchable {
 	 */
 	public boolean showInList()
 	{
-		return true;
+		return false;
 	}
 	
 	/**
@@ -213,36 +214,23 @@ public class JEX_BackGroundCorrect extends JEXCrunchable {
 			{
 				Logs.log("Image not found: " + dim.toString(), 0, this);
 			}
-			FloatProcessor imp = (FloatProcessor) im.getProcessor().convertToFloat(); // should be a float processor
+			ImageProcessor imp = im.getProcessor();
 			
 			// //// Begin Actual Function
-			jBackgroundSubtracter bS = new jBackgroundSubtracter();
-			bS.setup("", im);
-			jBackgroundSubtracter.radius = radius; // default rolling ball radius
-			jBackgroundSubtracter.lightBackground = inverse;
-			jBackgroundSubtracter.createBackground = extractBackground;
-			jBackgroundSubtracter.useParaboloid = paraboloid; // use "Sliding Paraboloid" instead of rolling ball algorithm
-			jBackgroundSubtracter.doPresmooth = presmooth;
-			// bS.JEX_setup();
-			FloatProcessor imp2 = (FloatProcessor) imp.duplicate();
-			bS.run(imp);
-			bS.setup("final", im);
+			BackgroundSubtracter bS = new BackgroundSubtracter();
+			bS.rollingBallBackground(imp, radius, extractBackground, inverse, paraboloid, presmooth, true);
+			
+			FloatProcessor imp2 = (FloatProcessor) imp.duplicate().convertToFloat();
 			im.setProcessor(imp); // This is the background
 			ImageStatistics ims = im.getStatistics(ImageStatistics.MIN_MAX); // save the background min
 			FloatBlitter blit = new FloatBlitter(imp2);
-			blit.copyBits(imp, 0, 0, Blitter.DIVIDE); // divide the original (imp2) by the background (imp)
+			blit.copyBits(imp.convertToFloat(), 0, 0, Blitter.DIVIDE); // divide the original (imp2) by the background (imp)
 			imp2.add(-1); // subtract off min value of 1 from the divided images
 			imp2.multiply(ims.min); // multiply by background min to bring overall levels back up.
 			
 			// //// End Actual Function
 			
 			// //// Save the results
-			// String localDir = JEXWriter.getEntryFolder(entry);
-			// if(localDir == null)
-			// Logs.log("Null local directory returned!!!!!", 0, this);
-			// String newFileName = FunctionUtility.getNextName(localDir, f.getName(), "BG");
-			// String finalPath = localDir + File.separator + newFileName;
-			// FunctionUtility.imSave(imp, "false", outputDepth, finalPath);
 			ImagePlus toSave = FunctionUtility.makeImageToSave(imp2, "false", outputDepth);
 			String finalPath = JEXWriter.saveImage(toSave);
 			

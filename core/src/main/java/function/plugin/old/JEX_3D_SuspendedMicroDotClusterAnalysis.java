@@ -1,18 +1,9 @@
 package function.plugin.old;
 
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DataReader.ImageReader;
-import Database.DataWriter.ImageWriter;
-import Database.DataWriter.ValueWriter;
-import Database.Definition.Parameter;
-import Database.Definition.ParameterSet;
-import Database.Definition.TypeName;
-import function.JEXCrunchable;
-import function.imageUtility.jBackgroundSubtracter;
 import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.measure.ResultsTable;
+import ij.plugin.filter.BackgroundSubtracter;
 import ij.plugin.filter.EDM;
 import ij.plugin.filter.ParticleAnalyzer;
 import ij.process.ImageProcessor;
@@ -24,6 +15,15 @@ import java.util.HashMap;
 import java.util.List;
 
 import logs.Logs;
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DataReader.ImageReader;
+import Database.DataWriter.ImageWriter;
+import Database.DataWriter.ValueWriter;
+import Database.Definition.Parameter;
+import Database.Definition.ParameterSet;
+import Database.Definition.TypeName;
+import function.JEXCrunchable;
 
 /**
  * This is a JEXperiment function template
@@ -365,17 +365,8 @@ class FluorescentClusterFinder {
 	 */
 	private void subtractBackground(ImageProcessor imp)
 	{
-		jBackgroundSubtracter bS = new jBackgroundSubtracter();
-		bS.setup("", new ImagePlus());
-		jBackgroundSubtracter.radius = 3 * radius; // default rolling ball
-		// radius
-		jBackgroundSubtracter.lightBackground = false;
-		jBackgroundSubtracter.createBackground = false;
-		jBackgroundSubtracter.useParaboloid = false; // use "Sliding Paraboloid"
-		// instead of rolling ball
-		// algorithm
-		jBackgroundSubtracter.doPresmooth = false;
-		bS.run(imp);
+		BackgroundSubtracter bS = new BackgroundSubtracter();
+		bS.rollingBallBackground(imp, 3 * radius, false, false, false, false, true);
 	}
 	
 	/**
