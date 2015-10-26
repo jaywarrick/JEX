@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>net.imagej</groupId>
 		<artifactId>pom-imagej</artifactId>
-		<version>8.0.1</version>
+		<version>13.2.0</version>
 	</parent>
 
 	<groupId>io.github.jaywarrick</groupId>
@@ -87,8 +87,8 @@
 		<!-- <bio-formats.version>5.1.0-SNAPSHOT</bio-formats.version>
 		<scifio-bf-compat.version>1.11.1-SNAPSHOT</scifio-bf-compat.version> -->
 		<!--  NB: for outputop-service branch -->
-		<imagej-ops.version>0.14.0-SNAPSHOT</imagej-ops.version>
-		<imglib2-roi.version>0.3.2-SNAPSHOT</imglib2-roi.version>
+		<imagej-ops.version>0.22.1-SNAPSHOT</imagej-ops.version>
+		<imglib2-roi.version>0.4.1</imglib2-roi.version>
 	</properties>
 
 	<repositories>
@@ -104,8 +104,8 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
-					<source>1.7</source>
-					<target>1.7</target>
+					<source>1.8</source>
+					<target>1.8</target>
 				</configuration>
 			</plugin>
 			<plugin>
