@@ -30,7 +30,8 @@
 			<artifactId>jgoodies-forms</artifactId>
 			<version>1.6.0</version>
 		</dependency>
-		<!-- Changed version of miglayout otherwise multiline text in JEXDialog caused crash which disables update ability due to MigLayout, https://github.com/jaywarrick/JEX/commit/4506449d5432c908c35cb93da2424b5d50fdc2b5 -->
+		<!-- Changed version of miglayout otherwise multiline text in JEXDialog 
+			caused crash which disables update ability due to MigLayout, https://github.com/jaywarrick/JEX/commit/4506449d5432c908c35cb93da2424b5d50fdc2b5 -->
 		<dependency>
 			<groupId>com.miglayout</groupId>
 			<artifactId>miglayout-swing</artifactId>
@@ -59,6 +60,11 @@
 			<version>0.6.4</version>
 		</dependency>
 
+		<dependency>
+			<groupId>javax.mail</groupId>
+			<artifactId>mail</artifactId>
+			<version>1.5.0-b01</version>
+		</dependency>
 		<dependency>
 			<groupId>javax.mail</groupId>
 			<artifactId>javax.mail-api</artifactId>
