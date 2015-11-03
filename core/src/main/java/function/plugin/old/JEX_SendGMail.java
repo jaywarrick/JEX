@@ -186,18 +186,15 @@ public class JEX_SendGMail extends JEXCrunchable {
 			final String password = parameters.getValueOfParameter("Password (not saved):");
 			
 			Properties props = new Properties();
+//			props.put("mail.smtp.ssl.enable", "true");
 			props.put("mail.smtp.auth", "true");
 			props.put("mail.smtp.starttls.enable", "true");
 			props.put("mail.smtp.host", "smtp.gmail.com");
 			props.put("mail.smtp.port", "587");
 			
-			Session session = Session.getInstance(props, new javax.mail.Authenticator() {
+			Session session = Session.getInstance(props);//.getInstance(props, new javax.mail.Authenticator() {
 				
-				protected PasswordAuthentication getPasswordAuthentication()
-				{
-					return new PasswordAuthentication(from, password);
-				}
-			});
+			//
 			
 			try
 			{
@@ -210,7 +207,7 @@ public class JEX_SendGMail extends JEXCrunchable {
 				message.setSubject(subject);
 				message.setText(messageText);
 				
-				Transport.send(message);
+				Transport.send(message, from, password);
 				
 				JEXStatics.statusBar.setStatusText("Sent GMail message. Done.");
 				Logs.log("Sent GMail message. Done.", 0, this);
