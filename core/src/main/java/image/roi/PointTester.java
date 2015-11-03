@@ -84,6 +84,7 @@ import function.CrunchFactory;
 import function.plugin.mechanism.JEXCrunchablePlugin;
 import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.JEXPluginInfo;
+import function.plugin.plugins.adhesion.LogFreqSweep;
 import function.singleCellAnalysis.SingleCellUtility;
 
 public class PointTester {// extends URLClassLoader {
@@ -118,6 +119,7 @@ public class PointTester {// extends URLClassLoader {
 //			viewer.show();
 //		}
 //	}
+
 	
 //	public static void tryReactiveProgramming(String name)
 //	{

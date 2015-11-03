@@ -34,6 +34,7 @@ import Database.SingleUserDatabase.JEXWriter;
 import function.JEXCrunchable;
 import function.imageUtility.MaximumFinder;
 
+
 /**
  * This is a JEXperiment function template To use it follow the following instructions
  * 
@@ -517,6 +518,7 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 			this.realOutputs.add(output0);
 			this.realOutputs.add(output1);
 			this.realOutputs.add(output2);
+			
 			
 			if(!maximaOnly)
 			{

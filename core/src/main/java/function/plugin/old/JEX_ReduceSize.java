@@ -224,6 +224,7 @@ public class JEX_ReduceSize extends JEXCrunchable {
 			// FunctionUtility.imSave(imp, "true", depth, finalPath);
 
 			ImagePlus toSave = FunctionUtility.makeImageToSave(imp, ""+shouldNormalize, depth);
+
 			String finalPath = JEXWriter.saveImage(toSave);
 			
 			outputMap.put(dim.copy(), finalPath);

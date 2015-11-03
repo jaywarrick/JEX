@@ -81,104 +81,104 @@ public class MakeSpectralUnmixingMatrixWithMask extends JEXPlugin {
 	public boolean run(JEXEntry entry)
 	{
 
-		// Check required inputs
-		if(calData == null || !calData.getTypeName().getType().equals(JEXData.IMAGE))
-		{
-			return false;
-		}
-		
-		Vector<Double> times = new Vector<Double>();
-		try
-		{
-			CSVList timesList = new CSVList(exposureTimes);
-			for(String t : timesList)
-			{
-				times.add(Double.parseDouble(t));
-			}
-		}
-		catch(Exception e)
-		{
-			JEXDialog.messageDialog("Couldn't parse the exposure times from the provided txt. Please use form like 100,300,250");
-			return false;
-		}
-
-		// Check optional inputs
-		if(calMaskData != null && !calData.getTypeName().getType().equals(JEXData.IMAGE))
-		{
-			return false;
-		}
-
-		// Prepare a data structure to store the results
-		TreeMap<DimensionMap,Double> sigMeans = new TreeMap<DimensionMap,Double>();
-		TreeMap<DimensionMap,Double> spectrum = new TreeMap<DimensionMap,Double>();
-
-		//		// Grab background rois if possible
-		//		TreeMap<DimensionMap,ROIPlus> bgRois = new TreeMap<DimensionMap,ROIPlus>();
-		//		if(bgRoiData != null)
+		//		// Check required inputs
+		//		if(calData == null || !calData.getTypeName().getType().equals(JEXData.IMAGE))
 		//		{
-		//			bgRois = RoiReader.readObjectToRoiMap(bgRoiData);
+		//			return false;
 		//		}
-
-		// Now we have the background intensity for each color that we can subtract from each image of each dye in each color
-		// But first we need to get mean intensities for each color of each calibration image.
-		TreeMap<DimensionMap,String> calImages = ImageReader.readObjectToImagePathTable(calData);
-		TreeMap<DimensionMap,String> calMasks = new TreeMap<DimensionMap,String>();
-
-		// Get image masks if they are available
-		if(calMaskData != null)
-		{
-			calMasks = ImageReader.readObjectToImagePathTable(calMaskData);
-		}
-
-		// Go through each calData dimension and ...
-		DimTable calTable = calData.getDimTable();
-		Dim channelDim = calTable.getDimWithName(channelDimName);
-		
-		// Create a map that links a channel name to an exposure time.
-		if(channelDim.size() != times.size())
-		{
-			JEXDialog.messageDialog("The number of channels and number of exposure times did not match. Aborting for this entry.");
-			return false;
-		}
-		TreeMap<String, Double> timeMap = new TreeMap<String, Double>(new StringUtility()); // Use string utility to sort the map the same way that the dims are sorted.
-		for(int i = 0; i < channelDim.size(); i++)
-		{
-			timeMap.put(channelDim.valueAt(i), times.get(i));
-		}
-		
-		// Measure the calibration images
-		ByteProcessor mask;
-		for(DimensionMap map : calTable.getDimensionMaps())
-		{
-			// Grab the cal image
-			ImagePlus calImage = new ImagePlus(calImages.get(map));
-			FloatProcessor fp = calImage.getProcessor().convertToFloatProcessor();
-
-			String maskPath = calMasks.get(map);
-			if(maskPath != null)
-			{
-				mask = (ByteProcessor) (new ImagePlus(maskPath)).getProcessor(); 
-				fp.setMask(mask);
-			}
-
-			double mean = fp.getStatistics().mean;
-			sigMeans.put(map, mean);
-		}
-
-		// Now we divide the 
-		for(DimensionMap map : calTable.getDimensionMaps())
-		{
-			spectrum.put(map, sigMeans.get(map) - bgMeans.get(map));
-		}		
-
-		// Write the files and save them
-		String bgPath = JEXTableWriter.writeTable("Background", bgMeans);
-		String sigPath = JEXTableWriter.writeTable("Signal", sigMeans);
-		String unmixingPath = JEXTableWriter.writeTable("UnmixingMatrix", spectrum);
-
-		bgMatrix = FileWriter.makeFileObject("temp", null, bgPath);
-		calMatrix = FileWriter.makeFileObject("temp", null, sigPath);
-		spectrum = FileWriter.makeFileObject("temp", null, unmixingPath);
+		//		
+		//		Vector<Double> times = new Vector<Double>();
+		//		try
+		//		{
+		//			CSVList timesList = new CSVList(exposureTimes);
+		//			for(String t : timesList)
+		//			{
+		//				times.add(Double.parseDouble(t));
+		//			}
+		//		}
+		//		catch(Exception e)
+		//		{
+		//			JEXDialog.messageDialog("Couldn't parse the exposure times from the provided txt. Please use form like 100,300,250");
+		//			return false;
+		//		}
+		//
+		//		// Check optional inputs
+		//		if(calMaskData != null && !calData.getTypeName().getType().equals(JEXData.IMAGE))
+		//		{
+		//			return false;
+		//		}
+		//
+		//		// Prepare a data structure to store the results
+		//		TreeMap<DimensionMap,Double> sigMeans = new TreeMap<DimensionMap,Double>();
+		//		TreeMap<DimensionMap,Double> spectrum = new TreeMap<DimensionMap,Double>();
+		//
+		//		//		// Grab background rois if possible
+		//		//		TreeMap<DimensionMap,ROIPlus> bgRois = new TreeMap<DimensionMap,ROIPlus>();
+		//		//		if(bgRoiData != null)
+		//		//		{
+		//		//			bgRois = RoiReader.readObjectToRoiMap(bgRoiData);
+		//		//		}
+		//
+		//		// Now we have the background intensity for each color that we can subtract from each image of each dye in each color
+		//		// But first we need to get mean intensities for each color of each calibration image.
+		//		TreeMap<DimensionMap,String> calImages = ImageReader.readObjectToImagePathTable(calData);
+		//		TreeMap<DimensionMap,String> calMasks = new TreeMap<DimensionMap,String>();
+		//
+		//		// Get image masks if they are available
+		//		if(calMaskData != null)
+		//		{
+		//			calMasks = ImageReader.readObjectToImagePathTable(calMaskData);
+		//		}
+		//
+		//		// Go through each calData dimension and ...
+		//		DimTable calTable = calData.getDimTable();
+		//		Dim channelDim = calTable.getDimWithName(channelDimName);
+		//		
+		//		// Create a map that links a channel name to an exposure time.
+		//		if(channelDim.size() != times.size())
+		//		{
+		//			JEXDialog.messageDialog("The number of channels and number of exposure times did not match. Aborting for this entry.");
+		//			return false;
+		//		}
+		//		TreeMap<String, Double> timeMap = new TreeMap<String, Double>(new StringUtility()); // Use string utility to sort the map the same way that the dims are sorted.
+		//		for(int i = 0; i < channelDim.size(); i++)
+		//		{
+		//			timeMap.put(channelDim.valueAt(i), times.get(i));
+		//		}
+		//		
+		//		// Measure the calibration images
+		//		ByteProcessor mask;
+		//		for(DimensionMap map : calTable.getDimensionMaps())
+		//		{
+		//			// Grab the cal image
+		//			ImagePlus calImage = new ImagePlus(calImages.get(map));
+		//			FloatProcessor fp = calImage.getProcessor().convertToFloatProcessor();
+		//
+		//			String maskPath = calMasks.get(map);
+		//			if(maskPath != null)
+		//			{
+		//				mask = (ByteProcessor) (new ImagePlus(maskPath)).getProcessor(); 
+		//				fp.setMask(mask);
+		//			}
+		//
+		//			double mean = fp.getStatistics().mean;
+		//			sigMeans.put(map, mean);
+		//		}
+		//
+		//		// Now we divide the 
+		//		for(DimensionMap map : calTable.getDimensionMaps())
+		//		{
+		//			spectrum.put(map, sigMeans.get(map) - bgMeans.get(map));
+		//		}		
+		//
+		//		// Write the files and save them
+		//		String bgPath = JEXTableWriter.writeTable("Background", bgMeans);
+		//		String sigPath = JEXTableWriter.writeTable("Signal", sigMeans);
+		//		String unmixingPath = JEXTableWriter.writeTable("UnmixingMatrix", spectrum);
+		//
+		//		bgMatrix = FileWriter.makeFileObject("temp", null, bgPath);
+		//		calMatrix = FileWriter.makeFileObject("temp", null, sigPath);
+		//		spectrum = FileWriter.makeFileObject("temp", null, unmixingPath);
 
 		return true;
 	}
