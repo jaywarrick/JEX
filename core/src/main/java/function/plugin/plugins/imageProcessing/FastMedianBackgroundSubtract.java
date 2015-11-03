@@ -94,11 +94,17 @@ public class FastMedianBackgroundSubtract extends JEXPlugin {
 				return false;
 			}
 			// Call helper method
+			
+			FloatProcessor fp = null;
 			ImageProcessor ip = (new ImagePlus(imageMap.get(map))).getProcessor();
 			ImageProcessor ip2 = FastMedian.process(ip, kernalWidth);
+			int bitDepth = ip.getBitDepth();
+			fp = (FloatProcessor) ip.convertToFloat();
+			ip2 = ip2.convertToFloat();
 			ip2.subtract(nominal);
-			ip.copyBits(ip2, 0, 0, Blitter.SUBTRACT);
-			tempPath = JEXWriter.saveImage(ip);
+			fp.copyBits(ip2, 0, 0, Blitter.SUBTRACT);
+			ImagePlus out = FunctionUtility.makeImageToSave(fp, "false", bitDepth);
+			tempPath = JEXWriter.saveImage(out);
 			if(tempPath != null)
 			{
 				outputImageMap.put(map, tempPath);
