@@ -320,7 +320,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 												continue;
 											}
 											reg = measureRegions.getLabelRegion(labelId);
-											if(reg == null)
+											if(reg == null || reg.size() <= 1 )
 											{
 												continue;
 											}
@@ -370,7 +370,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 										}
 
 										reg = measureRegions.getLabelRegion(labelId);
-										if(reg == null)
+										if(reg == null || reg.size() <=1 )
 										{
 											continue;
 										}
