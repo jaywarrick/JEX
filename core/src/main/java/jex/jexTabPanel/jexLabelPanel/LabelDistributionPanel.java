@@ -1,18 +1,11 @@
 package jex.jexTabPanel.jexLabelPanel;
 
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DBObjects.JEXLabel;
-import Database.DataReader.LabelReader;
-import Database.Definition.Experiment;
-import Database.Definition.Filter;
-import Database.Definition.TypeName;
-
 import java.awt.Color;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -20,6 +13,13 @@ import java.util.TreeSet;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DBObjects.JEXLabel;
+import Database.DataReader.LabelReader;
+import Database.Definition.Experiment;
+import Database.Definition.Filter;
+import Database.Definition.TypeName;
 import jex.JEXManager;
 import jex.statics.DisplayStatics;
 import jex.statics.JEXStatics;
@@ -165,7 +165,7 @@ public class LabelDistributionPanel implements ActionListener {
 	}
 	
 	/**
-	 * Create the labels that have been droped
+	 * Create the labels that have been dropped
 	 */
 	private boolean createLabels()
 	{
@@ -175,7 +175,7 @@ public class LabelDistributionPanel implements ActionListener {
 		}
 		TreeMap<JEXEntry,JEXData> toAdd = new TreeMap<JEXEntry,JEXData>();
 		TreeMap<JEXEntry,Set<JEXData>> toRemove = new TreeMap<JEXEntry,Set<JEXData>>();
-		TreeSet<JEXData> temp;
+		HashSet<JEXData> temp;
 		for (int x = 0; x < this.labeler.cols; x++)
 		{
 			for (int y = 0; y < this.labeler.rows; y++)
@@ -183,7 +183,7 @@ public class LabelDistributionPanel implements ActionListener {
 				JEXEntry e = this.curTray.get(x).get(y);
 				JEXLabel newL = this.labels.get(new Point(x, y));
 				JEXData oldL = this.getCurrentLabelInEntry(this.curTray.get(x).get(y));
-				temp = new TreeSet<JEXData>();
+				temp = new HashSet<JEXData>();
 				if(oldL != null)
 				{
 					temp.add(oldL);
