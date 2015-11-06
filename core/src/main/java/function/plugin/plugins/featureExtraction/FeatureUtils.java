@@ -19,7 +19,9 @@ import function.plugin.plugins.featureExtraction.ConnectedComponents.Structuring
  */
 public class FeatureUtils {
 	
-	public static <I extends IntegerType< I >> ImgLabeling<Integer, IntType> getConnectedComponents(Img< I > inputImg, boolean fourConnected)
+	private static FunctionOp<Object, Object> contourFunc;
+	
+	public static <I extends IntegerType< I >> ImgLabeling<Integer, IntType> getConnectedComponents(RandomAccessibleInterval<I> inputImg, boolean fourConnected)
 	{
 		StructuringElement se = null;
 		if(fourConnected)
