@@ -25,17 +25,24 @@ import net.imagej.ops.features.sets.ImageMomentsFeatureSet;
 import net.imagej.ops.features.sets.StatsFeatureSet;
 import net.imagej.ops.features.sets.ZernikeFeatureSet;
 import net.imagej.ops.featuresets.NamedFeature;
+import net.imglib2.Interval;
 import net.imglib2.IterableInterval;
+import net.imglib2.Positionable;
+import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.RealPositionable;
 import net.imglib2.converter.Converter;
 import net.imglib2.converter.Converters;
 import net.imglib2.img.Img;
 import net.imglib2.roi.IterableRegion;
 import net.imglib2.roi.PositionableIterableRegion;
 import net.imglib2.roi.Regions;
+import net.imglib2.roi.geometric.Polygon;
 import net.imglib2.roi.labeling.ImgLabeling;
 import net.imglib2.roi.labeling.LabelRegion;
 import net.imglib2.roi.labeling.LabelRegionCursor;
 import net.imglib2.roi.labeling.LabelRegions;
+import net.imglib2.roi.util.SamplingIterableInterval;
 import net.imglib2.type.logic.BitType;
 import net.imglib2.type.logic.BoolType;
 import net.imglib2.type.numeric.RealType;
@@ -43,6 +50,7 @@ import net.imglib2.type.numeric.integer.IntType;
 import net.imglib2.type.numeric.integer.LongType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.real.DoubleType;
+import net.imglib2.view.IterableRandomAccessibleInterval;
 
 import org.scijava.plugin.Plugin;
 
@@ -74,8 +82,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
 	public ImgOpener imgOpener;
 
-
-	public Geometric2DFeatureSet<Integer, DoubleType> opGeometric = null;
+	public Geometric2DFeatureSet<Polygon, DoubleType> opGeometric = null;
 	public Haralick2DFeatureSet<T,DoubleType> opHaralick2DHor = null;
 	public Haralick2DFeatureSet<T,DoubleType> opHaralick2DVer = null;
 	public Haralick2DFeatureSet<T,DoubleType> opHaralick2DDiag = null;
@@ -325,7 +332,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 												continue;
 											}
 
-											if(!this.putStats(mapImage, p.id, reg, image))
+											if(!this.putStats(mapImage, p.id, reg, measureMask, image))
 											{
 												return true;
 											}
@@ -505,7 +512,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		{
 			if(this.opZernike == null)
 			{
-				opZernike = IJ2PluginUtility.ij().op().op(ZernikeFeatureSet.class, reg, zernikeMomentMin, zernikeMomentMax);
+				opZernike = IJ2PluginUtility.ij().op().op(ZernikeFeatureSet.class, Regions.sample(reg, mask), zernikeMomentMin, zernikeMomentMax);
 			}
 
 			PositionableIterableRegion<BoolType> temp = reg;
@@ -565,7 +572,32 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			{
 				opGeometric = IJ2PluginUtility.ij().op().op(Geometric2DFeatureSet.class, reg);
 			}
-			Map<NamedFeature, DoubleType> results = opGeometric.compute(reg);
+			LabelRegions<Integer> regions = getSubRegions(reg, mask);
+			
+			Integer maxSizeLabel = null;
+			int subRegionCount = 0;
+			Polygon p = FeatureUtils.convert(reg);
+			for(Integer label : regions.getExistingLabels())
+			{
+				LabelRegion<Integer> r = regions.getLabelRegion(label);
+				// Check if all the sub regions of the parent region (because CCA is done in the bounding box, not the region)
+				if(p.contains(r.cursor()))
+				{
+					if(maxSizeLabel == null || r.size() > maxSizeLabel)
+					{
+						maxSizeLabel = label;
+					}
+					subRegionCount = subRegionCount + 1;
+				}
+			}
+			
+			if(maxSizeLabel == null)
+			{
+				// Then there wasn't a subregion within the parent region
+				return true;
+			}
+			
+			Map<NamedFeature, DoubleType> results = opGeometric.compute(FeatureUtils.convert(regions.getLabelRegion(maxSizeLabel)));
 			for(Entry<NamedFeature, DoubleType> result : results.entrySet())
 			{
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
@@ -573,12 +605,16 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 				newMap.put("Label", "" + reg.getLabel());
 				this.write(newMap, result.getValue().getRealDouble());
 			}
+			DimensionMap newMap = mapM.copyAndSet("Measurement=subRegionCount");
+			newMap.put("Id", "" + id);
+			newMap.put("Label", "" + reg.getLabel());
+			this.write(newMap, (double) subRegionCount);
 		}
 		return true;
 	}
 
 	@SuppressWarnings("unchecked")
-	public boolean putStats(DimensionMap mapM, int id, LabelRegion<Integer> reg, Img<T> image)
+	public boolean putStats(DimensionMap mapM, int id, LabelRegion<Integer> reg, Img<UnsignedByteType> mask, Img<T> image)
 	{
 		if(this.isCanceled())
 		{
@@ -805,6 +841,126 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		public void convert(Void input, BitType output)
 		{
 			output.set(true);
+		}
+	}
+	
+	private LabelRegions<Integer> getSubRegions(LabelRegion<Integer> reg, Img<UnsignedByteType> mask)
+	{
+		ImgLabeling<Integer, IntType> cellLabeling = FeatureUtils.getConnectedComponents(new IterableRandomAccessibleInterval<UnsignedByteType>(new RAII(reg, mask)), connectedness.equals("4 Connected"));
+		LabelRegions<Integer> subRegions = new LabelRegions<Integer>(cellLabeling);
+		return subRegions;
+	}
+	
+	class RAII implements RandomAccessibleInterval<UnsignedByteType> {
+		
+		LabelRegion<Integer> reg;
+		Img<UnsignedByteType> mask;
+		SamplingIterableInterval<UnsignedByteType> sampler;
+		
+		public RAII(LabelRegion<Integer> reg, Img<UnsignedByteType> mask)
+		{
+			this.mask = mask;
+			sampler = (SamplingIterableInterval<UnsignedByteType>) Regions.sample(reg, mask);
+		}
+
+		@Override
+		public RandomAccess<UnsignedByteType> randomAccess() {
+			return mask.randomAccess();
+		}
+
+		@Override
+		public RandomAccess<UnsignedByteType> randomAccess(Interval interval) {
+			return mask.randomAccess(interval);
+		}
+
+		@Override
+		public int numDimensions() {
+			// TODO Auto-generated method stub
+			return sampler.numDimensions();
+		}
+
+		@Override
+		public long min(int d) {
+			// TODO Auto-generated method stub
+			return sampler.min(d);
+		}
+
+		@Override
+		public void min(long[] min) {
+			// TODO Auto-generated method stub
+			sampler.min(min);
+		}
+
+		@Override
+		public void min(Positionable min) {
+			// TODO Auto-generated method stub
+			sampler.min(min);
+		}
+
+		@Override
+		public long max(int d) {
+			// TODO Auto-generated method stub
+			return sampler.max(d);
+		}
+
+		@Override
+		public void max(long[] max) {
+			// TODO Auto-generated method stub
+			sampler.max(max);
+		}
+
+		@Override
+		public void max(Positionable max) {
+			// TODO Auto-generated method stub
+			sampler.max(max);
+		}
+
+		@Override
+		public double realMin(int d) {
+			// TODO Auto-generated method stub
+			return sampler.realMin(d);
+		}
+
+		@Override
+		public void realMin(double[] min) {
+			// TODO Auto-generated method stub
+			sampler.realMin(min);
+		}
+
+		@Override
+		public void realMin(RealPositionable min) {
+			// TODO Auto-generated method stub
+			sampler.realMin(min);
+		}
+
+		@Override
+		public double realMax(int d) {
+			// TODO Auto-generated method stub
+			return sampler.realMax(d);
+		}
+
+		@Override
+		public void realMax(double[] max) {
+			// TODO Auto-generated method stub
+			sampler.realMax(max);
+		}
+
+		@Override
+		public void realMax(RealPositionable max) {
+			// TODO Auto-generated method stub
+			sampler.realMax(max);
+		}
+
+		@Override
+		public void dimensions(long[] dimensions) {
+			// TODO Auto-generated method stub
+			sampler.dimensions(dimensions);
+		}
+
+		@Override
+		public long dimension(int d) {
+			// TODO Auto-generated method stub
+			return sampler.dimension(d);
 		}
 	}
 }
