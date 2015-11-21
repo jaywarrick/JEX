@@ -19,6 +19,9 @@ import miscellaneous.DateUtility;
 import miscellaneous.DirectoryManager;
 import miscellaneous.FileUtility;
 import net.imagej.Dataset;
+import net.imglib2.img.Img;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.type.numeric.RealType;
 
 import org.apache.commons.io.FileUtils;
 
@@ -157,6 +160,15 @@ public class JEXWriter {
 			Logs.log("Error saving image to: " + fullPath, 1, JEXWriter.class);
 			return null;
 		}
+	}
+	
+	/**
+	 * Save the image in the temporary database folder
+	 */
+	public static <T extends RealType<T>> String saveImage(Img<T> img)
+	{
+		ImagePlus im = ImageJFunctions.wrap(img, "temp");
+		return JEXWriter.saveImage(im);
 	}
 	
 	/**
