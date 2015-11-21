@@ -1,13 +1,5 @@
 package function;
 
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.Definition.Parameter;
-import Database.Definition.ParameterSet;
-import Database.Definition.Type;
-import Database.Definition.TypeName;
-import cruncher.Ticket;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.TreeMap;
@@ -16,6 +8,13 @@ import jex.statics.JEXStatics;
 import logs.Logs;
 import miscellaneous.Cancelable;
 import miscellaneous.Canceler;
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.Definition.Parameter;
+import Database.Definition.ParameterSet;
+import Database.Definition.Type;
+import Database.Definition.TypeName;
+import cruncher.Ticket;
 
 public abstract class JEXCrunchable implements Canceler, Cancelable {
 	
@@ -268,5 +267,14 @@ public abstract class JEXCrunchable implements Canceler, Cancelable {
 	public boolean isCanceled()
 	{
 		return this.canceler.isCanceled();
+	}
+	
+	public static boolean isInputValid(JEXData data, Type type)
+	{
+		if(data == null || !data.getTypeName().getType().equals(type))
+		{
+			return false;
+		}
+		return true;
 	}
 }
