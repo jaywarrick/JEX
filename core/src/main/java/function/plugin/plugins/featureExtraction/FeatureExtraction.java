@@ -4,16 +4,14 @@ package function.plugin.plugins.featureExtraction;
 // Import needed classes here 
 import image.roi.IdPoint;
 import image.roi.ROIPlus;
-import io.scif.img.ImgIOException;
 import io.scif.img.ImgOpener;
-import io.scif.img.SCIFIOImgPlus;
 
-import java.awt.Point;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 
+import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import logs.Logs;
 import miscellaneous.JEXCSVReader;
@@ -25,12 +23,7 @@ import net.imagej.ops.features.sets.ImageMomentsFeatureSet;
 import net.imagej.ops.features.sets.StatsFeatureSet;
 import net.imagej.ops.features.sets.ZernikeFeatureSet;
 import net.imagej.ops.featuresets.NamedFeature;
-import net.imglib2.Interval;
 import net.imglib2.IterableInterval;
-import net.imglib2.Positionable;
-import net.imglib2.RandomAccess;
-import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.RealPositionable;
 import net.imglib2.converter.Converter;
 import net.imglib2.converter.Converters;
 import net.imglib2.img.Img;
@@ -40,9 +33,7 @@ import net.imglib2.roi.Regions;
 import net.imglib2.roi.geometric.Polygon;
 import net.imglib2.roi.labeling.ImgLabeling;
 import net.imglib2.roi.labeling.LabelRegion;
-import net.imglib2.roi.labeling.LabelRegionCursor;
 import net.imglib2.roi.labeling.LabelRegions;
-import net.imglib2.roi.util.SamplingIterableInterval;
 import net.imglib2.type.logic.BitType;
 import net.imglib2.type.logic.BoolType;
 import net.imglib2.type.numeric.RealType;
@@ -50,7 +41,6 @@ import net.imglib2.type.numeric.integer.IntType;
 import net.imglib2.type.numeric.integer.LongType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.real.DoubleType;
-import net.imglib2.view.IterableRandomAccessibleInterval;
 
 import org.scijava.plugin.Plugin;
 
@@ -63,6 +53,7 @@ import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;
 import Database.DataReader.RoiReader;
 import Database.DataWriter.FileWriter;
+import Database.SingleUserDatabase.JEXReader;
 import function.plugin.IJ2.IJ2PluginUtility;
 import function.plugin.mechanism.InputMarker;
 import function.plugin.mechanism.JEXPlugin;
@@ -98,25 +89,36 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	public JEXCSVWriter writer;
 	public Set<String> header = null;
 
+	public int total = 0, count = 0;
+	public int percentage = 0;
+
+	public TreeMap<DimensionMap, String> imageMap = new TreeMap<DimensionMap, String>();
+	public TreeMap<DimensionMap, String> maskMap = new TreeMap<DimensionMap, String>();
+	public TreeMap<DimensionMap, ROIPlus> roiMap = new TreeMap<DimensionMap, ROIPlus>();
+	TreeMap<Integer, Integer> idToLabelMap = new TreeMap<Integer, Integer>();
+
 	// Define a constructor that takes no arguments.
 	public FeatureExtraction()
 	{}
 
 	// ///////// Define Inputs here ///////////
 
-	@InputMarker(uiOrder = 1, name = "Image", type = MarkerConstants.TYPE_IMAGE, description = "Intensity images", optional = false)
+	@InputMarker(uiOrder = 1, name = "Images to Measure", type = MarkerConstants.TYPE_IMAGE, description = "Intensity images", optional = false)
 	JEXData imageData;
 
-	@InputMarker(uiOrder = 2, name = "Whole Cell Mask", type = MarkerConstants.TYPE_IMAGE, description = "Mask images defining the whole cell (should NOT have channel dimension)", optional = false)
-	JEXData cellMaskData;
-
-	@InputMarker(uiOrder = 3, name = "Masks to Measure", type = MarkerConstants.TYPE_IMAGE, description = "Mask images (SHOULD have channel dimension)", optional = false)
-	JEXData measureMaskData;
+	@InputMarker(uiOrder = 3, name = "Masks", type = MarkerConstants.TYPE_IMAGE, description = "Mask images", optional = false)
+	JEXData maskData;
 
 	@InputMarker(uiOrder = 4, name = "Maxima", type = MarkerConstants.TYPE_ROI, description = "Maxima ROI", optional = false)
 	JEXData roiData;
 
 	// ///////// Define Parameters here ///////////
+
+	@ParameterMarker(uiOrder = -2, name = "Mask channel dim name", description = "Channel dimension name in mask data.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "Channel")
+	String maskChannelName;
+
+	@ParameterMarker(uiOrder = -1, name = "'Whole Cell' channel value", description = "Which channel value in the channel dim represents the whole cell that has a 1-to-1 mapping with the maxima points.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "WholeCell")
+	String maskChannelValue;
 
 	@ParameterMarker(uiOrder = 0, name = "Image intensity offset", description = "Amount the images are offset from zero (will be subtracted before calculation)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "0.0")
 	double offset;
@@ -187,260 +189,148 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	@Override
 	public boolean run(JEXEntry optionalEntry)
 	{
-		this.imgOpener = new ImgOpener(IJ2PluginUtility.ij().getContext());
 
-		LabelRegion<Integer> reg;
 		if(!stats && !geometric && !haralick2D && !histogram && !moments && !zernike)
 		{
-			Logs.log("Nothing selected to compute. Returning false.", this);
+			JEXDialog.messageDialog("Feature Extraction: Nothing selected to compute. Returning false.");
 			return false;
 		}
-		if(cellMaskData == null)
+		if(maskData == null)
 		{
-			Logs.log("Returning false. NEED to have a whole cell mask.", this);
+			JEXDialog.messageDialog("Feature Extraction: Returning false. NEED to have a mask.");
 			return false;
 		}
-		if(measureMaskData == null)
+		if(roiData == null)
 		{
-			measureMaskData = cellMaskData;
+			JEXDialog.messageDialog("Feature Extraction: Returning false. NEED to have a roi that defines the id of each cell.");
+			return false;
 		}
 		if(imageData == null && (stats || haralick2D || histogram || moments))
 		{
-			Logs.log("Returning false. NEED to define an image to quantify if you want to use intensity based features such as first order, haralick2D, histogram, and moment statistics.", this);
+			JEXDialog.messageDialog("Feature Extraction: Returning false. NEED to define an image to quantify if you want to use intensity based features such as first order, haralick2D, histogram, and moment statistics.");
 			return false;
 		}
 
-		TreeMap<DimensionMap, String> imageMap = ImageReader.readObjectToImagePathTable(imageData);
-		TreeMap<DimensionMap, String> cellMaskMap = ImageReader.readObjectToImagePathTable(cellMaskData);
-		TreeMap<DimensionMap, String> measureMaskMap = cellMaskMap;
-		TreeMap<DimensionMap, ROIPlus> roiMap = RoiReader.readObjectToRoiMap(roiData);
+		imageMap = ImageReader.readObjectToImagePathTable(imageData);
+		maskMap = ImageReader.readObjectToImagePathTable(maskData);
+		roiMap = RoiReader.readObjectToRoiMap(roiData);
 
-		int count = 0, percentage = 0;
+		this.count = 0;
+		this.percentage = 0;
 
 		// Calculate expected number of iterations
-		DimTable maskIntersection = DimTable.intersect(measureMaskData.getDimTable(), cellMaskData.getDimTable());
-		DimTable maskAdditional = cellMaskData.getDimTable().getSubTable(maskIntersection.getMapIterator().iterator().next());
-		int total = maskIntersection.mapCount() * maskAdditional.mapCount();
+		// Assume at least calculating mask features
+		this.total = maskData.getDimTable().mapCount();
+		// Recalculate total if also calculating intensity features
 		if(imageData != null && (stats || haralick2D || histogram || moments))
 		{
-			DimTable imageIntersection = DimTable.intersect(imageData.getDimTable(), cellMaskData.getDimTable());
-			DimTable imageAdditional = imageData.getDimTable().getSubTable(imageIntersection.getMapIterator().iterator().next());
-			total = total + imageIntersection.mapCount() * imageAdditional.mapCount();
+			this.total = maskData.getDimTable().mapCount() + maskData.getDimTable().mapCount() * imageData.getDimTable().mapCount();
 		}
 
-		try
+		DimTable subTable = maskData.getDimTable().getSubTable(maskChannelName);
+		for(DimensionMap subMap : subTable.getMapIterator())
 		{
-			// Loop over whole cell masks
-			for(DimensionMap mapCell : cellMaskData.getDimTable().getMapIterator())
+			DimensionMap mapCellMask = subMap.copyAndSet(maskChannelName + "=" + maskChannelValue);
+			Img<UnsignedByteType> cellMask = JEXReader.getByteImage(maskMap.get(mapCellMask));
+
+			Logs.log("Utilizing whole cell mask: " + mapCellMask, this);
+			if(this.isCanceled())
 			{
-				if((geometric || zernike) || (imageData != null && imageData.getDimTable().hasDimensionMap(mapCell) && (stats || haralick2D || histogram || moments)))
+				this.close();
+				return true;
+			}
+
+			ImgLabeling<Integer, IntType> cellLabeling = FeatureUtils.getConnectedComponents(cellMask, connectedness.equals("4 Connected"));
+			LabelRegions<Integer> cellRegions = new LabelRegions<Integer>(cellLabeling);
+			idToLabelMap = new TreeMap<Integer, Integer>();
+
+			// Determine which LabelRegions are the ones we want to keep by testing if our maxima of interest are contained.
+			ROIPlus maxima = roiMap.get(mapCellMask);
+			for(LabelRegion<Integer> cellRegion : cellRegions)
+			{
+				Polygon poly = FeatureUtils.convert(cellRegion);
+				for(IdPoint p : maxima.pointList)
 				{
-					Logs.log("Utilizing cell mask: " + mapCell, this);
 					if(this.isCanceled())
 					{
 						this.close();
 						return true;
 					}
-
-					SCIFIOImgPlus<UnsignedByteType> cellMask = imgOpener.openImgs(cellMaskMap.get(mapCell), new UnsignedByteType()).get(0);
-					ImgLabeling<Integer, IntType> cellLabeling = FeatureUtils.getConnectedComponents(cellMask, connectedness.equals("4 Connected"));
-					LabelRegions<Integer> cellRegions = new LabelRegions<Integer>(cellLabeling);
-					TreeMap<Integer, Integer> idToLabelMap = new TreeMap<Integer, Integer>();
-
-					// Determine which LabelRegions are the ones we want to keep by testing if our maxima of interest are contained.
-					ROIPlus maxima = roiMap.get(mapCell);
-					for(LabelRegion<Integer> cellRegion : cellRegions)
+					if(poly.contains(p))
 					{
-						for(IdPoint p : maxima.pointList)
-						{
-							if(this.isCanceled())
-							{
-								this.close();
-								return true;
-							}
-							if(contains(cellRegion, p))
-							{
-								idToLabelMap.put(p.id, cellRegion.getLabel().intValue());
-							}
-						}
-					}
-
-					// For each measure mask (with appropriate dimensions per filter), intersect the measure mask with the whole cell regions and perform feature extraction
-					if(measureMaskData.getDimTable().hasDimensionMap(mapCell))
-					{
-						for(DimensionMap mapMeasure : measureMaskData.getDimTable().getMapIterator(mapCell))
-						{
-							if((geometric || zernike) || (imageData != null && imageData.getDimTable().hasDimensionMap(mapCell) && (stats || haralick2D || histogram || moments)))
-							{
-								Logs.log("Intersecting cell mask: " + mapCell + " with measurement mask " + mapMeasure, this);
-								if(this.isCanceled())
-								{
-									this.close();
-									return true;
-								}
-
-								// Intersect measure mask with whole cell regions
-								String measureMaskPath = measureMaskMap.get(mapMeasure);
-								if(measureMaskPath == null)
-								{
-									continue;
-								}
-
-								Img<UnsignedByteType> measureMask = imgOpener.openImgs(measureMaskPath, new UnsignedByteType()).get(0);
-								LabelRegions<Integer> measureRegions = cellRegions;
-								if(cellMaskData != measureMaskData)
-								{
-									ImgLabeling<Integer, IntType> measureLabeling = cellLabeling;
-									measureRegions = new LabelRegions<Integer>(measureLabeling);
-								}
-
-								// Measure the images first so that the CSV Table gets a FULL header of information given the images
-								// might have a dimension that the masks don't
-								if(imageData != null && imageData.getDimTable().hasDimensionMap(mapCell) && (stats || haralick2D || histogram || moments))
-								{
-									// Then do texture and intensity measures
-									// Loop over the images to quantify the mask region in all the original images
-									for(DimensionMap mapImage : imageData.dimTable.getMapIterator(mapCell))
-									{
-										Logs.log("Quantifying image: " + mapImage, this);
-
-										String imagePath = imageMap.get(mapImage);
-										if(imagePath == null)
-										{
-											continue;
-										}
-
-										@SuppressWarnings("unchecked")
-										// T gets defined here; Use get(0) because JEX saves all images individually
-										Img<T> image = (Img<T>) imgOpener.openImgs(imagePath).get(0);
-										for(IdPoint p : maxima.pointList)
-										{
-											if(this.isCanceled())
-											{
-												this.close();
-												return true;
-											}
-
-											Integer labelId = idToLabelMap.get(p.id);
-											if(labelId == null)
-											{
-												continue;
-											}
-											reg = measureRegions.getLabelRegion(labelId);
-											if(reg == null || reg.size() <= 1 )
-											{
-												continue;
-											}
-
-											if(!this.putStats(mapImage, p.id, reg, measureMask, image))
-											{
-												return true;
-											}
-
-											if(!this.putHaralick2D(mapImage, p.id, reg, image))
-											{
-												return true;
-											}
-
-											if(!this.putHistogram(mapImage, p.id, reg, image))
-											{
-												return true;
-											}
-
-											if(!this.putMoments(mapImage, p.id, reg, image))
-											{
-												return true;
-											}
-
-											//											if(!this.putTamura(mapImage, p.id, reg, image))
-											//											{
-											//												return true;
-											//											}
-										}
-										// Count the fact we quantified an image
-										count = count + 1;
-										percentage = (int) (100 * ((double) (count) / ((double) total)));
-										JEXStatics.statusBar.setProgressPercentage(percentage);
-									}
-								}
-
-								if(geometric || zernike)
-								{
-									Logs.log("Quantifying measurement mask: " + mapMeasure, this);
-									// For each cell, perform shape feature measurements first if desired
-									for(IdPoint p : maxima.pointList)
-									{
-										Integer labelId = idToLabelMap.get(p.id);
-										if(labelId == null)
-										{
-											continue;
-										}
-
-										reg = measureRegions.getLabelRegion(labelId);
-										if(reg == null || reg.size() <=1 )
-										{
-											continue;
-										}
-
-										if(!this.putGeometric(mapMeasure, p.id, reg, measureMask))
-										{
-											return true;
-										}
-
-										if(!this.putZernike(mapMeasure, p.id, reg, measureMask))
-										{
-											return true;
-										}
-									}
-								}
-
-								// Count the fact that we quantified a mask
-								count = count + 1;
-								percentage = (int) (100 * ((double) (count) / ((double) total)));
-								JEXStatics.statusBar.setProgressPercentage(percentage);													
-							}
-							else
-							{
-								// skip and index progress bar
-								count = count + 1;
-								percentage = (int) (100 * ((double) (count) / ((double) total)));
-								JEXStatics.statusBar.setProgressPercentage(percentage);
-							}
-						}
-					}
-					else
-					{
-						Logs.log("Skipping cell mask: " + mapCell + " given measurement mask and or the images do not have images corresponding to this cell mask.", this);
+						idToLabelMap.put(p.id, cellRegion.getLabel().intValue());
 					}
 				}
-				else
+			}
+
+			// for each map matching this subMap (now we are looping over channel)
+			for(DimensionMap mapMask : maskData.getDimTable().getSubTable(subMap).getMapIterator())
+			{
+				Img<UnsignedByteType> maskImage = JEXReader.getSingleImage(maskMap.get(mapMask));
+				
+				// Loop over channels of intensity images associated with this subMap
+				for(DimensionMap mapImage : imageData.getDimTable().getSubTable(subMap).getMapIterator())
 				{
-					// skip and index progress bar
-					count = count + 1;
-					percentage = (int) (100 * ((double) (count) / ((double) total)));
+					Img<T> intensityImage = JEXReader.getSingleImage(imageMap.get(mapImage));
+					boolean firstTimeThrough = true;
+					for(IdPoint p : maxima.pointList)
+					{
+						if(this.isCanceled())
+						{
+							this.close();
+							return true;
+						}
+						Integer label = this.idToLabelMap.get(p.id);
+						if(label == null)
+						{
+							continue;
+						}
+						LabelRegion<Integer> region = cellRegions.getLabelRegion(label);
+						// TODO maybe include subregion count
+						//						DimensionMap newMap = mapM.copyAndSet("Measurement=subRegionCount");
+						//						newMap.put("Id", "" + id);
+						//						newMap.put("Label", "" + reg.getLabel());
+						//						this.write(newMap, (double) subRegionCount);
+						LabelRegion<Integer> majorSubRegion = getMajorSubRegion(region, maskImage);
+						String maskOnImageString = this.getMaskOnImageString(mapMask, mapImage);
+						DimensionMap mapMeasure = mapImage.copyAndSet(maskChannelName + "=" + maskOnImageString);
+						this.quantifyIntensityFeatures(mapMeasure, p.id, majorSubRegion, intensityImage);
+
+						if(firstTimeThrough)
+						{
+							// quantify intensity features first (for a complete CSV header)
+							this.quantifyGeometricFeatures(mapMask.copy(), p.id, majorSubRegion);
+							this.count = this.count + 1;
+							this.percentage = (int) (100 * ((double) (count) / ((double) total)));
+							JEXStatics.statusBar.setProgressPercentage(percentage);
+						}						
+					}
+					this.count = this.count + 1;
+					this.percentage = (int) (100 * ((double) (count) / ((double) total)));
 					JEXStatics.statusBar.setProgressPercentage(percentage);
+					
+					firstTimeThrough = false;				
 				}
 			}
 
-			this.close();
-
-			// Return status
-			return true;
 		}
-		catch (ImgIOException e)
-		{
-			e.printStackTrace();
-			try
-			{
-				Logs.log("Trying to exit gracefully and close the file writer", this);
-				this.close();
-			}
-			catch(Exception e2)
-			{
-				e.printStackTrace();
-			}
 
-			return false;
+		this.close();
+
+		// Return status
+		return true;
+	}
+	
+	public String getMaskOnImageString(DimensionMap mapMask, DimensionMap mapImage)
+	{
+		String imageChannelString = mapImage.get(maskChannelName);
+		if(imageChannelString == null)
+		{
+			return mapMask.get(maskChannelName);
+		}
+		else
+		{
+			return mapMask.get(maskChannelName) + "_" + imageChannelString;
 		}
 	}
 
@@ -500,8 +390,30 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		outputARFF = FileWriter.makeFileObject("temp", null, arffPath);
 	}
 
+	public LabelRegion<Integer> getMajorSubRegion(LabelRegion<Integer> region, Img<UnsignedByteType> mask)
+	{
+		LabelRegions<Integer> subRegions = FeatureUtils.getSubRegions(region, mask, connectedness.equals("4 Connected"));
+		long maxSize = 1; // This is hopefully to avoid quantifying subregions that are only a pixel in size.
+		LabelRegion<Integer> majorSubRegion = null;
+		Polygon poly = FeatureUtils.convert(region);
+		long[] pos = new long[region.numDimensions()];
+		IdPoint p = new IdPoint();
+		for(LabelRegion<Integer> subRegion : subRegions)
+		{
+			subRegion.cursor().localize(pos);
+			p.x = (int) pos[0] + 1; // ImgLib2 considers upper left pixel as 0,0; JEX considers first pixel as 1,1; So, add 1
+			p.y = (int) pos[1] + 1; // ImgLib2 considers upper left pixel as 0,0; JEX considers first pixel as 1,1; So, add 1 
+			if(subRegion.size() > maxSize && poly.contains(p))
+			{
+				majorSubRegion = subRegion;
+				maxSize = subRegion.size();
+			}
+		}
+		return majorSubRegion;
+	}
+
 	@SuppressWarnings("unchecked")
-	public boolean putZernike(DimensionMap mapM, int id, LabelRegion<Integer> reg, Img<UnsignedByteType> mask)
+	public boolean putZernike(DimensionMap mapM, int id, LabelRegion<Integer> reg)
 	{
 		if(this.isCanceled())
 		{
@@ -512,7 +424,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		{
 			if(this.opZernike == null)
 			{
-				opZernike = IJ2PluginUtility.ij().op().op(ZernikeFeatureSet.class, Regions.sample(reg, mask), zernikeMomentMin, zernikeMomentMax);
+				opZernike = IJ2PluginUtility.ij().op().op(ZernikeFeatureSet.class, reg, zernikeMomentMin, zernikeMomentMax);
 			}
 
 			PositionableIterableRegion<BoolType> temp = reg;
@@ -559,7 +471,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	//	}
 
 	@SuppressWarnings("unchecked")
-	public boolean putGeometric(DimensionMap mapM, int id, LabelRegion<Integer> reg, Img<UnsignedByteType> mask)
+	public boolean putGeometric(DimensionMap mapM, int id, LabelRegion<Integer> reg)
 	{
 		if(this.isCanceled())
 		{
@@ -572,32 +484,8 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			{
 				opGeometric = IJ2PluginUtility.ij().op().op(Geometric2DFeatureSet.class, reg);
 			}
-			LabelRegions<Integer> regions = getSubRegions(reg, mask);
-			
-			Integer maxSizeLabel = null;
-			int subRegionCount = 0;
-			Polygon p = FeatureUtils.convert(reg);
-			for(Integer label : regions.getExistingLabels())
-			{
-				LabelRegion<Integer> r = regions.getLabelRegion(label);
-				// Check if all the sub regions of the parent region (because CCA is done in the bounding box, not the region)
-				if(p.contains(r.cursor()))
-				{
-					if(maxSizeLabel == null || r.size() > maxSizeLabel)
-					{
-						maxSizeLabel = label;
-					}
-					subRegionCount = subRegionCount + 1;
-				}
-			}
-			
-			if(maxSizeLabel == null)
-			{
-				// Then there wasn't a subregion within the parent region
-				return true;
-			}
-			
-			Map<NamedFeature, DoubleType> results = opGeometric.compute(FeatureUtils.convert(regions.getLabelRegion(maxSizeLabel)));
+
+			Map<NamedFeature, DoubleType> results = opGeometric.compute(FeatureUtils.convert(reg));
 			for(Entry<NamedFeature, DoubleType> result : results.entrySet())
 			{
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
@@ -605,16 +493,16 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 				newMap.put("Label", "" + reg.getLabel());
 				this.write(newMap, result.getValue().getRealDouble());
 			}
-			DimensionMap newMap = mapM.copyAndSet("Measurement=subRegionCount");
+			DimensionMap newMap = mapM.copyAndSet("Measurement=" + net.imagej.ops.Ops.Geometric.Size.class.getName() + "Iterable");
 			newMap.put("Id", "" + id);
 			newMap.put("Label", "" + reg.getLabel());
-			this.write(newMap, (double) subRegionCount);
+			this.write(newMap, (double) reg.size());
 		}
 		return true;
 	}
 
 	@SuppressWarnings("unchecked")
-	public boolean putStats(DimensionMap mapM, int id, LabelRegion<Integer> reg, Img<UnsignedByteType> mask, Img<T> image)
+	public boolean putStats(DimensionMap mapM, int id, LabelRegion<Integer> reg, Img<T> image)
 	{
 		if(this.isCanceled())
 		{
@@ -755,13 +643,8 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	}
 
 	@SuppressWarnings("unchecked")
-	public boolean putMoments(DimensionMap mapM, int id, LabelRegion<Integer> reg, Img<T> image)
+	public void putMoments(DimensionMap mapM, int id, LabelRegion<Integer> reg, Img<T> image)
 	{
-		if(this.isCanceled())
-		{
-			this.close();
-			return false;
-		}
 		if(moments)
 		{
 			if(opMoments == null)
@@ -777,24 +660,23 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 				this.write(newMap, result.getValue().get());
 			}
 		}
-		return true;
 	}
 
-	public static boolean contains(LabelRegion<?> region, Point p)
-	{
-		LabelRegionCursor c = region.localizingCursor();
-		do
-		{
-			if(c.getIntPosition(0) == p.x && c.getIntPosition(1) == p.y)
-			{
-				return true;
-			}
-			c.next();
-		} 
-		while(c.hasNext());
-
-		return false;
-	}
+	//	public static boolean contains(LabelRegion<?> region, Point p)
+	//	{
+	//		LabelRegionCursor c = region.localizingCursor();
+	//		do
+	//		{
+	//			if(c.getIntPosition(0) == p.x && c.getIntPosition(1) == p.y)
+	//			{
+	//				return true;
+	//			}
+	//			c.next();
+	//		} 
+	//		while(c.hasNext());
+	//
+	//		return false;
+	//	}
 
 	//	public TreeMap<String, Object> getPixelValues(Wand wand, IdPoint p, ByteProcessor impMask, FloatProcessor impImage1, FloatProcessor impImage2)
 	//	{
@@ -843,124 +725,31 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			output.set(true);
 		}
 	}
-	
-	private LabelRegions<Integer> getSubRegions(LabelRegion<Integer> reg, Img<UnsignedByteType> mask)
+
+	public void quantifyIntensityFeatures(DimensionMap map, int id, LabelRegion<Integer> region, Img<T> intensityImage)
 	{
-		ImgLabeling<Integer, IntType> cellLabeling = FeatureUtils.getConnectedComponents(new IterableRandomAccessibleInterval<UnsignedByteType>(new RAII(reg, mask)), connectedness.equals("4 Connected"));
-		LabelRegions<Integer> subRegions = new LabelRegions<Integer>(cellLabeling);
-		return subRegions;
-	}
-	
-	class RAII implements RandomAccessibleInterval<UnsignedByteType> {
-		
-		LabelRegion<Integer> reg;
-		Img<UnsignedByteType> mask;
-		SamplingIterableInterval<UnsignedByteType> sampler;
-		
-		public RAII(LabelRegion<Integer> reg, Img<UnsignedByteType> mask)
+		// return false if canceled, which means
+		if(region == null || region.size() <= 1 )
 		{
-			this.mask = mask;
-			sampler = (SamplingIterableInterval<UnsignedByteType>) Regions.sample(reg, mask);
+			return;
 		}
 
-		@Override
-		public RandomAccess<UnsignedByteType> randomAccess() {
-			return mask.randomAccess();
-		}
-
-		@Override
-		public RandomAccess<UnsignedByteType> randomAccess(Interval interval) {
-			return mask.randomAccess(interval);
-		}
-
-		@Override
-		public int numDimensions() {
-			// TODO Auto-generated method stub
-			return sampler.numDimensions();
-		}
-
-		@Override
-		public long min(int d) {
-			// TODO Auto-generated method stub
-			return sampler.min(d);
-		}
-
-		@Override
-		public void min(long[] min) {
-			// TODO Auto-generated method stub
-			sampler.min(min);
-		}
-
-		@Override
-		public void min(Positionable min) {
-			// TODO Auto-generated method stub
-			sampler.min(min);
-		}
-
-		@Override
-		public long max(int d) {
-			// TODO Auto-generated method stub
-			return sampler.max(d);
-		}
-
-		@Override
-		public void max(long[] max) {
-			// TODO Auto-generated method stub
-			sampler.max(max);
-		}
-
-		@Override
-		public void max(Positionable max) {
-			// TODO Auto-generated method stub
-			sampler.max(max);
-		}
-
-		@Override
-		public double realMin(int d) {
-			// TODO Auto-generated method stub
-			return sampler.realMin(d);
-		}
-
-		@Override
-		public void realMin(double[] min) {
-			// TODO Auto-generated method stub
-			sampler.realMin(min);
-		}
-
-		@Override
-		public void realMin(RealPositionable min) {
-			// TODO Auto-generated method stub
-			sampler.realMin(min);
-		}
-
-		@Override
-		public double realMax(int d) {
-			// TODO Auto-generated method stub
-			return sampler.realMax(d);
-		}
-
-		@Override
-		public void realMax(double[] max) {
-			// TODO Auto-generated method stub
-			sampler.realMax(max);
-		}
-
-		@Override
-		public void realMax(RealPositionable max) {
-			// TODO Auto-generated method stub
-			sampler.realMax(max);
-		}
-
-		@Override
-		public void dimensions(long[] dimensions) {
-			// TODO Auto-generated method stub
-			sampler.dimensions(dimensions);
-		}
-
-		@Override
-		public long dimension(int d) {
-			// TODO Auto-generated method stub
-			return sampler.dimension(d);
-		}
+		this.putStats(map, id, region, intensityImage);
+		this.putHaralick2D(map, id, region, intensityImage);
+		this.putHistogram(map, id, region, intensityImage);
+		this.putMoments(map, id, region, intensityImage);
 	}
+
+	public void quantifyGeometricFeatures(DimensionMap mapM, int id, LabelRegion<Integer> region)
+	{
+		if(region == null || region.size() <= 1 )
+		{
+			return;
+		}
+
+		this.putGeometric(mapM, id, region);
+		this.putZernike(mapM, id, region);
+	}
+
 }
+
