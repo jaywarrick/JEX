@@ -220,6 +220,10 @@ public class JEX_ImageTools_CropImageUsingROI extends JEXCrunchable {
 		
 		for (DimensionMap map : imageList.keySet())
 		{
+			if(this.isCanceled())
+			{
+				return false;
+			}
 			image = new ImagePlus(imageList.get(map));
 			imageP = (FloatProcessor) image.getProcessor().convertToFloat();
 			int bitDepth = image.getBitDepth();
