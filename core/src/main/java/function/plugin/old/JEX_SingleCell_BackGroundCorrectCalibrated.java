@@ -374,6 +374,9 @@ public class JEX_SingleCell_BackGroundCorrectCalibrated extends JEXCrunchable {
 			// subtract the calculated background from the image
 			blit.copyBits(impTemp, 0, 0, FloatBlitter.SUBTRACT);
 			
+			// Release memory of impTemp
+			impTemp = null;
+			
 			// //// Subtract off remaining background because subtraction method
 			// //subtracts off the MINIMUM of the background, we want the mean of
 			// //the background to be zero
@@ -424,6 +427,10 @@ public class JEX_SingleCell_BackGroundCorrectCalibrated extends JEXCrunchable {
 			// Status bar
 			int percentage = (int) (100 * ((double) count / (double) images.size()));
 			JEXStatics.statusBar.setProgressPercentage(percentage);
+			
+			// Release memory for garbage collecting
+			im.flush();
+			imp = null;
 		}
 		
 		// Set the outputs
