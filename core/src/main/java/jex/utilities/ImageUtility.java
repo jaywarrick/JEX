@@ -55,22 +55,27 @@ public class ImageUtility {
 		int i = 1;
 		boolean first = true;
 		ImageProcessor imp = null;
-		for(Entry<DimensionMap,String> e : files.entrySet())
+		for(DimensionMap map : maps)
 		{
-			String imPath = e.getValue();
+			String imPath = files.get(map);
 			if(imPath == null)
 			{
 				continue;
 			}
-			imp = (new ImagePlus(e.getValue())).getProcessor();
+			imp = (new ImagePlus(imPath)).getProcessor();
 			if(first)
 			{
 				im = new ImageStack(imp.getWidth(), imp.getHeight());
 				first = false;
 			}
 			im.addSlice(imp);
-			im.setSliceLabel(e.getKey().toString(), i);
+			im.setSliceLabel(map.toString(), i);
 			i = i + 1;
+		}
+		
+		if(i == 1)
+		{
+			return null;
 		}
 		
 		ImagePlus temp = new ImagePlus("Montage");
