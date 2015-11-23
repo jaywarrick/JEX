@@ -71,6 +71,7 @@ public class FunctionCallable implements Callable<Integer> {
 		}
 		catch (OutOfMemoryError e2)
 		{
+			e2.printStackTrace();
 			JEXDialog.messageDialog("Out of memory! Restart! Potentially try increasing java heap space option (-Xmx####m) in the start script (i.e., either the 'JEX for Windows.bat' or 'JEX for Mac.command' file).");
 			return 0;
 		}
