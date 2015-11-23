@@ -236,6 +236,8 @@ public class JEX_ImageTools_CropImageUsingROI extends JEXCrunchable {
 			outputMap.put(map, actualPath);
 			count = count + 1;
 			JEXStatics.statusBar.setProgressPercentage(count * 100 / total);
+			image.flush();
+			imageP = null;
 		}
 		
 		JEXData output1 = ImageWriter.makeImageStackFromPaths(outputNames[0].getName(), outputMap);
