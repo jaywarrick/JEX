@@ -427,10 +427,6 @@ public class JEX_SingleCell_BackGroundCorrectCalibrated extends JEXCrunchable {
 			// Status bar
 			int percentage = (int) (100 * ((double) count / (double) images.size()));
 			JEXStatics.statusBar.setProgressPercentage(percentage);
-			
-			// Release memory for garbage collecting
-			im.flush();
-			imp = null;
 		}
 		
 		// Set the outputs
