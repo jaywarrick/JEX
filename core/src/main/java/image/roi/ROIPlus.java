@@ -28,7 +28,6 @@ public class ROIPlus implements Copiable<ROIPlus>, Iterable<ROIPlus>, Comparable
 	public int type = ROI_RECT;
 	
 	// IJ ROI
-	private Roi roi;
 	
 	// Point list
 	public PointList pointList;
@@ -36,8 +35,6 @@ public class ROIPlus implements Copiable<ROIPlus>, Iterable<ROIPlus>, Comparable
 	
 	public ROIPlus(Roi roi)
 	{
-		this.roi = roi;
-		
 		if(roi.getType() == Roi.RECTANGLE)
 		{
 			type = ROI_RECT;
@@ -164,8 +161,7 @@ public class ROIPlus implements Copiable<ROIPlus>, Iterable<ROIPlus>, Comparable
 	
 	public Roi getRoi()
 	{
-		this.createIJroi();
-		return this.roi;
+		return this.createIJroi();
 	}
 	
 	public double getLength()
@@ -173,32 +169,34 @@ public class ROIPlus implements Copiable<ROIPlus>, Iterable<ROIPlus>, Comparable
 		return this.getPointList().getLength(this.isLine());
 	}
 	
-	private void createIJroi()
+	private Roi createIJroi()
 	{
+		Roi ret = null;
 		if(this.pointList != null && this.pointList.size() > 0)
 		{
 			switch (this.type)
 			{
 				case ROI_RECT:
-					this.roi = this.toRectangleRoi();
+					ret = this.toRectangleRoi();
 					break;
 				case ROI_ELLIPSE:
-					this.roi = this.toEllipseRoi();
+					ret = this.toEllipseRoi();
 					break;
 				case ROI_LINE:
-					this.roi = this.toLineRoi();
+					ret = this.toLineRoi();
 					break;
 				case ROI_POLYLINE:
-					this.roi = this.toPolylineRoi();
+					ret = this.toPolylineRoi();
 					break;
 				case ROI_POLYGON:
-					this.roi = this.toPolygonRoi();
+					ret = this.toPolygonRoi();
 					break;
 				case ROI_POINT:
-					this.roi = this.toPointRoi();
+					ret = this.toPointRoi();
 					break;
 			}
 		}
+		return ret;
 	}
 	
 	private Roi toRectangleRoi()

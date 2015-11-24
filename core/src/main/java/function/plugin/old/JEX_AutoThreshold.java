@@ -1,8 +1,12 @@
 package function.plugin.old;
 
+import java.util.HashMap;
+import java.util.TreeMap;
+
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;
+import Database.DataReader.RoiReader;
 import Database.DataWriter.ImageWriter;
 import Database.Definition.Parameter;
 import Database.Definition.ParameterSet;
@@ -14,10 +18,7 @@ import ij.ImagePlus;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
-
-import java.util.HashMap;
-import java.util.TreeMap;
-
+import image.roi.ROIPlus;
 import jex.statics.JEXStatics;
 import jex.utilities.FunctionUtility;
 import tables.DimensionMap;
@@ -33,14 +34,14 @@ import tables.DimensionMap;
  * 
  */
 public class JEX_AutoThreshold extends JEXCrunchable {
-	
+
 	public JEX_AutoThreshold()
 	{}
-	
+
 	// ----------------------------------------------------
 	// --------- INFORMATION ABOUT THE FUNCTION -----------
 	// ----------------------------------------------------
-	
+
 	/**
 	 * Returns the name of the function
 	 * 
@@ -52,7 +53,7 @@ public class JEX_AutoThreshold extends JEXCrunchable {
 		String result = "Auto-Threshold";
 		return result;
 	}
-	
+
 	/**
 	 * This method returns a string explaining what this method does This is purely informational and will display in JEX
 	 * 
@@ -64,7 +65,7 @@ public class JEX_AutoThreshold extends JEXCrunchable {
 		String result = "Automatically threhsold image and return a binary image.";
 		return result;
 	}
-	
+
 	/**
 	 * This method defines in which group of function this function will be shown in... Toolboxes (choose one, caps matter): Visualization, Image processing, Custom Cell Analysis, Cell tracking, Image tools Stack processing, Data Importing, Custom
 	 * image analysis, Matlab/Octave
@@ -76,7 +77,7 @@ public class JEX_AutoThreshold extends JEXCrunchable {
 		String toolbox = "Image processing";
 		return toolbox;
 	}
-	
+
 	/**
 	 * This method defines if the function appears in the list in JEX It should be set to true expect if you have good reason for it
 	 * 
@@ -87,7 +88,7 @@ public class JEX_AutoThreshold extends JEXCrunchable {
 	{
 		return true;
 	}
-	
+
 	/**
 	 * Returns true if the user wants to allow multithreding
 	 * 
@@ -98,11 +99,11 @@ public class JEX_AutoThreshold extends JEXCrunchable {
 	{
 		return true;
 	}
-	
+
 	// ----------------------------------------------------
 	// --------- INPUT OUTPUT DEFINITIONS -----------------
 	// ----------------------------------------------------
-	
+
 	/**
 	 * Return the array of input names
 	 * 
@@ -111,11 +112,12 @@ public class JEX_AutoThreshold extends JEXCrunchable {
 	@Override
 	public TypeName[] getInputNames()
 	{
-		TypeName[] inputNames = new TypeName[1];
+		TypeName[] inputNames = new TypeName[2];
 		inputNames[0] = new TypeName(IMAGE, "Image");
+		inputNames[1] = new TypeName(ROI, "ROI (optional)");
 		return inputNames;
 	}
-	
+
 	/**
 	 * Return the array of output names defined for this function
 	 * 
@@ -126,14 +128,14 @@ public class JEX_AutoThreshold extends JEXCrunchable {
 	{
 		this.defaultOutputNames = new TypeName[1];
 		this.defaultOutputNames[0] = new TypeName(IMAGE, "Auto-Thresholded Image");
-		
+
 		if(this.outputNames == null)
 		{
 			return this.defaultOutputNames;
 		}
 		return this.outputNames;
 	}
-	
+
 	/**
 	 * Returns a list of parameters necessary for this function to run... Every parameter is defined as a line in a form that provides the ability to set how it will be displayed to the user and what options are available to choose from The simplest
 	 * FormLine can be written as: FormLine p = new FormLine(parameterName); This will provide a text field for the user to input the value of the parameter named parameterName More complex displaying options can be set by consulting the FormLine API
@@ -148,7 +150,7 @@ public class JEX_AutoThreshold extends JEXCrunchable {
 		// String[] {"true"},0);
 		Parameter p1 = new Parameter("Method", "Method of automatically choosing the threshold.", Parameter.DROPDOWN, new String[] { "HUANG", "INTERMODES", "ISODATA", "LI", "MAXENTROPY", "MEAN", "MINERROR", "MINIMUM", "MOMENTS", "OTSU", "PERCENTILE", "RENYIENTROPY", "SHANBHAG", "TRIANGLE", "YEN" });
 		Parameter p2 = new Parameter("Threshold Multiplier", "Scale the threshold returned by the autothresholder before applying the threshold.", "1");
-		
+
 		// Make an array of the parameters and return it
 		ParameterSet parameterArray = new ParameterSet();
 		// parameterArray.addParameter(p0);
@@ -156,11 +158,11 @@ public class JEX_AutoThreshold extends JEXCrunchable {
 		parameterArray.addParameter(p2);
 		return parameterArray;
 	}
-	
+
 	// ----------------------------------------------------
 	// --------- ERROR CHECKING METHODS -------------------
 	// ----------------------------------------------------
-	
+
 	/**
 	 * Returns the status of the input validity checking It is HIGHLY recommended to implement input checking however this can be over-ridden by returning false If over-ridden ANY batch function using this function will not be able perform error
 	 * checking...
@@ -172,11 +174,11 @@ public class JEX_AutoThreshold extends JEXCrunchable {
 	{
 		return false;
 	}
-	
+
 	// ----------------------------------------------------
 	// --------- THE ACTUAL MEAT OF THIS FUNCTION ---------
 	// ----------------------------------------------------
-	
+
 	/**
 	 * Perform the algorithm here
 	 * 
@@ -190,7 +192,15 @@ public class JEX_AutoThreshold extends JEXCrunchable {
 		{
 			return false;
 		}
-		
+
+		// Collect the inputs
+		JEXData roiData = inputs.get("ROI (optional)");
+		TreeMap<DimensionMap, ROIPlus> rois = new TreeMap<DimensionMap,ROIPlus>();
+		if(roiData != null && !roiData.getTypeName().getType().equals(JEXData.ROI))
+		{
+			rois = RoiReader.readObjectToRoiMap(roiData);
+		}
+
 		// Gather parameters
 		double multiplier = Double.parseDouble(this.parameters.getValueOfParameter("Threshold Multiplier"));
 		String method = this.parameters.getValueOfParameter("Method");
@@ -255,11 +265,11 @@ public class JEX_AutoThreshold extends JEXCrunchable {
 		{
 			methodInt = AutoThresholder.YEN;
 		}
-		
+
 		// Run the function
 		TreeMap<DimensionMap,String> imageMap = ImageReader.readObjectToImagePathTable(imageData);
 		TreeMap<DimensionMap,String> outputMap = new TreeMap<DimensionMap,String>();
-		
+
 		int count = 0, percentage = 0;
 		AutoThresholder at = new AutoThresholder();
 		for (DimensionMap map : imageMap.keySet())
@@ -267,11 +277,16 @@ public class JEX_AutoThreshold extends JEXCrunchable {
 			// Get the image
 			ImagePlus im = new ImagePlus(imageMap.get(map));
 			ImageProcessor ip = im.getProcessor();
-			
+
 			// Do threshold
 			FloatProcessor temp = (FloatProcessor) ip.convertToFloat();
 			FunctionUtility.imAdjust(temp, ip.getMin(), ip.getMax(), 0d, 255d, 1d);
 			ByteProcessor bp = (ByteProcessor) temp.convertToByte(false);
+			ROIPlus roi = rois.get(map);
+			if(roi != null)
+			{
+				bp.setRoi(roi.getRoi());
+			}
 			int[] hist = bp.getHistogram();
 			double threshold = at.getThreshold(methodInt, hist);
 			threshold = threshold * multiplier;
@@ -286,7 +301,7 @@ public class JEX_AutoThreshold extends JEXCrunchable {
 			bp.threshold((int) threshold);
 			String path = JEXWriter.saveImage(bp);
 			outputMap.put(map, path);
-			
+
 			// Update progress
 			count = count + 1;
 			percentage = (int) (100 * ((double) (count) / ((double) imageMap.size())));
@@ -296,12 +311,12 @@ public class JEX_AutoThreshold extends JEXCrunchable {
 		{
 			return false;
 		}
-		
+
 		JEXData output1 = ImageWriter.makeImageStackFromPaths(this.outputNames[0].getName(), outputMap);
-		
+
 		// Set the outputs
 		this.realOutputs.add(output1);
-		
+
 		// Return status
 		return true;
 	}

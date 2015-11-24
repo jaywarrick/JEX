@@ -175,7 +175,7 @@ public class JEX_ExportFiles extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData data = inputs.get("Files to Export");
-		if(!(data.getTypeName().getType().equals(JEXData.FILE) || data.getTypeName().getType().equals(JEXData.IMAGE) || data.getTypeName().getType().equals(JEXData.MOVIE) || data.getTypeName().getType().equals(JEXData.WORKFLOW) || data.getTypeName().getType().equals(JEXData.SOUND)))
+		if(!(data.getTypeName().getType().equals(JEXData.FILE) || data.getTypeName().getType().equals(JEXData.ROI) || data.getTypeName().getType().equals(JEXData.IMAGE) || data.getTypeName().getType().equals(JEXData.MOVIE) || data.getTypeName().getType().equals(JEXData.WORKFLOW) || data.getTypeName().getType().equals(JEXData.SOUND)))
 		{
 			return false;
 		}
@@ -246,35 +246,24 @@ public class JEX_ExportFiles extends JEXCrunchable {
 	private static TreeMap<DimensionMap,String> readObjectToFilePathTable(JEXData data)
 	{
 		TreeMap<DimensionMap,String> result = new TreeMap<DimensionMap,String>();
-		JEXDataSingle ds = data.getFirstSingle();
-		String dataFolder = (new File(FileReader.readToPath(ds))).getParent(); // DO
-		// THIS
-		// ONE
-		// TIME
-		// OUTSIDE
-		// LOOP
-		// OTHERWISE
-		// YOU
-		// WILL
-		// CHECK
-		// IF
-		// THIS
-		// DIRECTORY
-		// EXISTS
-		// FOR
-		// EACH
-		// DATASINGLE
-		// IN
-		// THE
-		// JEXDATA!
-		// (MAJORLY
-		// SLOW)
-		for (DimensionMap map : data.getDataMap().keySet())
+		if(data.getTypeName().getType().equals(JEXData.ROI))
 		{
-			ds = data.getData(map);
-			String path = readToPath(dataFolder, ds);
-			result.put(map, path);
+			String dataFolder = data.getDetachedRelativePath();
+			dataFolder = JEXWriter.getDatabaseFolder() + File.separator + dataFolder;
+			result.put(new DimensionMap("File=1"), dataFolder);
 		}
+		else
+		{
+			JEXDataSingle ds = data.getFirstSingle();
+			String dataFolder = (new File(FileReader.readToPath(ds))).getParent(); 			
+			for (DimensionMap map : data.getDataMap().keySet())
+			{
+				ds = data.getData(map);
+				String path = readToPath(dataFolder, ds);
+				result.put(map, path);
+			}
+		}
+		
 		return result;
 	}
 	
