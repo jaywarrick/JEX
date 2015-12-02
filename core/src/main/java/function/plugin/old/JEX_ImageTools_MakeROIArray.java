@@ -261,6 +261,10 @@ public class JEX_ImageTools_MakeROIArray extends JEXCrunchable {
 			// JEXStatics.statusBar.setStatusText("Couldn't make the array of points!");
 			// return false;
 			// }
+			if(corners.size() < 3)
+			{
+				continue;
+			}
 			PointList pattern = getPattern(rows, cols, staggered, staggeredFirst, corners);
 			if(pattern == null)
 			{
