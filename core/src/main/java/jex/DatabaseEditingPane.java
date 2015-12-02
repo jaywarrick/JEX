@@ -74,7 +74,7 @@ public class DatabaseEditingPane extends JPanel implements ActionListener {
 		JLabel nameLabel = new JLabel("Name");
 		this.add(nameLabel, cc.xy(1, 2));
 		this.add(nameField, cc.xywh(2, 2, 2, 1));
-		nameField.setText(db.getName());
+		nameField.setText(db.getDBName());
 		
 		JLabel infoLabel = new JLabel("Info");
 		this.add(infoLabel, cc.xy(1, 3));

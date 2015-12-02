@@ -996,9 +996,6 @@ public class JEXDB implements Iterable<JEXEntry> {
 		// Set the experimental table in the manager
 		this.experimentalTable = (result);
 		
-		// Update the experimental table in the database Info
-		// MAYBE CHECK FOR PASSWORD PROTECTION IF YOU DONT WANT UNWANTED CHANGES
-		JEXStatics.jexManager.getDatabaseInfo().setExperimentalTable(result);
 		return;
 	}
 	

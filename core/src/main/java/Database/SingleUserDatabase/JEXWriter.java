@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 
+import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import logs.Logs;
 import miscellaneous.DateUtility;
@@ -69,59 +70,45 @@ public class JEXWriter {
 	
 	public static void editDBInfo(JEXDBInfo dbInfo, String name, String info, String password)
 	{
-		// Can't reliably change the database name yet so this is disabled for
-		// the moment.
-		Logs.log("Can't reliably change the database name yet so this is disabled for the moment.", 0, JEXWriter.class.getSimpleName());
-		return;
-		// if(name == null || name.equals(""))
-		// {
-		// return;
-		// }
-		//
-		// // Archive the current dbInfo
-		// JEXWriter.saveBDInfo(dbInfo);
-		//
-		// File currentDBDirectory = new File(dbInfo.getDirectory());
-		// String currentDBDirectoryParent = currentDBDirectory.getParent();
-		// //try
-		// //{
-		// // Check the new name and change the directory name if necessary
-		// name = FileUtility.removeWhiteSpaceOnEnds(name);
-		// File newDBDirectory = new File(currentDBDirectoryParent +
-		// File.separator + name);
-		// if(!name.equals(dbInfo.getName()))
-		// {
-		// // If the name changed then the folder of the database requires a
-		// name change
-		// // This method renames the folder.
-		// // We can do this and not affect DB behavior as long as we change the
-		// database name and
-		// // classy path (jexpath) in the dbInfo object held by JEXManager
-		// // because all file paths are relative to dbInfo.getDirectory(),
-		// which references jexPath
-		// try {
-		// FileUtils.(currentDBDirectory, newDBDirectory);
-		// // Change the information in dbInfo
-		// dbInfo.set(JEXDBInfo.DB_NAME, name);
-		// dbInfo.set(JEXDBInfo.DB_INFO, info);
-		// dbInfo.set(JEXDBInfo.DB_PWD, password);
-		//
-		// // Save the new one
-		// dbInfo.getXML().saveToPath(newDBDirectory.getAbsolutePath());
-		//
-		// // Reload dbInfo from new path
-		// dbInfo.setPath(newDBDirectory.getAbsolutePath());
-		// } catch (IOException e) {
-		// // TODO Auto-generated catch block
-		// e.printStackTrace();
-		// }
-		// }
-		// //}
-		// //catch (IOException e1)
-		// //{
-		// // // TODO Auto-generated catch block
-		// // e1.printStackTrace();
-		// //}
+//		// Can't reliably change the database name yet so this is disabled for
+//		// the moment.
+//		Logs.log("Can't reliably change the database name yet so this is disabled for the moment.", 0, JEXWriter.class.getSimpleName());
+//		return;
+		if(name == null || name.equals(""))
+		{
+			return;
+		}
+
+		// Archive the new info into the current DBInfo
+		// Not saving the DB_NAME anymore. Just using the parent folder name instead.
+		dbInfo.set(JEXDBInfo.DB_INFO, info);
+		dbInfo.set(JEXDBInfo.DB_PWD, password);
+		JEXWriter.saveBDInfo(dbInfo);
+
+		File currentDBDirectory = new File(dbInfo.getDirectory());
+		String currentDBDirectoryParent = currentDBDirectory.getParent();
+
+		// Check the new name and change the directory name if necessary
+		name = FileUtility.removeWhiteSpaceOnEnds(name);
+		File newDBDirectory = new File(currentDBDirectoryParent + File.separator + name);
+		if(!name.equals(dbInfo.getDBName()))
+		{
+			// If the name changed then the folder of the database requires a name change
+			// This method renames the folder.
+			// We can do this and not affect DB behavior as long as we change the database name and
+			// classy path (jexpath) in the dbInfo object held by JEXManager
+			// because all file paths are relative to dbInfo.getDirectory(), which references jexPath
+			boolean successful = currentDBDirectory.renameTo(newDBDirectory);
+			if(successful)
+			{
+				// Change the information in dbInfo
+				dbInfo.setPath(newDBDirectory.getAbsolutePath() + File.separator + JEXDBInfo.LOCAL_DBINFO_CURRENTVERSION);
+			}
+			else
+			{
+				JEXDialog.messageDialog("Couldn't rename database for some reason. Check to see if a database of that name already exists?");
+			}	
+		}
 	}
 	
 	public static void cleanDB(JEXDBInfo dbInfo)
@@ -455,7 +442,6 @@ public class JEXWriter {
 		
 		XPreferences dbInfo = new XPreferences();
 		
-		dbInfo.put(JEXDBInfo.DB_NAME, name);
 		dbInfo.put(JEXDBInfo.DB_INFO, info);
 		dbInfo.put(JEXDBInfo.DB_AUTHOR, JEXStatics.jexManager.getUserName());
 		dbInfo.put(JEXDBInfo.DB_DATE, miscellaneous.DateUtility.getDate());

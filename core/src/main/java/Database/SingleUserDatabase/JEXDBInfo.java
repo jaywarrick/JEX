@@ -1,16 +1,11 @@
 package Database.SingleUserDatabase;
 
-import Database.DBObjects.JEXEntry;
-import Database.Definition.Bookmark;
-import Database.Definition.Experiment;
-
 import java.awt.Color;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeMap;
 
 import jex.JEXLabelColorCode;
 import jex.statics.JEXStatics;
@@ -18,6 +13,7 @@ import logs.Logs;
 import plugins.labelManager.ColorPallet;
 import preferences.XPreferences;
 import preferences.XPreferences_Utilities;
+import Database.Definition.Bookmark;
 
 public class JEXDBInfo {
 	
@@ -32,7 +28,6 @@ public class JEXDBInfo {
 	public static String DB_VERSION = "Version";
 	public static String DB_TYPE = "Type";
 	
-	public static String DB_EXPTABLE = "Experimental Table";
 	public static String DB_LABELCOLORCODE = "Label Color Code";
 	public static String DB_LABELCOLORCODE_COLOR = "Color";
 	
@@ -53,7 +48,6 @@ public class JEXDBInfo {
 	
 	// Classy variables
 	private String jexPath;
-	private boolean isLoaded;
 	
 	// bookmarks
 	private Set<Bookmark> bookmarks;
@@ -69,10 +63,12 @@ public class JEXDBInfo {
 	
 	/**
 	 * Return the name of the database
+	 * 
+	 * Returns the name of the database folder associated with the internal variable jexPath (need to keep this current and up to date)
 	 */
-	public String getName()
+	public String getDBName()
 	{
-		String result = xinfo.get(DB_NAME, "No name found");
+		String result = (new File(this.getDirectory())).getName();
 		return result;
 	}
 	
@@ -97,27 +93,7 @@ public class JEXDBInfo {
 	public void setPath(String jexPath)
 	{
 		this.jexPath = jexPath;
-		this.xinfo = new XPreferences(this.jexPath);
-	}
-	
-	/**
-	 * Returns true if the database has been loaded
-	 * 
-	 * @return
-	 */
-	public boolean isLoaded()
-	{
-		return this.isLoaded;
-	}
-	
-	/**
-	 * Set the loaded flag
-	 * 
-	 * @param isLoaded
-	 */
-	public void setIsLoaded(boolean isLoaded)
-	{
-		this.isLoaded = isLoaded;
+		this.xinfo = new XPreferences(this.jexPath); // this reloads the xml of this file as an XPreferences object
 	}
 	
 	public String get(String key)
@@ -152,76 +128,6 @@ public class JEXDBInfo {
 	public void setType(String type)
 	{
 		this.set(DB_TYPE, type);
-	}
-	
-	// ---------------------------------------------
-	// Experimental table
-	// ---------------------------------------------
-	
-	// public TreeMap<String,Experiment> getExperimentalTable()
-	// {
-	// TreeMap<String,Experiment> result = new TreeMap<String,Experiment>();
-	//
-	// // Get the exptable child node
-	// XPreferences expPrefs = xinfo.getChildNode(DB_EXPTABLE);
-	//
-	// // Get the child experiments
-	// List<XPreferences> experiments = expPrefs.getChildNodes();
-	//
-	// // Loop through the experiments
-	// for (XPreferences experiment: experiments)
-	// {
-	// // Get the variables to create an experiment class
-	// String expName = experiment.get(JEXEntry.EXPERIMENT);
-	// String expInfo = experiment.get(JEXEntry.INFO);
-	// String expDate = experiment.get(JEXEntry.DATE);
-	// String expMDate = experiment.get(JEXEntry.DATE);
-	// String expAuthor = experiment.get(JEXEntry.AUTHOR);
-	// String expNumber = experiment.get(Experiment.NUMBER);
-	//
-	// // Make an experiment class
-	// Experiment exp = new
-	// Experiment(expName,expInfo,expDate,expMDate,expAuthor,expNumber);
-	//
-	// // Add it to the table
-	// result.put(expName, exp);
-	// }
-	//
-	// return result;
-	// }
-	
-	public void setExperimentalTable(TreeMap<String,Experiment> expTable)
-	{
-		// Remove the old experiment table
-		xinfo.removeNode(DB_EXPTABLE);
-		
-		// Make a new one
-		XPreferences expPrefs = xinfo.getChildNode(DB_EXPTABLE);
-		
-		// Loop through the expTable
-		for (String expName : expTable.keySet())
-		{
-			// Get the experiment
-			Experiment exp = expTable.get(expName);
-			
-			// Get the variables
-			String expInfo = exp.expInfo;
-			String expDate = exp.expDate;
-			String expMDate = exp.expMDate;
-			String expAuthor = exp.expAuthor;
-			String expNumber = exp.expNumber;
-			
-			// Make a new node in the prefs
-			XPreferences experiment = expPrefs.getChildNode(expName);
-			
-			// Fill the node
-			experiment.put(JEXEntry.EXPERIMENT, expName);
-			experiment.put(JEXEntry.INFO, expInfo);
-			experiment.put(JEXEntry.DATE, expDate);
-			experiment.put(JEXEntry.DATE, expMDate);
-			experiment.put(JEXEntry.AUTHOR, expAuthor);
-			experiment.put(Experiment.NUMBER, expNumber);
-		}
 	}
 	
 	// ---------------------------------------------

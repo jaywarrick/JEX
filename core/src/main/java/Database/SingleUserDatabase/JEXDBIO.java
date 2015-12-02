@@ -68,7 +68,7 @@ public class JEXDBIO {
 	public static JEXDB load(String xmlPath)
 	{
 		
-		Logs.log("Loading the local database " + xmlPath, 0, null);
+		Logs.log("Loading the database " + xmlPath, 0, null);
 		
 		// Load the xml into this db object
 		JEXDB db = JEXDBIO.XEntrySetToDatabaseObject(xmlPath);

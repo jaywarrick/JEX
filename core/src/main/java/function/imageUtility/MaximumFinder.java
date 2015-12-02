@@ -291,13 +291,6 @@ public class MaximumFinder {
 		if(excludeOnEdges)
 		{
 			this.deleteEdgeParticles(outIp, this.savedTypeP);
-			// if (false) // change to true to see the max points in the
-			// segmented image.
-			// {
-			// ROIPlus roip = new ROIPlus(points, ROIPlus.ROI_POINT);
-			// PointRoi pRoi = (PointRoi)roip.getRoi();
-			// outIp.draw(pRoi);
-			// }
 		}
 		
 		return outIp;
