@@ -4,7 +4,6 @@ import java.io.File;
 
 import jex.statics.JEXStatics;
 
-import org.rosuda.REngine.REXP;
 import org.scijava.plugin.Plugin;
 
 import rtools.R;
@@ -107,6 +106,7 @@ public class FilterTrackList_R extends JEXPlugin {
 		// Load the R TrackList
 		String path = FileReader.readFileObject(roiFileData);
 		R.eval("load(file=" + R.quotedPath(path) + ")");
+		R.eval("trackList <- trackList$copy()");
 		
 		count = count + 1;
 		percentage = (int) (100 * ((double) (count) / (total)));
