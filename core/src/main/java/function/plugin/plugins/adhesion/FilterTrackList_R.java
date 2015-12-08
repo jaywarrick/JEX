@@ -4,11 +4,13 @@ import java.io.File;
 
 import jex.statics.JEXStatics;
 
+import org.rosuda.REngine.REXP;
 import org.scijava.plugin.Plugin;
 
 import rtools.R;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
+import Database.DataReader.FileReader;
 import Database.DataWriter.FileWriter;
 import Database.SingleUserDatabase.JEXWriter;
 import function.plugin.mechanism.InputMarker;
@@ -45,22 +47,22 @@ public class FilterTrackList_R extends JEXPlugin {
 
 	/////////// Define Parameters ///////////
 
-	@ParameterMarker(uiOrder=1, name="Length Min", description="The minimum length (in frames, inclusive) of a track that is to be kept.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
+	@ParameterMarker(uiOrder=1, name="Length Min", description="The minimum length (in frames, inclusive) of a track that is to be kept. Tracks less than 3 frames cause problems for calculating velocities.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="3")
 	int lengthMin;
 
-	@ParameterMarker(uiOrder=2, name="Length Max", description="The maximum length (in frames, inclusive) of a track that is to be kept.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="4095.0")
+	@ParameterMarker(uiOrder=2, name="Length Max", description="The maximum length (in frames, inclusive) of a track that is to be kept.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="10000000")
 	int lengthMax;
 
-	@ParameterMarker(uiOrder=3, name="Start Frame Min", description="The maximum starting frame index of a track that is to be kept (i.e., keep if track ends at or after this frame).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
+	@ParameterMarker(uiOrder=3, name="Start Frame Min", description="The maximum starting frame index of a track that is to be kept (i.e., keep if track ends at or after this frame).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0")
 	int startMin;
 	
-	@ParameterMarker(uiOrder=4, name="Start Frame Max", description="The maximum starting frame index of a track that is to be kept (i.e., keep if track ends at or after this frame).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
+	@ParameterMarker(uiOrder=4, name="Start Frame Max", description="The maximum starting frame index of a track that is to be kept (i.e., keep if track ends at or after this frame).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="10000000")
 	int startMax;
 
-	@ParameterMarker(uiOrder=5, name="End Frame Min", description="The minimum ending frame index of a track that is to be kept (i.e., keep if track ends at or after this frame).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="65535.0")
+	@ParameterMarker(uiOrder=5, name="End Frame Min", description="The minimum ending frame index of a track that is to be kept (i.e., keep if track ends at or after this frame).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0")
 	int endMin;
 	
-	@ParameterMarker(uiOrder=6, name="End Frame Max", description="The minimum ending frame index of a track that is to be kept (i.e., keep if track ends at or after this frame).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="65535.0")
+	@ParameterMarker(uiOrder=6, name="End Frame Max", description="The minimum ending frame index of a track that is to be kept (i.e., keep if track ends at or after this frame).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="10000000")
 	int endMax;
 
 	/////////// Define Outputs ///////////
@@ -83,7 +85,7 @@ public class FilterTrackList_R extends JEXPlugin {
 			return false;
 		}
 
-		int count = 0, total = 4, percentage = 0;
+		int count = 0, total = 5, percentage = 0;
 		percentage = (int) (100 * ((double) (count) / (total)));
 		JEXStatics.statusBar.setProgressPercentage(percentage);
 		if(this.isCanceled())
@@ -93,6 +95,18 @@ public class FilterTrackList_R extends JEXPlugin {
 		
 		R.eval("rm(list=ls())"); // Start with a clean slate and start R session if necessary
 		AdhesionUtility.loadAdhesionScripts(); // Load necessary R scripts
+		
+		count = count + 1;
+		percentage = (int) (100 * ((double) (count) / (total)));
+		JEXStatics.statusBar.setProgressPercentage(percentage);
+		if(this.isCanceled())
+		{
+			return false;
+		}
+		
+		// Load the R TrackList
+		String path = FileReader.readFileObject(roiFileData);
+		R.eval("load(file=" + R.quotedPath(path) + ")");
 		
 		count = count + 1;
 		percentage = (int) (100 * ((double) (count) / (total)));
@@ -126,7 +140,7 @@ public class FilterTrackList_R extends JEXPlugin {
 		
 		// Save
 		String trackListPath = JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getUniqueRelativeTempPath("RData");
-		R.eval("save(list=c('trackList'), file=" + R.pathString(trackListPath) + ")");
+		R.eval("save(list=c('trackList'), file=" + R.quotedPath(trackListPath) + ")");
 		output = FileWriter.makeFileObject("temp", null, trackListPath);
 		
 		count = count + 1;
