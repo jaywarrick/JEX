@@ -447,7 +447,7 @@ public class R {
 	}
 	
 	/**
-	 * Put single quotes around a string
+	 * 
 	 * 
 	 * @param s
 	 * @return
