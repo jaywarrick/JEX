@@ -62,7 +62,7 @@ public class TrackOscillatoryMotion_R extends JEXPlugin {
 	double maxDist;
 
 	@ParameterMarker(uiOrder=4, name="Primary direction (x,y,z)", description="Primary direction for tracking in terms of vector direction components (typically 1,0,0 for x direction, sign doesn't matter).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1,0,0")
-	double direction;
+	String direction;
 
 	@ParameterMarker(uiOrder=5, name="Directionality", description="How much to weight the primary direction in terms of linking points. A value of 10 penalizes 'movement' perpendicular to the primary direction by a multiple of 10.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="10")
 	double directionality;
@@ -103,12 +103,22 @@ public class TrackOscillatoryMotion_R extends JEXPlugin {
 			return false;
 		}
 
+		if(this.isCanceled())
+		{
+			return false;
+		}
+		
 		R.eval("rm(list=ls())"); // Start with a clean slate and also ensure that the Rsession is running by calling eval at least once first before sourcing files.
 		AdhesionUtility.loadAdhesionScripts(); // source the adhesion files
 
 		count = count + 1;
 		percentage = (int) (100 * ((double) (count) / (total)));
 		JEXStatics.statusBar.setProgressPercentage(percentage);
+		
+		if(this.isCanceled())
+		{
+			return false;
+		}
 
 		// Load the ROI
 		String path = JEXWriter.getDatabaseFolder() + File.separator + roiData.getDetachedRelativePath();
@@ -118,6 +128,11 @@ public class TrackOscillatoryMotion_R extends JEXPlugin {
 		count = count + 1;
 		percentage = (int) (100 * ((double) (count) / (total)));
 		JEXStatics.statusBar.setProgressPercentage(percentage);
+		
+		if(this.isCanceled())
+		{
+			return false;
+		}
 
 		// Track the points
 		if(lastFrame < 0)
@@ -133,27 +148,42 @@ public class TrackOscillatoryMotion_R extends JEXPlugin {
 		count = count + 4;
 		percentage = (int) (100 * ((double) (count) / (total)));
 		JEXStatics.statusBar.setProgressPercentage(percentage);
+		
+		if(this.isCanceled())
+		{
+			return false;
+		}
 
 		// Save the tracked maximaList to file
 		String maximaListPath = JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getUniqueRelativeTempPath("RData");
-		R.eval("save(list=c('maximaList'), file=" + R.pathString(maximaListPath) + ")");
+		R.eval("save(list=c('maximaList'), file=" + R.quotedPath(maximaListPath) + ")");
 		maximaListOutput = FileWriter.makeFileObject("temp", null, maximaListPath);
 		
 		count = count + 1;
 		percentage = (int) (100 * ((double) (count) / (total)));
 		JEXStatics.statusBar.setProgressPercentage(percentage);
 		
+		if(this.isCanceled())
+		{
+			return false;
+		}
+		
 		// Save the JEX ROI to file
 		String roiPath = JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getUniqueRelativeTempPath("jxd");
-		R.eval("maximaList$saveROI(file=" + R.pathString(roiPath) + ")");
+		R.eval("maximaList$saveROI(file=" + R.quotedPath(roiPath) + ")");
 		JEXData data = new JEXData(JEXData.ROI, "temp");
 		JEXDataIO.loadJXD(data, roiPath);
 		roiOutput = data;
+		
+		if(this.isCanceled())
+		{
+			return false;
+		}
 
 		// Get the TrackList and save it
-		R.eval("maximaList$getTrackList(t0_Frame=" + t0_Frame + ", timePerFrame=" + timePerFrame + ")");
+		R.eval("trackList <- maximaList$getTrackList(t0_Frame=" + t0_Frame + ", timePerFrame=" + timePerFrame + ")");
 		String trackListPath = JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getUniqueRelativeTempPath("RData");
-		R.eval("save(list=c('trackList'), file=" + R.pathString(trackListPath) + ")");
+		R.eval("save(list=c('trackList'), file=" + R.quotedPath(trackListPath) + ")");
 		trackListOutput = FileWriter.makeFileObject("temp", null, trackListPath);
 
 		count = count + 3;
