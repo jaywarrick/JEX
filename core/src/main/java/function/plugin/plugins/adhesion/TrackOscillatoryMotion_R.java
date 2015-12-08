@@ -29,7 +29,7 @@ import function.plugin.mechanism.ParameterMarker;
 
 @Plugin(
 		type = JEXPlugin.class,
-		name="2. Track Oscillatory Motion (R)",
+		name="1. Track Oscillatory Motion (R)",
 		menuPath="Adhesion",
 		visible=true,
 		description="Track oscillatory motion of cell locations stored in a MaximaList R object."
@@ -46,31 +46,31 @@ public class TrackOscillatoryMotion_R extends JEXPlugin {
 
 	/////////// Define Parameters ///////////
 
-	@ParameterMarker(uiOrder=6, name="Time Dim Name", description="Name of the 'Time' dimension.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Time")
+	@ParameterMarker(uiOrder=1, name="Time Dim Name", description="Name of the 'Time' dimension.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Time")
 	String timeDimName;
 
-	@ParameterMarker(uiOrder=1, name="t=0 Frame", description="First frame of oscillatory motion that should be treated as time=0 (i.e., t=0).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
+	@ParameterMarker(uiOrder=2, name="t=0 Frame", description="First frame of oscillatory motion that should be treated as time=0 (i.e., t=0).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
 	int t0_Frame;
 
-	@ParameterMarker(uiOrder=2, name="Last Frame", description="Last frame of oscillatory motion to track backwards from (towards the first frame). Specify integer frame or '-1' for last possible frame.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="-1")
+	@ParameterMarker(uiOrder=3, name="Last Frame", description="Last frame of oscillatory motion to track backwards from (towards the first frame). Specify integer frame or '-1' for last possible frame.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="-1")
 	int lastFrame;
 
-	@ParameterMarker(uiOrder=3, name="Time Per Frame", description="Time between frames of the timelapse. [seconds]", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.035")
+	@ParameterMarker(uiOrder=4, name="Time Per Frame", description="Time between frames of the timelapse. [seconds]", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.035")
 	double timePerFrame;
 
-	@ParameterMarker(uiOrder=3, name="Max Distance", description="Maximum distance to consider for linking two points in subsequent frames.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
+	@ParameterMarker(uiOrder=5, name="Max Distance", description="Maximum distance to consider for linking two points in subsequent frames.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="150.0")
 	double maxDist;
 
-	@ParameterMarker(uiOrder=4, name="Primary direction (x,y,z)", description="Primary direction for tracking in terms of vector direction components (typically 1,0,0 for x direction, sign doesn't matter).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1,0,0")
+	@ParameterMarker(uiOrder=6, name="Primary direction (x,y,z)", description="Primary direction for tracking in terms of vector direction components (typically 1,0,0 for x direction, sign doesn't matter).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1,0,0")
 	String direction;
 
-	@ParameterMarker(uiOrder=5, name="Directionality", description="How much to weight the primary direction in terms of linking points. A value of 10 penalizes 'movement' perpendicular to the primary direction by a multiple of 10.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="10")
+	@ParameterMarker(uiOrder=7, name="Directionality", description="How much to weight the primary direction in terms of linking points. A value of 10 penalizes 'movement' perpendicular to the primary direction by a multiple of 10.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="10")
 	double directionality;
 
-	@ParameterMarker(uiOrder=6, name="Uniformity distance threshold", description="Should all points move 'as one' together? If so, set this to a value >= 0. If a link is made that is longer than this distance (pixels), it must move in the average direction of the population or the link is removed as a possibility.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="2")
+	@ParameterMarker(uiOrder=8, name="Uniformity distance threshold", description="Should all points move 'as one' together? If so, set this to a value >= 0. If a link is made that is longer than this distance (pixels), it must move in the average direction of the population or the link is removed as a possibility.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="2")
 	double uniformityDistThresh;
 
-	@ParameterMarker(uiOrder=7, name="Precision", description="Number of digits to keep after decimal place during calculations of distances.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
+	@ParameterMarker(uiOrder=9, name="Precision", description="Number of digits to keep after decimal place during calculations of distances.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
 	int digits;
 
 	/////////// Define Outputs ///////////
