@@ -75,10 +75,10 @@ public class TrackOscillatoryMotion_R extends JEXPlugin {
 
 	/////////// Define Outputs ///////////
 
-	@OutputMarker(uiOrder=1, name="R TrackList", type=MarkerConstants.TYPE_FILE, flavor="", description="The resultant R TrackList", enabled=true)
+	@OutputMarker(uiOrder=1, name="R MaximaList", type=MarkerConstants.TYPE_FILE, flavor="", description="The resultant R TrackList", enabled=true)
 	JEXData maximaListOutput;
 
-	@OutputMarker(uiOrder=2, name="R MaximaList", type=MarkerConstants.TYPE_FILE, flavor="", description="The resultant R MaximaList", enabled=true)
+	@OutputMarker(uiOrder=2, name="R TrackList", type=MarkerConstants.TYPE_FILE, flavor="", description="The resultant R MaximaList", enabled=true)
 	JEXData trackListOutput;
 	
 	@OutputMarker(uiOrder=3, name="Tracked Maxima ROI", type=MarkerConstants.TYPE_ROI, flavor="", description="The resultant JEX ROI Maxima with tracked id's.", enabled=true)
