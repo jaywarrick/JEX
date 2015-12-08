@@ -233,6 +233,7 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 						for(Entry<DimensionMap,ImageProcessor> e : splitImages.entrySet())
 						{
 							String filename = JEXWriter.saveImage(e.getValue());
+							map.putAll(baseMap.copy());
 							map.putAll(e.getKey());
 							if(pendingImageFiles.size() > 1)
 							{
