@@ -9,14 +9,14 @@ public class AdhesionUtility {
 		ScriptRepository.sourceGitHubFile("jaywarrick", "R-General", "master", ".Rprofile");
 		ScriptRepository.sourceGitHubFile("jaywarrick", "R-Adhesion", "master", "CellTracking/R/PackageFunctions.R");
 		ScriptRepository.sourceGitHubFile("jaywarrick", "R-Adhesion", "master", "CellTracking/R/LAPJV.R");
-		ScriptRepository.sourceGitHubFile("jaywarrick", "R-General", "master", "CellTracking/R/Tracking.R");
-		ScriptRepository.sourceGitHubFile("jaywarrick", "R-General", "master", "CellTracking/R/TrackList.R");
-		ScriptRepository.sourceGitHubFile("jaywarrick", "R-General", "master", "CellTracking/R/Track.R");
-		ScriptRepository.sourceGitHubFile("jaywarrick", "R-General", "master", "CellTracking/R/Maxima.R");
-		ScriptRepository.sourceGitHubFile("jaywarrick", "R-General", "master", "CellTracking/R/MaximaList.R");
-		ScriptRepository.sourceGitHubFile("jaywarrick", "R-General", "master", "CellTracking/R/TrackFilters.R");
-		ScriptRepository.sourceGitHubFile("jaywarrick", "R-General", "master", "CellTracking/R/TrackFitting.R");
-		ScriptRepository.sourceGitHubFile("jaywarrick", "R-General", "master", "CellTracking/R/PackageFunctions.R");
+		ScriptRepository.sourceGitHubFile("jaywarrick", "R-Adhesion", "master", "CellTracking/R/Tracking.R");
+		ScriptRepository.sourceGitHubFile("jaywarrick", "R-Adhesion", "master", "CellTracking/R/TrackList.R");
+		ScriptRepository.sourceGitHubFile("jaywarrick", "R-Adhesion", "master", "CellTracking/R/Track.R");
+		ScriptRepository.sourceGitHubFile("jaywarrick", "R-Adhesion", "master", "CellTracking/R/Maxima.R");
+		ScriptRepository.sourceGitHubFile("jaywarrick", "R-Adhesion", "master", "CellTracking/R/MaximaList.R");
+		ScriptRepository.sourceGitHubFile("jaywarrick", "R-Adhesion", "master", "CellTracking/R/TrackFilters.R");
+		ScriptRepository.sourceGitHubFile("jaywarrick", "R-Adhesion", "master", "CellTracking/R/TrackFitting.R");
+		ScriptRepository.sourceGitHubFile("jaywarrick", "R-Adhesion", "master", "CellTracking/R/PackageFunctions.R");
 	}
 
 }
