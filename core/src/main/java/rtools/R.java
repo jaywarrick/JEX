@@ -3,6 +3,7 @@ package rtools;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.TreeMap;
 import java.util.Vector;
 import java.util.regex.Pattern;
 
@@ -20,6 +21,10 @@ import org.rosuda.REngine.Rserve.RserveException;
 
 import tables.DimensionMap;
 import tables.Table;
+import Database.DBObjects.JEXData;
+import Database.DataWriter.FileWriter;
+import Database.DataWriter.ImageWriter;
+import Database.SingleUserDatabase.JEXWriter;
 
 public class R {
 	
@@ -606,4 +611,107 @@ public class R {
 		}
 	}
 	
+	/**
+	 * Start Rsession, clear workspace variables, call library(foreign) for reading .arff files, create "jexTempRFolder" and "jexDBFolder"
+	 */
+	public static void initializeWorkspace()
+	{
+		R.eval("temp <- 0"); // Dummy command to get the R connection up an running.
+		R.endPlot();
+		R.eval("rm(list=ls())");
+		R.load("foreign");
+		String tempPath = JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getTempFolderName() + File.separator + "RScriptTempFolder";
+		File tempFolder = new File(tempPath);
+		if(!tempFolder.exists())
+		{
+			tempFolder.mkdirs();
+		}
+		R.eval("jexTempRFolder <- " + R.quotedPath(tempPath));
+
+		String dbPath = JEXWriter.getDatabaseFolder();
+		R.eval("jexDBFolder <- " + R.quotedPath(dbPath));
+	}
+
+	/**
+	 * Save the information in a JEXData to a variable in the R workspace called 'name'.
+	 * 
+	 * The object is a list with $type, $name, $value (which is populated with read.arff(detachedpath), i.e., the .jxd file, not the files it may refer to)
+	 * @param data
+	 * @param name
+	 */
+	public static void initializeData(JEXData data, String name, boolean detachedPath)
+	{
+		if(data == null)
+		{
+			return;
+		}
+		String path = JEXWriter.getDatabaseFolder() + File.separator + data.getDetachedRelativePath();
+		R.eval(name + " <- list()");
+		R.eval(name + "$type <- " + R.sQuote(data.getTypeName().getType().toString()));
+		R.eval(name + "$name <- " + R.sQuote(data.getTypeName().getName()));
+		R.eval(name + "$value <- read.arff(" + R.quotedPath(path) + ")");
+	}
+	
+	public static JEXData getCharacterVectorAsJEXDataFileObject(String expression, boolean createImageObject)
+	{
+		TreeMap<DimensionMap,String> files = new TreeMap<DimensionMap,String>();
+		REXP fileObject = R.eval(expression);
+		String[] fileStrings = null;
+		try
+		{
+			fileStrings = fileObject.asStrings();
+			int i = 0;
+			for(String s : fileStrings)
+			{
+				String fixedString = s.replaceAll("/", File.separator); // Might have to figure out Pattern.quote(File.separator) stuff for windows.
+				files.put(new DimensionMap("i=" + i), fixedString);
+				i++;
+			}
+			JEXData ret = null;
+			if(createImageObject)
+			{
+				ret = ImageWriter.makeImageStackFromPaths("dummy", files);
+			}
+			else
+			{
+				ret = FileWriter.makeFileObject("dummy", null, files);
+			}
+
+			return ret;
+		}
+		catch (REXPMismatchException e)
+		{
+			Logs.log("Couldn't convert " + expression + " to String[]", R.class);
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	public static JEXData getCharacterVariableAsJEXDataFileObject(String expression, boolean createImageObject)
+	{
+		REXP fileObject = R.eval(expression);
+		String fileString = null;
+		try
+		{
+			fileString = fileObject.asString();
+			String fixedString = fileString.replaceAll("/", File.separator); // Might have to figure out Pattern.quote(File.separator) stuff for windows.
+			JEXData ret = null;
+			if(createImageObject)
+			{
+				ret = ImageWriter.makeImageObject("dummy", fixedString);
+			}
+			else
+			{
+				ret = FileWriter.makeFileObject("dummy", null, fixedString);
+			}
+
+			return ret;
+		}
+		catch (REXPMismatchException e)
+		{
+			Logs.log("Couldn't convert " + expression + " to String", R.class);
+			e.printStackTrace();
+		}
+		return null;
+	}
 }
