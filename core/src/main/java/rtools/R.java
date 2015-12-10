@@ -639,7 +639,7 @@ public class R {
 	 * @param data
 	 * @param name
 	 */
-	public static void initializeData(JEXData data, String name, boolean detachedPath)
+	public static void initializeData(JEXData data, String name)
 	{
 		if(data == null)
 		{
