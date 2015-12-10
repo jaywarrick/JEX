@@ -67,7 +67,7 @@ public class ApplyOscillatoryTrackMetadata_R extends JEXPlugin {
 	@ParameterMarker(uiOrder=7, name="Vel. Smoothing: Max Frames", description="The maximum number of frames to average over (i.e., we don't want to lose temporal resolution)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="15")
 	int maxFrames;
 	
-	@ParameterMarker(uiOrder=8, name="Fraction of Wave Valid", description="What fraction of the time between zero crossings should be used to quantify velocity and adhesion (e.g., center 80% -> enter a fraction of 0.8)? We don't want to determine if cells are adhered while cells are switching directions. ", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.8")
+	@ParameterMarker(uiOrder=8, name="Fraction of Wave Valid", description="What fraction of the time between zero crossings should be used to quantify velocity and adhesion (e.g., center 60% -> enter a fraction of 0.6)? We don't want to determine if cells are adhered while cells are switching directions. ", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.6")
 	double validFraction;
 
 	/////////// Define Outputs ///////////
@@ -130,6 +130,7 @@ public class ApplyOscillatoryTrackMetadata_R extends JEXPlugin {
 		{
 			sin="FALSE";
 		}
+		// Have to do these temp variables because it didn't work 'inline'. Probably a concurrent modification thing or a reference thing.
 		R.eval("t0_Frame <- trackList$meta$t0_Frame");
 		R.eval("timePerFrame <- trackList$meta$timePerFrame");
 		R.eval("trackList$setOscillatoryMeta(sin=" + sin + ", fi=" + fi + ", ff=" + ff + ", sweepDuration=" + duration + ", t0_Frame=t0_Frame, timePerFrame=timePerFrame)");
@@ -141,7 +142,6 @@ public class ApplyOscillatoryTrackMetadata_R extends JEXPlugin {
 		{
 			return false;
 		}		
-		
 		R.eval("bestFit <- getBulkPhaseShiftGS(trackList, cores=" + cores + ")");
 		R.eval("trackList$meta$bestFit <- bestFit");
 		
@@ -177,7 +177,7 @@ public class ApplyOscillatoryTrackMetadata_R extends JEXPlugin {
 		// are recorded as being valid.
 		double validStart = (1-validFraction)/2;
 		double validEnd = (1 - validStart);
-		R.eval("trackList$calculateValidFrames(fit=trackList$meta$bestFit, validStart=" + validStart + ", validEnd=" + validEnd + ")");
+		R.eval("trackList$calculateValidFrames(fit=bestFit, validStart=" + validStart + ", validEnd=" + validEnd + ")");
 		
 		count = count + 1;
 		percentage = (int) (100 * ((double) (count) / (total)));
