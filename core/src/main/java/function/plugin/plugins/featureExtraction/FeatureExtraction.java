@@ -289,7 +289,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 						// TODO maybe include subregion count
 						//						DimensionMap newMap = mapM.copyAndSet("Measurement=subRegionCount");
 						//						newMap.put("Id", "" + id);
-						//						newMap.put("Label", "" + reg.getLabel());
+						//						newMap.put("Label", "" + idToLabelMap.get(id));
 						//						this.write(newMap, (double) subRegionCount);
 						LabelRegion<Integer> majorSubRegion = getMajorSubRegion(region, maskImage);
 						String maskOnImageString = this.getMaskOnImageString(mapMask, mapImage);
@@ -437,7 +437,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			{
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
 				newMap.put("Id", "" + id);
-				newMap.put("Label", "" + reg.getLabel());
+				newMap.put("Label", "" + idToLabelMap.get(id));
 				this.write(newMap, result.getValue().get());
 			}
 		}
@@ -463,7 +463,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	//			{
 	//				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
 	//				newMap.put("Id", "" + id);
-	//				newMap.put("Label", "" + reg.getLabel());
+	//				newMap.put("Label", "" + idToLabelMap.get(id));
 	//				this.write(newMap, result.getValue().get());
 	//			}
 	//		}
@@ -490,12 +490,12 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			{
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
 				newMap.put("Id", "" + id);
-				newMap.put("Label", "" + reg.getLabel());
+				newMap.put("Label", "" + idToLabelMap.get(id));
 				this.write(newMap, result.getValue().getRealDouble());
 			}
 			DimensionMap newMap = mapM.copyAndSet("Measurement=" + net.imagej.ops.Ops.Geometric.Size.class.getName() + "Iterable");
 			newMap.put("Id", "" + id);
-			newMap.put("Label", "" + reg.getLabel());
+			newMap.put("Label", "" + idToLabelMap.get(id));
 			this.write(newMap, (double) reg.size());
 		}
 		return true;
@@ -520,7 +520,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			{
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
 				newMap.put("Id", "" + id);
-				newMap.put("Label", "" + reg.getLabel());
+				newMap.put("Label", "" + idToLabelMap.get(id));
 				this.write(newMap, result.getValue().get());
 			}
 		}
@@ -560,7 +560,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			{
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName() + "_Horizontal");
 				newMap.put("Id", "" + id);
-				newMap.put("Label", "" + reg.getLabel());
+				newMap.put("Label", "" + idToLabelMap.get(id));
 				this.write(newMap, result.getValue().getRealDouble());
 			}
 
@@ -575,7 +575,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			{
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName() + "_Vertical");
 				newMap.put("Id", "" + id);
-				newMap.put("Label", "" + reg.getLabel());
+				newMap.put("Label", "" + idToLabelMap.get(id));
 				this.write(newMap, result.getValue().getRealDouble());
 			}
 
@@ -592,7 +592,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 				{
 					DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName() + "_Diagonal");
 					newMap.put("Id", "" + id);
-					newMap.put("Label", "" + reg.getLabel());
+					newMap.put("Label", "" + idToLabelMap.get(id));
 					this.write(newMap, result.getValue().getRealDouble());
 				}
 
@@ -607,7 +607,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 				{
 					DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName() + "_AntiDiagonal");
 					newMap.put("Id", "" + id);
-					newMap.put("Label", "" + reg.getLabel());
+					newMap.put("Label", "" + idToLabelMap.get(id));
 					this.write(newMap, result.getValue().getRealDouble());
 				}
 			}
@@ -635,7 +635,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			{
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
 				newMap.put("Id", "" + id);
-				newMap.put("Label", "" + reg.getLabel());
+				newMap.put("Label", "" + idToLabelMap.get(id));
 				this.write(newMap, result.getValue().getRealDouble());
 			}
 		}
@@ -656,7 +656,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			{
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
 				newMap.put("Id", "" + id);
-				newMap.put("Label", "" + reg.getLabel());
+				newMap.put("Label", "" + idToLabelMap.get(id));
 				this.write(newMap, result.getValue().get());
 			}
 		}
