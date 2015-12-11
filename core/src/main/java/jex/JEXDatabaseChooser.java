@@ -35,6 +35,7 @@ public class JEXDatabaseChooser extends JFrame implements ActionListener {
 	{
 		this.setLayout(new BorderLayout());
 		this.setBackground(DisplayStatics.background);
+		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
 		databasePane = new JEXAvailableDatabases(this);
 		
