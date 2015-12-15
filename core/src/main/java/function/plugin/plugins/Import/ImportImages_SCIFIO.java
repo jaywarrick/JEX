@@ -55,61 +55,57 @@ import function.plugin.mechanism.ParameterMarker;
 				+ "(e.g. one (or many) ND2 files or tif stacks)"
 		)
 public class ImportImages_SCIFIO extends JEXPlugin {
-	
+
 	public ImportImages_SCIFIO() {}
-	
+
 	/////////// Define Inputs ///////////
-	
+
 	/*
 	 * None necessary; Input Directory is classified as a parameter.
 	 */
-	
+
 	/////////// Define Parameters ///////////
-	
+
 	@ParameterMarker(uiOrder=0, name="Input Directory/File", description="Location of the multicolor TIFF images", ui=MarkerConstants.UI_FILECHOOSER, defaultText="")
 	String inDir;
-	
+
 	@ParameterMarker(uiOrder=1, name="File Extension", description="The type of file that is being imported. Default is tif. Not necessary if importing a single file.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="tif")
 	String fileExtension;
-	
+
 	@ParameterMarker(uiOrder=2, name="File Name Parse Separator", description="Charactor that separates dimension names in the image name (e.g., '_' in X002_Y003.tif). Use blank (i.e., no character) to avoid parsing.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="_")
 	String separator;
-	
+
 	@ParameterMarker(uiOrder=3, name="Montage Rows", description="If this image is a montage and is to be split, how many rows are in the image.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
 	int imRows;
-	
+
 	@ParameterMarker(uiOrder=4, name="Montage Cols", description="If this image is a montage and is to be split, how many cols are in the image.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
 	int imCols;
-	
+
 	@ParameterMarker(uiOrder=5, name="Gather channel names?", description="Transfer the name of each channel (e.g. DAPI, FITC, etc) if available in the metadata of the image. Otherwise, channels are named by index in the order they were provided by the image.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
 	boolean transferNames;
-	
-	
-	
+
+
+
 	/////////// Define Outputs ///////////
-	
+
 	@OutputMarker(uiOrder=1, name="Imported Image", type=MarkerConstants.TYPE_IMAGE, flavor="", description="The imported image object", enabled=true)
 	JEXData output;
-	
+
 	@Override
 	public int getMaxThreads()
 	{
 		return 1;
 	}
-	
+
 	@Override
 	public boolean run(JEXEntry optionalEntry) {
 		// GATHER DATA FROM PARAMETERS
 		// create file object for input directory
 		File filePath = new File(inDir);
-		//boolean autoNameGathering = transferNames.equals("automatic");
-		boolean autoNameGathering = transferNames;
-		
-		DimTable table = null;
-		
+
 		// FIGURE OUT IF ONE OR MULTIPLE FILES ARE BEING IMPORTED
 		List<File> pendingImageFiles; // contains either one or multiple image files; depends on whether one file is selected or a whole directory
-		
+
 		if(!filePath.exists())
 		{
 			JEXDialog.messageDialog("Warning! The file or folder specified could not be found.");
@@ -126,216 +122,16 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 			pendingImageFiles = new Vector<File>();
 			pendingImageFiles.add(filePath);
 		}
-		
-		TreeMap<DimensionMap,String> multiMap = new TreeMap<DimensionMap,String>();
-		boolean fileNotFound = false;
-		for (int fi = 0; fi < pendingImageFiles.size(); fi++)
-		{
-			File f = pendingImageFiles.get(fi);
-			if(!f.exists())
-			{
-				fileNotFound = true;
-				continue;
-			}
-			
-			if(this.isCanceled())
-			{
-				return false;
-			}
-			// usually x and y coordinate map
-			DimensionMap baseMap = this.getMapFromPath(f.getAbsolutePath(), separator);
-			
-			// get reader for image file
-			final SCIFIO scifio = new SCIFIO(IJ2PluginUtility.ij().getContext());
-			Reader reader = null;
-			try
-			{
-				reader = scifio.initializer().initializeReader(f.getAbsolutePath(), new SCIFIOConfig().checkerSetOpen(true));
-			}
-			catch (Exception e)
-			{
-				Logs.log("Couldn't initialize reader for file " + filePath, Logs.ERROR, this);
-				e.printStackTrace();
-				return false;
-			}
-			// 	get table from reader		
-			table = getDimTableFromReader(reader, autoNameGathering);
-			if(table == null)
-			{
-				JEXDialog.messageDialog("Function canceled manually OR due to issues with determining dimensions of the image.");
-				return false;
-			}
-			
-			if(reader.getImageCount() > 1)
-			{
-				Dim loc = new Dim("Loc",reader.getImageCount());
-				table.add(0, loc);
-			}
-			Iterator<DimensionMap> itr = table.getMapIterator().iterator();
-			double total = reader.getImageCount() * reader.getPlaneCount(0);
-			double count = 0;
-			
-			JEXStatics.statusBar.setProgressPercentage(0);
-			for (int i = 0; i < reader.getImageCount(); i++) {
-				for (int j = 0; j < reader.getPlaneCount(i); j++) {
-					Plane plane;
-					try
-					{
-						plane = reader.openPlane(i, j);
-					}
-					catch (Exception e)
-					{
-						Logs.log("Couldn't read image " + i + " plane " + j + " in " + f.getAbsolutePath() + ". Skipping to next plane.", Logs.ERROR, this);
-						e.printStackTrace();
-						continue;
-					}
-					ImageMetadata d = plane.getImageMetadata();
-					long[] dims = d.getAxesLengthsPlanar();
-					ImageProcessor ip = null;
-					if(d.getBitsPerPixel() <= 8)
-					{
-						byte[] converted = (byte[]) DataTools.makeDataArray(plane.getBytes(), 1, false, d.isLittleEndian());
-						ip = new ByteProcessor((int)dims[0], (int)dims[1], converted, null);
-					}
-					else if(d.getBitsPerPixel() >= 9 && d.getBitsPerPixel() <= 16)
-					{
-						short[] converted = (short[]) DataTools.makeDataArray(plane.getBytes(), 2, false, d.isLittleEndian());
-						ip = new ShortProcessor((int)dims[0], (int)dims[1], converted, null);
-					}
-					else if(d.getBitsPerPixel() >= 17 && d.getBitsPerPixel() <= 32)
-					{
-						float[] converted = (float[]) DataTools.makeDataArray(plane.getBytes(), 4, true, d.isLittleEndian());
-						ip = new FloatProcessor((int)dims[0], (int)dims[1], converted, null);
-					}
-					else
-					{
-						Logs.log("Couldn't handle writing of image with this particular bits-per-pixel: " + d.getBitsPerPixel(), Logs.ERROR, this);
-						return false;
-					}
-					
-					
-					if(this.isCanceled())
-					{
-						return false;
-					}
-					
-					// For each image split it if necessary
-					if(imRows * imCols > 1)
-					{
-						TreeMap<DimensionMap,ImageProcessor> splitImages = splitRowsAndCols(ip, imRows, imCols, this);
-						// The above might return null because of being canceled. Catch cancel condition and move on.
-						if(this.isCanceled())
-						{
-							return false;
-						}
-						DimensionMap map = itr.next().copy();
-						int imageCounter = 0;
-						for(Entry<DimensionMap,ImageProcessor> e : splitImages.entrySet())
-						{
-							String filename = JEXWriter.saveImage(e.getValue());
-							map.putAll(baseMap.copy());
-							map.putAll(e.getKey());
-							if(pendingImageFiles.size() > 1)
-							{
-								if(reader.getImageCount() > 1)
-								{
-									if(separator.equals(""))
-									{
-										map.put("Loc", ""+fi);
-										map.put("Loc 2", ""+imageCounter);
-										imageCounter = imageCounter + 1;
-									}
-									else
-									{
-										map.put("Loc", ""+imageCounter);
-										imageCounter = imageCounter + 1;
-									}
-								}
-								else
-								{
-									if(separator.equals(""))
-									{
-										map.put("Loc", ""+fi);
-									}
-									else
-									{
-										// Do nothing, the multi-file "Loc" dimension(s) is/are created through parsing of the file names
-									}
-								}
-							}
-							multiMap.put(map.copy(),filename);
-							Logs.log(map.toString() + " :: " + filename, this);
-						}
-						splitImages.clear();
-					}
-					else
-					{
-						String filename = JEXWriter.saveImage(ip);
-						DimensionMap map = itr.next().copy();
-						map.putAll(baseMap.copy());
-						int imageCounter = 0;
-						if(pendingImageFiles.size() > 1)
-						{
-							if(reader.getImageCount() > 1)
-							{
-								if(separator.equals(""))
-								{
-									map.put("Loc", ""+fi);
-									map.put("Loc 2", ""+imageCounter);
-									imageCounter = imageCounter + 1;
-								}
-								else
-								{
-									map.put("Loc", ""+imageCounter);
-									imageCounter = imageCounter + 1;
-								}
-							}
-							else
-							{
-								if(separator.equals(""))
-								{
-									map.put("Loc", ""+fi);
-								}
-								else
-								{
-									// Do nothing, the multi-file "Loc" dimension(s) is/are created through parsing of the file names
-								}
-							}
-						}
-						multiMap.put(map,filename);
-						Logs.log(map.toString() + " = " + filename, this);
-						ip = null;
-					}					
-					
-					JEXStatics.statusBar.setProgressPercentage((int) (100.0 * count / total));
-					count = count + 1;
-				}
-			}
-		}
-		
-		if(fileNotFound)
-		{
-			JEXDialog.messageDialog("Warning! At least one of the files specified for this function was not found.");
-		}
-		
-		// OUTPUT PROCESSING
-		output = ImageWriter.makeImageStackFromPaths(output.name, multiMap);
-		if (table != null) {
-			DimTable toSet = new DimTable(multiMap);
-			for(Dim d : table)
-			{
-				toSet.removeDimWithName(d.dimName);
-			}
-			for(Dim d : table)
-			{
-				toSet.add(d.copy());
-			}
-			output.setDimTable(toSet);
-		}
-		
+
+		// DO something
+		output = importFiles(pendingImageFiles, this.separator, this.fileExtension, this.imRows, this.imCols, "ImRow", "ImCol", this.transferNames, this);
+
+
+
+
 		return true;
 	}
-	
+
 	/**
 	 * Create DimensionMap of a given image 
 	 * The image name should be in certain format, ex. Image_x001_y002_z004.tif
@@ -344,17 +140,17 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 	 * @param separator separator of the image Name
 	 * @return
 	 */
-	public DimensionMap getMapFromPath(String filePath, String separator) {
+	public static DimensionMap getMapFromPath(String filePath, String separator) {
 		String name = FileUtility.getFileNameWithoutExtension(filePath);
 		String[] names = name.split(separator);
-		
+
 		DimensionMap dimMap = new DimensionMap();
 		String dimValue, dimName, temp;
 		int splitIndex = 0;
-		
+
 		for (int i = 0; i < names.length; i++){
 			temp = names[i];
-			
+
 			// find the first Digit in the string in order to separate dimName and dimValue
 			for (int j = 0; j < temp.length(); j++){
 				if (Character.isDigit(temp.charAt(j))){
@@ -364,20 +160,20 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 				else
 					splitIndex = 0;
 			}
-			
+
 			// if the string is not a dimName followed by a dimValue then skip it.
 			if (splitIndex != 0) {
 				dimName = temp.substring(0, splitIndex);
 				dimValue = temp.substring(splitIndex);
-				
+
 				dimMap.put(dimName, dimValue);
 			}
 		}
-		
+
 		return dimMap;
-		
+
 	}
-	
+
 	private static DimTable getDimTableFromReader(Reader r, boolean transferNames)
 	{
 		DimTable ret = new DimTable();
@@ -396,7 +192,7 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 			e.printStackTrace();
 			return null; // Cancels function
 		}
-		
+
 		if(transferNames)
 		{
 			TreeMap<String,String> colors = new TreeMap<String,String>();
@@ -428,7 +224,7 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 						colorNamesList.add(colorNames[j]);
 					}
 				}
-				
+
 				// Check if there are any duplicate names and add something to the name to make it not a duplicate...
 				Vector<String> newColorNamesList = new Vector<String>();
 				for(int j = 0; j < colorNamesList.size(); j++)
@@ -442,9 +238,9 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 					newColorNamesList.add(newName);
 				}
 				colorNamesList = newColorNamesList;
-				
+
 				Dim newColorDim = new Dim(Axes.CHANNEL.getLabel(), colorNamesList); // Using a TreeMap and the TreeMap.values() provides and ordered list based on the order of the "Name #x" key from the non-ordered HashMap of the MetaTable
-				
+
 				if(newColorDim.size() > size)
 				{
 					int choice = JEXDialog.getChoice("What should I do?", "The number of colors/channels does not match the number of possible channel names. Should we replace the indices of colors with the supposed names which might not be correct or just leave the indices?", new String[]{"Replace Names Anyway","Leave as Indices"}, 0);
@@ -475,16 +271,16 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 		}
 		return ret;
 	}
-	
-	public static TreeMap<DimensionMap,ImageProcessor> splitRowsAndCols(ImageProcessor imp, int rows, int cols, Canceler canceler)
+
+	public static TreeMap<DimensionMap,ImageProcessor> splitRowsAndCols(ImageProcessor imp, int rows, int cols, String rowName, String colName, Canceler canceler)
 	{
 		TreeMap<DimensionMap,ImageProcessor> ret = new TreeMap<DimensionMap,ImageProcessor>();
-		
+
 		int wAll = imp.getWidth();
 		int hAll = imp.getHeight();
 		int w = wAll / cols;
 		int h = hAll / rows;
-		
+
 		for (int r = 0; r < rows; r++)
 		{
 			for (int c = 0; c < cols; c++)
@@ -500,9 +296,221 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 				ImageProcessor toCopy = imp.crop();
 				ImageProcessor toSave = imp.createProcessor(w, h);
 				toSave.copyBits(toCopy, 0, 0, Blitter.COPY);
-				ret.put(new DimensionMap("ImRow=" + r + ",ImCol=" + c), toSave);
+				ret.put(new DimensionMap(rowName + "=" + r + "," + colName + "=" + c), toSave);
 			}
 		}
 		return ret;
+	}
+
+	public static JEXData importFiles(List<File> pendingImageFiles, String parseFileNameSeparator, String fileExtension, int imRows, int imCols, String rowName, String colName, boolean autoNameGathering, Canceler canceler)
+	{
+		DimTable table = null;
+		
+		TreeMap<DimensionMap,String> multiMap = new TreeMap<DimensionMap,String>();
+		boolean fileNotFound = false;
+		for (int fi = 0; fi < pendingImageFiles.size(); fi++)
+		{
+			File f = pendingImageFiles.get(fi);
+			if(!f.exists())
+			{
+				fileNotFound = true;
+				continue;
+			}
+
+			if(canceler.isCanceled())
+			{
+				return null;
+			}
+			// usually x and y coordinate map
+			DimensionMap baseMap = getMapFromPath(f.getAbsolutePath(), parseFileNameSeparator);
+
+			// get reader for image file
+			final SCIFIO scifio = new SCIFIO(IJ2PluginUtility.ij().getContext());
+			Reader reader = null;
+			try
+			{
+				reader = scifio.initializer().initializeReader(f.getAbsolutePath(), new SCIFIOConfig().checkerSetOpen(true));
+			}
+			catch (Exception e)
+			{
+				JEXDialog.messageDialog("Couldn't initialize reader for file " + f.getAbsolutePath(), ImportImages_SCIFIO.class);
+				e.printStackTrace();
+				return null;
+			}
+			// 	get table from reader		
+			table = getDimTableFromReader(reader, autoNameGathering);
+			if(table == null)
+			{
+				JEXDialog.messageDialog("Function canceled manually OR due to issues with determining dimensions of the image.", ImportImages_SCIFIO.class);
+				return null;
+			}
+
+			if(reader.getImageCount() > 1)
+			{
+				Dim loc = new Dim("Loc",reader.getImageCount());
+				table.add(0, loc);
+			}
+			Iterator<DimensionMap> itr = table.getMapIterator().iterator();
+			double total = reader.getImageCount() * reader.getPlaneCount(0);
+			double count = 0;
+
+			JEXStatics.statusBar.setProgressPercentage(0);
+			for (int i = 0; i < reader.getImageCount(); i++) {
+				for (int j = 0; j < reader.getPlaneCount(i); j++) {
+					Plane plane;
+					try
+					{
+						plane = reader.openPlane(i, j);
+					}
+					catch (Exception e)
+					{
+						JEXDialog.messageDialog("Couldn't read image " + i + " plane " + j + " in " + f.getAbsolutePath() + ". Skipping to next plane.", ImportImages_SCIFIO.class);
+						e.printStackTrace();
+						continue;
+					}
+					ImageMetadata d = plane.getImageMetadata();
+					long[] dims = d.getAxesLengthsPlanar();
+					ImageProcessor ip = null;
+					if(d.getBitsPerPixel() <= 8)
+					{
+						byte[] converted = (byte[]) DataTools.makeDataArray(plane.getBytes(), 1, false, d.isLittleEndian());
+						ip = new ByteProcessor((int)dims[0], (int)dims[1], converted, null);
+					}
+					else if(d.getBitsPerPixel() >= 9 && d.getBitsPerPixel() <= 16)
+					{
+						short[] converted = (short[]) DataTools.makeDataArray(plane.getBytes(), 2, false, d.isLittleEndian());
+						ip = new ShortProcessor((int)dims[0], (int)dims[1], converted, null);
+					}
+					else if(d.getBitsPerPixel() >= 17 && d.getBitsPerPixel() <= 32)
+					{
+						float[] converted = (float[]) DataTools.makeDataArray(plane.getBytes(), 4, true, d.isLittleEndian());
+						ip = new FloatProcessor((int)dims[0], (int)dims[1], converted, null);
+					}
+					else
+					{
+						JEXDialog.messageDialog("Couldn't handle writing of image with this particular bits-per-pixel: " + d.getBitsPerPixel(), ImportImages_SCIFIO.class);
+						return null;
+					}
+
+
+					if(canceler.isCanceled())
+					{
+						return null;
+					}
+
+					// For each image split it if necessary
+					if(imRows * imCols > 1)
+					{
+						TreeMap<DimensionMap,ImageProcessor> splitImages = splitRowsAndCols(ip, imRows, imCols, rowName, colName, canceler);
+						// The above might return null because of being canceled. Catch cancel condition and move on.
+						if(canceler.isCanceled())
+						{
+							return null;
+						}
+						DimensionMap map = itr.next().copy();
+						int imageCounter = 0;
+						for(Entry<DimensionMap,ImageProcessor> e : splitImages.entrySet())
+						{
+							String filename = JEXWriter.saveImage(e.getValue());
+							map.putAll(baseMap.copy());
+							map.putAll(e.getKey());
+							if(pendingImageFiles.size() > 1)
+							{
+								if(reader.getImageCount() > 1)
+								{
+									if(parseFileNameSeparator.equals(""))
+									{
+										map.put("Loc", ""+fi);
+										map.put("Loc 2", ""+imageCounter);
+										imageCounter = imageCounter + 1;
+									}
+									else
+									{
+										map.put("Loc", ""+imageCounter);
+										imageCounter = imageCounter + 1;
+									}
+								}
+								else
+								{
+									if(parseFileNameSeparator.equals(""))
+									{
+										map.put("Loc", ""+fi);
+									}
+									else
+									{
+										// Do nothing, the multi-file "Loc" dimension(s) is/are created through parsing of the file names
+									}
+								}
+							}
+							multiMap.put(map.copy(),filename);
+							Logs.log(map.toString() + " :: " + filename, ImportImages_SCIFIO.class);
+						}
+						splitImages.clear();
+					}
+					else
+					{
+						String filename = JEXWriter.saveImage(ip);
+						DimensionMap map = itr.next().copy();
+						map.putAll(baseMap.copy());
+						int imageCounter = 0;
+						if(pendingImageFiles.size() > 1)
+						{
+							if(reader.getImageCount() > 1)
+							{
+								if(parseFileNameSeparator.equals(""))
+								{
+									map.put("Loc", ""+fi);
+									map.put("Loc 2", ""+imageCounter);
+									imageCounter = imageCounter + 1;
+								}
+								else
+								{
+									map.put("Loc", ""+imageCounter);
+									imageCounter = imageCounter + 1;
+								}
+							}
+							else
+							{
+								if(parseFileNameSeparator.equals(""))
+								{
+									map.put("Loc", ""+fi);
+								}
+								else
+								{
+									// Do nothing, the multi-file "Loc" dimension(s) is/are created through parsing of the file names
+								}
+							}
+						}
+						multiMap.put(map,filename);
+						Logs.log(map.toString() + " = " + filename, ImportImages_SCIFIO.class);
+						ip = null;
+					}					
+
+					JEXStatics.statusBar.setProgressPercentage((int) (100.0 * count / total));
+					count = count + 1;
+				}
+			}
+		}
+		if(fileNotFound)
+		{
+			JEXDialog.messageDialog("Warning! At least one of the files specified for this function was not found. Will attempt to continue", ImportImages_SCIFIO.class);
+		}
+
+		// OUTPUT PROCESSING
+		JEXData output = ImageWriter.makeImageStackFromPaths("temp", multiMap);
+		if (table != null) {
+			DimTable toSet = new DimTable(multiMap);
+			for(Dim d : table)
+			{
+				toSet.removeDimWithName(d.dimName);
+			}
+			for(Dim d : table)
+			{
+				toSet.add(d.copy());
+			}
+			output.setDimTable(toSet);
+		}
+		
+		return output;
 	}
 }
