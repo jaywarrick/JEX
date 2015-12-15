@@ -50,7 +50,7 @@ import Database.SingleUserDatabase.tnvi;
 import cruncher.JEXFunction;
 
 public class FunctionBlockPanel implements ActionListener, MouseListener {
-	
+
 	// GUI
 	protected Color foregroundColor = DisplayStatics.lightBackground;
 	JPanel panel = new JPanel();
@@ -66,30 +66,30 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 	JPanel runPane = new JPanel();
 	JButton runButton = new JButton();
 	// JButton testButton = new JButton() ;
-	
+
 	// variables
 	protected JEXFunction function;
 	protected ParameterSet parameters;
 	private JEXFunctionPanel parent;
-	
+
 	// Function variables
 	TreeMap<String,FunctionInputDrop> inputPanes;
 	TreeMap<Integer,FunctionOutputDrag> outputPanes;
 	JEXCrunchable crunch;
-	
+
 	public FunctionBlockPanel(JEXFunctionPanel parent)
 	{
 		this.parent = parent;
-		
+
 		this.makeTitlePane();
 		this.initializeSingleFunctionPanel();
 	}
-	
+
 	public JPanel panel()
 	{
 		return this.panel;
 	}
-	
+
 	private void makeTitlePane()
 	{
 		// Prepare the name label
@@ -100,42 +100,42 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 		this.functionName.setFont(FontUtility.boldFont);
 		this.functionName.setMaximumSize(new Dimension(1000, 25));
 		this.functionName.addMouseListener(this);
-		
+
 		// Prepare the left button
 		// upOneButton.setText("<");
 		this.upOneButton.addActionListener(this);
 		// upOneButton.setPreferredSize(new Dimension(25,25));
 		// upOneButton.setMaximumSize(new Dimension(25,25));
-		
+
 		// Prepare the right button
 		// downOneButton.setText(">");
 		this.downOneButton.addActionListener(this);
 		// downOneButton.setPreferredSize(new Dimension(25,25));
 		// downOneButton.setMaximumSize(new Dimension(25,25));
-		
+
 		// Prepare the right button
 		// deleteButton.setText("x");
 		this.deleteButton.addActionListener(this);
 		// deleteButton.setPreferredSize(new Dimension(25,25));
 		// deleteButton.setMaximumSize(new Dimension(25,25));
-		
+
 		// Prepare the title pane container
 		this.titlePane.removeAll();
 		this.titlePane.setBackground(this.foregroundColor);
 		this.titlePane.setLayout(new MigLayout("center,flowx, ins 0", "[]2[center,fill,grow]0[]0[]", "[]"));
-		
+
 		// Add the objects inside
 		this.titlePane.add(this.upOneButton.panel());
 		this.titlePane.add(this.functionName, "growx");
 		this.titlePane.add(this.deleteButton.panel());
 		this.titlePane.add(this.downOneButton.panel());
-		
+
 		// Make the run buttons
 		// testButton.setText("TEST");
 		// testButton.addActionListener(this);
 		this.runButton.setText("RUN");
 		this.runButton.addActionListener(this);
-		
+
 		// Make the run panel
 		this.runPane.setBackground(this.foregroundColor);
 		this.runPane.setLayout(new MigLayout("flowx,ins 0", "[fill,grow]", "[]"));
@@ -143,28 +143,28 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 		// runPane.add(runButton,"growx, width 25:60:");
 		this.runPane.add(this.runButton, "growx");
 	}
-	
+
 	private void initializeSingleFunctionPanel()
 	{
-		
+
 		this.inputList.setBackground(this.foregroundColor);
 		this.inputList.setLayout(new MigLayout("flowy, ins 0", "[fill,grow]", "[]2"));
 		// inputList.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 		this.outputList.setBackground(this.foregroundColor);
 		this.outputList.setLayout(new MigLayout("flowy, ins 0", "[fill,grow]", "[]2"));
 		// outputList.setAlignmentX(JPanel.LEFT_ALIGNMENT);
-		
+
 		this.centerPane.setBackground(this.foregroundColor);
 		this.centerPane.setLayout(new MigLayout("flowy, ins 0, gapy 3", "[left,fill,grow]", "[]"));
 		this.centerPane.add(this.inputList, "growx,width 50:100:");
 		this.centerPane.add(this.outputList, "growx,width 50:100:");
-		
+
 		this.scroll = new JScrollPane(this.centerPane);
 		this.scroll.setBorder(BorderFactory.createEmptyBorder());
 		this.scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		this.scroll.addMouseWheelListener(this.parent.centerTopHalf);
 		this.scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-		
+
 		this.panel = new JPanel();
 		this.panel.setLayout(new MigLayout("flowy,ins 3", "[fill,grow]", "[]0[fill,grow,]0[]"));
 		this.panel.setBackground(this.foregroundColor);
@@ -173,11 +173,11 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 		this.panel.add(this.scroll);
 		this.panel.add(this.runPane, "growx,width 50:100:");
 	}
-	
+
 	public void setFunction(JEXFunction function)
 	{
 		this.function = function;
-		
+
 		JEXCrunchable crunch = null;
 		if(function != null)
 		{
@@ -187,7 +187,7 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 		this.outputPanes = new TreeMap<Integer,FunctionOutputDrag>();
 		this.inputList.removeAll();
 		this.outputList.removeAll();
-		
+
 		// Creating the input drop panels
 		int nbInput = 0;
 		TypeName[] inNames = null;
@@ -218,7 +218,7 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 			this.inputPanes.put(inNames[i].getName(), ind);
 		}
 		Logs.log("Created " + nbInput + " input drop panels", 1, this);
-		
+
 		// Create the output drag panels
 		int nbOutput = 0;
 		if(crunch != null)
@@ -247,22 +247,22 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 			this.outputPanes.put(new Integer(i), oud);
 		}
 		Logs.log("Created " + nbOutput + " output drag panels", 1, this);
-		
+
 		// Prepare the name label
 		this.functionName.setText(function.getFunctionName());
 		this.functionName.setFont(FontUtility.boldFont);
-		
+
 		this.centerPane.revalidate();
 		this.centerPane.repaint();
 	}
-	
+
 	/**
 	 * An input has been droped... check the new set of inputs for validity
 	 */
 	public void inputsChanged()
 	{
 		Logs.log("Inputs changed... testing function", 1, this);
-		
+
 		// Get output names before test function
 		Set<Integer> intKeys = this.outputPanes.keySet();
 		for (Integer index : intKeys)
@@ -272,7 +272,7 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 			this.function.setExpectedOutputName(index, outputName);
 		}
 	}
-	
+
 	/**
 	 * Set input of name NAME with typename INPUTTN
 	 * 
@@ -284,7 +284,7 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 		this.function.setInput(inputName, inputTN);
 		this.inputsChanged();
 	}
-	
+
 	/**
 	 * Set the list of given output names for this function
 	 */
@@ -298,7 +298,7 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 		}
 		return;
 	}
-	
+
 	/**
 	 * Set the list of given output names for this function
 	 */
@@ -306,7 +306,7 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 	{
 		this.function.setSavingSelections(this.getSavingSelections());
 	}
-	
+
 	/**
 	 * Test the function and set the status to green or red
 	 */
@@ -315,7 +315,7 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 		// Set the cruncher
 		this.crunch = this.function.getCrunch();
 		this.crunch.setInputs(this.function.getInputs());
-		
+
 		// Loop through the inputs to see if they exist in the database or if
 		// another function
 		// has an output with that typeName
@@ -323,14 +323,14 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 		{
 			// Get the inputTN
 			TypeName inputTN = this.function.getInputs().get(inputName);
-			
+
 			// Check if the object is in the database
 			if(this.isDataInDatabase(inputTN))
 			{
 				FunctionInputDrop in = this.inputPanes.get(inputName);
 				in.setInputTN(inputTN);
 			}
-			
+
 			// Else check if the object is the output of a previous object
 			if(inputTN != null && this.isDataOutputOfFunction(inputTN))
 			{
@@ -338,7 +338,7 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 				in.setInputTN(inputTN);
 			}
 		}
-		
+
 		// Set the outputs
 		boolean canRun = (this.crunch.checkInputs() == JEXCrunchable.INPUTSOK);
 		for (FunctionOutputDrag outPane : this.outputPanes.values())
@@ -346,7 +346,7 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 			outPane.setCanRun(canRun);
 		}
 	}
-	
+
 	/**
 	 * Return true if the object exists in the database
 	 * 
@@ -359,24 +359,24 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 		{
 			return false;
 		}
-		
+
 		tnvi TNVI = JEXStatics.jexManager.getTNVI();
-		
+
 		TreeMap<String,TreeMap<String,Set<JEXEntry>>> nvi = TNVI.get(tn.getType());
 		if(nvi == null)
 		{
 			return false;
 		}
-		
+
 		TreeMap<String,Set<JEXEntry>> vi = nvi.get(tn.getName());
 		if(vi == null)
 		{
 			return false;
 		}
-		
+
 		return true;
 	}
-	
+
 	/**
 	 * Return true if the object is the output of another function of the function list
 	 * 
@@ -387,7 +387,7 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 	{
 		return this.parent.isDataOutputOfFunction(tn);
 	}
-	
+
 	/**
 	 * Return the function in this functionblockpanel
 	 * 
@@ -399,7 +399,7 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 		this.setSavingSelections();
 		return this.function;
 	}
-	
+
 	public TreeMap<Integer,Boolean> getSavingSelections()
 	{
 		TreeMap<Integer,Boolean> selections = new TreeMap<Integer,Boolean>();
@@ -409,24 +409,24 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 		}
 		return selections;
 	}
-	
+
 	// ----------------------------------------------------
 	// --------- INPUT DROP BOX ---------------------------
 	// ----------------------------------------------------
 	class FunctionInputDrop extends JPanel {
-		
+
 		private static final long serialVersionUID = 1L;
-		
+
 		TypeName inputTN;
 		int index;
 		TypeName inname;
 		String toolTip;
 		FunctionBlockPanel parent;
-		
+
 		JPanel dropArea = new JPanel();
 		JLabel inputTNLabel = new JLabel();
 		JPanel box;
-		
+
 		FunctionInputDrop(FunctionBlockPanel parent, int index, TypeName inname, String toolTip)
 		{
 			this.parent = parent;
@@ -436,20 +436,20 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 			new InputButtonListener(this);
 			this.initialize();
 		}
-		
+
 		private void initialize()
 		{
 			this.setLayout(new MigLayout("flowx, ins 0", "[center]2[center]2[fill,grow]", "[center]"));
 			this.setBackground(FunctionBlockPanel.this.foregroundColor);
 			// this.setMinimumSize(new Dimension(400,20));
 			// this.setMaximumSize(new Dimension(200,20));
-			
+
 			this.inputTNLabel.setFont(FontUtility.italicFonts);
 			this.inputTNLabel.setText(this.inname.toString());
 			this.box = new JPanel() {
-				
+
 				private static final long serialVersionUID = 1L;
-				
+
 				@Override
 				protected void paintComponent(Graphics g)
 				{
@@ -457,11 +457,11 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 					int y = 0;
 					int w = this.getWidth() - 1;
 					int h = this.getHeight() - 1;
-					
+
 					Graphics2D g2 = (Graphics2D) g.create();
 					// g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
 					// RenderingHints.VALUE_ANTIALIAS_ON);
-					
+
 					Color c;
 					if(FunctionInputDrop.this.inputTN != null)
 					{
@@ -473,11 +473,11 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 					}
 					g2.setColor(c);
 					g2.fillRect(x, y, w, h);
-					
+
 					g2.setStroke(new BasicStroke(1f));
 					g2.setColor(Color.black);
 					g2.drawRect(x, y, w, h);
-					
+
 					g2.dispose();
 				}
 			};
@@ -498,7 +498,7 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 			this.add(Box.createHorizontalStrut(5));
 			this.add(this.inputTNLabel, "growx");
 		}
-		
+
 		private void rebuild()
 		{
 			if(this.inputTN != null)
@@ -513,59 +513,61 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 			}
 			this.repaint();
 		}
-		
+
 		public void setInputTN(TypeName inputTN)
 		{
 			Logs.log("Set typename of the input drop...", 1, this);
 			this.inputTN = inputTN;
 			this.parent.setInput(this.inname.getName(), inputTN);
-			
+
 			this.rebuild();
 		}
-		
+
 		public void setIsCrunchable(boolean b)
 		{
 			this.rebuild();
 		}
 	}
-	
+
 	// ----------------------------------------------------
 	// --------- INPUT LISTENER ---------------------------
 	// ----------------------------------------------------
-	class InputButtonListener extends DropTargetAdapter {
-		
+	class InputButtonListener extends DropTargetAdapter implements MouseListener {
+
 		private DropTarget dropTarget;
 		private FunctionInputDrop button;
-		
+
 		public InputButtonListener(FunctionInputDrop button)
 		{
 			this.button = button;
-			
+
 			this.dropTarget = new DropTarget(button, DnDConstants.ACTION_COPY, this, true, null);
 			Logs.log("Drop target constructed ..." + this.dropTarget, 1, this);
+			
+			this.button.addMouseListener(this);
 		}
-		
+
 		@Override
 		public void drop(DropTargetDropEvent event)
 		{
-			
+
 			try
 			{
 				if(event.isDataFlavorSupported(TransferableTypeName.jexDataFlavor))
 				{
 					Transferable tr = event.getTransferable();
-					
+
 					if(tr.isDataFlavorSupported(TransferableTypeName.jexDataFlavor))
 					{
 						TypeName name = (TypeName) tr.getTransferData(TransferableTypeName.jexDataFlavor);
 						Logs.log("Passing a typeName...", 1, this);
 						this.button.setInputTN(name);
 					}
-					
+
 					event.acceptDrop(DnDConstants.ACTION_COPY);
 					event.dropComplete(true);
 					Logs.log("Drop completed...", 1, this);
-					
+
 					return;
 				}
 				event.rejectDrop();
@@ -576,25 +578,62 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 				event.rejectDrop();
 			}
 		}
+
+		@Override
+		public void mouseClicked(MouseEvent e)
+		{
+			if (e.getClickCount() == 2) {
+				Logs.log("Detected double click. Removing this inputname.", 1, this);
+				this.button.setInputTN(null);
+			}
+		}
+
+		@Override
+		public void mousePressed(MouseEvent e)
+		{
+			// TODO Auto-generated method stub
+
+		}
+
+		@Override
+		public void mouseReleased(MouseEvent e)
+		{
+			// TODO Auto-generated method stub
+
+		}
+
+		@Override
+		public void mouseEntered(MouseEvent e)
+		{
+			// TODO Auto-generated method stub
+
+		}
+
+		@Override
+		public void mouseExited(MouseEvent e)
+		{
+			// TODO Auto-generated method stub
+
+		}
 	}
-	
+
 	// ----------------------------------------------------
 	// --------- OUTPUT BOX -------------------------------
 	// ----------------------------------------------------
 	class FunctionOutputDrag extends JPanel implements DragGestureListener, DocumentListener {
-		
+
 		private static final long serialVersionUID = 1L;
-		
+
 		TypeName tn;
 		int index;
 		String toolTip;
 		boolean canRun = false;
-		
+
 		JPanel dragArea = new JPanel();
 		JTextField outputTNLabel = new JTextField();
 		JCheckBox saveOutput = new JCheckBox();
 		JPanel box;
-		
+
 		FunctionOutputDrag(int index, boolean savingSelection, TypeName tn, String toolTip)
 		{
 			this.tn = tn;
@@ -603,20 +642,20 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 			this.toolTip = toolTip;
 			this.initialize();
 		}
-		
+
 		private void initialize()
 		{
 			this.setLayout(new MigLayout("flowx, ins 0", "[center]2[center]2[center]2[fill,grow]", "[center]"));
 			this.setBackground(FunctionBlockPanel.this.foregroundColor);
 			// this.setMinimumSize(new Dimension(400,20));
 			// this.setMaximumSize(new Dimension(200,20));
-			
+
 			this.outputTNLabel.setFont(FontUtility.italicFonts);
 			this.outputTNLabel.getDocument().addDocumentListener(this);
 			this.box = new JPanel() {
-				
+
 				private static final long serialVersionUID = 1L;
-				
+
 				@Override
 				protected void paintComponent(Graphics g)
 				{
@@ -624,11 +663,11 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 					int y = 0;
 					int w = this.getWidth() - 1;
 					int h = this.getHeight() - 1;
-					
+
 					Graphics2D g2 = (Graphics2D) g.create();
 					// g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
 					// RenderingHints.VALUE_ANTIALIAS_ON);
-					
+
 					Color c;
 					if(FunctionOutputDrag.this.canRun)
 					{
@@ -640,11 +679,11 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 					}
 					g2.setColor(c);
 					g2.fillRect(x, y, w, h);
-					
+
 					g2.setStroke(new BasicStroke(1f));
 					g2.setColor(Color.black);
 					g2.drawRect(x, y, w, h);
-					
+
 					g2.dispose();
 				}
 			};
@@ -654,10 +693,10 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 			this.box.setBorder(BorderFactory.createLineBorder(Color.black));
 			this.box.setBackground(Color.RED);
 			this.saveOutput.setToolTipText("Check this box to set the output to be saved in the database");
-			
+
 			// Create the drag source
 			this.createDragSource();
-			
+
 			if(this.tn == null)
 			{
 				this.outputTNLabel.setText("Set name");
@@ -670,31 +709,31 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 			{
 				this.outputTNLabel.setToolTipText(this.toolTip);
 			}
-			
-			
+
+
 			this.add(this.box, "width 20:20:20, height 20:20:20");
 			this.add(Box.createHorizontalStrut(5));
 			this.add(this.saveOutput);
 			this.add(this.outputTNLabel, "growx");
 			this.repaint();
 		}
-		
+
 		public boolean getSavingSelection()
 		{
 			return this.saveOutput.isSelected();
 		}
-		
+
 		public void setCanRun(boolean canRun)
 		{
 			this.canRun = canRun;
 			this.repaint();
 		}
-		
+
 		public String getOutputName()
 		{
 			return this.outputTNLabel.getText();
 		}
-		
+
 		/**
 		 * Set up a drag source on this object
 		 */
@@ -704,7 +743,7 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 			DragSource ds = new DragSource();
 			ds.createDefaultDragGestureRecognizer(this, DnDConstants.ACTION_COPY, this);
 		}
-		
+
 		@Override
 		public void dragGestureRecognized(DragGestureEvent event)
 		{
@@ -715,30 +754,30 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 			}
 			event.startDrag(cursor, new TransferableTypeName(this.tn.duplicate()));
 		}
-		
+
 		@Override
 		public void changedUpdate(DocumentEvent arg0)
 		{
 			this.tn.setName(this.outputTNLabel.getText());
 		}
-		
+
 		@Override
 		public void insertUpdate(DocumentEvent arg0)
 		{
 			this.tn.setName(this.outputTNLabel.getText());
 		}
-		
+
 		@Override
 		public void removeUpdate(DocumentEvent arg0)
 		{
 			this.tn.setName(this.outputTNLabel.getText());
 		}
 	}
-	
+
 	// ----------------------------------------------------
 	// --------- EVENT HANDLING FUNCTIONS -----------------
 	// ----------------------------------------------------
-	
+
 	@Override
 	public void actionPerformed(ActionEvent e)
 	{
@@ -757,7 +796,7 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 				this.parent.selectFunction(null);
 			}
 			this.parent.delete(this);
-			
+
 		}
 		// else if (e.getSource() == this.testButton)
 		// {
@@ -771,23 +810,23 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 			this.parent.runOneFunction(this.function, this.parent.isAutoSaveSelected());
 		}
 	}
-	
+
 	@Override
 	public void mouseClicked(MouseEvent arg0)
 	{}
-	
+
 	@Override
 	public void mouseEntered(MouseEvent arg0)
 	{}
-	
+
 	@Override
 	public void mouseExited(MouseEvent arg0)
 	{}
-	
+
 	@Override
 	public void mousePressed(MouseEvent arg0)
 	{}
-	
+
 	@Override
 	public void mouseReleased(MouseEvent arg0)
 	{
