@@ -170,12 +170,12 @@ public class CallRScript extends JEXPlugin {
 	@Override
 	public boolean run(JEXEntry optionalEntry)
 	{
-		initializeWorkspace();
-		initializeData(data1, "data1");
-		initializeData(data2, "data2");
-		initializeData(data3, "data3");
-		initializeData(data4, "data4");
-		initializeData(data5, "data5");
+		R.initializeWorkspace();
+		R.initializeData(data1, "data1");
+		R.initializeData(data2, "data2");
+		R.initializeData(data3, "data3");
+		R.initializeData(data4, "data4");
+		R.initializeData(data5, "data5");
 
 		if(console)
 		{

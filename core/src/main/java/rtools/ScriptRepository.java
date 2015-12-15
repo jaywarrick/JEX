@@ -5,14 +5,48 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 
+import org.apache.commons.io.FileUtils;
+
+import Database.SingleUserDatabase.JEXWriter;
+import jex.statics.JEXDialog;
 import logs.Logs;
 import miscellaneous.DirectoryManager;
 
 public class ScriptRepository {
-	
+
+	public static String R_COMMON = "RCommon.R", LAPJV = "LAPJV", MAXIMA = "Maxima", MAXIMA_LIST = "MaximaList", PACKAGE_FUNCTIONS = "PackageFunctions", START_R_SERVE = "StartRServe", TRACK = "Track", TRACK_FILTERS = "TrackFilters", TRACK_FITTING = "TrackFitting", TRACKING = "Tracking", TRACK_LIST = "TrackList";
+
+	public static void sourceGitHubFile(String user, String repository, String branch, String fileName)
+	{
+		// https://github.com/user/repository/raw/branch/filename
+		String fileToGet = "https://github.com/" + user + "/" + repository + "/raw/" + branch + "/" + fileName;
+		URL toGet;
+		try
+		{
+			toGet = new URL(fileToGet);
+			Logs.log("Attempting to source: " + fileToGet, ScriptRepository.class);
+			String freePath = JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getUniqueRelativeTempPath("R");
+			File freeFile = new File(freePath);
+			FileUtils.copyURLToFile(toGet, freeFile, 10000, 10000);
+			R.eval("1");
+			R.source(freeFile.getAbsolutePath());
+		}
+		catch(MalformedURLException e)
+		{
+			JEXDialog.messageDialog("Couldn't create a proper URL for source: " + fileToGet + ".  Check GitHub user, repository, branch, and filename are well constructed.", ScriptRepository.class);
+			e.printStackTrace();
+		}
+		catch(IOException e)
+		{
+			JEXDialog.messageDialog("Couldn't source: " + fileToGet + ".  Check file exists at this url and you have a connection to the internet.", ScriptRepository.class);
+			e.printStackTrace();
+		}
+	}
+
 	public static void runRScript(String[] expressions)
 	{
 		String[] cmds = new String[2*expressions.length + 1];
@@ -49,12 +83,12 @@ public class ScriptRepository {
 				OutputStream out = new FileOutputStream(scriptfile);
 				int read;
 				byte[] bytes = new byte[1024];
-				
+
 				while ((read = input.read(bytes)) != -1)
 				{
 					out.write(bytes, 0, read);
 				}
-				
+
 				out.close();
 				scriptfile.deleteOnExit();
 				return scriptfile;
@@ -66,7 +100,7 @@ public class ScriptRepository {
 			return null;
 		}
 		else
-		// there is a useable file path already for use in the system command
+			// there is a useable file path already for use in the system command
 		{
 			try
 			{
@@ -92,15 +126,15 @@ public class ScriptRepository {
 		{
 			Logs.log("Couldn't find the script file to start R! This is where I tried to look: " + scriptfile.getAbsolutePath(), ScriptRepository.class);
 		}
-		
+
 	}
-	
+
 	public static void runSysCommand(String[] cmds)
 	{
 		try
 		{
 			Process p = Runtime.getRuntime().exec(cmds);
-			
+
 			// // Debug code only... causes process to stall waiting for more
 			// lines to be read from the process.
 			// BufferedReader stdInput = new BufferedReader(new
@@ -128,7 +162,7 @@ public class ScriptRepository {
 			//
 			// stdInput.close();
 			// stdError.close();
-			
+
 			p.waitFor();
 		}
 		catch (IOException e)
@@ -141,5 +175,5 @@ public class ScriptRepository {
 			e.printStackTrace();
 		}
 	}
-	
+
 }

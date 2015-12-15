@@ -98,6 +98,7 @@ import org.scijava.plugin.PluginInfo;
 import org.scijava.util.ConversionUtils;
 
 import rtools.R;
+import rtools.ScriptRepository;
 import tables.Dim;
 import tables.DimTable;
 import tables.DimensionMap;
@@ -131,34 +132,23 @@ public class PointTester {// extends URLClassLoader {
 		List<PluginInfo<Op>> infos = IJ2PluginUtility.ij().op().getPlugins();
 		for(PluginInfo<Op> info : infos)
 		{
-
-			System.out.println(info.getClassName());
+			System.out.println(info.toString());
 		}
+	}
 
-		ImgLabeling<Integer, IntType> labeling = FeatureUtils.getConnectedComponents(dot1, true);
-		LabelRegions<Integer> regions = new LabelRegions<Integer>(labeling);
-		Integer label = regions.getExistingLabels().iterator().next();
-		LabelRegion<Integer> region = regions.getLabelRegion(label);
-		SamplingIterableRegion<UnsignedByteType> sampler = new SamplingIterableRegion<UnsignedByteType>(region, dot1);
-
-		ArrayImgFactory<UnsignedByteType> factory = new ArrayImgFactory<UnsignedByteType>();
-		long[] dims = new long[dot1.numDimensions()];
-		dot1.dimensions(dims);
-		Img<UnsignedByteType> blank = factory.create(dims, new UnsignedByteType(0));
-		ImageJFunctions.show(blank);
-		Op andOp = IJ2PluginUtility.ij().op().computer(Ops.Logic.Or.class, (RandomAccessibleInterval<UnsignedByteType>) blank, (IterableInterval<UnsignedByteType>) Regions.sample(region, dot1));
-		andOp.run();
-		ImageJFunctions.show(blank);
-		//		UnsignedByteType b1 = new UnsignedByteType(100);
-		//		UnsignedByteType b2 = new UnsignedByteType(100);
-		//		b1.mul(b2);		
-		//		System.out.println(b1);
-		//		System.out.println(b1);
-		//		
-		//		andOp.run();
-		//		ImageJFunctions.show(dot1);
-		//		ImageJFunctions.show(dot2);
-
+	public static void tryGitHubRFile()
+	{
+		// https://github.com/user/repository/raw/branch/filename
+		DirectoryManager.setHostDirectory("/Users/jaywarrick/Desktop/A Sandbox");
+		R.eval("x <- 1");
+		//		R.source("/Users/jaywarrick/Desktop/A Sandbox/temp/JEXData0000000000.R");
+		ScriptRepository.sourceGitHubFile("jaywarrick", "R-General", "master", ".Rprofile");
+		ScriptRepository.sourceGitHubFile("jaywarrick", "R-Adhesion", "master", "CellTracking/R/PackageFunctions.R");
+		ScriptRepository.sourceGitHubFile("jaywarrick", "R-Adhesion", "master", "CellTracking/R/Track.R");
+		R.eval("duh <- getSweep()");
+		R.eval("plot(duh$t, duh$x)");
+		R.eval("print(duh)");
+		Logs.log("Yo", PointTester.class);
 	}
 
 	//	public static void tryLogFreqSweep()

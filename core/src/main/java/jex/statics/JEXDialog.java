@@ -24,6 +24,20 @@ public class JEXDialog {
 		JOptionPane.showMessageDialog(JEXStatics.main, msg);
 	}
 	
+	public static void messageDialog(String msg, Class<?> source)
+	{
+		//default icon, custom title
+		JOptionPane.showMessageDialog(JEXStatics.main, msg);
+		Logs.log(msg, source);
+	}
+	
+	public static void messageDialog(String msg, Object source)
+	{
+		//default icon, custom title
+		JOptionPane.showMessageDialog(JEXStatics.main, msg);
+		Logs.log(msg, source);
+	}
+	
 	/**
 	 * Get the index of the choice made by the user from the supplied list.
 	 * @param title
