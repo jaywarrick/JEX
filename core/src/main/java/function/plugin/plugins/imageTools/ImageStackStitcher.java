@@ -30,8 +30,10 @@ import tables.DimensionMap;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;
+import Database.DataReader.LabelReader;
 import Database.DataReader.ValueReader;
 import Database.DataWriter.ImageWriter;
+import Database.Definition.TypeName;
 import Database.SingleUserDatabase.JEXWriter;
 import function.plugin.mechanism.InputMarker;
 import function.plugin.mechanism.JEXPlugin;
@@ -77,8 +79,8 @@ public class ImageStackStitcher extends JEXPlugin {
 	@ParameterMarker(uiOrder=-1, name="Location Dim Name", description="Name of the row dimension in the imageset.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Location")
 	String locDimName;
 	
-	@ParameterMarker(uiOrder=0, name="Number of Columns", description="Number of columns that make up the stitched image.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="2")
-	int cols;
+	@ParameterMarker(uiOrder=0, name="Number of Columns", description="Number of columns that make up the stitched image. (Can also specify a label name)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="2")
+	String colsString;
 	
 	@ParameterMarker(uiOrder=1, name="Starting Point", description="In what corner is the first image of each image group to be stitched.", ui=MarkerConstants.UI_DROPDOWN, choices={"UL", "UR", "LL", "LR"}, defaultChoice=0)
 	String startPt;
@@ -161,6 +163,31 @@ public class ImageStackStitcher extends JEXPlugin {
 			return false;
 		}
 		DimTable table = imageData.getDimTable();
+		
+		// Get the number of columns
+		Integer cols = -1;
+		JEXData colsLabel = null;
+		try
+		{
+			cols = Integer.parseInt(colsString);
+		}
+		catch(NumberFormatException e)
+		{
+			try
+			{
+				colsLabel = JEXStatics.jexManager.getDataOfTypeNameInEntry(new TypeName(JEXData.LABEL, colsString), entry);
+				if(colsLabel == null)
+				{
+					JEXDialog.messageDialog("Couldn't parse '" + colsString + "' to a number or to an existing label in this directory");
+				}
+				cols = Integer.parseInt(LabelReader.readLabelValue(colsLabel));
+			}
+			catch(NumberFormatException e2)
+			{
+				JEXDialog.messageDialog("Couldn't parse '" + colsString + "' to a number, so looked and found a corresponding label but couldn't parse the label value to an integer. Label value: " + LabelReader.readLabelValue(colsLabel));
+			}
+		}
+		
 		Dim locDim = table.getDimWithName(locDimName);
 		if(locDim == null)
 		{
