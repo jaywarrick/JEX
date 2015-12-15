@@ -15,7 +15,6 @@ import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataWriter.FileWriter;
 import Database.DataWriter.ImageWriter;
-import Database.SingleUserDatabase.JEXWriter;
 import function.plugin.mechanism.InputMarker;
 import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.MarkerConstants;
@@ -170,12 +169,12 @@ public class CallRScript extends JEXPlugin {
 	@Override
 	public boolean run(JEXEntry optionalEntry)
 	{
-		initializeWorkspace();
-		initializeData(data1, "data1");
-		initializeData(data2, "data2");
-		initializeData(data3, "data3");
-		initializeData(data4, "data4");
-		initializeData(data5, "data5");
+		R.initializeWorkspace();
+		R.initializeData(data1, "data1");
+		R.initializeData(data2, "data2");
+		R.initializeData(data3, "data3");
+		R.initializeData(data4, "data4");
+		R.initializeData(data5, "data5");
 
 		if(console)
 		{
@@ -209,6 +208,7 @@ public class CallRScript extends JEXPlugin {
 		return true;
 	}
 
+<<<<<<< HEAD
 	public static void initializeWorkspace()
 	{
 		R.eval("temp <- 0"); // Dummy command to get the R connection up an running.
@@ -240,6 +240,8 @@ public class CallRScript extends JEXPlugin {
 		R.eval(name + "$value <- read.arff(" + R.quotedPath(path) + ")");
 	}
 
+=======
+>>>>>>> Adhesion
 	public static JEXData getOutput(String name)
 	{
 		TreeMap<DimensionMap,String> files = new TreeMap<DimensionMap,String>();

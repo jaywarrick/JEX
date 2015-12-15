@@ -6,11 +6,9 @@ import image.roi.ROIPlus;
 import java.awt.Point;
 import java.awt.Shape;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.TreeMap;
 
 import jex.statics.JEXStatics;
-import miscellaneous.Canceler;
 
 import org.scijava.plugin.Plugin;
 
@@ -21,7 +19,6 @@ import Database.DBObjects.JEXEntry;
 import Database.DataReader.RoiReader;
 import Database.DataWriter.FileWriter;
 import Database.DataWriter.RoiWriter;
-import Database.DataWriter.ValueWriter;
 import function.plugin.mechanism.InputMarker;
 import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.MarkerConstants;
