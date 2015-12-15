@@ -11,6 +11,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
 
+import rtools.ScriptRepository;
 import logs.Logs;
 import net.miginfocom.swing.MigLayout;
 import Database.SingleUserDatabase.JEXWriter;

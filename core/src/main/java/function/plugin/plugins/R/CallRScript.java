@@ -15,7 +15,6 @@ import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataWriter.FileWriter;
 import Database.DataWriter.ImageWriter;
-import Database.SingleUserDatabase.JEXWriter;
 import function.plugin.mechanism.InputMarker;
 import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.MarkerConstants;
@@ -209,6 +208,7 @@ public class CallRScript extends JEXPlugin {
 		return true;
 	}
 
+<<<<<<< HEAD
 	public static void initializeWorkspace()
 	{
 		R.eval("temp <- 0"); // Dummy command to get the R connection up an running.
@@ -240,6 +240,8 @@ public class CallRScript extends JEXPlugin {
 		R.eval(name + "$value <- read.arff(" + R.quotedPath(path) + ")");
 	}
 
+=======
+>>>>>>> Adhesion
 	public static JEXData getOutput(String name)
 	{
 		TreeMap<DimensionMap,String> files = new TreeMap<DimensionMap,String>();
