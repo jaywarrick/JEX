@@ -8,18 +8,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;
 
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DBObjects.JEXLabel;
-import Database.DataReader.LabelReader;
-import Database.Definition.Experiment;
-import Database.Definition.Filter;
-import Database.Definition.TypeName;
 import jex.JEXManager;
 import jex.statics.DisplayStatics;
 import jex.statics.JEXStatics;
