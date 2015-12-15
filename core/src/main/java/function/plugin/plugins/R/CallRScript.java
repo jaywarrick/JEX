@@ -208,40 +208,6 @@ public class CallRScript extends JEXPlugin {
 		return true;
 	}
 
-<<<<<<< HEAD
-	public static void initializeWorkspace()
-	{
-		R.eval("temp <- 0"); // Dummy command to get the R connection up an running.
-		R.endPlot();
-		R.eval("rm(list=ls())");
-		R.load("foreign");
-		String tempPath = JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getTempFolderName() + File.separator + "RScriptTempFolder";
-		File tempFolder = new File(tempPath);
-		if(!tempFolder.exists())
-		{
-			tempFolder.mkdirs();
-		}
-		R.eval("jexTempRFolder <- " + R.quotedPath(tempPath));
-
-		String dbPath = JEXWriter.getDatabaseFolder();
-		R.eval("jexDBFolder <- " + R.quotedPath(dbPath));
-	}
-
-	public static void initializeData(JEXData data, String name)
-	{
-		if(data == null)
-		{
-			return;
-		}
-		String path = JEXWriter.getDatabaseFolder() + File.separator + data.getDetachedRelativePath();
-		R.eval(name + " <- list()");
-		R.eval(name + "$type <- " + R.sQuote(data.getTypeName().getType().toString()));
-		R.eval(name + "$name <- " + R.sQuote(data.getTypeName().getName()));
-		R.eval(name + "$value <- read.arff(" + R.quotedPath(path) + ")");
-	}
-
-=======
->>>>>>> Adhesion
 	public static JEXData getOutput(String name)
 	{
 		TreeMap<DimensionMap,String> files = new TreeMap<DimensionMap,String>();
