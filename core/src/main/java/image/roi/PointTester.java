@@ -129,6 +129,12 @@ public class PointTester {// extends URLClassLoader {
 		ImageJFunctions.show(dot1);
 		ImageJFunctions.show(dot2);
 
+		Op andOp = IJ2PluginUtility.ij().op().op(Ops.Logic.LogicalEqual.class, dot2, dot1);
+		andOp.run();
+		
+		ImageJFunctions.show(dot1);
+		ImageJFunctions.show(dot2);
+		
 		List<PluginInfo<Op>> infos = IJ2PluginUtility.ij().op().getPlugins();
 		for(PluginInfo<Op> info : infos)
 		{

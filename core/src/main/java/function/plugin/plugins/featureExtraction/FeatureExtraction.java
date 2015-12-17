@@ -432,7 +432,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			IterableInterval<Void> temp3 = temp2;
 			IterableInterval<BitType> convert = Converters.convert(temp3, new MyConverter(), new BitType());
 
-			Map<NamedFeature, DoubleType> results = opZernike.compute(convert);
+			Map<NamedFeature, DoubleType> results = opZernike.compute1(convert);
 			for(Entry<NamedFeature, DoubleType> result : results.entrySet())
 			{
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
@@ -485,7 +485,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 				opGeometric = IJ2PluginUtility.ij().op().op(Geometric2DFeatureSet.class, reg);
 			}
 
-			Map<NamedFeature, DoubleType> results = opGeometric.compute(FeatureUtils.convert(reg));
+			Map<NamedFeature, DoubleType> results = opGeometric.compute1(FeatureUtils.convert(reg));
 			for(Entry<NamedFeature, DoubleType> result : results.entrySet())
 			{
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
@@ -515,7 +515,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			{
 				opStats = IJ2PluginUtility.ij().op().op(StatsFeatureSet.class, (IterableInterval<T>) image);
 			}
-			Map<NamedFeature, DoubleType> results = opStats.compute(Regions.sample(reg, image));
+			Map<NamedFeature, DoubleType> results = opStats.compute1(Regions.sample(reg, image));
 			for(Entry<NamedFeature, DoubleType> result : results.entrySet())
 			{
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
@@ -548,7 +548,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 				}
 			}
 
-			results = opHaralick2DHor.compute(Regions.sample(reg, image));
+			results = opHaralick2DHor.compute1(Regions.sample(reg, image));
 
 			///// Horizontal /////
 			if(this.isCanceled())
@@ -570,7 +570,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 				this.close();
 				return false;
 			}
-			results = opHaralick2DVer.compute(Regions.sample(reg, image));
+			results = opHaralick2DVer.compute1(Regions.sample(reg, image));
 			for(Entry<NamedFeature, DoubleType> result : results.entrySet())
 			{
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName() + "_Vertical");
@@ -587,7 +587,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 					this.close();
 					return false;
 				}
-				results = opHaralick2DDiag.compute(Regions.sample(reg, image));
+				results = opHaralick2DDiag.compute1(Regions.sample(reg, image));
 				for(Entry<NamedFeature, DoubleType> result : results.entrySet())
 				{
 					DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName() + "_Diagonal");
@@ -602,7 +602,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 					this.close();
 					return false;
 				}
-				results = opHaralick2DAntiDiag.compute(Regions.sample(reg, image));
+				results = opHaralick2DAntiDiag.compute1(Regions.sample(reg, image));
 				for(Entry<NamedFeature, DoubleType> result : results.entrySet())
 				{
 					DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName() + "_AntiDiagonal");
@@ -630,7 +630,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 				opHistogram = IJ2PluginUtility.ij().op().op(HistogramFeatureSet.class, image, histogramBins);
 			}
 			IterableInterval<T> itr = Regions.sample(reg, image);
-			Map<NamedFeature, LongType> ret = opHistogram.compute(itr);
+			Map<NamedFeature, LongType> ret = opHistogram.compute1(itr);
 			for(Entry<NamedFeature, LongType> result : ret.entrySet())
 			{
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
@@ -651,7 +651,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			{
 				opMoments = IJ2PluginUtility.ij().op().op(ImageMomentsFeatureSet.class, (IterableInterval<T>) image);
 			}
-			Map<NamedFeature, DoubleType> results = opMoments.compute(Regions.sample(reg, image));
+			Map<NamedFeature, DoubleType> results = opMoments.compute1(Regions.sample(reg, image));
 			for(Entry<NamedFeature, DoubleType> result : results.entrySet())
 			{
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());

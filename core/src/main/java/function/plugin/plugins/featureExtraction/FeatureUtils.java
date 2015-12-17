@@ -1,17 +1,20 @@
 package function.plugin.plugins.featureExtraction;
 
-import image.roi.IdPoint;
-import image.roi.PointList;
-import image.roi.ROIPlus;
-
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import function.plugin.IJ2.IJ2PluginUtility;
+import function.plugin.plugins.featureExtraction.ConnectedComponents.StructuringElement;
+import image.roi.IdPoint;
+import image.roi.PointList;
+import image.roi.ROIPlus;
 import miscellaneous.Canceler;
 import miscellaneous.Pair;
-import net.imagej.ops.FunctionOp;
 import net.imagej.ops.Op;
 import net.imagej.ops.Ops;
+import net.imagej.ops.special.Computers;
+import net.imagej.ops.special.Functions;
+import net.imagej.ops.special.UnaryFunctionOp;
 import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
@@ -26,8 +29,6 @@ import net.imglib2.type.numeric.IntegerType;
 import net.imglib2.type.numeric.integer.IntType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
-import function.plugin.IJ2.IJ2PluginUtility;
-import function.plugin.plugins.featureExtraction.ConnectedComponents.StructuringElement;
 
 /**
  * Had to copy this class out temporarily while SNAPSHOTS conflict and this code is in flux.
@@ -38,7 +39,7 @@ import function.plugin.plugins.featureExtraction.ConnectedComponents.Structuring
  */
 public class FeatureUtils {
 
-	private static FunctionOp<Object, Object> contourFunc;
+	private static UnaryFunctionOp<Object, Object> contourFunc;
 
 	public static <I extends IntegerType< I >> ImgLabeling<Integer, IntType> getConnectedComponents(final RandomAccessibleInterval<I> inputImg, boolean fourConnected)
 	{
@@ -87,11 +88,11 @@ public class FeatureUtils {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public static <T> Polygon convert(final LabelRegion<T> src) {
 		if (contourFunc == null) {
-			contourFunc = (FunctionOp) IJ2PluginUtility.ij().op().function(Ops.Geometric.Contour.class, Polygon.class, src, true,
+			contourFunc = (UnaryFunctionOp) Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.Contour.class, Polygon.class, src, true,
 					true);
 		}
 		// FIXME: can we make this faster?
-		final Polygon p = (Polygon) contourFunc.compute(src);
+		final Polygon p = (Polygon) contourFunc.compute1(src);
 		return p;
 	}
 
@@ -186,7 +187,7 @@ public class FeatureUtils {
 		{
 			LabelRegion<Integer> region = regions.getLabelRegion(label);
 			//			ImageJFunctions.show(new SamplingIterableRegion(region, mask));
-			Op orOp = IJ2PluginUtility.ij().op().computer(Ops.Logic.Or.class, blank, Regions.sample(region, mask));
+			Op orOp = Computers.unary(IJ2PluginUtility.ij().op(), Ops.Logic.Or.class, blank, Regions.sample(region, mask));
 			orOp.run();
 		}
 
