@@ -196,7 +196,7 @@ public class GeneratePlotsAndData_R extends JEXPlugin {
 		//		plot(results$time, results$percentAdhered, xlab='Time [s]', ylab='Percent Adhered [%]', pch=20, cex=0.75, ylim=c(0,100))
 
 		// Get the percent adhered
-		R.eval("adhesionResults = trackList$getPercentAdhered(velocityThreshold=" + velocityThreshold + ")");
+		R.eval("adhesionResults <- trackList$getPercentAdhered(velocityThreshold=" + velocityThreshold + ")");
 		
 		count = count + 1;
 		percentage = (int) (100 * ((double) (count) / (total)));
