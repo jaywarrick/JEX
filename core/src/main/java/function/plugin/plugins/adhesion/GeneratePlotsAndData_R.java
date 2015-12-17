@@ -13,6 +13,7 @@ import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.FileReader;
 import Database.DataWriter.FileWriter;
+import Database.DataWriter.ImageWriter;
 import Database.SingleUserDatabase.JEXWriter;
 import function.plugin.mechanism.InputMarker;
 import function.plugin.mechanism.JEXPlugin;
@@ -48,54 +49,42 @@ public class GeneratePlotsAndData_R extends JEXPlugin {
 
 	/////////// Define Parameters ///////////
 
-	// duh <- trackList$getPercentAdhered(velocityThreshold=1)
-	// tau <- getShearStress(f=getFrequencies(duh$time)$f, pixelAmplitude = 180, mu=0.0052)
-	// 
-	// plot(tau, duh$percentAdhered/100, log='x')
-	// bestFit1 <- fitLogNorm(tau, duh$percentAdhered/100, thresh=0.1, SANN=TRUE)
-	// lines(tau, do.call(logNorm, c(list(x=tau), bestFit1$par)), lwd=3, col='red')
-	// bestFit2 <- fitLogNorm2(tau, duh$percentAdhered/100, guess=guess, alpha=0.1, newMu=0.01, newSigma=1, SANN=FALSE)
-	// lines(tau, do.call(logNorm2, c(list(x=tau), bestFit2$par)), lwd=3, col='blue')
-
-	//	getFrequencies <- function(t=seq(0,300,0.035), fi=1, ff=0.01, duration=300)
-	//	{
-	//	     return(data.frame(t=t, f=fi*(ff/fi)^(t/duration)))
-	//	}
-	//
-	//	getShearStress <- function(f, pixelAmplitude, h=200e-6, mu=0.00078, mag=4)
-	//	{
-	//	     micronAmplitude <- (6.45e-6/mag)*pixelAmplitude
-	//	     uMax <- 4*micronAmplitude*f
-	//	     return((2/3)*uMax*(6*mu)/h)
-	//	}
-
 	@ParameterMarker(uiOrder=1, name="Velocity Threshold [pixels/s]", description="The velocity below which a cell is considered adhered (typical values are around 2-5)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="3.0")
 	double velocityThreshold;
 	
-	@ParameterMarker(uiOrder=1, name="Alpha Guess", description="The fraction of the total population that represents the lower adhesion strength population", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.9")
+	@ParameterMarker(uiOrder=2, name="Initial 'mu' Search Range", description="The 'lower, upper, number-of-increments' range (log scale incremented) to grid search for 1-pop fit before least-squares optimization.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0001,0.5,50")
+	String muRange;
+	
+	@ParameterMarker(uiOrder=3, name="Initial 'sigma' Search Range", description="The 'lower, upper, increment' range to grid search for 1-pop fit before least-squares optimization.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.01,1.51,0.01")
+	String sigmaRange;
+	
+	@ParameterMarker(uiOrder=4, name="Alpha Guess", description="The fraction of the total population that represents the lower adhesion strength population", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.9")
 	double alphaGuess;
 	
-	@ParameterMarker(uiOrder=1, name="mu2 Guess", description="The mean frequency near which the stronger adhesion population is expected to adhere. Leave as 'NULL' (all caps) to automatically generate a reasonable guess of 1 sigma above whatever is determined for the single population.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="NULL")
+	@ParameterMarker(uiOrder=5, name="mu2 Guess", description="The mean frequency near which the stronger adhesion population is expected to adhere. Leave as '-1' (all caps) to automatically generate a reasonable guess of 1 sigma above whatever is determined for the single population.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="-1")
 	double mu2Guess;
 	
-	@ParameterMarker(uiOrder=1, name="sigma2 Guess", description="The log normal sigma of the population (i.e., it is log(sigma) of a standard distribution). Leave as -1 to automatically guess the same sigma as found for the lower strength adhesion population.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="-1")
+	@ParameterMarker(uiOrder=6, name="sigma2 Guess", description="The log normal sigma of the population (i.e., it is log(sigma) of a standard distribution). Leave as -1 to automatically guess the same sigma as found for the lower strength adhesion population.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="-1")
 	double sigma2Guess;
 	
-	@ParameterMarker(uiOrder=1, name="Number of Cores (OSX/Unix only)", description="Number of processor cores to use during grid search of initial guess for the single population model fit. (WINDOWS ONLY ALLOWS 1)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
+	@ParameterMarker(uiOrder=7, name="Number of Cores (OSX/Unix only)", description="Number of processor cores to use during grid search of initial guess for the single population model fit. (WINDOWS ONLY ALLOWS 1)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
 	double cores;
 
 	/////////// Define Outputs ///////////
 
 	@OutputMarker(uiOrder=1, name="Phase Shift Plots", type=MarkerConstants.TYPE_IMAGE, flavor="", description="Plots of the track velocities overlaid with a predicted velocity to illustrate whether we have fit the cell motion well in terms of when the cell switches direction.", enabled=true)
-	JEXData outputPhase;
+	JEXData outputPhasePlots;
 
 	@OutputMarker(uiOrder=2, name="Percent Adhered vs Frequency Plot", type=MarkerConstants.TYPE_IMAGE, flavor="", description="Plots of the percent adhered vs frequency, and different plots of the fitted curves.", enabled=true)
 	JEXData outputAdhesionPlot;
 
 	@OutputMarker(uiOrder=3, name="Percent Adhered vs Frequency Table", type=MarkerConstants.TYPE_FILE, flavor="", description="Table of the percent adhered vs frequency data along with fitted values.", enabled=true)
-	JEXData outputAdhesionTable;
+	JEXData outputAdhesionPercentageTable;
 	
-	@OutputMarker(uiOrder=4, name="R TrackList (analyzed)", type=MarkerConstants.TYPE_FILE, flavor="", description="The resultant R TrackList after analyzing for percent adhered (saved as a .RData file).", enabled=true)
+	@OutputMarker(uiOrder=4, name="Fitted Results Table", type=MarkerConstants.TYPE_FILE, flavor="", description="Table of the fitted parameters of adhesion curve.", enabled=true)
+	JEXData outputFittedParametersTable;
+	
+	@OutputMarker(uiOrder=5, name="R TrackList (analyzed)", type=MarkerConstants.TYPE_FILE, flavor="", description="The resultant R TrackList after analyzing for percent adhered (saved as a .RData file).", enabled=true)
 	JEXData outputTrackList;
 
 	@Override
@@ -167,21 +156,22 @@ public class GeneratePlotsAndData_R extends JEXPlugin {
 		}
 
 		// Plot the trackList velocities and the fitted curve
-		String plotPath = R.startPlot("tif", 4, 3, 600, 10, "Arial", "lzw");
+		String plotPath = R.startPlot("tif", 7, 5, 600, 10, "Arial", "lzw");
 		R.eval("trackList$plotTrackList(slot='vx', ylim=c(-500,500), rel=FALSE, validOnly=FALSE, xlim=c(0,300))");
 		R.eval("lines(fitCurveData$t, fitCurveData$v, col='red')");
 		R.endPlot();
 		phasePlots.put(new DimensionMap("i=0"), plotPath);
-		plotPath = R.startPlot("tif", 4, 3, 600, 10, "Arial", "lzw");
+		plotPath = R.startPlot("tif", 7, 5, 600, 10, "Arial", "lzw");
 		R.eval("trackList$plotTrackList(slot='vx', ylim=c(-500,500), rel=FALSE, validOnly=FALSE, xlim=c(0,5))");
 		R.eval("lines(fitCurveData$t, fitCurveData$v, col='red')");
 		R.endPlot();
 		phasePlots.put(new DimensionMap("i=1"), plotPath);
-		plotPath = R.startPlot("tif", 4, 3, 600, 10, "Arial", "lzw");
-		R.eval("trackList$plotTrackList(slot='vx', ylim=c(-500,500), rel=FALSE, validOnly=FALSE, xlim=c(125,300))");
+		plotPath = R.startPlot("tif", 7, 5, 600, 10, "Arial", "lzw");
+		R.eval("trackList$plotTrackList(slot='vx', ylim=c(-50,50), rel=FALSE, validOnly=FALSE, xlim=c(125,300))");
 		R.eval("lines(fitCurveData$t, fitCurveData$v, col='red')");
 		R.endPlot();
 		phasePlots.put(new DimensionMap("i=2"), plotPath);
+		this.outputPhasePlots = ImageWriter.makeImageStackFromPaths("temp", phasePlots);
 
 		count = count + 1;
 		percentage = (int) (100 * ((double) (count) / (total)));
@@ -208,12 +198,12 @@ public class GeneratePlotsAndData_R extends JEXPlugin {
 
 		// Fit the data
 		R.eval("adhesionResults$f <- getFrequencies(adhesionResults$time)$f");
-		R.eval("fitResults <- fitLogNormGS(x=adhesionResults$f, y=adhesionResults$percentAdhered/100, alphaGuess=" + alphaGuess + ", mu2Guess=" + mu2Guess + ", sigma2Guess=" + sigma2Guess + ", cores=" + cores + ")");
+		R.eval("fitResults <- fitLogNormGS(x=adhesionResults$f, y=adhesionResults$percentAdhered/100, mu=lseq(" + muRange + "), sigma=seq(" + sigmaRange + "), alphaGuess=" + alphaGuess + ", mu2Guess=" + mu2Guess + ", sigma2Guess=" + sigma2Guess + ", cores=" + cores + ")");
 		R.eval("fit1y <- do.call(logNorm, c(list(x=adhesionResults$f), fitResults$par1))");
 		R.eval("fit2y <- do.call(logNorm2, c(list(x=adhesionResults$f), fitResults$par2))");
 		R.eval("adhesionResults$fit1y <- fit1y");
 		R.eval("adhesionResults$fit2y <- fit2y");
-		R.eval("finalResults <- c(fitResults$par1, fitResults$par2, fitResults$r2_single, fitResults$r2_double, fitResults$limitFlag)");
+		R.eval("finalResults <- as.data.frame(as.list(c(fitResults$par1, fitResults$par2, r2_single=fitResults$r2_single, r2_double=fitResults$r2_double, limitFlag=fitResults$limitFlag)))");
 		
 		count = count + 1;
 		percentage = (int) (100 * ((double) (count) / (total)));
@@ -225,11 +215,13 @@ public class GeneratePlotsAndData_R extends JEXPlugin {
 		
 		// Plot the data
 		plotPath = R.startPlot("tif", 5, 3.5, 600, 10, "Arial", "lzw");
-		R.eval("plot(adhesionResults$f, adhesionResults$percentAdhered/100, pch=21, cex=0.5, col=rgb(0,0,0,0.5), log='x', xlab='Frequency [Hz]', ylab='Fraction of Population Adhered', main='')");
-		R.eval("lines(x, fit1y, lwd=3, col='red')");
-		R.eval("lines(x, fit2y, lwd=3, col='blue')");
+		R.eval("plot(adhesionResults$f, adhesionResults$percentAdhered/100, pch=21, cex=0.5, col=rgb(0,0,0,0), bg=rgb(0,0,0,0), log='x', xlab='Frequency [Hz]', ylab='Fraction of Population Adhered', main='')");
+		R.eval("lines(adhesionResults$f, fit1y, lwd=3, col='red')");
+		R.eval("lines(adhesionResults$f, fit2y, lwd=3, col='blue')");
+		R.eval("points(adhesionResults$f, adhesionResults$percentAdhered/100, pch=21, cex=0.5, col=rgb(0,0,0,0), bg=rgb(0,0,0,0.5), log='x', xlab='Frequency [Hz]', ylab='Fraction of Population Adhered', main='')");
+		R.eval("legend('topright', c('1 Pop.','2 Pop.'), lty=c(1,1), lwd=c(3,3),col=c('red','blue'))");
 		R.endPlot();
-		outputAdhesionPlot = FileWriter.makeFileObject("temp", null, plotPath);
+		outputAdhesionPlot = ImageWriter.makeImageObject("temp", plotPath);
 		
 		count = count + 1;
 		percentage = (int) (100 * ((double) (count) / (total)));
@@ -242,10 +234,10 @@ public class GeneratePlotsAndData_R extends JEXPlugin {
 		// Save the adhesion data as tables
 		String tablePath = JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getUniqueRelativeTempPath("csv");
 		R.eval("write.csv(adhesionResults, file=" + R.quotedPath(tablePath) + ", row.names=FALSE)");
-		outputTrackList = FileWriter.makeFileObject("temp", null, tablePath);
+		outputAdhesionPercentageTable = FileWriter.makeFileObject("temp", null, tablePath);
 		tablePath = JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getUniqueRelativeTempPath("csv");
 		R.eval("write.csv(finalResults, file=" + R.quotedPath(tablePath) + ", row.names=FALSE)");
-		outputTrackList = FileWriter.makeFileObject("temp", null, tablePath);
+		outputFittedParametersTable = FileWriter.makeFileObject("temp", null, tablePath);
 
 		// Remember to save the updated TrackList object.
 		R.eval("trackList$meta$adhesionResults <- adhesionResults"); // save results into the trackList object
