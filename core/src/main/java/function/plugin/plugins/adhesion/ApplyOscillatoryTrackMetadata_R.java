@@ -72,8 +72,11 @@ public class ApplyOscillatoryTrackMetadata_R extends JEXPlugin {
 
 	/////////// Define Outputs ///////////
 
-	@OutputMarker(uiOrder=1, name="R TrackList (oscillatory)", type=MarkerConstants.TYPE_FILE, flavor="", description="The resultant .RData file of the oscillatory R TrackList,", enabled=true)
+	@OutputMarker(uiOrder=1, name="R TrackList (oscillatory)", type=MarkerConstants.TYPE_FILE, flavor="", description="The resultant .RData file of the oscillatory R TrackList.", enabled=true)
 	JEXData output;
+	
+	@OutputMarker(uiOrder=2, name="BulkFitResults", type=MarkerConstants.TYPE_FILE, flavor="", description="The results of finding the phase shift of the fitted curve.", enabled=true)
+	JEXData outputBulkFitResults;
 
 	@Override
 	public int getMaxThreads()
@@ -144,7 +147,10 @@ public class ApplyOscillatoryTrackMetadata_R extends JEXPlugin {
 		}		
 		R.eval("bestFit <- getBulkPhaseShiftGS(trackList, cores=" + cores + ")");
 		R.eval("trackList$meta$bestFit <- bestFit");
-		
+		String tablePath = JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getUniqueRelativeTempPath("csv");
+		R.eval("write.csv(as.data.frame(as.list(bestFit$par)), file=" + R.quotedPath(tablePath) + ", row.names=FALSE)");
+		outputBulkFitResults = FileWriter.makeFileObject("temp", null, tablePath);
+				
 		count = count + 1;
 		percentage = (int) (100 * ((double) (count) / (total)));
 		JEXStatics.statusBar.setProgressPercentage(percentage);
