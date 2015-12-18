@@ -14,7 +14,6 @@ import Database.DataReader.LabelReader;
 import Database.DataWriter.FileWriter;
 import Database.Definition.TypeName;
 import Database.SingleUserDatabase.JEXWriter;
-import cruncher.Ticket;
 import function.plugin.mechanism.InputMarker;
 import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.MarkerConstants;
@@ -22,6 +21,7 @@ import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
 import jex.statics.JEXStatics;
 import miscellaneous.CSVList;
+import miscellaneous.JEXCSVWriter;
 import rtools.R;
 import rtools.ScriptRepository;
 import tables.DimTable;
@@ -42,14 +42,14 @@ import weka.core.converters.JEXTableWriter;
  */
 @Plugin(
 		type = JEXPlugin.class,
-		name="Compile ARFF Tables",
+		name="Convert ARFF File (R)",
 		menuPath="Table Tools",
 		visible=true,
-		description="Compile results in ARFF files across different entries in the database."
+		description="Reorganize tables from ARFF format to CSV format and save."
 		)
-public class CompileArffTables extends JEXPlugin {
+public class ConvertARFFFile extends JEXPlugin {
 
-	public CompileArffTables()
+	public ConvertARFFFile()
 	{}
 
 	/////////// Define Inputs ///////////
@@ -59,7 +59,7 @@ public class CompileArffTables extends JEXPlugin {
 
 	/////////// Define Parameters ///////////
 
-	@ParameterMarker(uiOrder=1, name="Sorting Labels", description="Names of labels in these entries by which to sort the data in the compiled results table (comma separated, no extra spaces near commas, case sensitive).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Valid,Substrate,Cell")
+	@ParameterMarker(uiOrder=1, name="Additional Labels", description="Names of labels in these entries by which to sort the data in the compiled results table (comma separated, no extra spaces near commas, case sensitive).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Valid,Substrate,Cell")
 	String sortingLabelsCSVString;
 
 	@ParameterMarker(uiOrder=2, name="Save As...", description="Choose a file extension.", ui=MarkerConstants.UI_DROPDOWN, choices={"arff","csv","txt"}, defaultChoice=0)
@@ -79,7 +79,7 @@ public class CompileArffTables extends JEXPlugin {
 
 	/////////// Define Outputs ///////////
 
-	@OutputMarker(uiOrder=1, name="Compiled Table", type=MarkerConstants.TYPE_FILE, flavor="", description="The resultant compiled table", enabled=true)
+	@OutputMarker(uiOrder=1, name="Converted Table", type=MarkerConstants.TYPE_FILE, flavor="", description="The resultant converted table", enabled=true)
 	JEXData output;
 
 	@Override
@@ -87,8 +87,9 @@ public class CompileArffTables extends JEXPlugin {
 	{
 		return 1;
 	}
-
-	public static TreeMap<DimensionMap,Double> compiledData = null;
+	
+	JEXCSVWriter writer = null;
+	public Set<String> header = null;
 
 	@Override
 	public boolean run(JEXEntry optionalEntry)
@@ -131,10 +132,8 @@ public class CompileArffTables extends JEXPlugin {
 
 		// Save the data.
 		DimensionMap compiledMap = new DimensionMap();
-		if(compiledData == null)
-		{
-			compiledData = new TreeMap<DimensionMap,Double>();
-		}
+		TreeMap<DimensionMap,Double> compiledData = new TreeMap<>();
+		
 		compiledMap = new DimensionMap();
 		compiledMap.put("Experiment", optionalEntry.getEntryExperiment());
 		// compiledMap.put("Array Name", entry.getEntryTrayName());
@@ -152,29 +151,10 @@ public class CompileArffTables extends JEXPlugin {
 			map.putAll(compiledMap);
 			compiledData.put(map, e.getValue());
 		}
-
-		// Return status
-		return true;
-	}
-
-	public void finalizeTicket(Ticket ticket)
-	{
-		if(compiledData == null)
-		{
-			return;
-		}
+		
 		// Write the file and make a JEXData
 		// Put the final JEXData in all the entries
-		TreeMap<JEXEntry,Set<JEXData>> outputList = ticket.getOutputList();
-		String tempPath = JEXTableWriter.writeTable(ticket.getOutputNames()[0].getName(), new DimTable(compiledData), compiledData, this.fileExtension);;
-		for (JEXEntry entry : outputList.keySet())
-		{
-			String path = JEXTableWriter.writeTable(ticket.getOutputNames()[0].getName(), new DimTable(compiledData), compiledData, this.fileExtension);
-			JEXData data = FileWriter.makeFileObject(ticket.getOutputNames()[0].getName(),null, path);
-			Set<JEXData> set = outputList.get(entry);
-			set.clear();
-			set.add(data);
-		}
+		String path = JEXTableWriter.writeTable(output.getTypeName().getName(), new DimTable(compiledData), compiledData, this.fileExtension);
 		
 		if(this.fileExtension.equals(JEXTableWriter.CSV_FILE))
 		{
@@ -182,27 +162,20 @@ public class CompileArffTables extends JEXPlugin {
 			ScriptRepository.sourceGitHubFile("jaywarrick", "R-General", "master", ".Rprofile");
 			
 			R.load("foreign");
-			R.eval("temp <- read.arff(file=" + R.quotedPath(tempPath) + ")");
+			R.eval("temp <- read.arff(file=" + R.quotedPath(path) + ")");
 			
 			if(this.reorganize)
 			{
 				R.eval("temp <- reorganizeFeatureTable(temp, specialNames = c(" + R.sQuote(this.specialCols) + "), convertToNumeric = FALSE, nameCol = " + R.sQuote(this.nameCol) + ", valueCol = " + R.sQuote(this.valueCol) + ")");
 			}
 			
-			for (JEXEntry entry : outputList.keySet())
-			{
-				String newPath = JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getUniqueRelativeTempPath(this.fileExtension);
-				R.eval("write.csv(temp, file=" + R.quotedPath(newPath) + ", row.names=FALSE)");
-				JEXData data = FileWriter.makeFileObject(ticket.getOutputNames()[0].getName(),null, newPath);
-				
-				Set<JEXData> set = outputList.get(entry);
-				set.clear();
-				set.add(data);
-			}
-			
+			path = JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getUniqueRelativeTempPath(this.fileExtension);
+			R.eval("write.csv(temp, file=" + R.quotedPath(path) + ", row.names=FALSE)");			
 		}
 
-		// Remember to set static variable to null again so this data isn't carried over to other function runs
-		compiledData = null;
+		this.output = FileWriter.makeFileObject(output.getTypeName().getName(),null, path);
+
+		// Return status
+		return true;
 	}
 }
