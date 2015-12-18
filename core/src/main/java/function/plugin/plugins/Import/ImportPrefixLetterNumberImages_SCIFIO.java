@@ -69,11 +69,14 @@ public class ImportPrefixLetterNumberImages_SCIFIO extends JEXPlugin {
 	
 	@ParameterMarker(uiOrder=1, name="File Prefix", description="Prefix in the file name preceeding the RowLetterColumnNumber.fileExtension name format.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
 	String prefix;
+	
+	@ParameterMarker(uiOrder=1, name="Column Num Digits", description="Number of digits used to define the column number (e.g., 02 is represented with 2 digits)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="2")
+	int digits;
 
 	@ParameterMarker(uiOrder=2, name="File Extension", description="The type of file that is being imported. Default is nd2.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="nd2")
 	String fileExtension;
 
-	@ParameterMarker(uiOrder=3, name="File Name Parse Separator", description="Charactor that separates dimension names in the image name (e.g., '_' in X002_Y003.tif). Use blank (i.e., no character) to avoid parsing.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="_")
+	@ParameterMarker(uiOrder=3, name="File Name Parse Separator", description="Charactor that separates dimension names in the image name (e.g., '_' in X002_Y003.tif). Use blank (i.e., no character) to avoid parsing.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
 	String separator;
 
 	@ParameterMarker(uiOrder=4, name="Montage Rows", description="If this image is a montage and is to be split, how many rows are in the image.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
@@ -82,7 +85,7 @@ public class ImportPrefixLetterNumberImages_SCIFIO extends JEXPlugin {
 	@ParameterMarker(uiOrder=5, name="Montage Cols", description="If this image is a montage and is to be split, how many cols are in the image.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
 	int imCols;
 
-	@ParameterMarker(uiOrder=6, name="Gather channel names?", description="Transfer the name of each channel (e.g. DAPI, FITC, etc) if available in the metadata of the image. Otherwise, channels are named by index in the order they were provided by the image.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	@ParameterMarker(uiOrder=6, name="Gather channel names?", description="Transfer the name of each channel (e.g. DAPI, FITC, etc) if available in the metadata of the image. Otherwise, channels are named by index in the order they were provided by the image.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
 	boolean transferNames;
 
 	/////////// Define Outputs ///////////
@@ -123,7 +126,7 @@ public class ImportPrefixLetterNumberImages_SCIFIO extends JEXPlugin {
 		}
 		
 		// Filter files for this particular entry
-		String expectedFileName = prefix + getRowString(optionalEntry.getTrayY(), optionalEntry.getTrayX());
+		String expectedFileName = prefix + getEntryString(optionalEntry.getTrayY(), optionalEntry.getTrayX());
 		List<File> newFileList = new Vector<>();
 		for(File file : pendingImageFiles)
 		{
@@ -145,20 +148,26 @@ public class ImportPrefixLetterNumberImages_SCIFIO extends JEXPlugin {
 		return true;
 	}
 	
-	public String getRowString(int trayY, int trayX)
+	public String getColString(int trayX)
+	{
+		String formatted = String.format("%0" + digits + "d", trayX);
+		return formatted;
+	}
+	
+	public String getEntryString(int trayY, int trayX)
 	{
 		StringBuilder sb = new StringBuilder();
 		int rowMultiple = (trayY / 26);
 		for(int i = 0; i < rowMultiple; i++)
 		{
-			sb.append(getRowLetter(rowMultiple));
+			sb.append(getRowString(rowMultiple));
 		}
-		sb.append(getRowLetter(trayY));
-		sb.append(trayX + 1);
+		sb.append(getRowString(trayY));
+		sb.append(getColString(trayX + 1));
 		return sb.toString();
 	}
 	
-	public String getRowLetter(int trayY)
+	public String getRowString(int trayY)
 	{
 		return String.valueOf((char)((trayY % 26) + 65));
 	}
