@@ -20,6 +20,7 @@ import function.plugin.mechanism.MarkerConstants;
 import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
 import jex.statics.JEXStatics;
+import logs.Logs;
 import miscellaneous.CSVList;
 import miscellaneous.JEXCSVWriter;
 import rtools.R;
@@ -42,10 +43,10 @@ import weka.core.converters.JEXTableWriter;
  */
 @Plugin(
 		type = JEXPlugin.class,
-		name="Convert ARFF File (R)",
+		name="Convert ARFF File",
 		menuPath="Table Tools",
 		visible=true,
-		description="Reorganize tables from ARFF format to CSV format and save."
+		description="Gather label information into the table, save as arff, txt, or csv and, if csv, optionally reorganize tables and save."
 		)
 public class ConvertARFFFile extends JEXPlugin {
 
@@ -142,7 +143,14 @@ public class ConvertARFFFile extends JEXPlugin {
 		for (String labelName : sortingLabels)
 		{
 			JEXData label = JEXStatics.jexManager.getDataOfTypeNameInEntry(new TypeName(JEXData.LABEL, labelName), optionalEntry);
-			compiledMap.put(labelName, LabelReader.readLabelValue(label));
+			if(label != null)
+			{
+				compiledMap.put(labelName, LabelReader.readLabelValue(label));
+			}
+			else
+			{
+				Logs.log("No label named '" + labelName + "' could be found in Experiment: " + optionalEntry.getEntryExperiment() + ", X: " + optionalEntry.getTrayX() + ", Y: " + optionalEntry.getTrayY(), this);
+			}
 		}
 
 		for (Entry<DimensionMap,Double> e : tableDatas.entrySet())
