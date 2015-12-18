@@ -1,11 +1,5 @@
 package cruncher;
 
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.Definition.ParameterSet;
-import Database.Definition.TypeName;
-import function.JEXCrunchable;
-
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -15,7 +9,12 @@ import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
-import jex.statics.JEXDialog;
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.Definition.ParameterSet;
+import Database.Definition.TypeName;
+import function.JEXCrunchable;
+import function.plugin.mechanism.JEXCrunchablePlugin;
 import jex.statics.JEXStatics;
 import logs.Logs;
 import miscellaneous.Canceler;
@@ -37,6 +36,7 @@ public class Ticket implements Callable<Integer>, Canceler{
 	TreeMap<JEXEntry,Integer> flags; // -2 not run, -1 canceled, 0 failed, 1 success
 	JEXCrunchable cr;
 	ParameterSet firstParamSet;
+	TreeMap<Integer,TypeName> outputNames;
 	TreeMap<JEXEntry,Set<JEXData>> outputList = new TreeMap<JEXEntry,Set<JEXData>>();
 	int functionsStarted = 0, functionsFinished = 0;
 	String startTime = "", endTime = "";
@@ -72,6 +72,7 @@ public class Ticket implements Callable<Integer>, Canceler{
 		if(this.firstParamSet == null)
 		{
 			this.firstParamSet = func.getParameters();
+			this.outputNames = func.getExpectedOutputs();
 		}
 		
 	}
@@ -111,6 +112,16 @@ public class Ticket implements Callable<Integer>, Canceler{
 	public TreeMap<JEXEntry,Set<JEXData>> getOutputList()
 	{
 		return this.outputList;
+	}
+	
+	public ParameterSet getParamset()
+	{
+		return this.firstParamSet;
+	}
+	
+	public TypeName[] getOutputNames()
+	{
+		return this.cr.getOutputs();
 	}
 	
 	private void setOutputtedData(TreeMap<JEXEntry,Set<JEXData>> outputList)
@@ -203,6 +214,10 @@ public class Ticket implements Callable<Integer>, Canceler{
 			this.setOutputtedData(output);
 			if(this.cr != null)
 			{
+				if(this.cr instanceof JEXCrunchablePlugin)
+				{
+					((JEXCrunchablePlugin) this.cr).setPluginParameters();
+				}
 				this.cr.finalizeTicket(this);
 			}
 			

@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.TreeMap;
 
 import logs.Logs;
 import tables.DimensionMap;
@@ -70,7 +71,7 @@ public class JEXCSVReader {
 		}
 		
 		ArrayList<String> temp = this.readRowToArrayList();
-		if(temp == null)
+		if(temp == null || temp.size()!=header.size())
 		{
 			return null;
 		}
@@ -82,6 +83,25 @@ public class JEXCSVReader {
 		}
 		
 		Pair<DimensionMap, String> ret = new Pair<DimensionMap,String>(map, temp.get(this.header.size()-1));
+		return ret;
+	}
+	
+	public static TreeMap<DimensionMap,String> getCSVTable(String csvPath, boolean hasHeaderRow)
+	{
+		JEXCSVReader reader = new JEXCSVReader(csvPath, true);
+
+		reader = new JEXCSVReader(csvPath, true);
+		TreeMap<DimensionMap,String> ret = new TreeMap<>();
+		while(!reader.isEOF())
+		{
+			miscellaneous.Pair<DimensionMap,String> result = reader.readRowToDimensionMapString();
+			if(result != null)
+			{
+				ret.put(result.p1, result.p2);
+			}
+		}
+		
+		reader.close();
 		return ret;
 	}
 	

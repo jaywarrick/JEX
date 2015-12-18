@@ -16,6 +16,7 @@ import miscellaneous.CSVList;
 import miscellaneous.Pair;
 import net.imagej.ops.Op;
 import net.imagej.ops.Ops;
+import net.imagej.ops.special.Computers;
 import net.imglib2.img.Img;
 import net.imglib2.roi.labeling.LabelRegion;
 import net.imglib2.roi.labeling.LabelRegionCursor;
@@ -193,7 +194,7 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 
 			// Segment and save the union image into finalMap
 			Img<UnsignedByteType> segImage = JEXReader.getByteImage(segMap.get(subMap));
-			Op unionOp = IJ2PluginUtility.ij().op().computer(Ops.Logic.And.class, union, segImage);
+			Op unionOp = Computers.unary(IJ2PluginUtility.ij().op(), Ops.Logic.And.class, union, segImage);
 			unionOp.run();
 			//ImageJFunctions.show(segImage);
 			//ImageJFunctions.show(union);
@@ -224,7 +225,7 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 					Logs.log("Intersecting remaining images with Segmented Union Image: " + name, this);
 					DimensionMap mapTemp = subMap.copyAndSet(channelDimName + "=" + name);
 					Img<UnsignedByteType> tempMaskImg = JEXReader.getByteImage(maskMap.get(mapTemp));
-					Op op = IJ2PluginUtility.ij().op().computer(Ops.Logic.And.class, tempMaskImg, union);
+					Op op = Computers.unary(IJ2PluginUtility.ij().op(), Ops.Logic.And.class, tempMaskImg, union);
 					op.run();
 					path = JEXWriter.saveImage(tempMaskImg);
 					finalMap.put(mapTemp, path);
@@ -273,7 +274,7 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 			}
 			else
 			{
-				Op op = IJ2PluginUtility.ij().op().computer(Ops.Logic.Or.class, union, mask);
+				Op op = Computers.unary(IJ2PluginUtility.ij().op(), Ops.Logic.Or.class, union, mask);
 				op.run();
 			}
 		}
@@ -285,7 +286,7 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 		Img<UnsignedByteType> ret = union.copy();
 		DimensionMap temp = subMap.copyAndSet(channelDimName + "=" + nameToSubtract);
 		Img<UnsignedByteType> toSubtract = JEXReader.getByteImage(maskMap.get(temp));
-		Op op = IJ2PluginUtility.ij().op().computer(Ops.Logic.LessThan.class, ret, toSubtract);
+		Op op = Computers.unary(IJ2PluginUtility.ij().op(), Ops.Logic.LessThan.class, ret, toSubtract);
 		op.run();
 		return ret;
 	}

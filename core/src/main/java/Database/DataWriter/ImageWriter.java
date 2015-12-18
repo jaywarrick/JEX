@@ -98,7 +98,7 @@ public class ImageWriter {
 			data.addData(map, ds);
 		}
 		
-		if(data.datamap.size() == 0)
+		if(data.getDataMap().size() == 0)
 		{
 			return null;
 		}
@@ -161,7 +161,7 @@ public class ImageWriter {
 			data.addData(newmap, ds);
 		}
 		
-		if(data.datamap.size() == 0)
+		if(data.getDataMap().size() == 0)
 		{
 			return null;
 		}

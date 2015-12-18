@@ -49,7 +49,7 @@ public class FileDropCellController {
 	{
 		this.row = row;
 		this.column = column;
-		title.setText("Cell " + row + "." + column);
+		title.setText("X" + row + ".Y" + column);
 		panel().rebuild();
 	}
 	
@@ -104,7 +104,7 @@ public class FileDropCellController {
 			this.setLayout(new MigLayout("ins 2 2 2 2", "[fill,grow]", "2[20]2[fill,grow]2"));
 			
 			// The title and the label color
-			this.add(title, "growx, wrap");
+			this.add(title, "growx, wrap, wmin 0");
 			
 			// The data view
 			if(theFiles == null)
