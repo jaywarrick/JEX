@@ -1,12 +1,39 @@
 package image.roi;
 
+import java.awt.Desktop;
+import java.awt.Point;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.JarURLConnection;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.text.DecimalFormat;
+import java.util.Enumeration;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Random;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.Vector;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+
+import org.apache.commons.math3.stat.StatUtils;
+import org.scijava.command.CommandInfo;
+import org.scijava.plugin.DefaultPluginFinder;
+import org.scijava.plugin.Plugin;
+import org.scijava.plugin.PluginInfo;
+import org.scijava.util.ConversionUtils;
+
 import function.CrunchFactory;
 import function.plugin.IJ2.IJ2PluginUtility;
 import function.plugin.mechanism.JEXCrunchablePlugin;
 import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.JEXPluginInfo;
-import function.plugin.plugins.featureExtraction.FeatureUtils;
-import function.plugin.plugins.featureExtraction.SamplingIterableRegion;
 import function.singleCellAnalysis.SingleCellUtility;
 import ij.ImagePlus;
 import ij.gui.PolygonRoi;
@@ -33,29 +60,6 @@ import io.scif.config.SCIFIOConfig;
 import io.scif.img.ImgIOException;
 import io.scif.img.ImgOpener;
 import io.scif.img.SCIFIOImgPlus;
-
-import java.awt.Desktop;
-import java.awt.Point;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.JarURLConnection;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.text.DecimalFormat;
-import java.util.Enumeration;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Random;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.Vector;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
-
 import jex.statics.JEXDialog;
 import jex.utilities.ROIUtility;
 import loci.common.DataTools;
@@ -72,31 +76,18 @@ import net.imagej.display.ImageDisplay;
 import net.imagej.display.OverlayView;
 import net.imagej.ops.Op;
 import net.imagej.ops.Ops;
+import net.imagej.ops.special.Functions;
+import net.imagej.ops.special.UnaryFunctionOp;
 import net.imagej.options.OptionsChannels;
 import net.imagej.overlay.Overlay;
 import net.imagej.overlay.RectangleOverlay;
 import net.imagej.patcher.LegacyInjector;
-import net.imglib2.IterableInterval;
-import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.img.Img;
-import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.meta.CalibratedAxis;
 import net.imglib2.meta.ImgPlus;
-import net.imglib2.roi.Regions;
-import net.imglib2.roi.labeling.ImgLabeling;
-import net.imglib2.roi.labeling.LabelRegion;
-import net.imglib2.roi.labeling.LabelRegions;
-import net.imglib2.type.numeric.integer.IntType;
+import net.imglib2.roi.geometric.Polygon;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
-
-import org.apache.commons.math3.stat.StatUtils;
-import org.scijava.command.CommandInfo;
-import org.scijava.plugin.DefaultPluginFinder;
-import org.scijava.plugin.Plugin;
-import org.scijava.plugin.PluginInfo;
-import org.scijava.util.ConversionUtils;
-
+import net.imglib2.type.numeric.real.DoubleType;
 import rtools.R;
 import rtools.ScriptRepository;
 import tables.Dim;
@@ -114,7 +105,22 @@ public class PointTester {// extends URLClassLoader {
 
 	public static void main(String[] args) throws Exception
 	{
-		tryBooleanImageCalc();
+		tryPolygonSizeOp();
+	}
+	
+	public static void tryPolygonSizeOp()
+	{
+		PointList pl = new PointList();
+		pl.add(0, 0);
+		pl.add(0, 1);
+		pl.add(1, 1);
+		pl.add(1, 0);
+		Polygon p = new Polygon(pl);
+		
+		UnaryFunctionOp<Polygon,DoubleType> op = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.Size.class, DoubleType.class,  p);
+		DoubleType d = op.compute1(p);
+		
+		Logs.log(d.toString(), PointTester.class);
 	}
 
 	public static void tryBooleanImageCalc() throws ImgIOException
