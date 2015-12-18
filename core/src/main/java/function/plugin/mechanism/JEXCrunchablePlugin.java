@@ -193,7 +193,7 @@ public class JEXCrunchablePlugin extends JEXCrunchable {
 		}
 	}
 	
-	private void setPluginParameters()
+	public void setPluginParameters()
 	{
 		for(Database.Definition.Parameter parameter : this.parameters.getParameters())
 		{
