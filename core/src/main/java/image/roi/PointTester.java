@@ -76,7 +76,8 @@ import net.imagej.display.ImageDisplay;
 import net.imagej.display.OverlayView;
 import net.imagej.ops.Op;
 import net.imagej.ops.Ops;
-import net.imagej.ops.special.UnaryComputerOp;
+import net.imagej.ops.special.Functions;
+import net.imagej.ops.special.UnaryFunctionOp;
 import net.imagej.options.OptionsChannels;
 import net.imagej.overlay.Overlay;
 import net.imagej.overlay.RectangleOverlay;
@@ -87,6 +88,7 @@ import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.meta.CalibratedAxis;
 import net.imglib2.meta.ImgPlus;
+import net.imglib2.roi.geometric.Polygon;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.real.DoubleType;
 import rtools.R;
@@ -131,6 +133,22 @@ public class PointTester {// extends URLClassLoader {
 		}
 
 		return tmp;
+
+	}
+	
+	public static void tryPolygonSizeOp()
+	{
+		PointList pl = new PointList();
+		pl.add(0, 0);
+		pl.add(0, 1);
+		pl.add(1, 1);
+		pl.add(1, 0);
+		Polygon p = new Polygon(pl);
+		
+		UnaryFunctionOp<Polygon,DoubleType> op = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.Size.class, DoubleType.class,  p);
+		DoubleType d = op.compute1(p);
+		
+		Logs.log(d.toString(), PointTester.class);
 	}
 
 	public static void tryBooleanImageCalc() throws ImgIOException

@@ -6,6 +6,7 @@ import java.util.Vector;
 
 import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
+import logs.Logs;
 import miscellaneous.FileUtility;
 import miscellaneous.SimpleFileFilter;
 
@@ -14,6 +15,7 @@ import org.scijava.plugin.Plugin;
 import tables.DimensionMap;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
+import Database.DBObjects.JEXLabel;
 import Database.DataReader.LabelReader;
 import function.plugin.mechanism.InputMarker;
 import function.plugin.mechanism.JEXPlugin;
@@ -76,6 +78,9 @@ public class ImportByImagesLabel extends JEXPlugin {
 	@ParameterMarker(uiOrder=6, name="Filename Matching Method", description="How to match the name. 1) If filename 'contains each' label name/value pair, 2) If filename 'contains all' name/value pair in uninterrupted sequence spearated by the provided separator, or 3) If filename 'exactly matches' the sequence of label name/value paires separated by provided separator (no extra chars).", ui=MarkerConstants.UI_DROPDOWN, choices={"Contains Each","Contains All","Exactly Matches"}, defaultChoice=0)
 	String method;	
 	
+	@ParameterMarker(uiOrder=7, name="Overwrite?", description="Overwrite existing object of the same name if it exists in that particular entry?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	boolean overwrite;
+	
 	/////////// Define Outputs ///////////
 	
 	@OutputMarker(uiOrder=1, name="Imported Image", type=MarkerConstants.TYPE_IMAGE, flavor="", description="The imported image object", enabled=true)
@@ -90,6 +95,16 @@ public class ImportByImagesLabel extends JEXPlugin {
 	@Override
 	public boolean run(JEXEntry optionalEntry) {
 		
+		if(!overwrite)
+		{
+			if(optionalEntry.getData(this.output.getTypeName()) != null)
+			{
+				// Skip
+				Logs.log("Skipping this entry: x" + optionalEntry.getTrayX() + " y"  +optionalEntry.getTrayY() + ". Found existing data of same type and name: " + output.getTypeName(), this);
+				return true;
+			}
+		}
+		
 		// GATHER DATA FROM PARAMETERS
 		// create file object for input directory
 		File filePath = new File(inDir);
@@ -97,11 +112,10 @@ public class ImportByImagesLabel extends JEXPlugin {
 		// SETUP THE PENDING IMAGE FILES FOR THIS ENTRY
 		// Gather a list of the provided labels.
 		List<JEXData> labels = new Vector<JEXData>();
-		if(!JEXPlugin.isInputValid(labelData1, JEXData.LABEL))
+		if(labelData1 != null && labelData1.getTypeName().getType().equals(JEXData.LABEL))
 		{
-			return false;
+			labels.add(labelData1);
 		}
-		labels.add(labelData1);
 		if(labelData2 != null && labelData2.getTypeName().getType().equals(JEXData.LABEL))
 		{
 			labels.add(labelData2);
@@ -145,6 +159,16 @@ public class ImportByImagesLabel extends JEXPlugin {
 		
 		// Filter the file list according to the label filters
 		pendingImageFiles = this.filterFiles(pendingImageFiles, labels);
+		
+		if(pendingImageFiles.size() == 0)
+		{
+			Logs.log("Skipping this entry: x" + optionalEntry.getTrayX() + " y"  +optionalEntry.getTrayY() + ". No files found to import.", this);
+			for(JEXData label : labels)
+			{
+				Logs.log(label.getDataObjectName() + " = " + ((JEXLabel) label).getLabelValue(), this);
+			}
+			return false;
+		}
 		
 		output = ImportImages_SCIFIO.importFiles(pendingImageFiles, this.separator, this.fileExtension, this.imRows, this.imCols, "ImRow", "ImCol", this.transferNames, this);
 		
@@ -269,7 +293,7 @@ public class ImportByImagesLabel extends JEXPlugin {
 	
 	public boolean matches(String fileName, List<JEXData> labelList)
 	{
-		if(!FileUtility.getFileNameExtension(fileName).equals(this.fileExtension))
+		if(!FileUtility.getFileNameExtension(fileName).equals(this.fileExtension) || labelList.size() == 0)
 		{
 			return false;
 		}

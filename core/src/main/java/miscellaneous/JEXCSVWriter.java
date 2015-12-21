@@ -5,6 +5,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 
 import tables.DimTable;
 import tables.DimensionMap;
@@ -53,6 +54,19 @@ public class JEXCSVWriter {
 		row[map.size()] = value;
 		
 		this.write(row);
+	}
+	
+	public static String write(TreeMap<DimensionMap,String> tableData)
+	{
+		JEXCSVWriter writer = new JEXCSVWriter();
+		writer.writeHeader(tableData.firstKey());
+		for(Entry<DimensionMap,String> e : tableData.entrySet())
+		{
+			writer.write(e.getKey(), e.getValue());
+		}
+		String ret = writer.getPath();
+		writer.close();
+		return ret;
 	}
 	
 	/**

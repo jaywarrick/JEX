@@ -480,12 +480,18 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		}
 		if(geometric)
 		{
+			Polygon toCalc = FeatureUtils.convert(reg);
+			if(toCalc == null)
+			{
+				Logs.log("Encountered a null polygon for geometric2d features. id:" + id + ", label:" + reg.getLabel(), FeatureExtraction.class);
+			}
 			if(opGeometric == null)
 			{
-				opGeometric = IJ2PluginUtility.ij().op().op(Geometric2DFeatureSet.class, reg);
+				opGeometric = IJ2PluginUtility.ij().op().op(Geometric2DFeatureSet.class, toCalc);
 			}
 
-			Map<NamedFeature, DoubleType> results = opGeometric.compute1(FeatureUtils.convert(reg));
+			Map<NamedFeature, DoubleType> results = opGeometric.compute1(toCalc);
+			//Map<NamedFeature, DoubleType> results = opGeometric.compute1(reg);
 			for(Entry<NamedFeature, DoubleType> result : results.entrySet())
 			{
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
