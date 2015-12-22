@@ -1,21 +1,35 @@
 // Define package name as "plugins" as show here
 package function.plugin.plugins.featureExtraction;
 
-// Import needed classes here 
-import image.roi.IdPoint;
-import image.roi.ROIPlus;
-import io.scif.img.ImgOpener;
-
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 
+import org.scijava.plugin.Plugin;
+
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DataReader.ImageReader;
+import Database.DataReader.RoiReader;
+import Database.DataWriter.FileWriter;
+import Database.SingleUserDatabase.JEXReader;
+import function.plugin.IJ2.IJ2PluginUtility;
+import function.plugin.mechanism.InputMarker;
+import function.plugin.mechanism.JEXPlugin;
+import function.plugin.mechanism.MarkerConstants;
+import function.plugin.mechanism.OutputMarker;
+import function.plugin.mechanism.ParameterMarker;
+// Import needed classes here 
+import image.roi.IdPoint;
+import image.roi.ROIPlus;
+import io.scif.img.ImgOpener;
 import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import logs.Logs;
 import miscellaneous.JEXCSVReader;
 import miscellaneous.JEXCSVWriter;
+import miscellaneous.Pair;
 import net.imagej.ops.features.sets.Geometric2DFeatureSet;
 import net.imagej.ops.features.sets.Haralick2DFeatureSet;
 import net.imagej.ops.features.sets.HistogramFeatureSet;
@@ -23,7 +37,9 @@ import net.imagej.ops.features.sets.ImageMomentsFeatureSet;
 import net.imagej.ops.features.sets.StatsFeatureSet;
 import net.imagej.ops.features.sets.ZernikeFeatureSet;
 import net.imagej.ops.featuresets.NamedFeature;
+import net.imglib2.Cursor;
 import net.imglib2.IterableInterval;
+import net.imglib2.RandomAccess;
 import net.imglib2.converter.Converter;
 import net.imglib2.converter.Converters;
 import net.imglib2.img.Img;
@@ -41,25 +57,10 @@ import net.imglib2.type.numeric.integer.IntType;
 import net.imglib2.type.numeric.integer.LongType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.real.DoubleType;
-
-import org.scijava.plugin.Plugin;
-
 import tables.DimTable;
 import tables.DimTableBuilder;
 import tables.DimensionMap;
 import weka.core.converters.JEXTableWriter;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DataReader.ImageReader;
-import Database.DataReader.RoiReader;
-import Database.DataWriter.FileWriter;
-import Database.SingleUserDatabase.JEXReader;
-import function.plugin.IJ2.IJ2PluginUtility;
-import function.plugin.mechanism.InputMarker;
-import function.plugin.mechanism.JEXPlugin;
-import function.plugin.mechanism.MarkerConstants;
-import function.plugin.mechanism.OutputMarker;
-import function.plugin.mechanism.ParameterMarker;
 
 // Specify plugin characteristics here
 @Plugin(
@@ -114,58 +115,58 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
 	// ///////// Define Parameters here ///////////
 
-	@ParameterMarker(uiOrder = -2, name = "Mask channel dim name", description = "Channel dimension name in mask data.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "Channel")
+	@ParameterMarker(uiOrder = 0, name = "Mask channel dim name", description = "Channel dimension name in mask data.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "Channel")
 	String maskChannelName;
 
-	@ParameterMarker(uiOrder = -1, name = "'Whole Cell' channel value", description = "Which channel value in the channel dim represents the whole cell that has a 1-to-1 mapping with the maxima points.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "WholeCell")
-	String maskChannelValue;
+	@ParameterMarker(uiOrder = 1, name = "'Whole Cell' channel value", description = "Which channel value in the channel dim represents the whole cell that has a 1-to-1 mapping with the maxima points.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "WholeCell")
+	String maskWholeCellChannelValue;
 
-	@ParameterMarker(uiOrder = 0, name = "Image intensity offset", description = "Amount the images are offset from zero (will be subtracted before calculation)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "0.0")
+	@ParameterMarker(uiOrder = 2, name = "Image intensity offset", description = "Amount the images are offset from zero (will be subtracted before calculation)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "0.0")
 	double offset;
 
-	@ParameterMarker(uiOrder = 1, name = "** Compute Stats Features?", description = "Whether to quantify first order statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
+	@ParameterMarker(uiOrder = 3, name = "** Compute Stats Features?", description = "Whether to quantify first order statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
 	boolean stats;
-
-	@ParameterMarker(uiOrder = 2, name = "** Compute 2D Geometric Features?", description = "Whether to quantify geometric statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	
+	@ParameterMarker(uiOrder = 4, name = "** Compute 2D Geometric Features?", description = "Whether to quantify geometric statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean geometric;
 
-	@ParameterMarker(uiOrder = 3, name = "** Compute 2D Haralick Features?", description = "Whether to quantify Haralick texture statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	@ParameterMarker(uiOrder = 5, name = "** Compute 2D Haralick Features?", description = "Whether to quantify Haralick texture statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean haralick2D;
 
-	@ParameterMarker(uiOrder = 4, name = "** Compute Histogram Features?", description = "Whether to quantify histogram statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	@ParameterMarker(uiOrder = 6, name = "** Compute Histogram Features?", description = "Whether to quantify histogram statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean histogram;
 
-	@ParameterMarker(uiOrder = 5, name = "** Compute Moments Features?", description = "Whether to quantify image moment statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	@ParameterMarker(uiOrder = 7, name = "** Compute Moments Features?", description = "Whether to quantify image moment statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean moments;
 
 	//	@ParameterMarker(uiOrder = 5, name = "** Compute 2D Tamura Features?", description = "Whether to quantify Tamura statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	//	boolean tamura;
 
-	@ParameterMarker(uiOrder = 6, name = "** Compute Zernike Features?", description = "Whether to quantify Zernike shape statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	@ParameterMarker(uiOrder = 8, name = "** Compute Zernike Features?", description = "Whether to quantify Zernike shape statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean zernike;
 
-	@ParameterMarker(uiOrder = 7, name = "** Connectedness Features", description = "The structuring element or number of neighbors to require to be part of the neighborhood.", ui = MarkerConstants.UI_DROPDOWN, choices = { "4 Connected", "8 Connected" }, defaultChoice = 0)
+	@ParameterMarker(uiOrder = 9, name = "** Connectedness Features", description = "The structuring element or number of neighbors to require to be part of the neighborhood.", ui = MarkerConstants.UI_DROPDOWN, choices = { "4 Connected", "8 Connected" }, defaultChoice = 0)
 	String connectedness;
 
-	@ParameterMarker(uiOrder = 8, name = "Haralick Gray Levels", description = "Number of gray levels for Haralick calculations", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "8")
+	@ParameterMarker(uiOrder = 10, name = "Haralick Gray Levels", description = "Number of gray levels for Haralick calculations", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "8")
 	int haralickGrayLevels;
 
-	@ParameterMarker(uiOrder = 9, name = "Haralick Co-Occurrence Matrix Distance", description = "Distance at which to compute the co-occurrence matrix", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "1")
+	@ParameterMarker(uiOrder = 11, name = "Haralick Co-Occurrence Matrix Distance", description = "Distance at which to compute the co-occurrence matrix", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "1")
 	double haralickDistance;
 
-	@ParameterMarker(uiOrder = 10, name = "Haralick Number of Directions", description = "(Orthogonals and Diagonals etc) 2 performs horizontal and vertical. 4 adds the 2 diagonals as well.", ui = MarkerConstants.UI_DROPDOWN, choices = { "2", "4" }, defaultChoice = 1)
+	@ParameterMarker(uiOrder = 12, name = "Haralick Number of Directions", description = "(Orthogonals and Diagonals etc) 2 performs horizontal and vertical. 4 adds the 2 diagonals as well.", ui = MarkerConstants.UI_DROPDOWN, choices = { "2", "4" }, defaultChoice = 1)
 	String haralickNumDirections;
 
-	@ParameterMarker(uiOrder = 11, name = "Histogram Number of Bins", description = "Number of bins for the histogram created for each cell region", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "256")
+	@ParameterMarker(uiOrder = 13, name = "Histogram Number of Bins", description = "Number of bins for the histogram created for each cell region", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "256")
 	int histogramBins;
 
-	@ParameterMarker(uiOrder = 11, name = "Tamura 2D Number of Bins", description = "Number of bins for the histogram created for each cell region for the directionality feature", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "256")
+	@ParameterMarker(uiOrder = 14, name = "Tamura 2D Number of Bins", description = "Number of bins for the histogram created for each cell region for the directionality feature", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "256")
 	int tamuraBins;
 
-	@ParameterMarker(uiOrder = 14, name = "Zernike Min Moment", description = "Min Zernike moment calculate", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "1")
+	@ParameterMarker(uiOrder = 15, name = "Zernike Min Moment", description = "Min Zernike moment calculate", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "1")
 	int zernikeMomentMin;
 
-	@ParameterMarker(uiOrder = 15, name = "Zernike Max Moment", description = "Max Zernike moment calculate", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "3")
+	@ParameterMarker(uiOrder = 16, name = "Zernike Max Moment", description = "Max Zernike moment calculate", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "3")
 	int zernikeMomentMax;
 
 	// Add a primary mask and secondary mask
@@ -227,36 +228,37 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			this.total = maskData.getDimTable().mapCount() + maskData.getDimTable().mapCount() * imageData.getDimTable().mapCount();
 		}
 
-		DimTable subTable = maskData.getDimTable().getSubTable(maskChannelName);
-		for(DimensionMap subMap : subTable.getMapIterator())
+		DimTable noMaskChannelTable = maskData.getDimTable().getSubTable(maskChannelName);
+		for(DimensionMap noMaskChannelMap : noMaskChannelTable.getMapIterator())
 		{
-			DimensionMap mapCellMask = subMap.copyAndSet(maskChannelName + "=" + maskChannelValue);
-			Img<UnsignedByteType> cellMask = JEXReader.getByteImage(maskMap.get(mapCellMask));
+			DimensionMap mapWholeCellMask = noMaskChannelMap.copyAndSet(maskChannelName + "=" + maskWholeCellChannelValue);
+			Img<UnsignedByteType> wholeCellMaskImage = JEXReader.getByteImage(maskMap.get(mapWholeCellMask));
 
-			Logs.log("Utilizing whole cell mask: " + mapCellMask, this);
+			Logs.log("Utilizing whole cell mask: " + mapWholeCellMask, this);
 			if(this.isCanceled())
 			{
 				this.close();
 				return true;
 			}
 
-			ImgLabeling<Integer, IntType> cellLabeling = FeatureUtils.getConnectedComponents(cellMask, connectedness.equals("4 Connected"));
+			ImgLabeling<Integer, IntType> cellLabeling = FeatureUtils.getConnectedComponents(wholeCellMaskImage, connectedness.equals("4 Connected"));
 			LabelRegions<Integer> cellRegions = new LabelRegions<Integer>(cellLabeling);
 			idToLabelMap = new TreeMap<Integer, Integer>();
 
 			// Determine which LabelRegions are the ones we want to keep by testing if our maxima of interest are contained.
-			ROIPlus maxima = roiMap.get(mapCellMask);
+			ROIPlus maxima = roiMap.get(mapWholeCellMask);
 			for(LabelRegion<Integer> cellRegion : cellRegions)
 			{
-				Polygon poly = FeatureUtils.convert(cellRegion);
+				if(this.isCanceled())
+				{
+					this.close();
+					return true;
+				}
+				RandomAccess<BoolType> ra = Regions.iterable(cellRegion).randomAccess();
 				for(IdPoint p : maxima.pointList)
 				{
-					if(this.isCanceled())
-					{
-						this.close();
-						return true;
-					}
-					if(poly.contains(p))
+					ra.setPosition(p);
+					if(ra.get().get())
 					{
 						idToLabelMap.put(p.id, cellRegion.getLabel().intValue());
 					}
@@ -264,15 +266,17 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			}
 
 			// for each map matching this subMap (now we are looping over channel)
-			for(DimensionMap mapMask : maskData.getDimTable().getSubTable(subMap).getMapIterator())
+			for(DimensionMap mapMask : maskData.getDimTable().getSubTable(noMaskChannelMap).getMapIterator())
 			{
 				Img<UnsignedByteType> maskImage = JEXReader.getSingleImage(maskMap.get(mapMask));
-				
+				boolean firstTimeThrough = true;
 				// Loop over channels of intensity images associated with this subMap
-				for(DimensionMap mapImage : imageData.getDimTable().getSubTable(subMap).getMapIterator())
+				for(DimensionMap mapImage : imageData.getDimTable().getSubTable(noMaskChannelMap).getMapIterator())
 				{
+					String maskOnImageString = this.getMaskOnImageString(mapMask, mapImage);
+					DimensionMap mapMeasure = noMaskChannelMap.copyAndSet("MaskChannel_ImageChannel=" + maskOnImageString);
+					
 					Img<T> intensityImage = JEXReader.getSingleImage(imageMap.get(mapImage));
-					boolean firstTimeThrough = true;
 					for(IdPoint p : maxima.pointList)
 					{
 						if(this.isCanceled())
@@ -292,14 +296,14 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 						//						newMap.put("Label", "" + idToLabelMap.get(id));
 						//						this.write(newMap, (double) subRegionCount);
 						LabelRegion<Integer> majorSubRegion = getMajorSubRegion(region, maskImage);
-						String maskOnImageString = this.getMaskOnImageString(mapMask, mapImage);
-						DimensionMap mapMeasure = mapImage.copyAndSet(maskChannelName + "=" + maskOnImageString);
+						
+						// quantify intensity features first (for a complete CSV header)
 						this.quantifyIntensityFeatures(mapMeasure, p.id, majorSubRegion, intensityImage);
-
 						if(firstTimeThrough)
 						{
-							// quantify intensity features first (for a complete CSV header)
-							this.quantifyGeometricFeatures(mapMask.copy(), p.id, majorSubRegion);
+							// Then quantify geometric features of mask
+							DimensionMap temp = noMaskChannelMap.copyAndSet("MaskChannel_ImageChannel=" + mapMask.get(maskChannelName) + "_NA");
+							this.quantifyGeometricFeatures(temp, p.id, majorSubRegion);
 							this.count = this.count + 1;
 							this.percentage = (int) (100 * ((double) (count) / ((double) total)));
 							JEXStatics.statusBar.setProgressPercentage(percentage);
@@ -307,10 +311,9 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 					}
 					this.count = this.count + 1;
 					this.percentage = (int) (100 * ((double) (count) / ((double) total)));
-					JEXStatics.statusBar.setProgressPercentage(percentage);
-					
-					firstTimeThrough = false;				
+					JEXStatics.statusBar.setProgressPercentage(percentage);				
 				}
+				firstTimeThrough = false;
 			}
 
 		}
@@ -324,13 +327,18 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	public String getMaskOnImageString(DimensionMap mapMask, DimensionMap mapImage)
 	{
 		String imageChannelString = mapImage.get(maskChannelName);
+		String maskChannelString = mapMask.get(maskChannelName);
 		if(imageChannelString == null)
 		{
-			return mapMask.get(maskChannelName);
+			return maskChannelString + "_NA";
+		}
+		if(maskChannelString == null)
+		{
+			return "NA_" + imageChannelString;
 		}
 		else
 		{
-			return mapMask.get(maskChannelName) + "_" + imageChannelString;
+			return maskChannelString + "_" + imageChannelString;
 		}
 	}
 
@@ -368,7 +376,15 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		DimTableBuilder builder = new DimTableBuilder();
 		while(!reader.isEOF())
 		{
-			builder.add(reader.readRowToDimensionMapString().p1);
+			Pair<DimensionMap,String> toAdd = reader.readRowToDimensionMapString();
+			if(toAdd != null)
+			{
+				builder.add(toAdd.p1);
+			}
+			else
+			{
+				Logs.log("Went past end of file!?!", this);
+			}
 		}
 		reader.close();
 
@@ -378,8 +394,15 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		arffWriter.writeNumericTableHeader(builder.getDimTable());
 		while(!reader.isEOF())
 		{
-			miscellaneous.Pair<DimensionMap, String> result = reader.readRowToDimensionMapString();
-			arffWriter.writeData(result.p1, Double.parseDouble(result.p2));
+			Pair<DimensionMap, String> result = reader.readRowToDimensionMapString();
+			if(result != null)
+			{
+				arffWriter.writeData(result.p1, Double.parseDouble(result.p2));
+			}
+			else
+			{
+				Logs.log("Went past end of file!?!", this);
+			}
 		}
 
 		// Close and save the data.
@@ -395,15 +418,16 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		LabelRegions<Integer> subRegions = FeatureUtils.getSubRegions(region, mask, connectedness.equals("4 Connected"));
 		long maxSize = 1; // This is hopefully to avoid quantifying subregions that are only a pixel in size.
 		LabelRegion<Integer> majorSubRegion = null;
-		Polygon poly = FeatureUtils.convert(region);
+		RandomAccess<BoolType> ra = Regions.iterable(region).randomAccess();
 		long[] pos = new long[region.numDimensions()];
-		IdPoint p = new IdPoint();
+		Cursor<Void> c = null;
 		for(LabelRegion<Integer> subRegion : subRegions)
 		{
-			subRegion.cursor().localize(pos);
-			p.x = (int) pos[0] + 1; // ImgLib2 considers upper left pixel as 0,0; JEX considers first pixel as 1,1; So, add 1
-			p.y = (int) pos[1] + 1; // ImgLib2 considers upper left pixel as 0,0; JEX considers first pixel as 1,1; So, add 1 
-			if(subRegion.size() > maxSize && poly.contains(p))
+			c = Regions.iterable(subRegion).cursor();
+			c.fwd(); // This needs to be called to get the cursor into the first pixel of the region.
+			c.localize(pos); // localize the pos variable to this location
+			ra.setPosition(pos); // set the position of the random accessible to pos
+			if(subRegion.size() > maxSize && ra.get().get())
 			{
 				majorSubRegion = subRegion;
 				maxSize = subRegion.size();

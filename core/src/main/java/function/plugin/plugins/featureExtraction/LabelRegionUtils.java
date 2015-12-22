@@ -1,13 +1,17 @@
 package function.plugin.plugins.featureExtraction;
 
+import image.roi.IdPoint;
+import net.imglib2.Cursor;
 import net.imglib2.RandomAccess;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgs;
+import net.imglib2.roi.IterableRegion;
+import net.imglib2.roi.Regions;
 import net.imglib2.roi.labeling.ImgLabeling;
 import net.imglib2.roi.labeling.LabelRegion;
-import net.imglib2.roi.labeling.LabelRegionCursor;
 import net.imglib2.roi.labeling.LabelRegions;
 import net.imglib2.roi.labeling.LabelingType;
+import net.imglib2.type.logic.BoolType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.IntType;
 
@@ -36,7 +40,8 @@ public class LabelRegionUtils {
 		// For each region, use a cursor to iterate over the region
 		for(LabelRegion<Integer> region : regions)
 		{
-			LabelRegionCursor c = region.iterator();
+			IterableRegion<BoolType> itrReg = Regions.iterable(region);
+			Cursor<Void> c = itrReg.cursor();
 			Integer toSet = region.getLabel();
 			while(c.hasNext())
 			{
@@ -52,6 +57,28 @@ public class LabelRegionUtils {
 			}
 		}
 		return ret;
+	}
+	
+	public static boolean contains(LabelRegion<?> region, IdPoint p)
+	{
+		// Use the random access to directly determine if the label region contains the point.
+		// Should be faster than iterating
+		RandomAccess<BoolType> ra = Regions.iterable(region).randomAccess();
+		ra.setPosition(p);
+		return ra.get().get();
+		//		LabelRegionCursor c = region.localizingCursor();
+		//		region.randomAccess().
+		//		do
+		//		{
+		//			if(c.getIntPosition(0) == p.x && c.getIntPosition(1) == p.y)
+		//			{
+		//				return true;
+		//			}
+		//			c.next();
+		//		} 
+		//		while(c.hasNext());
+		//
+		//		return false;
 	}
 
 }

@@ -1,34 +1,10 @@
 // Define package name as "plugins" as show here
 package function.plugin.plugins.featureExtraction;
 
-// Import needed classes here 
-import image.roi.IdPoint;
-import image.roi.PointList;
-import image.roi.ROIPlus;
-
-import java.awt.Point;
 import java.util.TreeMap;
-
-import jex.statics.JEXDialog;
-import jex.statics.JEXStatics;
-import logs.Logs;
-import miscellaneous.CSVList;
-import miscellaneous.Pair;
-import net.imagej.ops.Op;
-import net.imagej.ops.Ops;
-import net.imagej.ops.special.Computers;
-import net.imglib2.img.Img;
-import net.imglib2.roi.labeling.LabelRegion;
-import net.imglib2.roi.labeling.LabelRegionCursor;
-import net.imglib2.type.numeric.RealType;
-import net.imglib2.type.numeric.integer.UnsignedByteType;
 
 import org.scijava.plugin.Plugin;
 
-import tables.Dim;
-import tables.DimTable;
-import tables.DimensionMap;
-import weka.core.converters.JEXTableWriter;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;
@@ -43,6 +19,25 @@ import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.MarkerConstants;
 import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
+// Import needed classes here 
+import image.roi.IdPoint;
+import image.roi.PointList;
+import image.roi.ROIPlus;
+import jex.statics.JEXDialog;
+import jex.statics.JEXStatics;
+import logs.Logs;
+import miscellaneous.CSVList;
+import miscellaneous.Pair;
+import net.imagej.ops.Op;
+import net.imagej.ops.Ops;
+import net.imagej.ops.special.Computers;
+import net.imglib2.img.Img;
+import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.integer.UnsignedByteType;
+import tables.Dim;
+import tables.DimTable;
+import tables.DimensionMap;
+import weka.core.converters.JEXTableWriter;
 
 // Specify plugin characteristics here
 @Plugin(
@@ -243,22 +238,6 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 		outputFile = FileWriter.makeFileObject("temp", null, path);
 
 		return true;
-	}
-
-	public static boolean contains(LabelRegion<?> region, Point p)
-	{
-		LabelRegionCursor c = region.localizingCursor();
-		do
-		{
-			if(c.getIntPosition(0) == p.x && c.getIntPosition(1) == p.y)
-			{
-				return true;
-			}
-			c.next();
-		} 
-		while(c.hasNext());
-
-		return false;
 	}
 
 	private Img<UnsignedByteType> getUnion(DimensionMap subMap, CSVList namesToUnion, TreeMap<DimensionMap,String> maskMap)

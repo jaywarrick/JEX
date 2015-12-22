@@ -5,9 +5,10 @@ import java.util.Comparator;
 
 import miscellaneous.CSVList;
 import miscellaneous.Copiable;
+import net.imglib2.Localizable;
 import net.imglib2.RealLocalizable;
 
-public class IdPoint extends Point implements Comparator<IdPoint>, Copiable<IdPoint>, RealLocalizable {
+public class IdPoint extends Point implements Comparator<IdPoint>, Copiable<IdPoint>, RealLocalizable, Localizable {
 	
 	/**
 	 * 
@@ -102,6 +103,20 @@ public class IdPoint extends Point implements Comparator<IdPoint>, Copiable<IdPo
 		position[0] = this.x;
 		position[1] = this.y;
 	}
+	
+	@Override
+	public void localize(int[] position)
+	{
+		position[0] = this.x;
+		position[1] = this.y;
+	}
+
+	@Override
+	public void localize(long[] position)
+	{
+		position[0] = this.x;
+		position[1] = this.y;
+	}
 
 	@Override
 	public float getFloatPosition(int d)
@@ -129,4 +144,29 @@ public class IdPoint extends Point implements Comparator<IdPoint>, Copiable<IdPo
 		}
 	}
 	
+	@Override
+	public int getIntPosition(int d)
+	{
+		if(d == 0)
+		{
+			return this.x;
+		}
+		else
+		{
+			return this.y;
+		}
+	}
+
+	@Override
+	public long getLongPosition(int d)
+	{
+		if(d == 0)
+		{
+			return this.x;
+		}
+		else
+		{
+			return this.y;
+		}
+	}
 }

@@ -162,14 +162,14 @@ public class FeatureUtils {
 				return null;
 			}
 			LabelRegion<Integer> region = regions.getLabelRegion(label);
-			Polygon poly = convert(region);
+			//Polygon poly = convert(region);
 			for(IdPoint p : maxima.getPointList())
 			{
 				if(canceler != null && canceler.isCanceled())
 				{
 					return null;
 				}
-				if(poly.contains(p))
+				if(LabelRegionUtils.contains(region, p)) //poly.contains(p))
 				{
 					PointList pl = labelToPointsMap.get(label);
 					if(pl == null)
