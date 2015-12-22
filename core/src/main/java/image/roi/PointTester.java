@@ -108,7 +108,12 @@ public class PointTester {// extends URLClassLoader {
 
 	public static void main(String[] args) throws Exception
 	{
-		tryImageMoments();
+		double d = -0.20000000000000001234e-36;
+		DecimalFormat df1 = new DecimalFormat("#.##########################E0");
+		DecimalFormat df2 = new DecimalFormat("0.00000000000000000000000000E0");
+		System.out.println((new Double(d)).toString());
+		System.out.println(df1.format(d));
+		System.out.println(df2.format(d));
 	}
 	
 	public static void tryImageMoments()

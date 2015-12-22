@@ -38,7 +38,6 @@ public class JEXTableWriter {
 	public DimTable dimTable;
 	public Instances instances;
 	public String valueHeaderName = VALUE;
-	public static int precisionAfterDecPoint = 6;
 	
 	private int rowCounter = 0;
 	
@@ -318,7 +317,8 @@ public class JEXTableWriter {
 			}
 			else
 			{
-				text.append(doubleToString(((Number) value).doubleValue(), precisionAfterDecPoint));
+				text.append(((Number) value).toString());
+				//text.append(doubleToString(((Number) value).doubleValue(), precisionAfterDecPoint));
 			}
 		}
 		return text.toString();
