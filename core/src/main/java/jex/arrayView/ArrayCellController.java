@@ -158,13 +158,13 @@ public class ArrayCellController {
 		selected = JEXStatics.jexManager.isAllSelected(cell.getEntries());
 		if(selected)
 		{
-			Logs.log("Setting border color to selected color", 2, this);
+			//Logs.log("Setting border color to selected color", 2, this);
 			borderColor = DisplayStatics.selectedDividerColor;
 			borderColor = DisplayStatics.selectedButtonBorder;
 		}
 		else
 		{
-			Logs.log("Setting border color to unselected color", 2, this);
+			//Logs.log("Setting border color to unselected color", 2, this);
 			borderColor = DisplayStatics.dividerColor;
 		}
 		
