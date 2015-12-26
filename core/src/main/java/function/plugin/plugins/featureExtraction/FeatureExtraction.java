@@ -20,6 +20,13 @@ import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.MarkerConstants;
 import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
+import function.plugin.plugins.featureExtraction.ops.features.sets.Geometric2DFeatureSet;
+import function.plugin.plugins.featureExtraction.ops.features.sets.Haralick2DFeatureSet;
+import function.plugin.plugins.featureExtraction.ops.features.sets.HistogramFeatureSet;
+import function.plugin.plugins.featureExtraction.ops.features.sets.ImageMomentsFeatureSet;
+import function.plugin.plugins.featureExtraction.ops.features.sets.StatsFeatureSet;
+import function.plugin.plugins.featureExtraction.ops.features.sets.ZernikeFeatureSet;
+import function.plugin.plugins.featureExtraction.ops.featuresets.NamedFeature;
 // Import needed classes here 
 import image.roi.IdPoint;
 import image.roi.ROIPlus;
@@ -30,13 +37,6 @@ import logs.Logs;
 import miscellaneous.JEXCSVReader;
 import miscellaneous.JEXCSVWriter;
 import miscellaneous.Pair;
-import net.imagej.ops.features.sets.Geometric2DFeatureSet;
-import net.imagej.ops.features.sets.Haralick2DFeatureSet;
-import net.imagej.ops.features.sets.HistogramFeatureSet;
-import net.imagej.ops.features.sets.ImageMomentsFeatureSet;
-import net.imagej.ops.features.sets.StatsFeatureSet;
-import net.imagej.ops.features.sets.ZernikeFeatureSet;
-import net.imagej.ops.featuresets.NamedFeature;
 import net.imglib2.Cursor;
 import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccess;
@@ -232,9 +232,9 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		for(DimensionMap noMaskChannelMap : noMaskChannelTable.getMapIterator())
 		{
 			DimensionMap mapWholeCellMask = noMaskChannelMap.copyAndSet(maskChannelName + "=" + maskWholeCellChannelValue);
+			Logs.log("Getting whole cell mask: " + mapWholeCellMask, this);
 			Img<UnsignedByteType> wholeCellMaskImage = JEXReader.getByteImage(maskMap.get(mapWholeCellMask));
 
-			Logs.log("Utilizing whole cell mask: " + mapWholeCellMask, this);
 			if(this.isCanceled())
 			{
 				this.close();
@@ -268,6 +268,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			// for each map matching this subMap (now we are looping over channel)
 			for(DimensionMap mapMask : maskData.getDimTable().getSubTable(noMaskChannelMap).getMapIterator())
 			{
+				Logs.log("Getting mask: " + mapMask.toString(), this);
 				Img<UnsignedByteType> maskImage = JEXReader.getSingleImage(maskMap.get(mapMask));
 				boolean firstTimeThrough = true;
 				// Loop over channels of intensity images associated with this subMap
@@ -275,6 +276,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 				{
 					String maskOnImageString = this.getMaskOnImageString(mapMask, mapImage);
 					DimensionMap mapMeasure = noMaskChannelMap.copyAndSet("MaskChannel_ImageChannel=" + maskOnImageString);
+					Logs.log("Measuring: " + mapMeasure.toString(), this);
 					
 					Img<T> intensityImage = JEXReader.getSingleImage(imageMap.get(mapImage));
 					for(IdPoint p : maxima.pointList)

@@ -19,6 +19,8 @@ import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.MarkerConstants;
 import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
+import function.plugin.plugins.featureExtraction.ops.MapIterableIntervalToSamplingRAI;
+import function.plugin.plugins.featureExtraction.ops.logic.RealLogic;
 // Import needed classes here 
 import image.roi.IdPoint;
 import image.roi.PointList;
@@ -29,8 +31,6 @@ import logs.Logs;
 import miscellaneous.CSVList;
 import miscellaneous.Pair;
 import net.imagej.ops.Op;
-import net.imagej.ops.Ops;
-import net.imagej.ops.special.Computers;
 import net.imglib2.img.Img;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
@@ -74,7 +74,7 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 	@ParameterMarker(uiOrder = 2, name = "Channels to Union", description = "Which channels should be 'unioned' to determine the 'master/primary' region encompassing the 'whole cell'. (comma separated name list, avoid spaces, can be a single channel)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "Nuc,Cyt")
 	String channelsToUnion;
 
-	@ParameterMarker(uiOrder = 3, name = "Name for Union Result", description = "Which channels should be 'unioned' to determine the 'master/primary' region encompassing the 'whole cell'. (comma separated name list, avoid spaces, can be a single channel)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "Nuc,Cyt")
+	@ParameterMarker(uiOrder = 3, name = "Name for Union Result", description = "Which channels should be 'unioned' to determine the 'master/primary' region encompassing the 'whole cell'. (comma separated name list, avoid spaces, can be a single channel)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "WholeCell")
 	String unionName;
 
 	@ParameterMarker(uiOrder = 4, name = "Channels to Subtract from Union", description = "Which channels should be 'subtracted' from the unioned mask to define other regions for quantifiction (e.g., 'whole cell' - 'nuclear' = 'cytoplasm') [blank assumes first channel]", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "Nuc")
@@ -91,7 +91,7 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 
 	/////////// Define Outputs here ///////////
 
-	@OutputMarker(uiOrder = 1, name = "Segmented Images", type = MarkerConstants.TYPE_IMAGE, flavor = "", description = "Thresholded images segmented by the segmentation lines and cleaned up to only show regions associated with cells.", enabled = true)
+	@OutputMarker(uiOrder = 1, name = "Prepared Masks", type = MarkerConstants.TYPE_IMAGE, flavor = "", description = "Thresholded images segmented by the segmentation lines and cleaned up to only show regions associated with cells.", enabled = true)
 	JEXData outputImage;
 
 	@OutputMarker(uiOrder = 1, name = "Clump Data", type = MarkerConstants.TYPE_FILE, flavor = "", description = "Test table output (i.e., for Weka etc).", enabled = true)
@@ -189,8 +189,10 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 
 			// Segment and save the union image into finalMap
 			Img<UnsignedByteType> segImage = JEXReader.getByteImage(segMap.get(subMap));
-			Op unionOp = Computers.unary(IJ2PluginUtility.ij().op(), Ops.Logic.And.class, union, segImage);
-			unionOp.run();
+			
+			Op andOp = IJ2PluginUtility.ij().op().op(RealLogic.And.class, RealType.class, RealType.class);
+			IJ2PluginUtility.ij().op().run(MapIterableIntervalToSamplingRAI.class, union, segImage, andOp);
+			
 			//ImageJFunctions.show(segImage);
 			//ImageJFunctions.show(union);
 			String path = JEXWriter.saveImage(union);
@@ -220,8 +222,7 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 					Logs.log("Intersecting remaining images with Segmented Union Image: " + name, this);
 					DimensionMap mapTemp = subMap.copyAndSet(channelDimName + "=" + name);
 					Img<UnsignedByteType> tempMaskImg = JEXReader.getByteImage(maskMap.get(mapTemp));
-					Op op = Computers.unary(IJ2PluginUtility.ij().op(), Ops.Logic.And.class, tempMaskImg, union);
-					op.run();
+					IJ2PluginUtility.ij().op().run(MapIterableIntervalToSamplingRAI.class, tempMaskImg, union, andOp);
 					path = JEXWriter.saveImage(tempMaskImg);
 					finalMap.put(mapTemp, path);
 				}
@@ -243,6 +244,7 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 	private Img<UnsignedByteType> getUnion(DimensionMap subMap, CSVList namesToUnion, TreeMap<DimensionMap,String> maskMap)
 	{
 		Img<UnsignedByteType> union = null;
+		Op orOp = IJ2PluginUtility.ij().op().op(RealLogic.Or.class, RealType.class, RealType.class);
 		for(String name : namesToUnion)
 		{
 			DimensionMap temp = subMap.copyAndSet(channelDimName + "=" + name);
@@ -253,8 +255,7 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 			}
 			else
 			{
-				Op op = Computers.unary(IJ2PluginUtility.ij().op(), Ops.Logic.Or.class, union, mask);
-				op.run();
+				IJ2PluginUtility.ij().op().run(MapIterableIntervalToSamplingRAI.class, union, mask, orOp);
 			}
 		}
 		return union;
@@ -265,8 +266,8 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 		Img<UnsignedByteType> ret = union.copy();
 		DimensionMap temp = subMap.copyAndSet(channelDimName + "=" + nameToSubtract);
 		Img<UnsignedByteType> toSubtract = JEXReader.getByteImage(maskMap.get(temp));
-		Op op = Computers.unary(IJ2PluginUtility.ij().op(), Ops.Logic.LessThan.class, ret, toSubtract);
-		op.run();
+		Op lessThanOp = IJ2PluginUtility.ij().op().op(RealLogic.LessThan.class, RealType.class, RealType.class);
+		IJ2PluginUtility.ij().op().run(MapIterableIntervalToSamplingRAI.class, ret, toSubtract, lessThanOp);
 		return ret;
 	}
 	

@@ -34,6 +34,7 @@ import function.plugin.IJ2.IJ2PluginUtility;
 import function.plugin.mechanism.JEXCrunchablePlugin;
 import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.JEXPluginInfo;
+import function.plugin.plugins.featureExtraction.ops.BinaryMapIIAndRAIToRAI;
 import function.singleCellAnalysis.SingleCellUtility;
 import ij.ImagePlus;
 import ij.gui.PolygonRoi;
@@ -89,6 +90,7 @@ import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.meta.CalibratedAxis;
 import net.imglib2.meta.ImgPlus;
 import net.imglib2.roi.geometric.Polygon;
+import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.real.DoubleType;
 import rtools.R;
@@ -108,12 +110,7 @@ public class PointTester {// extends URLClassLoader {
 
 	public static void main(String[] args) throws Exception
 	{
-		double d = -0.20000000000000001234e-36;
-		DecimalFormat df1 = new DecimalFormat("#.##########################E0");
-		DecimalFormat df2 = new DecimalFormat("0.00000000000000000000000000E0");
-		System.out.println((new Double(d)).toString());
-		System.out.println(df1.format(d));
-		System.out.println(df2.format(d));
+		tryBooleanImageCalc2();
 	}
 	
 	public static void tryImageMoments()
@@ -154,6 +151,31 @@ public class PointTester {// extends URLClassLoader {
 		DoubleType d = op.compute1(p);
 		
 		Logs.log(d.toString(), PointTester.class);
+	}
+	
+	public static void tryBooleanImageCalc2() throws ImgIOException
+	{
+		String path1 = "/Users/jaywarrick/Pictures/TIFFS/Dot.tif";
+		String path2 = "/Users/jaywarrick/Pictures/TIFFS/Dot_2.tif";
+
+		ImgOpener opener = new ImgOpener(IJ2PluginUtility.ij().getContext());
+		SCIFIOImgPlus<UnsignedByteType> dot1 = opener.openImgs(path1, new UnsignedByteType()).get(0);
+		SCIFIOImgPlus<UnsignedByteType> dot2 = opener.openImgs(path2, new UnsignedByteType()).get(0);
+
+		ImageJFunctions.show(dot1);
+		ImageJFunctions.show(dot2);
+
+		Op op = IJ2PluginUtility.ij().op().op(function.plugin.plugins.featureExtraction.ops.math.BinaryRealMath.Divide.class, RealType.class, RealType.class, RealType.class, 50.0);
+		IJ2PluginUtility.ij().op().run(BinaryMapIIAndRAIToRAI.class, dot2, dot1, dot2, op);
+		
+		ImageJFunctions.show(dot1);
+		ImageJFunctions.show(dot2);
+		
+		List<PluginInfo<Op>> infos = IJ2PluginUtility.ij().op().getPlugins();
+		for(PluginInfo<Op> info : infos)
+		{
+			System.out.println(info.toString());
+		}
 	}
 
 	public static void tryBooleanImageCalc() throws ImgIOException

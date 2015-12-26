@@ -5,6 +5,8 @@ import java.util.TreeSet;
 
 import function.plugin.IJ2.IJ2PluginUtility;
 import function.plugin.plugins.featureExtraction.ConnectedComponents.StructuringElement;
+import function.plugin.plugins.featureExtraction.ops.MapIterableIntervalToSamplingRAI;
+import function.plugin.plugins.featureExtraction.ops.logic.RealLogic;
 import image.roi.IdPoint;
 import image.roi.PointList;
 import image.roi.ROIPlus;
@@ -12,7 +14,6 @@ import miscellaneous.Canceler;
 import miscellaneous.Pair;
 import net.imagej.ops.Op;
 import net.imagej.ops.Ops;
-import net.imagej.ops.special.Computers;
 import net.imagej.ops.special.Functions;
 import net.imagej.ops.special.UnaryFunctionOp;
 import net.imglib2.IterableInterval;
@@ -26,6 +27,7 @@ import net.imglib2.roi.labeling.ImgLabeling;
 import net.imglib2.roi.labeling.LabelRegion;
 import net.imglib2.roi.labeling.LabelRegions;
 import net.imglib2.type.numeric.IntegerType;
+import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.IntType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
@@ -187,8 +189,8 @@ public class FeatureUtils {
 		{
 			LabelRegion<Integer> region = regions.getLabelRegion(label);
 			//			ImageJFunctions.show(new SamplingIterableRegion(region, mask));
-			Op orOp = Computers.unary(IJ2PluginUtility.ij().op(), Ops.Logic.Or.class, blank, Regions.sample(region, mask));
-			orOp.run();
+			Op op = IJ2PluginUtility.ij().op().op(RealLogic.Or.class, RealType.class, RealType.class);
+			IJ2PluginUtility.ij().op().run(MapIterableIntervalToSamplingRAI.class, blank, Regions.sample(region, mask), op);
 		}
 
 		Pair<Img<UnsignedByteType>,TreeMap<Integer,PointList>> ret = new Pair<Img<UnsignedByteType>,TreeMap<Integer,PointList>>();
