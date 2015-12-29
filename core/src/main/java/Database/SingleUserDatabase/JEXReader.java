@@ -66,6 +66,11 @@ public class JEXReader {
 	@SuppressWarnings("unchecked")
 	public static <T extends RealType<T>> Img<T> getSingleImage(String path)
 	{
+		if(path == null)
+		{
+			return null;
+		}
+		
 		ImgOpener imgOpener = new ImgOpener(IJ2PluginUtility.ij().getContext());
 
 		// Always get the first image because that is how JEX stores images.
