@@ -29,10 +29,6 @@
  */
 package function.plugin.plugins.featureExtraction.ops.features.sets;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import org.scijava.plugin.Attr;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
@@ -40,9 +36,7 @@ import org.scijava.plugin.Plugin;
 import function.plugin.plugins.featureExtraction.ops.featuresets.AbstractOpRefFeatureSet;
 import function.plugin.plugins.featureExtraction.ops.featuresets.DimensionBoundFeatureSet;
 import function.plugin.plugins.featureExtraction.ops.featuresets.FeatureSet;
-import function.plugin.plugins.featureExtraction.ops.featuresets.NamedFeature;
 import net.imagej.ops.OpService;
-import net.imagej.ops.special.UnaryFunctionOp;
 import net.imglib2.type.numeric.RealType;
 
 /**
@@ -132,20 +126,6 @@ public class Geometric2DFeatureSet<I, O extends RealType<O>> extends AbstractOpR
 			@Attr(name = ATTR_PARAMS, value = ""),
 			@Attr(name = ATTR_TYPE, value = PKG + "Solidity") })
 	private boolean isSolidityActive = true;
-	
-	@Override
-	public Map<NamedFeature, O> compute1(final I input) {
-		final Map<NamedFeature, O> res = new HashMap<NamedFeature, O>();
-
-		// For some reason the converter was not being engaged automatically.
-//		Polygon newInput = convert(input);
-		
-		for (final Entry<NamedFeature, UnaryFunctionOp<Object, ? extends O>> entry : namedFeatureMap.entrySet()) {
-			res.put(entry.getKey(), entry.getValue().compute1(input));
-		}
-
-		return res;
-	}
 
 	@Override
 	public int getMinDimensions() {
