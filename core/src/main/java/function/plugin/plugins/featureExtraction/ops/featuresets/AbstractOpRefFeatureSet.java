@@ -148,7 +148,14 @@ public abstract class AbstractOpRefFeatureSet<I, O extends RealType<O>> extends 
 
 	/**
 	 * Can be overriden by implementors to provide specialized implementations
-	 * for certain functions.
+	 * for certain functions. For example, this method calls func.compute1
+	 * directly which bypasses input automatic input conversion. Thus, ops
+	 * that are part of the feature set that require input conversion can produce
+	 * a class cast exception.
+	 * 
+	 * Alternatively, one could call "ops().run(func, input)" at the expense
+	 * of some speed (e.g., converting separately for individual features in
+	 * the feature set can be costly).
 	 * 
 	 * @param func
 	 *            function used to compute output. Will be any function added as
