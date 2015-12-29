@@ -115,10 +115,10 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
 	// ///////// Define Parameters here ///////////
 
-	@ParameterMarker(uiOrder = 0, name = "Mask channel dim name", description = "Channel dimension name in mask data.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "Channel")
-	String maskChannelName;
+	@ParameterMarker(uiOrder = 0, name = "Channel dim name", description = "Channel dimension name in mask data.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "Channel")
+	String channelName;
 
-	@ParameterMarker(uiOrder = 1, name = "'Whole Cell' channel value", description = "Which channel value in the channel dim represents the whole cell that has a 1-to-1 mapping with the maxima points.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "WholeCell")
+	@ParameterMarker(uiOrder = 1, name = "'Whole Cell' mask channel value", description = "Which channel value of the mask image represents the whole cell that has a 1-to-1 mapping with the maxima points.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "WholeCell")
 	String maskWholeCellChannelValue;
 
 	@ParameterMarker(uiOrder = 2, name = "Image intensity offset", description = "Amount the images are offset from zero (will be subtracted before calculation)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "0.0")
@@ -211,8 +211,18 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			JEXDialog.messageDialog("Feature Extraction: Returning false. NEED to define an image to quantify if you want to use intensity based features such as first order, haralick2D, histogram, and moment statistics.");
 			return false;
 		}
+		
+		if((imageData != null && !imageData.getTypeName().getType().equals(JEXData.IMAGE)) || (maskData != null && !maskData.getTypeName().getType().equals(JEXData.IMAGE)) || (roiData != null && !roiData.getTypeName().getType().equals(JEXData.ROI)))
+		{
+			JEXDialog.messageDialog("All inputs to the function are not of the correct 'Type'. Please check that the image and mask object are 'Image' objects and the maxima is a 'Roi' object.", this);
+			return false;
+		}
 
-		imageMap = ImageReader.readObjectToImagePathTable(imageData);
+		imageMap = new TreeMap<>();
+		if(imageData != null)
+		{
+			imageMap = ImageReader.readObjectToImagePathTable(imageData);
+		}
 		maskMap = ImageReader.readObjectToImagePathTable(maskData);
 		roiMap = RoiReader.readObjectToRoiMap(roiData);
 
@@ -228,10 +238,10 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			this.total = maskData.getDimTable().mapCount() + maskData.getDimTable().mapCount() * imageData.getDimTable().mapCount();
 		}
 
-		DimTable noMaskChannelTable = maskData.getDimTable().getSubTable(maskChannelName);
+		DimTable noMaskChannelTable = maskData.getDimTable().getSubTable(channelName);
 		for(DimensionMap noMaskChannelMap : noMaskChannelTable.getMapIterator())
 		{
-			DimensionMap mapWholeCellMask = noMaskChannelMap.copyAndSet(maskChannelName + "=" + maskWholeCellChannelValue);
+			DimensionMap mapWholeCellMask = noMaskChannelMap.copyAndSet(channelName + "=" + maskWholeCellChannelValue);
 			Logs.log("Getting whole cell mask: " + mapWholeCellMask, this);
 			Img<UnsignedByteType> wholeCellMaskImage = JEXReader.getByteImage(maskMap.get(mapWholeCellMask));
 
@@ -265,20 +275,30 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 				}
 			}
 
-			// for each map matching this subMap (now we are looping over channel)
+			// for each map matching this subMap (now we are looping over mask channel)
 			for(DimensionMap mapMask : maskData.getDimTable().getSubTable(noMaskChannelMap).getMapIterator())
 			{
 				Logs.log("Getting mask: " + mapMask.toString(), this);
 				Img<UnsignedByteType> maskImage = JEXReader.getSingleImage(maskMap.get(mapMask));
+				
+				DimTable imageDimTable = new DimTable();
+				if(imageData != null)
+				{
+					imageDimTable = imageData.getDimTable();
+				}
 				boolean firstTimeThrough = true;
+					
 				// Loop over channels of intensity images associated with this subMap
-				for(DimensionMap mapImage : imageData.getDimTable().getSubTable(noMaskChannelMap).getMapIterator())
+				// FYI: Whether we have any images (vs. masks) or not, we will at least go through this loop once with an empty mapImage
+				// This is part of the nature of the DimTable iteration scheme. So we have to watch out for null image paths and intensityImages
+				for(DimensionMap mapImage : imageDimTable.getSubTable(noMaskChannelMap).getMapIterator())
 				{
 					String maskOnImageString = this.getMaskOnImageString(mapMask, mapImage);
 					DimensionMap mapMeasure = noMaskChannelMap.copyAndSet("MaskChannel_ImageChannel=" + maskOnImageString);
 					Logs.log("Measuring: " + mapMeasure.toString(), this);
 					
 					Img<T> intensityImage = JEXReader.getSingleImage(imageMap.get(mapImage));
+					
 					for(IdPoint p : maxima.pointList)
 					{
 						if(this.isCanceled())
@@ -304,7 +324,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 						if(firstTimeThrough)
 						{
 							// Then quantify geometric features of mask
-							DimensionMap temp = noMaskChannelMap.copyAndSet("MaskChannel_ImageChannel=" + mapMask.get(maskChannelName) + "_NA");
+							DimensionMap temp = noMaskChannelMap.copyAndSet("MaskChannel_ImageChannel=" + mapMask.get(channelName) + "_NA");
 							this.quantifyGeometricFeatures(temp, p.id, majorSubRegion);
 							this.count = this.count + 1;
 							this.percentage = (int) (100 * ((double) (count) / ((double) total)));
@@ -328,8 +348,23 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	
 	public String getMaskOnImageString(DimensionMap mapMask, DimensionMap mapImage)
 	{
-		String imageChannelString = mapImage.get(maskChannelName);
-		String maskChannelString = mapMask.get(maskChannelName);
+		
+		String imageChannelString = null;
+		if(mapImage != null)
+		{
+			imageChannelString = mapImage.get(channelName);
+		}
+		String maskChannelString = null;
+		if(mapImage != null)
+		{
+			maskChannelString = mapMask.get(channelName);
+		}
+		
+		if(maskChannelString == null && imageChannelString == null)
+		{
+			// Should never happen.
+			return "NA_NA";
+		}
 		if(imageChannelString == null)
 		{
 			return maskChannelString + "_NA";
@@ -761,7 +796,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	public void quantifyIntensityFeatures(DimensionMap map, int id, LabelRegion<Integer> region, Img<T> intensityImage)
 	{
 		// return false if canceled, which means
-		if(region == null || region.size() <= 1 )
+		if(region == null || region.size() <= 1 || intensityImage == null)
 		{
 			return;
 		}
