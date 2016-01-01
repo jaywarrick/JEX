@@ -19,8 +19,6 @@ import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.MarkerConstants;
 import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
-import function.plugin.plugins.featureExtraction.ops.MapIterableIntervalToSamplingRAI;
-import function.plugin.plugins.featureExtraction.ops.logic.RealLogic;
 // Import needed classes here 
 import image.roi.IdPoint;
 import image.roi.PointList;
@@ -31,6 +29,8 @@ import logs.Logs;
 import miscellaneous.CSVList;
 import miscellaneous.Pair;
 import net.imagej.ops.Op;
+import net.imagej.ops.logic.RealLogic;
+import net.imagej.ops.map.MapIterableIntervalToSamplingRAI;
 import net.imglib2.img.Img;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;

@@ -34,7 +34,6 @@ import function.plugin.IJ2.IJ2PluginUtility;
 import function.plugin.mechanism.JEXCrunchablePlugin;
 import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.JEXPluginInfo;
-import function.plugin.plugins.featureExtraction.ops.BinaryMapIIAndRAIToRAI;
 import function.singleCellAnalysis.SingleCellUtility;
 import ij.ImagePlus;
 import ij.gui.PolygonRoi;
@@ -77,6 +76,10 @@ import net.imagej.display.ImageDisplay;
 import net.imagej.display.OverlayView;
 import net.imagej.ops.Op;
 import net.imagej.ops.Ops;
+import net.imagej.ops.image.cooccurrencematrix.MatrixOrientation;
+import net.imagej.ops.image.cooccurrencematrix.MatrixOrientation2D;
+import net.imagej.ops.image.cooccurrencematrix.MatrixOrientation3D;
+import net.imagej.ops.map.BinaryMapIIAndRAIToRAI;
 import net.imagej.ops.special.Functions;
 import net.imagej.ops.special.UnaryFunctionOp;
 import net.imagej.options.OptionsChannels;
@@ -110,7 +113,15 @@ public class PointTester {// extends URLClassLoader {
 
 	public static void main(String[] args) throws Exception
 	{
-		tryBooleanImageCalc2();
+		tryConvertingStringToMatrixOrientation();
+	}
+	
+	public static void tryConvertingStringToMatrixOrientation()
+	{
+		ImageJ ij = new ImageJ();
+		Logs.log(""+ij.convert().supports(String.class, MatrixOrientation3D.class), PointTester.class);
+		Logs.log(""+ij.convert().supports(String.class, MatrixOrientation2D.class), PointTester.class);
+		Logs.log(""+ij.convert().supports(String.class, MatrixOrientation.class), PointTester.class);
 	}
 	
 	public static void tryImageMoments()
@@ -165,7 +176,7 @@ public class PointTester {// extends URLClassLoader {
 		ImageJFunctions.show(dot1);
 		ImageJFunctions.show(dot2);
 
-		Op op = IJ2PluginUtility.ij().op().op(function.plugin.plugins.featureExtraction.ops.math.BinaryRealMath.Divide.class, RealType.class, RealType.class, RealType.class, 50.0);
+		Op op = IJ2PluginUtility.ij().op().op(net.imagej.ops.math.BinaryRealMath.Divide.class, RealType.class, RealType.class, RealType.class, 50.0);
 		IJ2PluginUtility.ij().op().run(BinaryMapIIAndRAIToRAI.class, dot2, dot1, dot2, op);
 		
 		ImageJFunctions.show(dot1);

@@ -5,8 +5,6 @@ import java.util.TreeSet;
 
 import function.plugin.IJ2.IJ2PluginUtility;
 import function.plugin.plugins.featureExtraction.ConnectedComponents.StructuringElement;
-import function.plugin.plugins.featureExtraction.ops.MapIterableIntervalToSamplingRAI;
-import function.plugin.plugins.featureExtraction.ops.logic.RealLogic;
 import image.roi.IdPoint;
 import image.roi.PointList;
 import image.roi.ROIPlus;
@@ -14,6 +12,8 @@ import miscellaneous.Canceler;
 import miscellaneous.Pair;
 import net.imagej.ops.Op;
 import net.imagej.ops.Ops;
+import net.imagej.ops.logic.RealLogic;
+import net.imagej.ops.map.MapIterableIntervalToSamplingRAI;
 import net.imagej.ops.special.Functions;
 import net.imagej.ops.special.UnaryFunctionOp;
 import net.imglib2.IterableInterval;
