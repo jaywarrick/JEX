@@ -261,6 +261,20 @@ public class StringUtility implements Comparator<String> {
 		return compareString(thisString, thatString);
 	}
 	
+	public static String removeWhiteSpaceOnEnds(String s)
+	{
+		String temp = s;
+		while (temp.startsWith(" ") || temp.startsWith("\t"))
+		{
+			temp = temp.substring(1);
+		}
+		while (temp.endsWith(" ") || temp.endsWith("\t"))
+		{
+			temp = temp.substring(0, temp.length() - 1);
+		}
+		return temp;
+	}
+	
 	/**
 	 * Alphanumeric string sorter
 	 * 
