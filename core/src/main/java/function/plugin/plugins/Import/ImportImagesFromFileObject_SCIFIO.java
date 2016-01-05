@@ -66,9 +66,6 @@ public class ImportImagesFromFileObject_SCIFIO extends JEXPlugin {
 
 	/////////// Define Parameters ///////////
 
-	@ParameterMarker(uiOrder=0, name="Input Directory/File", description="Location of the multicolor TIFF images", ui=MarkerConstants.UI_FILECHOOSER, defaultText="")
-	String inDir;
-
 	@ParameterMarker(uiOrder=1, name="Montage Rows", description="If this image is a montage and is to be split, how many rows are in the image.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
 	int imRows;
 
@@ -77,9 +74,6 @@ public class ImportImagesFromFileObject_SCIFIO extends JEXPlugin {
 
 	@ParameterMarker(uiOrder=3, name="Gather channel names?", description="Transfer the name of each channel (e.g. DAPI, FITC, etc) if available in the metadata of the image. Otherwise, channels are named by index in the order they were provided by the image.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
 	boolean transferNames;
-
-	@ParameterMarker(uiOrder=4, name="Remove Singleton Dimensions?", description="If the image object has a dimension that is of length 0, check the box to remove this dimension.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
-	boolean removeSingletonDimensions;
 
 
 	/////////// Define Outputs ///////////
@@ -115,7 +109,7 @@ public class ImportImagesFromFileObject_SCIFIO extends JEXPlugin {
 
 		// DO something
 		output = importFiles(pendingImageFiles, "_", fileExtension, this.imRows, this.imCols, "ImRow", "ImCol", this.transferNames, this);
-
+		
 		return true;
 	}
 
