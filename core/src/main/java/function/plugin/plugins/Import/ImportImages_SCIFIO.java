@@ -227,12 +227,10 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 
 				// Check if there are any duplicate names and add something to the name to make it not a duplicate...
 				Vector<String> newColorNamesList = new Vector<String>();
-				newColorNamesList.addAll(colorNamesList);
 				for(int j = 0; j < colorNamesList.size(); j++)
 				{
 					String newName = colorNamesList.get(j);
-					List<String> subList = colorNamesList.subList(j+1, colorNamesList.size());
-					while(subList.contains(newName))
+					while(newColorNamesList.contains(newName))
 					{
 						newName = newName + "_copy";
 					}
