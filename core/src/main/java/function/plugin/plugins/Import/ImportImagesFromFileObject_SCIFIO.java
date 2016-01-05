@@ -108,7 +108,7 @@ public class ImportImagesFromFileObject_SCIFIO extends JEXPlugin {
 		}
 
 		// DO something
-		output = importFiles(pendingImageFiles, "_", fileExtension, this.imRows, this.imCols, "ImRow", "ImCol", this.transferNames, this);
+		output = importFiles(pendingImageFiles, "", fileExtension, this.imRows, this.imCols, "ImRow", "ImCol", this.transferNames, this);
 		
 		return true;
 	}
