@@ -241,16 +241,7 @@ public class FileUtility implements Comparator<File> {
 	
 	public static String removeWhiteSpaceOnEnds(String s)
 	{
-		String temp = s;
-		while (temp.startsWith(" ") || temp.startsWith("\t"))
-		{
-			temp = temp.substring(1);
-		}
-		while (temp.endsWith(" ") || temp.endsWith("\t"))
-		{
-			temp = temp.substring(0, temp.length() - 1);
-		}
-		return temp;
+		return StringUtility.removeWhiteSpaceOnEnds(s);
 	}
 	
 	public static String getFileNameSuffixDigits(String pathOrFilename)
