@@ -663,7 +663,7 @@ public class R {
 			int i = 0;
 			for(String s : fileStrings)
 			{
-				String fixedString = s.replaceAll("/", File.separator); // Might have to figure out Pattern.quote(File.separator) stuff for windows.
+				String fixedString = s; //s.replaceAll("/", File.separator); // Might have to figure out Pattern.quote(File.separator) stuff for windows.
 				files.put(new DimensionMap("i=" + i), fixedString);
 				i++;
 			}
@@ -694,7 +694,7 @@ public class R {
 		try
 		{
 			fileString = fileObject.asString();
-			String fixedString = fileString.replaceAll("/", File.separator); // Might have to figure out Pattern.quote(File.separator) stuff for windows.
+			String fixedString = fileString; //fileString.replaceAll("/", File.separator); // Might have to figure out Pattern.quote(File.separator) stuff for windows.
 			JEXData ret = null;
 			if(createImageObject)
 			{
