@@ -70,7 +70,8 @@ public class JEXDataUpdate implements Update {
 				String dstRelativePath = dataFolderRelativePath + File.separator + JEXDataIO.createReferencedFileName(ds);
 				String dst = dbFolder + File.separator + dstRelativePath;
 				File src = new File(FileReader.readToPath(ds));
-				this.hasReferencedFilesToCopy = session.fileExists(src) && !src.getPath().equals(dst); // Then
+				// Keep track through looping if we encounter a ds that needs to be copied.
+				this.hasReferencedFilesToCopy = this.hasReferencedFilesToCopy || session.fileExists(src) && !src.getPath().equals(dst); // Then
 				// we
 				// for
 				// sure
