@@ -77,7 +77,7 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 	@ParameterMarker(uiOrder = 3, name = "Name for Union Result", description = "Which channels should be 'unioned' to determine the 'master/primary' region encompassing the 'whole cell'. (comma separated name list, avoid spaces, can be a single channel)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "WholeCell")
 	String unionName;
 
-	@ParameterMarker(uiOrder = 4, name = "Channels to Subtract from Union", description = "Which channels should be 'subtracted' from the unioned mask to define other regions for quantifiction (e.g., 'whole cell' - 'nuclear' = 'cytoplasm') [blank assumes first channel]", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "Nuc")
+	@ParameterMarker(uiOrder = 4, name = "Channels to Subtract from Union", description = "Which channels should be 'subtracted' from the unioned mask to define other regions for quantifiction (e.g., 'whole cell' - 'nuclear' = 'cytoplasm') [blank skips this step]", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
 	String channelsToSubtract;
 
 	@ParameterMarker(uiOrder = 5, name = "Names for Subtraction Results", description = "Names for subtraction result (e.g., 'Cyt' for result of 'whole cell' - 'nuclear' = 'cytoplasm', comma separated list of names, avoid spaces) [blank skips subtraction calculations]", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "Cyt")
@@ -123,7 +123,11 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 		}
 		Dim channelDim = maskData.getDimTable().getDimWithName(channelDimName);
 		CSVList namesToUnion = new CSVList(channelsToUnion);
-		CSVList namesToSubtract = new CSVList(channelsToSubtract);
+		CSVList namesToSubtract = new CSVList();
+		if(!channelsToSubtract.equals(""))
+		{
+			namesToSubtract = new CSVList(channelsToSubtract);
+		}
 		for(String name : namesToUnion)
 		{
 			if(!channelDim.containsValue(name))
@@ -146,7 +150,7 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 			return false;
 		}
 		CSVList subtractedResultNames = new CSVList(subtractedNames);
-		if(subtractedResultNames.size() != namesToSubtract.size())
+		if(namesToSubtract.size() > 0 && subtractedResultNames.size() != namesToSubtract.size())
 		{
 			JEXDialog.messageDialog("The list of specified channels to subtract does not match the number of names for subtraction results. Aborting.");
 			return false;
