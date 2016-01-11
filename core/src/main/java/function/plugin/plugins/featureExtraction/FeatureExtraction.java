@@ -87,7 +87,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	// TODO: Figure out how to get a RandomAccessbleInterval<T> from a
 	// LabelRegion and an Img<T>
 	// public Tamura2DFeatureSet<T,DoubleType> opTamura = null;
-	public ZernikeFeatureSet<BitType> opZernike = null;
+	public ZernikeFeatureSet<T> opZernike = null;
 
 	public JEXCSVWriter writer;
 	public Set<String> header = null;
@@ -210,9 +210,9 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 					"Feature Extraction: Returning false. NEED to have a roi that defines the id of each cell.");
 			return false;
 		}
-		if (imageData == null && (stats || haralick2D || histogram || moments)) {
+		if (imageData == null && (stats || haralick2D || histogram || moments || zernike)) {
 			JEXDialog.messageDialog(
-					"Feature Extraction: Returning false. NEED to define an image to quantify if you want to use intensity based features such as first order, haralick2D, histogram, and moment statistics.");
+					"Feature Extraction: Returning false. NEED to define an image to quantify if you want to use intensity based features such as first order, haralick2D, histogram, zernike and moment statistics.");
 			return false;
 		}
 
@@ -238,11 +238,6 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		// Calculate expected number of iterations
 		// Assume at least calculating mask features
 		this.total = maskData.getDimTable().mapCount();
-		// Recalculate total if also calculating intensity features
-		if (imageData != null && (stats || haralick2D || histogram || moments)) {
-			this.total = maskData.getDimTable().mapCount()
-					+ maskData.getDimTable().mapCount() * imageData.getDimTable().mapCount();
-		}
 
 		DimTable noMaskChannelTable = maskData.getDimTable().getSubTable(channelName);
 		for (DimensionMap noMaskChannelMap : noMaskChannelTable.getMapIterator()) {
@@ -330,15 +325,12 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 							DimensionMap temp = noMaskChannelMap
 									.copyAndSet("MaskChannel_ImageChannel=" + mapMask.get(channelName) + "_NA");
 							this.quantifyGeometricFeatures(temp, p.id, majorSubRegion);
-							this.count = this.count + 1;
-							this.percentage = (int) (100 * ((double) (count) / ((double) total)));
-							JEXStatics.statusBar.setProgressPercentage(percentage);
 						}
 					}
-					this.count = this.count + 1;
-					this.percentage = (int) (100 * ((double) (count) / ((double) total)));
-					JEXStatics.statusBar.setProgressPercentage(percentage);
 				}
+				this.count = this.count + 1;
+				this.percentage = (int) (100 * ((double) (count) / ((double) total)));
+				JEXStatics.statusBar.setProgressPercentage(percentage);
 				firstTimeThrough = false;
 			}
 
@@ -459,7 +451,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	}
 
 	@SuppressWarnings("unchecked")
-	public boolean putZernike(DimensionMap mapM, int id, LabelRegion<Integer> reg) {
+	public boolean putZernike(DimensionMap mapM, int id, LabelRegion<Integer> reg, Img<T> image) {
 		if (this.isCanceled()) {
 			this.close();
 			return false;
@@ -470,12 +462,12 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 						zernikeMomentMax);
 			}
 
-			PositionableIterableRegion<BoolType> temp = reg;
-			IterableRegion<BoolType> temp2 = temp;
-			IterableInterval<Void> temp3 = temp2;
-			IterableInterval<BitType> convert = Converters.convert(temp3, new MyConverter(), new BitType());
+			//			PositionableIterableRegion<BoolType> temp = reg;
+			//			IterableRegion<BoolType> temp2 = temp;
+			//			IterableInterval<Void> temp3 = temp2;
+			//			IterableInterval<BitType> convert = Converters.convert(temp3, new MyConverter(), new BitType());
 
-			Map<NamedFeature, DoubleType> results = opZernike.compute1(convert);
+			Map<NamedFeature, DoubleType> results = opZernike.compute1(Regions.sample(reg, image));
 			for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
 				newMap.put("Id", "" + id);
@@ -766,6 +758,8 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		this.putHaralick2D(map, id, region, intensityImage);
 		this.putHistogram(map, id, region, intensityImage);
 		this.putMoments(map, id, region, intensityImage);
+
+		this.putZernike(map, id, region, intensityImage);
 	}
 
 	public void quantifyGeometricFeatures(DimensionMap mapM, int id, LabelRegion<Integer> region) {
@@ -774,7 +768,6 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		}
 
 		this.putGeometric(mapM, id, region);
-		this.putZernike(mapM, id, region);
 	}
 
 }
