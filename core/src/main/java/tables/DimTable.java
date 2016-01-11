@@ -586,10 +586,14 @@ public class DimTable extends ArrayList<Dim> implements Copiable<DimTable> {
 	// }
 	
 	/**
-	 * returned an iterator of DimValues, given dimName in this DimTable
+	 * Get an iterator that returns DimTable objects where each DimTable
+	 * contains a single value for each of the values in the Dim
+	 * specified by DimName. For example if there are dims X, Y, and Z
+	 * and the name Z is given. DimTables with all the values of X and Y
+	 * are provided, each with a different single value for Z.
 	 * 
 	 * @param dimName DimName
-	 * @return an iterator of DimValues, given dimName in this DimTable
+	 * @return an iterator of DimTables
 	 */
 	public DimTableIterable getSubTableIterator(String dimName)
 	{
