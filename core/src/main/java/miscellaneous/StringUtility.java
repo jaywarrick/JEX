@@ -365,4 +365,16 @@ public class StringUtility implements Comparator<String> {
 		}
 		return lengthFirstStr - lengthSecondStr;
 	}
+	
+	public static CSVList getCSVListAndRemoveWhiteSpaceOnEnds(String param)
+	{
+		CSVList temp = new CSVList(param);
+		CSVList ret = new CSVList();
+		for(String p : temp)
+		{
+			// This list may not be the same length as the channel dim but we'll test for that elsewhere.
+			ret.add(StringUtility.removeWhiteSpaceOnEnds(p));
+		}
+		return ret;
+	}
 }
