@@ -95,8 +95,9 @@ public class CompileArffTables extends JEXPlugin {
 	public boolean run(JEXEntry optionalEntry)
 	{
 		// Validate the input data
-		if(fileData == null || !fileData.getTypeName().getType().equals(JEXData.FILE))	
+ 		if(fileData == null || !fileData.getTypeName().getType().equals(JEXData.FILE))	
 		{
+			Logs.log("No Data found for entry X:" + optionalEntry.getTrayX() + " Y:" + optionalEntry.getTrayY(), this);
 			return false;
 		}
 
