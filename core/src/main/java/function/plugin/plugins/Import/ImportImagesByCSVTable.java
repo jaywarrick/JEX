@@ -229,13 +229,13 @@ public class ImportImagesByCSVTable extends JEXPlugin {
 		return ret;
 	}
 	
-	public TreeMap<DimensionMap,String> filterFiles(TreeMap<DimensionMap,String> paths, JEXLabel label)
+	public TreeMap<DimensionMap,String> filterFiles(TreeMap<DimensionMap,String> paths, JEXData label)
 	{
 		TreeMap<DimensionMap,String> ret = new TreeMap<>();
 		for(Entry<DimensionMap,String> path : paths.entrySet())
 		{
-			String name = label.getTypeName().getName();
-			String val = ((JEXLabel) label).getLabelValue();
+			String name = LabelReader.readLabelName(label);
+			String val =LabelReader.readLabelValue(label);
 			if(path.getKey().get(name) != null && path.getKey().get(name).equals(val))
 			{
 				ret.put(path.getKey().copy(), path.getValue());
@@ -253,7 +253,7 @@ public class ImportImagesByCSVTable extends JEXPlugin {
 		}
 		for(JEXData label : labelList)
 		{
-			temp = this.filterFiles(temp, (JEXLabel) label);
+			temp = this.filterFiles(temp, label);
 		}
 		return temp;
 	}
