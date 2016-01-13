@@ -189,7 +189,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	// variables shared between function instances).
 	@Override
 	public int getMaxThreads() {
-		return 10;
+		return 1;
 	}
 
 	// Code the actions of the plugin here using comments for significant
@@ -282,7 +282,6 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 				if (imageData != null) {
 					imageDimTable = imageData.getDimTable();
 				}
-				boolean firstTimeThrough = true;
 
 				// Loop over channels of intensity images associated with this
 				// subMap
@@ -291,6 +290,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 				// This is part of the nature of the DimTable iteration scheme.
 				// So we have to watch out for null image paths and
 				// intensityImages
+				boolean firstTimeThrough = true;
 				for (DimensionMap mapImage : imageDimTable.getSubTable(noMaskChannelMap).getMapIterator()) {
 					String maskOnImageString = this.getMaskOnImageString(mapMask, mapImage);
 					DimensionMap mapMeasure = noMaskChannelMap
@@ -327,13 +327,12 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 							this.quantifyGeometricFeatures(temp, p.id, majorSubRegion);
 						}
 					}
+					this.count = this.count + 1;
+					this.percentage = (int) (100 * ((double) (count) / ((double) total)));
+					JEXStatics.statusBar.setProgressPercentage(percentage);
+					firstTimeThrough = false;
 				}
-				this.count = this.count + 1;
-				this.percentage = (int) (100 * ((double) (count) / ((double) total)));
-				JEXStatics.statusBar.setProgressPercentage(percentage);
-				firstTimeThrough = false;
 			}
-
 		}
 
 		this.close();

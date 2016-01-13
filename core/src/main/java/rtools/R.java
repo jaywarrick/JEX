@@ -714,4 +714,22 @@ public class R {
 		}
 		return null;
 	}
+	
+	public static String getCharacterVariableValueAsString(String expression)
+	{
+		REXP fileObject = R.eval(expression);
+		String fileString = null;
+		try
+		{
+			fileString = fileObject.asString();
+			String fixedString = fileString; //fileString.replaceAll("/", File.separator); // Might have to figure out Pattern.quote(File.separator) stuff for windows.
+			return fixedString;
+		}
+		catch (REXPMismatchException e)
+		{
+			Logs.log("Couldn't convert " + expression + " to String", R.class);
+			e.printStackTrace();
+		}
+		return null;
+	}
 }
