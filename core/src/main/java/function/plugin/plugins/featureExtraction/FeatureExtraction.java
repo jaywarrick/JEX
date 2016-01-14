@@ -99,6 +99,8 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	public TreeMap<DimensionMap, String> maskMap = new TreeMap<DimensionMap, String>();
 	public TreeMap<DimensionMap, ROIPlus> roiMap = new TreeMap<DimensionMap, ROIPlus>();
 	TreeMap<Integer, Integer> idToLabelMap = new TreeMap<Integer, Integer>();
+	
+	FeatureUtils utils = new FeatureUtils();
 
 	// Define a constructor that takes no arguments.
 	public FeatureExtraction() {
@@ -255,8 +257,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 				return true;
 			}
 
-			ImgLabeling<Integer, IntType> cellLabeling = FeatureUtils.getConnectedComponents(wholeCellMaskImage,
-					connectedness.equals("4 Connected"));
+			ImgLabeling<Integer, IntType> cellLabeling = utils.getConnectedComponents(wholeCellMaskImage, connectedness.equals("4 Connected"));
 			LabelRegions<Integer> cellRegions = new LabelRegions<Integer>(cellLabeling);
 			idToLabelMap = new TreeMap<Integer, Integer>();
 
@@ -435,8 +436,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	}
 
 	public LabelRegion<Integer> getMajorSubRegion(LabelRegion<Integer> region, Img<UnsignedByteType> mask) {
-		LabelRegions<Integer> subRegions = FeatureUtils.getSubRegions(region, mask,
-				connectedness.equals("4 Connected"));
+		LabelRegions<Integer> subRegions = utils.getSubRegions(region, mask, connectedness.equals("4 Connected"));
 		long maxSize = 1; // This is hopefully to avoid quantifying subregions
 							// that are only a pixel in size.
 		LabelRegion<Integer> majorSubRegion = null;
@@ -523,7 +523,8 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			return false;
 		}
 		if (geometric) {
-			Polygon toCalc = FeatureUtils.convert(reg);
+			
+			Polygon toCalc = utils.convert(reg);
 			if (toCalc == null) {
 				Logs.log("Encountered a null polygon for geometric2d features. id:" + id + ", label:" + reg.getLabel(),
 						FeatureExtraction.class);
