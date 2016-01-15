@@ -138,7 +138,15 @@ public class ScriptRepository {
 	{
 		try
 		{
-			Process p = Runtime.getRuntime().exec(cmds, null, new File(workingDir));
+			Process p;
+			if(workingDir != null)
+			{
+				p = Runtime.getRuntime().exec(cmds, null, new File(workingDir));
+			}
+			else
+			{
+				p = Runtime.getRuntime().exec(cmds);
+			}
 
 			// // Debug code only... causes process to stall waiting for more
 			// lines to be read from the process.

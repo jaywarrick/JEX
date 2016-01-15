@@ -1,15 +1,22 @@
 package function.plugin.plugins.R;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.util.List;
 import java.util.Vector;
 
 import org.scijava.plugin.Plugin;
 
+import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelExec;
+import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
@@ -70,7 +77,7 @@ public class HTCondorCollect extends JEXPlugin {
 	String host;
 
 	/////////// Define Outputs ///////////
-	
+
 	@OutputMarker(uiOrder=1, name="Output Files", type=MarkerConstants.TYPE_ANY, flavor="", description="The files from the Condor results.", enabled=true)
 	Vector<JEXData> output = new Vector<JEXData>();
 
@@ -79,39 +86,40 @@ public class HTCondorCollect extends JEXPlugin {
 	{
 		return 1; // R doesn't like multiple threads
 	}
-	
+
 	private String id = null;
 	private String exptName = null;
 
 	@Override
 	public boolean run(JEXEntry optionalEntry)
 	{
-		
+
 		// For this entry id and experiment, grab all the files in a particular folder
 		id = optionalEntry.getEntryID();
 		exptName = StringUtility.removeAllWhitespace(optionalEntry.getEntryExperiment());
-		
+
 		// Zip the file contents
-		String cmd1 = "cd " + R.sQuote("ChtcRun/" + exptName);
+		String cmd1 = "cd " + R.sQuote("ChtcRun/" + exptName+"Results");
 		String cmd2 = "zip -r " + id + ".zip " + id; 
 		this.runCommands(cmd1, cmd2);
 
 		// Transfer the zip to the temp folder and umpack the files
-		String uniqueFolder = JEXWriter.getUniqueRelativeTempPath(null);
-		String cmd3 = "scp " + username + "@" + host + ":" + R.sQuote("ChtcRun/" + exptName + "/" + id + ".zip") + " " + R.sQuote(uniqueFolder + File.separator + id + ".zip");
-		String cmd4 = "unzip -d " + R.sQuote(uniqueFolder) + " " + R.sQuote(uniqueFolder + File.separator + id + ".zip");
-		ScriptRepository.runSysCommand(new String[]{cmd3, cmd4});
-		
+		String uniqueFolder = JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getUniqueRelativeTempPath(null);
+		this.transferFile("ChtcRun/" + exptName + "Results", id + ".zip", uniqueFolder);
+		//String cmd3 = "scp " + username + "@" + host + ":" + R.sQuote("ChtcRun/" + exptName + "/" + id + ".zip") + " " + R.sQuote(uniqueFolder + File.separator + id + ".zip");
+		String cmd3 = "unzip -d " + R.sQuote(uniqueFolder) + " " + R.sQuote(uniqueFolder + File.separator + id + ".zip");
+		ScriptRepository.runSysCommand(new String[]{"sh", "-c", cmd3});
+
 		// Import the files as JEXData
 		List<File> files = FileUtility.getSortedFileList((new File(uniqueFolder)).listFiles());
 		for(File f : files)
 		{
-			if(f.isFile())
+			if(f.isFile() && !f.getName().equals(id + ".zip"))
 			{
 				output.addElement(FileWriter.makeFileObject(f.getName(), null, f));
 			}
 		}
-		
+
 		return true;
 	}
 
@@ -171,5 +179,46 @@ public class HTCondorCollect extends JEXPlugin {
 		{
 			e.printStackTrace();
 		}
+	}
+
+	public void transferFile(String srcDir, String fileToCopy, String dstDirPath)
+	{
+		try{
+			JSch ssh = new JSch();
+			Session session = ssh.getSession(username, host, 22);
+			session.setPassword(password);
+			java.util.Properties config = new java.util.Properties(); 
+			config.put("StrictHostKeyChecking", "no");
+			session.setConfig(config);
+			session.connect(30000);
+			Channel channel = session.openChannel("sftp");
+			channel.connect();
+			ChannelSftp channelSftp = (ChannelSftp)channel;
+			channelSftp.cd(srcDir);
+			//channelSftp.put(new FileInputStream(fileToCopy), src.getName());
+			
+			byte[] buffer = new byte[1024];
+			BufferedInputStream bis = new BufferedInputStream(channelSftp.get(fileToCopy));
+			File newFile = new File(dstDirPath+File.separator+fileToCopy);
+			newFile.getParentFile().mkdirs();
+			OutputStream os = new FileOutputStream(newFile);
+			BufferedOutputStream bos = new BufferedOutputStream(os);
+			int readCount;
+			//System.out.println("Getting: " + theLine);
+			while( (readCount = bis.read(buffer)) > 0)
+			{
+				bos.write(buffer, 0, readCount);
+			}
+			bis.close();
+			bos.close();
+
+			channel.disconnect();
+			session.disconnect();		
+
+		}catch(Exception ex){
+			ex.printStackTrace();
+			JEXDialog.messageDialog("Couldn't transfer the files", this);
+		}
+
 	}
 }

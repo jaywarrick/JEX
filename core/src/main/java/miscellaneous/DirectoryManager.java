@@ -107,7 +107,7 @@ public class DirectoryManager {
 	private synchronized static String getAvailableTempFileName(String coreName, int suffixNumberLength, String extension)
 	{
 		String fileName;
-		if(extension.equals(null))
+		if(extension == null)
 		{
 			fileName = coreName + StringUtility.fillLeft("" + fileCounter, suffixNumberLength, "0");
 		}
