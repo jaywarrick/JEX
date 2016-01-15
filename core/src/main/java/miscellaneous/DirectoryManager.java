@@ -94,7 +94,9 @@ public class DirectoryManager {
 	}
 	
 	/**
-	 * Get the next free file name based on the core name, a suffix and a selected extension
+	 * Get the next free file name based on the core name, a suffix and a selected extension.
+	 * If extension is null, it will return a unique directory name, incrementing the unique
+	 * id counter as well.
 	 * 
 	 * @param path
 	 * @param coreName
@@ -104,7 +106,15 @@ public class DirectoryManager {
 	 */
 	private synchronized static String getAvailableTempFileName(String coreName, int suffixNumberLength, String extension)
 	{
-		String fileName = coreName + StringUtility.fillLeft("" + fileCounter, suffixNumberLength, "0") + "." + extension;
+		String fileName;
+		if(extension.equals(null))
+		{
+			fileName = coreName + StringUtility.fillLeft("" + fileCounter, suffixNumberLength, "0");
+		}
+		else
+		{
+			fileName = coreName + StringUtility.fillLeft("" + fileCounter, suffixNumberLength, "0") + "." + extension;
+		}
 		fileCounter = fileCounter + 1;
 		return fileName;
 	}
