@@ -42,10 +42,7 @@ import net.imglib2.Cursor;
 import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccess;
 import net.imglib2.converter.Converter;
-import net.imglib2.converter.Converters;
 import net.imglib2.img.Img;
-import net.imglib2.roi.IterableRegion;
-import net.imglib2.roi.PositionableIterableRegion;
 import net.imglib2.roi.Regions;
 import net.imglib2.roi.geometric.Polygon;
 import net.imglib2.roi.labeling.ImgLabeling;
@@ -327,11 +324,11 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 							this.quantifyGeometricFeatures(temp, p.id, majorSubRegion);
 						}
 					}
-					this.count = this.count + 1;
-					this.percentage = (int) (100 * ((double) (count) / ((double) total)));
-					JEXStatics.statusBar.setProgressPercentage(percentage);
 					firstTimeThrough = false;
 				}
+				this.count = this.count + 1;
+				this.percentage = (int) (100 * ((double) (count) / ((double) total)));
+				JEXStatics.statusBar.setProgressPercentage(percentage);
 			}
 		}
 
@@ -457,7 +454,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		}
 		if (zernike) {
 			if (this.opZernike == null) {
-				opZernike = IJ2PluginUtility.ij().op().op(ZernikeFeatureSet.class, reg, zernikeMomentMin,
+				opZernike = IJ2PluginUtility.ij().op().op(ZernikeFeatureSet.class, Regions.sample(reg, image), zernikeMomentMin,
 						zernikeMomentMax);
 			}
 
