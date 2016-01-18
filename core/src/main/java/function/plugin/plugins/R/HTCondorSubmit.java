@@ -101,11 +101,22 @@ public class HTCondorSubmit extends JEXPlugin {
 		return 1; // R doesn't like multiple threads
 	}
 
+	private static File dir = null;
+	private File getDirPath(JEXEntry optionalEntry)
+	{
+		if(dir == null)
+		{
+			dir = new File(JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getUniqueRelativeTempPath(null) + File.separator + StringUtility.removeAllWhitespace(optionalEntry.getEntryExperiment()));
+		}
+		return dir;
+	}
+	
 	@Override
 	public boolean run(JEXEntry optionalEntry)
 	{
 		try {
-			File dir = new File(JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getTempFolderName() + File.separator + StringUtility.removeAllWhitespace(optionalEntry.getEntryExperiment()));
+			
+			File dir = this.getDirPath(optionalEntry);
 
 			if(firstTimeCalled)
 			{
@@ -258,7 +269,7 @@ public class HTCondorSubmit extends JEXPlugin {
 
 			dir.mkdir();
 			File dstRScript = new File(dir.getAbsolutePath() + File.separator + "shared/rScript.R");
-			File dstRLibs = new File(dir.getAbsolutePath() + File.separator + "shared/rLibs.tar.gz");
+			File dstRLibs = new File(dir.getAbsolutePath() + File.separator + "shared/sl6-RLIBS.tar.gz");
 			FileUtils.copyFile(rScriptFile, dstRScript);
 			FileUtils.copyFile(rLibsFile, dstRLibs);
 
@@ -305,13 +316,19 @@ public class HTCondorSubmit extends JEXPlugin {
 
 	public void finalizeTicket(Ticket ticket)
 	{
+		File dir = this.getDirPath(ticket.getOutputList().firstEntry().getKey());
 		//String cmd1 = "cd "+ JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getTempFolderName();
-		String cmd2 = "zip -r " + "zipfile.zip" +" " + R.sQuote(StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment()));
-		ScriptRepository.runSysCommand(new String[]{"sh", "-c", cmd2}, JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getTempFolderName());
-		transferFile(new File(JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getTempFolderName() + File.separator + "zipfile.zip"), "ChtcRun");
-		this.runCommands("cd ChtcRun", "unzip zipfile.zip", "rm zipfile.zip","./mkdag --data="+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+" --outputdir="+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+"OUT --resultdir=" +StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment()) + "Results --cmdtorun=rScript.R --pattern="+outFile+" --type=R --version=R-3.2.0", "cd "+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+"OUT", "condor_submit_dag mydag.dag" );
+		//String cmd2 = "zip -r " + "zipfile.zip" +" " + R.sQuote(StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment()));
+		String cmd2 = "tar -zcvf " + "tarfile.tar.gz" +" " + R.sQuote(dir.getName());
+		ScriptRepository.runSysCommand(new String[]{"sh", "-c", cmd2}, dir.getParent());
+		transferFile(new File(dir.getParent() + File.separator + "tarfile.tar.gz"), "ChtcRun");
+		//this.runCommands("cd ChtcRun", "unzip zipfile.zip", "rm zipfile.zip","./mkdag --data="+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+" --outputdir="+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+"OUT --resultdir=" +StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment()) + "Results --cmdtorun=rScript.R --pattern="+outFile+" --type=R --version=R-3.2.0", "cd "+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+"OUT", "condor_submit_dag mydag.dag" );
+		this.runCommands("cd ChtcRun", "tar zxvf tarfile.tar.gz", "rm tarfile.tar.gz");
+		this.runCommands("cd ChtcRun/" + StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment()) +"/shared", "chmod 664 sl6-RLIBS.tar.gz");
+		this.runCommands("cd ChtcRun", "./mkdag --data="+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+" --outputdir="+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+"OUT --resultdir=" +StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment()) + "Results --cmdtorun=rScript.R --pattern="+outFile+" --type=R --version=R-3.2.0", "cd "+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+"OUT", "condor_submit_dag mydag.dag" );
 		
 		firstTimeCalled = true;
+		dir = null;
 	}
 
 
