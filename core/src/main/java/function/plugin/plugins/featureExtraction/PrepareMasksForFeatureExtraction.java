@@ -49,6 +49,7 @@ import weka.core.converters.JEXTableWriter;
 		)
 public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
+	FeatureUtils utils = new FeatureUtils();
 
 	// Define a constructor that takes no arguments.
 	public PrepareMasksForFeatureExtraction()
@@ -185,7 +186,7 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 			
 			// Get the regions in the union image that correspond to maxima
 			Logs.log("Getting regions corresponding to maxima", this);
-			Pair<Img<UnsignedByteType>,TreeMap<Integer,PointList>> temp = FeatureUtils.keepRegionsWithMaxima(union, connectedness.equals("4 Connected"), roiMap.get(subMap), this.getCanceler());
+			Pair<Img<UnsignedByteType>,TreeMap<Integer,PointList>> temp = utils.keepRegionsWithMaxima(union, connectedness.equals("4 Connected"), roiMap.get(subMap), this.getCanceler());
 			union = temp.p1;
 			
 			// Get clump stats

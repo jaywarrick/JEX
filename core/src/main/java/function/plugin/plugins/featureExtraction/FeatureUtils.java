@@ -41,9 +41,9 @@ import net.imglib2.type.numeric.integer.UnsignedShortType;
  */
 public class FeatureUtils {
 
-	private static UnaryFunctionOp<Object, Object> contourFunc;
+	private UnaryFunctionOp<Object, Object> contourFunc;
 
-	public static <I extends IntegerType< I >> ImgLabeling<Integer, IntType> getConnectedComponents(final RandomAccessibleInterval<I> inputImg, boolean fourConnected)
+	public <I extends IntegerType< I >> ImgLabeling<Integer, IntType> getConnectedComponents(final RandomAccessibleInterval<I> inputImg, boolean fourConnected)
 	{
 		StructuringElement se = null;
 		if(fourConnected)
@@ -65,7 +65,7 @@ public class FeatureUtils {
 		return labeling;
 	}
 
-	public static <I extends IntegerType< I >> ImgLabeling<Integer, IntType> getConnectedComponents(final RandomAccessibleInterval<I> inputImg, IterableInterval<Void> region, boolean fourConnected)
+	public <I extends IntegerType< I >> ImgLabeling<Integer, IntType> getConnectedComponents(final RandomAccessibleInterval<I> inputImg, IterableInterval<Void> region, boolean fourConnected)
 	{
 		StructuringElement se = null;
 		if(fourConnected)
@@ -88,12 +88,10 @@ public class FeatureUtils {
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public static <T> Polygon convert(final LabelRegion<T> src) {
+	public <T> Polygon convert(final LabelRegion<T> src) {
 		if (contourFunc == null) {
-			contourFunc = (UnaryFunctionOp) Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.Contour.class, Polygon.class, src, true,
-					true);
+			contourFunc = (UnaryFunctionOp) Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.Contour.class, Polygon.class, src, true, true);
 		}
-		// FIXME: can we make this faster?
 		final Polygon p = (Polygon) contourFunc.compute1(src);
 		return p;
 	}
@@ -119,7 +117,7 @@ public class FeatureUtils {
 	//		return labeling;
 	//	}
 
-	public static <I extends IntegerType< I >> Img< UnsignedShortType > getConnectedComponentsImage(Img< I > inputImg, boolean fourConnected)
+	public <I extends IntegerType< I >> Img< UnsignedShortType > getConnectedComponentsImage(Img< I > inputImg, boolean fourConnected)
 	{
 		StructuringElement se = null;
 		if(fourConnected)
@@ -140,7 +138,7 @@ public class FeatureUtils {
 		return indexImg;
 	}
 
-	public static Pair<Img<UnsignedByteType>,TreeMap<Integer,PointList>> keepRegionsWithMaxima(Img<UnsignedByteType> mask, boolean fourConnected, ROIPlus maxima, Canceler canceler)
+	public Pair<Img<UnsignedByteType>,TreeMap<Integer,PointList>> keepRegionsWithMaxima(Img<UnsignedByteType> mask, boolean fourConnected, ROIPlus maxima, Canceler canceler)
 	{
 		// Create a blank image
 		ArrayImgFactory<UnsignedByteType> factory = new ArrayImgFactory<UnsignedByteType>();
@@ -149,7 +147,7 @@ public class FeatureUtils {
 		Img<UnsignedByteType> blank = factory.create(dims, new UnsignedByteType(0));
 
 		// Get the regions
-		ImgLabeling<Integer, IntType> labeling = FeatureUtils.getConnectedComponents(mask, fourConnected);
+		ImgLabeling<Integer, IntType> labeling = this.getConnectedComponents(mask, fourConnected);
 		//		ImageJFunctions.show(mask);
 		LabelRegions<Integer> regions = new LabelRegions<Integer>(labeling);
 
@@ -199,9 +197,9 @@ public class FeatureUtils {
 		return ret;
 	}
 	
-	public static LabelRegions<Integer> getSubRegions(LabelRegion<Integer> reg, Img<UnsignedByteType> mask, boolean fourConnected)
+	public LabelRegions<Integer> getSubRegions(LabelRegion<Integer> reg, Img<UnsignedByteType> mask, boolean fourConnected)
 	{
-		ImgLabeling<Integer, IntType> cellLabeling = FeatureUtils.getConnectedComponents(mask, reg, fourConnected);
+		ImgLabeling<Integer, IntType> cellLabeling = this.getConnectedComponents(mask, reg, fourConnected);
 		LabelRegions<Integer> subRegions = new LabelRegions<Integer>(cellLabeling);
 		return subRegions;
 	}
