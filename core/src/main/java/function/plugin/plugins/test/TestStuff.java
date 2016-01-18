@@ -27,7 +27,7 @@ public class TestStuff {
 		int nPoints = 100;
 		int rndSeed = 1234;
 		
-		DirectoryManager.setHostDirectory("/Users/jaywarrick/Desktop");
+		DirectoryManager.setHostDirectory("C:/Users/David Niles/Desktop");
 		
 		PointList pl = getRandomPoints(maxRadius, xOffset, yOffset, nPoints, rndSeed);
 		
