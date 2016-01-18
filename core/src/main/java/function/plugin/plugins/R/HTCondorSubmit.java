@@ -229,9 +229,10 @@ public class HTCondorSubmit extends JEXPlugin {
 		try {
 			// Remove existing directory on CHTC
 			String cmd1 = "cd ChtcRun";
-			String cmd2 = "rm -r " + StringUtility.removeAllWhitespace(dir.getName());
-			String cmd3 = "rm -r " + StringUtility.removeAllWhitespace(dir.getName()) + "OUT";
-			this.runCommands(cmd1, cmd2, cmd3);
+			String cmd2 = "rm -rf " + StringUtility.removeAllWhitespace(dir.getName());
+			String cmd3 = "rm -rf " + StringUtility.removeAllWhitespace(dir.getName()) + "OUT";
+			String cmd4 = "rm -rf " + StringUtility.removeAllWhitespace(dir.getName()) + "Results";
+			this.runCommands(cmd1, cmd2, cmd3, cmd4);
 
 			// Get the RScript
 			File rScriptFile = FileReader.readFileObjectToFile(rScripts);
@@ -308,7 +309,7 @@ public class HTCondorSubmit extends JEXPlugin {
 		String cmd2 = "zip -r " + "zipfile.zip" +" " + R.sQuote(StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment()));
 		ScriptRepository.runSysCommand(new String[]{"sh", "-c", cmd2}, JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getTempFolderName());
 		transferFile(new File(JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getTempFolderName() + File.separator + "zipfile.zip"), "ChtcRun");
-		this.runCommands("cd ChtcRun", "unzip zipfile.zip", "rm zipfile.zip","./mkdag --data="+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+" --outputdir="+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+"OUT"+" --cmdtorun=rScript.R --pattern="+outFile+" --type=R --version=R-3.2.0", "cd "+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+"OUT", "condor_submit_dag mydag.dag" );
+		this.runCommands("cd ChtcRun", "unzip zipfile.zip", "rm zipfile.zip","./mkdag --data="+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+" --outputdir="+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+"OUT --resultdir=" +StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment()) + "Results --cmdtorun=rScript.R --pattern="+outFile+" --type=R --version=R-3.2.0", "cd "+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+"OUT", "condor_submit_dag mydag.dag" );
 		
 		firstTimeCalled = true;
 	}
