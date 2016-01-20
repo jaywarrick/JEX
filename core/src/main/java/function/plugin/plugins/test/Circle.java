@@ -1,9 +1,10 @@
 package function.plugin.plugins.test;
 
-import net.imglib2.Localizable;
+import miscellaneous.Copiable;
 import net.imglib2.RealLocalizable;
+import net.imglib2.RealPoint;
 
-public class Circle
+public class Circle implements Copiable<Circle>
 {
 	RealLocalizable center;
 
@@ -25,7 +26,7 @@ public class Circle
 		return this.radius;
 	}
 
-	public boolean contains(Localizable testPoint)
+	public boolean contains(RealLocalizable testPoint)
 	{		
 				
 		double[] p  = new double[testPoint.numDimensions()];
@@ -55,6 +56,12 @@ public class Circle
 		}
 		sb.append(radius);
 		return sb.toString();
+	}
+	
+	public Circle copy()
+	{
+		Circle ret = new Circle(new RealPoint(this.center), this.radius);
+		return ret;
 	}
 	
 }
