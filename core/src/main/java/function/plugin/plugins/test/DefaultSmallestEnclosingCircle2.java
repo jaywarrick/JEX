@@ -6,22 +6,27 @@ import java.util.Random;
 import java.util.Stack;
 import java.util.Vector;
 
+import org.scijava.Priority;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
-import function.plugin.mechanism.MarkerConstants;
-import function.plugin.mechanism.ParameterMarker;
+import image.roi.PointSampleList;
+import miscellaneous.FileUtility;
 import net.imagej.ops.Ops;
+import net.imagej.ops.geom.geom2d.Circle;
 import net.imagej.ops.special.AbstractUnaryFunctionOp;
 import net.imglib2.Cursor;
 import net.imglib2.IterableInterval;
-import net.imglib2.RealLocalizable;
 import net.imglib2.Point;
+import net.imglib2.RealLocalizable;
 import net.imglib2.RealPoint;
+import rtools.R;
 
-@Plugin(type = Ops.Geometric.SmallestEnclosingCircle.class)
-public class DefaultSmallestEnclosingCircle extends AbstractUnaryFunctionOp<IterableInterval<?>, Circle>
+@Plugin(type = Ops.Geometric.SmallestEnclosingCircle.class, priority=Priority.LAST_PRIORITY)
+public class DefaultSmallestEnclosingCircle2 extends AbstractUnaryFunctionOp<IterableInterval<?>, Circle>
 implements Ops.Geometric.SmallestEnclosingCircle {
+
+	final static String BOUNCINGBUBBLE = "Bouncing Bubble", WELZL_RECURSIVE = "Welzl recursive", WELZL_LOOP = "Welzl loop";
 
 	@Parameter(required = false)
 	RealLocalizable center = null;
@@ -35,9 +40,8 @@ implements Ops.Geometric.SmallestEnclosingCircle {
 	@Parameter(required = false)
 	int rndSeed = 1234;
 
-	@ParameterMarker(name = "Algorithm", description = "Specifies algorithm used to find circle.", ui = MarkerConstants.UI_DROPDOWN, choices = {
-			"Bouncing Bubble", "Welzl", "Welzl loop" }, defaultChoice = 0)
-	String algorithm;
+	@Parameter(required = false)
+	String algorithm = WELZL_LOOP;
 
 	@Override
 	public Circle compute1(IterableInterval<?> input) throws IllegalArgumentException {
@@ -54,19 +58,19 @@ implements Ops.Geometric.SmallestEnclosingCircle {
 
 		// Make a stack and initialize
 
-		SnapShotStruct currentSnapShot = new SnapShotStruct();
+		SnapShot currentSnapShot = new SnapShot();
 		currentSnapShot.points = points;
 		currentSnapShot.boundary = boundary;
 		currentSnapShot.D = null;
 		currentSnapShot.stage = 0;
 
-		SnapShotStruct result = miniDiskLoop(currentSnapShot);
+		Circle ret = miniDiskLoop(currentSnapShot);
 
 		if (paddingRatio != 1.0) {
-			result.D = new Circle(result.D.getCenter(), result.D.getRadius() * paddingRatio);
+			ret = new Circle(ret.getCenter(), ret.getRadius() * paddingRatio);
 		}
 
-		return result.D;
+		return currentSnapShot.D;
 	}
 
 	private List<RealLocalizable> getInitialPointList(IterableInterval<?> input) {
@@ -94,77 +98,85 @@ implements Ops.Geometric.SmallestEnclosingCircle {
 	}
 
 
-	private SnapShotStruct miniDiskLoop(SnapShotStruct currentSnapShot) {
+	private Circle miniDiskLoop(SnapShot snapShot) {
 
-		// Initialize the output
-		SnapShotStruct returnVal = null;
+		Stack<SnapShot> stack = new Stack<>();
+		stack.push(snapShot);
 
-		Stack<SnapShotStruct> snapshotStack = new Stack<SnapShotStruct>();
-		snapshotStack.push(currentSnapShot);
+		Circle ret = null;
+		// Perform stack loop style recursion
+		while (!stack.isEmpty())
+		{
+			SnapShot currentSnapShot = stack.pop();
 
-		int counter = 0;
-
-		while (!snapshotStack.empty()) {
-			counter = counter + 1;
-			// Get the top of the stack
-			currentSnapShot = snapshotStack.pop();
-
-			// Special cases
-			if (currentSnapShot.boundary.size() == 3) {
-				returnVal = makeCircle3(currentSnapShot);
-				snapshotStack.push(returnVal);
-				continue;
-			} else if (currentSnapShot.points.size() >= 1 && currentSnapShot.boundary.size() == 0) {
-				returnVal = makeCircle1(currentSnapShot);
-				snapshotStack.push(returnVal);
-				continue;
-				//			SnapShotStruct newSnapshot = new SnapShotStruct();
-				//			newSnapshot.boundary = points;
-				//			newSnapshot.
-			} else if (currentSnapShot.points.size() == 0 && currentSnapShot.boundary.size() == 2) {
-				returnVal = makeCircle2(currentSnapShot);
-				snapshotStack.push(returnVal);
-				continue;
-			} else if (currentSnapShot.points.size() == 1 && currentSnapShot.boundary.size() == 1) {
-				RealLocalizable p1 = currentSnapShot.points.get(0);
-				RealLocalizable p2 = currentSnapShot.boundary.get(0);
-				List<RealLocalizable> pl = new Vector<>();
-				pl.add(p1);
-				pl.add(p2);
-				returnVal = makeCircle2(currentSnapShot); // pointList and boundary
-				snapshotStack.push(returnVal);
-				continue;
-			} else {
-				if (currentSnapShot.D == null) {
-					returnVal = makeCircle1(currentSnapShot);
-					snapshotStack.push(returnVal);
-					continue;
+			if(currentSnapShot.stage == 0)
+			{
+				if(currentSnapShot.points.size() == 0)
+				{
+					System.out.println(currentSnapShot);
+					ret = currentSnapShot.D;
 				}
-
-				// Make a new snapshot
-
-				// Remove a test point
-				RealLocalizable testPoint = currentSnapShot.points.get(currentSnapShot.points.size()-1);
-				returnVal = currentSnapShot.getTrimmedSnapShot();
-				
-
-				if (!currentSnapShot.D.contains(testPoint)) {
-
-					// Return the new snapshot
-					snapshotStack.push(returnVal);
-					continue;
-
-					// Otherwise simply return the circle
-				} else {
-					// Do nothing which results in shrinking
-					returnVal = currentSnapShot;
-					continue;
+				else
+				{
+					RealLocalizable testPoint = currentSnapShot.points.get(currentSnapShot.points.size()-1);
+					currentSnapShot.points = currentSnapShot.points.subList(0, currentSnapShot.points.size() - 1);
+					currentSnapShot.stage = 1;
+					stack.push(currentSnapShot);
+					
+					if(currentSnapShot.points.size() > 0 && (currentSnapShot.D == null || !currentSnapShot.D.contains(testPoint)))
+					{
+						SnapShot newSnapShot = currentSnapShot.copy();
+						newSnapShot.boundary.add(newSnapShot.points.remove(newSnapShot.points.size()-1));
+						newSnapShot.stage = 0;
+						stack.push(newSnapShot);
+					}
 				}
 			}
+			else
+			{
+				this.updateCircle(currentSnapShot);
+				System.out.println(currentSnapShot);
+				ret = currentSnapShot.D;
+			}
 		}
-		return returnVal;
+		
+		return ret;
 	}
 
+	private void updateCircle(SnapShot snapShot)
+	{
+		
+		if(snapShot.boundary.size() == 0)
+		{
+			snapShot.D = new Circle(snapShot.points.get(snapShot.points.size()-1), 0);
+			snapShot.boundary.add(snapShot.points.remove(snapShot.points.size()-1));
+		}
+		else if(snapShot.boundary.size() == 1)
+		{
+			makeCircle1(snapShot);
+		}
+		else if(snapShot.boundary.size() == 2)
+		{
+			makeCircle2(snapShot);
+		}
+		else if(snapShot.boundary.size() == 3)
+		{
+			makeCircle3(snapShot);
+		}
+	}
+
+	public static void plotAndShowResults(PointSampleList<?> pl, double xCenter, double yCenter, double radius) throws Exception
+	{
+		R.eval("x <- 1"); // Just to get R going.
+		R.makeVector("x", pl.getDoubleArray(0));
+		R.makeVector("y", pl.getDoubleArray(1));
+		R.load("plotrix");
+		String filePath = R.startPlot("pdf", 7, 5, 0, 12, "Helvetica", null);
+		R.eval("plot(x,y, xlab='X [pixels]', ylab='Y [pixels]', asp=1)");
+		R.eval("draw.circle(x=" + xCenter + ",y=" + yCenter + ",radius=" + radius + ")");
+		R.endPlot();
+		FileUtility.openFileDefaultApplication(filePath);
+	}
 	//	private Circle miniDisk2(List<RealLocalizable> points) {
 	//		
 	//		Circle left = null;
@@ -278,7 +290,7 @@ implements Ops.Geometric.SmallestEnclosingCircle {
 	//		return D;
 	//	}
 
-	
+
 
 	//private SnapShot makeSnapshot1(SnapShot state) {
 	//	List<RealLocalizable> points = state.points;
@@ -287,22 +299,16 @@ implements Ops.Geometric.SmallestEnclosingCircle {
 	//	
 	//}
 
+	private void makeCircle1(SnapShot snapShot) {
 
-	private SnapShotStruct makeCircle1(SnapShotStruct snapShot) {
-
-		Circle D = new Circle(snapShot.points.get(snapShot.points.size()-1), 0);
-		SnapShotStruct ret = snapShot.getTrimmedSnapShot();
-		ret.D = D;
-		return ret;
+		snapShot.D = new Circle(new RealPoint(snapShot.boundary.get(0)), 0);
 
 	}
 
-	private SnapShotStruct makeCircle2(SnapShotStruct snapShot) {
+	private void makeCircle2(SnapShot snapShot) {
 
-		SnapShotStruct ret = snapShot.copy();
-
-		RealLocalizable p = ret.points.get(0);
-		RealLocalizable q = ret.points.get(1);
+		RealLocalizable p = snapShot.boundary.get(0);
+		RealLocalizable q = snapShot.boundary.get(1);
 
 		double[] pos1 = new double[p.numDimensions()];
 		double[] pos2 = new double[p.numDimensions()];
@@ -316,9 +322,7 @@ implements Ops.Geometric.SmallestEnclosingCircle {
 
 		RealPoint center = new RealPoint(x0, y0);
 
-		ret.D = new Circle(center, r);
-
-		return ret;
+		snapShot.D = new Circle(center, r);
 	}
 
 	//private Circle makeCircle2(List<RealLocalizable> points) {
@@ -338,17 +342,32 @@ implements Ops.Geometric.SmallestEnclosingCircle {
 	//
 	//}
 
-	private SnapShotStruct makeCircle3(SnapShotStruct snapShot) {
+	private void makeCircle4(SnapShot snapShot, int keeper)
+	{
+		// We must eliminate 1 point. 
+		SnapShot temp = snapShot.copy();
+		for(int i = 0; i < 4; i++)
+		{
+			int i1 = i%4;
+			int i2 = (i+1)%4;
+			int i3 = (i+2)%4;
+			int test = (i+3)%4;
 
-		SnapShotStruct ret = snapShot.copy();
 
-		double[] pos1 = new double[ret.points.get(0).numDimensions()];
-		double[] pos2 = new double[ret.points.get(0).numDimensions()];
-		double[] pos3 = new double[ret.points.get(0).numDimensions()];
 
-		ret.points.get(0).localize(pos1);
-		ret.points.get(1).localize(pos2);
-		ret.points.get(2).localize(pos3);
+		}
+	}
+
+	private void makeCircle3(SnapShot snapShot)
+	{
+
+		double[] pos1 = new double[snapShot.boundary.get(0).numDimensions()];
+		double[] pos2 = new double[snapShot.boundary.get(0).numDimensions()];
+		double[] pos3 = new double[snapShot.boundary.get(0).numDimensions()];
+
+		snapShot.boundary.get(0).localize(pos1);
+		snapShot.boundary.get(1).localize(pos2);
+		snapShot.boundary.get(2).localize(pos3);
 
 		double x1 = pos1[0];
 		double x2 = pos2[0];
@@ -370,13 +389,13 @@ implements Ops.Geometric.SmallestEnclosingCircle {
 			double biggest = Math.max(Math.max(d12, d13), d23);
 
 			if (biggest == d12)
-				ret.points.remove(2);
+				snapShot.boundary.remove(2);
 			else if (biggest == d13)
-				ret.points.remove(1);
+				snapShot.boundary.remove(1);
 			else if (biggest == d23)
-				ret.points.remove(0);
+				snapShot.boundary.remove(0);
 
-			return makeCircle2(ret);
+			makeCircle2(snapShot);
 		} else {
 			// Calculate the center (intersection of lines perpendicular to
 			// those separating the points)
@@ -388,8 +407,7 @@ implements Ops.Geometric.SmallestEnclosingCircle {
 
 			// Make circle
 			RealPoint center = new RealPoint(x0, y0);
-			ret.D = new Circle(center, r);
-			return ret;
+			snapShot.D = new Circle(center, r);
 		}
 	}
 
@@ -400,30 +418,30 @@ implements Ops.Geometric.SmallestEnclosingCircle {
 }
 
 //Define snapshot to hold current state
-class SnapShotStruct {
+class SnapShot {
 
 	List<RealLocalizable> points;
 	List<RealLocalizable> boundary;
 	Circle D;
 	int stage;
 
-	public SnapShotStruct(SnapShotStruct another) {
+	public SnapShot(SnapShot another) {
 		this.points = another.points;
 		this.boundary = another.boundary;
 		this.D = another.D;
 		this.stage = another.stage;
 	}
 
-	public SnapShotStruct() {
+	public SnapShot() {
 		this.points = null;
 		this.boundary = null;
 		this.D = null;
 		this.stage = 0;
 	}
 
-	public SnapShotStruct copy()
+	public SnapShot copy()
 	{
-		SnapShotStruct ret = new SnapShotStruct();
+		SnapShot ret = new SnapShot();
 		ret.points = new Vector<RealLocalizable>(this.points);
 		ret.boundary = new Vector<RealLocalizable>(this.boundary);
 		if(ret.D != null)
@@ -434,17 +452,17 @@ class SnapShotStruct {
 		System.out.println(this);
 		return ret;
 	}
-	
-	public SnapShotStruct getTrimmedSnapShot() {
 
-		SnapShotStruct ret = this.copy();
+	public SnapShot getTrimmedSnapShot() {
+
+		SnapShot ret = this.copy();
 		ret.boundary.add(ret.points.get(ret.points.size()-1));
 		ret.points = ret.points.subList(0, ret.points.size() - 1);
-		
+
 		return ret;
 
 	}
-	
+
 	public String toString()
 	{
 		if(this.D == null)
