@@ -4,12 +4,22 @@ import java.util.Random;
 
 import function.plugin.IJ2.IJ2PluginUtility;
 import image.roi.PointList;
+import image.roi.PointSampleList;
+import image.roi.PointSampleListII;
 import miscellaneous.DirectoryManager;
 import miscellaneous.FileUtility;
 import net.imagej.ops.Ops;
+import net.imagej.ops.features.zernike.helper.ZernikeComputer;
+import net.imagej.ops.features.zernike.helper.ZernikeMoment;
+import net.imagej.ops.geom.geom2d.Circle;
+import net.imagej.ops.special.Functions;
+import net.imagej.ops.special.UnaryFunctionOp;
 import net.imglib2.Cursor;
 import net.imglib2.IterableInterval;
+import net.imglib2.RealLocalizable;
 import net.imglib2.roi.geometric.PointCollection;
+import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.integer.IntType;
 import rtools.R;
 
 public class TestStuff {
@@ -24,30 +34,82 @@ public class TestStuff {
 		int maxRadius = 100;
 		int xOffset = 0;
 		int yOffset = 0;
-		int nPoints = 100;
-		int rndSeed = 1234;
+		int nPoints = 5;
+		int rndSeed = 1235;
 		
-		DirectoryManager.setHostDirectory("C:/Users/David Niles/Desktop");
+		//DirectoryManager.setHostDirectory("C:/Users/David Niles/Desktop");
+		DirectoryManager.setHostDirectory("/Users/jaywarrick/Desktop");
 		
-		PointList pl = getRandomPoints(maxRadius, xOffset, yOffset, nPoints, rndSeed);
+		PointSampleList<IntType> pl = getRandomPoints(maxRadius, xOffset, yOffset, nPoints, rndSeed);
 		
-		IterableInterval<Void> ii = getIterableInterval(pl);
+		//pl.rotate(90);
+
+		pl = getPointListWithCoMAtOrigin(pl);
+		PointSampleList<IntType> pl2 = pl.copy();
+		pl2.rotate(30);
+		pl2 = getPointListWithCoMAtOrigin(pl2);
+		PointSampleList<IntType> pl3 = pl2.copy();
+		pl3.translate(10, 10);
+		PointSampleList<IntType> pl4 = pl3.copy();
+		pl4.rotate(-30);
+		pl4 = getPointListWithCoMAtOrigin(pl4);
+		PointSampleList<IntType> pl5 = pl4.copy();
+		pl5.translate(100, 100);
+		pl5.rotate(40.7);
+		pl5.scale(1.722);
+//		pl5 = getPointListWithCoMAtOrigin(pl5);
 		
-		Circle result = (Circle) IJ2PluginUtility.ij().op().run(Ops.Geometric.SmallestEnclosingCircle.class, ii);
 		
-		TestStuff.plotAndShowResults(pl, result.getCenter().getDoublePosition(0), result.getCenter().getDoublePosition(1), result.getRadius());
+		getZernikeInfo(pl);
+		getZernikeInfo(pl2);
+		getZernikeInfo(pl3);
+		getZernikeInfo(pl4);
+		getZernikeInfo(pl5);
+		
+		
 	}
 	
-	public static PointList getRandomPoints(int maxRadius, int xOffset, int yOffset, int nPoints, int rndSeed)
+	public static <T extends RealType<T>> PointSampleList<T> getPointListWithCoMAtOrigin(PointSampleList<T> pl)
 	{
-		PointList pl = new PointList();
+		pl = pl.getRealPointListRelativeToCenter();
+		RealLocalizable com = getCenterOfMass(pl);
+		pl.translate(-1*com.getDoublePosition(0), -1*com.getDoublePosition(1));
+		System.out.println("Center of Mass now at: " + getCenterOfMass(pl));
+		return pl;
+	}
+	
+	public static <T extends RealType<T>> void getZernikeInfo(PointSampleList<T> pl) throws Exception
+	{
+		PointSampleListII<T> plII = new PointSampleListII<>(pl);
+		RealLocalizable center = getCenterOfMass(plII.pl);
+		UnaryFunctionOp<IterableInterval<T>,Circle> op = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.SmallestEnclosingCircle.class, Circle.class, plII, (RealLocalizable) null);
+		Circle result = op.compute1(plII);
+		
+		UnaryFunctionOp<IterableInterval<T>,ZernikeMoment> opZ = Functions.unary(IJ2PluginUtility.ij().op(), ZernikeComputer.class, ZernikeMoment.class, plII, 2, 2, null, null);
+		ZernikeMoment m = opZ.compute1(plII);
+		double mag = m.getMagnitude();
+		System.out.println(plII);
+		System.out.println(center);
+		System.out.println(mag);
+		System.out.println(result);
+		TestStuff.plotAndShowResults(plII.pl, result.getCenter().getDoublePosition(0), result.getCenter().getDoublePosition(1), result.getRadius());
+	}
+	
+	public static <T extends RealType<T>> RealLocalizable getCenterOfMass(PointSampleList<T> pl)
+	{
+		return (RealLocalizable) IJ2PluginUtility.ij().op().run(Ops.Geometric.CenterOfGravity.class, new PointSampleListII<T>(pl));
+	}
+	
+	public static PointSampleList<IntType> getRandomPoints(int maxRadius, int xOffset, int yOffset, int nPoints, int rndSeed)
+	{
+		PointSampleList<IntType> pl = new PointSampleList<>(IntType.class);
 		Random rand = new Random(rndSeed);
 		
 		for(int i = 0; i < nPoints; i++)
 		{
 			double r = rand.nextDouble()*maxRadius;
 			double theta = rand.nextDouble()*2*Math.PI;
-			pl.add((int) (r*Math.sin(theta)), (int) (r*Math.cos(theta))); 
+			pl.add((int) (r*Math.sin(theta)), (int) (r*Math.cos(theta)), 1); 
 		}
 		
 		pl.translate(xOffset, yOffset);
@@ -69,11 +131,11 @@ public class TestStuff {
 		return p;
 	}
 	
-	public static void plotAndShowResults(PointList pl, double xCenter, double yCenter, double radius) throws Exception
+	public static void plotAndShowResults(PointSampleList<?> pl, double xCenter, double yCenter, double radius) throws Exception
 	{
 		R.eval("x <- 1"); // Just to get R going.
-		R.makeVector("x", pl.getXIntArray());
-		R.makeVector("y", pl.getYIntArray());
+		R.makeVector("x", pl.getDoubleArray(0));
+		R.makeVector("y", pl.getDoubleArray(1));
 		R.load("plotrix");
 		String filePath = R.startPlot("pdf", 7, 5, 0, 12, "Helvetica", null);
 		R.eval("plot(x,y, xlab='X [pixels]', ylab='Y [pixels]', asp=1)");
@@ -81,4 +143,6 @@ public class TestStuff {
 		R.endPlot();
 		FileUtility.openFileDefaultApplication(filePath);
 	}
+	
+	
 }
