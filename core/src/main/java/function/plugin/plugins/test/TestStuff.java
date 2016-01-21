@@ -24,7 +24,7 @@ public class TestStuff {
 		int maxRadius = 100;
 		int xOffset = 0;
 		int yOffset = 0;
-		int nPoints = 100;
+		int nPoints = 1000000;
 		int rndSeed = 1234;
 		
 		DirectoryManager.setHostDirectory("C:/Users/David Niles/Desktop");
@@ -71,14 +71,16 @@ public class TestStuff {
 	
 	public static void plotAndShowResults(PointList pl, double xCenter, double yCenter, double radius) throws Exception
 	{
-		R.eval("x <- 1"); // Just to get R going.
-		R.makeVector("x", pl.getXIntArray());
-		R.makeVector("y", pl.getYIntArray());
-		R.load("plotrix");
-		String filePath = R.startPlot("pdf", 7, 5, 0, 12, "Helvetica", null);
-		R.eval("plot(x,y, xlab='X [pixels]', ylab='Y [pixels]', asp=1)");
-		R.eval("draw.circle(x=" + xCenter + ",y=" + yCenter + ",radius=" + radius + ")");
-		R.endPlot();
-		FileUtility.openFileDefaultApplication(filePath);
+//		R.eval("x <- 1"); // Just to get R going.
+//		R.makeVector("x", pl.getXIntArray());
+//		R.makeVector("y", pl.getYIntArray());
+//		R.load("plotrix");
+//		String filePath = R.startPlot("pdf", 7, 5, 0, 12, "Helvetica", null);
+//		R.eval("plot(x,y, xlab='X [pixels]', ylab='Y [pixels]', asp=1)");
+//		R.eval("draw.circle(x=" + xCenter + ",y=" + yCenter + ",radius=" + radius + ")");
+//		R.endPlot();
+//		FileUtility.openFileDefaultApplication(filePath);
+		System.out.print("Center: (" + xCenter + ", " + yCenter + ")    ");
+		System.out.print("Radius: " + radius);
 	}
 }

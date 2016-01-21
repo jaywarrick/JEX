@@ -15,7 +15,7 @@ public class Circle implements Copiable<Circle>
 		this.center = center;
 		this.radius = radius;
 	}
-
+	
 	public RealLocalizable getCenter()
 	{
 		return this.center;
@@ -24,7 +24,7 @@ public class Circle implements Copiable<Circle>
 	public double getRadius()
 	{
 		return this.radius;
-	}
+	}	
 
 	public boolean contains(RealLocalizable testPoint)
 	{		
