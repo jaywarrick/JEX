@@ -109,6 +109,12 @@ public class PointList extends Vector<IdPoint> implements Copiable<PointList> {
 		return this.toPolygon().getBounds();
 	}
 	
+	/**
+	 * The total length of all line segments unless isLine is true which
+	 * then gives the length between the start and end point only
+	 * @param isLine
+	 * @return
+	 */
 	public double getLength(boolean isLine)
 	{
 		double length = 0;

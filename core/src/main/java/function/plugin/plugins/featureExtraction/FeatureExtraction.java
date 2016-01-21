@@ -71,7 +71,7 @@ import weka.core.converters.JEXTableWriter;
 		visible = true,
 		description = "Function for testing feature extraction using the ImageJ Ops framework."
 		)
-public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
+public class FeatureExtraction<T extends RealType<T>, B extends RealType<B>> extends JEXPlugin {
 
 	public ImgOpener imgOpener;
 
@@ -87,7 +87,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	// TODO: Figure out how to get a RandomAccessbleInterval<T> from a
 	// LabelRegion and an Img<T>
 	// public Tamura2DFeatureSet<T,DoubleType> opTamura = null;
-	public ZernikeFeatureSet<BitType> opZernike = null;
+	public ZernikeFeatureSet<B> opZernike = null;
 
 	public JEXCSVWriter writer;
 	public Set<String> header = null;
@@ -459,14 +459,14 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	}
 
 	@SuppressWarnings("unchecked")
-	public boolean putZernike(DimensionMap mapM, int id, LabelRegion<Integer> reg) {
+	public boolean putZernike(DimensionMap mapM, int id, LabelRegion<Integer> reg, Img<B> mask) {
 		if (this.isCanceled()) {
 			this.close();
 			return false;
 		}
 		if (zernike) {
 			if (this.opZernike == null) {
-				opZernike = IJ2PluginUtility.ij().op().op(ZernikeFeatureSet.class, reg, zernikeMomentMin,
+				opZernike = IJ2PluginUtility.ij().op().op(ZernikeFeatureSet.class, Regions.sample(reg, mask), zernikeMomentMin,
 						zernikeMomentMax);
 			}
 
