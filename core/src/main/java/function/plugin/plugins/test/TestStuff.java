@@ -26,7 +26,35 @@ public class TestStuff {
 	
 	public static void main (String[] args) throws Exception
 	{
-		tryIIPointList();
+		tryCircleOp();
+	}
+	
+	public static void tryCircleOp() throws Exception
+	{
+		int maxRadius = 100;
+		int xOffset = 0;
+		int yOffset = 0;
+		int nPoints = 100;
+		int rndSeed = 1235;
+		
+		//DirectoryManager.setHostDirectory("C:/Users/David Niles/Desktop");
+		DirectoryManager.setHostDirectory("/Users/jaywarrick/Desktop");
+		
+		PointSampleList<IntType> pl = getRandomPoints(maxRadius, xOffset, yOffset, nPoints, rndSeed);
+		PointSampleListII<IntType> plII = new PointSampleListII<IntType>(pl);
+		
+		UnaryFunctionOp<IterableInterval<IntType>,Circle> op = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.SmallestEnclosingCircle.class, Circle.class, plII, (RealLocalizable) null);
+		
+		Circle result = op.compute1(plII);
+		
+		//		UnaryFunctionOp<IterableInterval<IntType>,ZernikeMoment> opZ = Functions.unary(IJ2PluginUtility.ij().op(), ZernikeComputer.class, ZernikeMoment.class, plII, 2, 2, null, null);
+		//		ZernikeMoment m = opZ.compute1(plII);
+		//		double mag = m.getMagnitude();
+		//		System.out.println(plII);
+		//		System.out.println(center);
+		//		System.out.println(mag);
+		//		System.out.println(result);
+		TestStuff.plotAndShowResults(pl, result.getCenter().getDoublePosition(0), result.getCenter().getDoublePosition(1), result.getRadius());
 	}
 	
 	public static void tryIIPointList() throws Exception
