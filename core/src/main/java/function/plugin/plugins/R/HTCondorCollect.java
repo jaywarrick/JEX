@@ -23,6 +23,8 @@ import com.jcraft.jsch.Session;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataWriter.FileWriter;
+import Database.Definition.TypeName;
+import Database.SingleUserDatabase.JEXReader;
 import Database.SingleUserDatabase.JEXWriter;
 import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.MarkerConstants;
@@ -114,12 +116,20 @@ public class HTCondorCollect extends JEXPlugin {
 		
 		
 		// Import the files as JEXData
-		List<File> files = FileUtility.getSortedFileList((new File(uniqueFolder)).listFiles());
+		List<File> files = FileUtility.getSortedFileList((new File(uniqueFolder + File.separator + optionalEntry.getEntryID())).listFiles());
 		for(File f : files)
 		{
 			if(f.isFile() && !f.getName().equals(id + ".zip"))
 			{
-				output.addElement(FileWriter.makeFileObject(f.getName(), null, f));
+				if(FileUtility.getFileNameExtension(f.getName()).equals("jxd"))
+				{
+					JEXData roi = JEXReader.readFileToJEXData(f.getAbsolutePath(), new TypeName(JEXData.ROI, f.getName()));
+					output.addElement(roi);
+				}
+				else
+				{
+					output.addElement(FileWriter.makeFileObject(f.getName(), null, f));
+				}
 			}
 		}
 

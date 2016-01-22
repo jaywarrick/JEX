@@ -11,6 +11,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import Database.DBObjects.JEXData;
+import Database.Definition.TypeName;
 import jex.statics.JEXDialog;
 import miscellaneous.CSVReader;
 import net.imglib2.img.Img;
@@ -85,6 +87,13 @@ public class JEXReader {
 			e.printStackTrace();
 			return null;
 		}		
+	}
+	
+	public static JEXData readFileToJEXData(String file, TypeName tn)
+	{
+		JEXData ret = new JEXData(tn);
+		JEXDataIO.loadJXD(ret, file);
+		return ret;
 	}
 	
 }
