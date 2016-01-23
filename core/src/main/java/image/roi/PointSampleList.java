@@ -41,6 +41,7 @@ public class PointSampleList<T extends RealType<T>> extends Vector<PointSample<T
 	
 	public PointSampleList(PointSampleList<T> pl)
 	{
+		this.type = pl.type;
 		for (PointSample<T> p : pl)
 		{
 			this.add(p.copy());
@@ -49,8 +50,7 @@ public class PointSampleList<T extends RealType<T>> extends Vector<PointSample<T
 	
 	public PointSampleList(String polygonPts, Class<T> type) throws InstantiationException, IllegalAccessException
 	{
-		super();
-		this.type = type;
+		this(type);
 		
 		if(polygonPts != null)
 		{
@@ -73,19 +73,10 @@ public class PointSampleList<T extends RealType<T>> extends Vector<PointSample<T
 		}
 	}
 	
-	public PointSampleList(Point[] pa)
+	public PointSampleList(Point[] pa, Class<T> type)
 	{
-		super();
+		this(type);
 		for (Point p : pa)
-		{
-			this.add(p);
-		}
-	}
-	
-	public PointSampleList(RealPoint[] pa)
-	{
-		super();
-		for (RealPoint p : pa)
 		{
 			this.add(p);
 		}
@@ -93,8 +84,7 @@ public class PointSampleList<T extends RealType<T>> extends Vector<PointSample<T
 	
 	public PointSampleList(RealPoint[] pa, Class<T> type)
 	{
-		super();
-		this.type = type;
+		this(type);
 		for (RealPoint p : pa)
 		{
 			this.add(p);
@@ -106,9 +96,9 @@ public class PointSampleList<T extends RealType<T>> extends Vector<PointSample<T
 	//		this(polygonToPointArray(pg));
 	//	}
 	
-	public PointSampleList(Polygon2D pg)
+	public PointSampleList(Polygon2D pg, Class<T> type)
 	{
-		this(polygonToRealPointArray(pg));
+		this(polygonToRealPointArray(pg), type);
 	}
 	
 	// public RealPointList<T>(XRealPointList<T> pl)
