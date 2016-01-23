@@ -88,7 +88,7 @@ public class FeatureUtils {
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public <T> Polygon convert(final LabelRegion<T> src) {
+	public <T> Polygon convert(final IterableInterval<T> src) {
 		if (contourFunc == null) {
 			contourFunc = (UnaryFunctionOp) Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.Contour.class, Polygon.class, src, true, true);
 		}
