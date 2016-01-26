@@ -1,24 +1,20 @@
 package image.roi;
 
 import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.geom.Rectangle2D;
-import java.util.Comparator;
 
 import miscellaneous.CSVList;
-import miscellaneous.Copiable;
-import net.imglib2.Localizable;
 import net.imglib2.RealLocalizable;
 import net.imglib2.RealPoint;
 import net.imglib2.Sampler;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.IntType;
 
-public class PointSample<T extends RealType<T>> extends RealPoint implements Comparator<PointSample<T>>, Copiable<PointSample<T>>, Sampler<T>, Localizable {
+public class PointSample<T extends RealType<T>> extends RealPoint implements PointSampler<T> {
 	
 	public T id;
 	
-	public PointSample(PointSample<T> pos)
+	public PointSample(PointSampler<T> pos)
 	{
 		super(pos);
 		this.id = pos.get().copy();
@@ -94,7 +90,12 @@ public class PointSample<T extends RealType<T>> extends RealPoint implements Com
 		return true;
 	}
 	
-	public int compare(PointSample<T> p1, PointSample<T> p2)
+	public int compareTo(Sampler<T> p2)
+	{
+		return this.compare(this, p2);
+	}
+	
+	public int compare(Sampler<T> p1, Sampler<T> p2)
 	{
 		return p1.get().compareTo(p2.get());
 	}
@@ -143,31 +144,5 @@ public class PointSample<T extends RealType<T>> extends RealPoint implements Com
 		double x = ((double) r.x + r.width) / 2.0;
 		double y = ((double) r.y + r.height) / 2.0;
 		return new PointSample<IntType>(x, y, new IntType(0));
-	}
-
-	@Override
-	public void localize(int[] position) {
-		for(int i = 0; i < position.length; i++)
-		{
-			position[i] = this.getIntPosition(i);
-		}
-	}
-
-	@Override
-	public void localize(long[] position) {
-		for(int i = 0; i < position.length; i++)
-		{
-			position[i] = this.getLongPosition(i);
-		}
-	}
-
-	@Override
-	public int getIntPosition(int d) {
-		return (int) Math.round(this.getDoublePosition(d)) ;
-	}
-
-	@Override
-	public long getLongPosition(int d) {
-		return Math.round(this.getDoublePosition(d));
 	}
 }

@@ -1,4 +1,4 @@
-package function.plugin.plugins.test;
+package function.ops;
 
 import java.util.Collections;
 import java.util.List;
@@ -12,21 +12,16 @@ import org.scijava.plugin.Plugin;
 
 import net.imagej.ops.Ops;
 import net.imagej.ops.geom.geom2d.Circle;
-import net.imagej.ops.special.AbstractUnaryFunctionOp;
-import net.imglib2.Cursor;
-import net.imglib2.IterableInterval;
+import net.imagej.ops.special.function.AbstractUnaryFunctionOp;
 import net.imglib2.RealLocalizable;
 import net.imglib2.RealPoint;
 
-@Plugin(type = Ops.Geometric.SmallestEnclosingCircle.class, priority = Priority.FIRST_PRIORITY)
-public class DSEC3 extends AbstractUnaryFunctionOp<IterableInterval<?>, Circle>
+@Plugin(type = Ops.Geometric.SmallestEnclosingCircle.class, priority = Priority.NORMAL_PRIORITY)
+public class DefaultSmallestEnclosingCircle extends AbstractUnaryFunctionOp<List<? extends RealLocalizable>, Circle>
 implements Ops.Geometric.SmallestEnclosingCircle {
 
 	@Parameter(required = false)
 	RealLocalizable center = null;
-
-	@Parameter(required = false)
-	double paddingRatio = 1.0;
 
 	@Parameter(required = false)
 	boolean randomizePointRemoval = false;
@@ -35,38 +30,45 @@ implements Ops.Geometric.SmallestEnclosingCircle {
 	int rndSeed = 1234;
 
 	@Override
-	public Circle compute1(IterableInterval<?> input) throws IllegalArgumentException {
-		if (input.size() > Integer.MAX_VALUE || (center != null && input.size() > Integer.MAX_VALUE / 2)) {
-			throw new IllegalArgumentException();
+	public Circle compute1(List<? extends RealLocalizable> input) throws IllegalArgumentException {
+		if (center != null && input.size() > Integer.MAX_VALUE / 2) {
+			throw new IllegalArgumentException("Not enough space in the list to add points mirrored about the provided center point.");
 		}
 
-		List<RealLocalizable> points = getInitialPointList(input);
-		List<RealLocalizable> boundary = new Vector<RealLocalizable>(3);
-
-		SS ss = new SS();
-		ss.p = points;
-		ss.b = boundary;
+		List<? extends RealLocalizable> points = input;
+		if(center != null)
+		{
+			// Then we must add mirrored points
+			points = new Vector<RealLocalizable>(input);
+		}
 
 		if(randomizePointRemoval)
 		{
-			Collections.shuffle(ss.p, new Random(rndSeed));
+			points = new Vector<RealLocalizable>(input);
+			Collections.shuffle(points, new Random(rndSeed));
 		}
 
-		Circle D = getMinCircle(ss);
-
-		if(paddingRatio != 1.0)
-		{
-			D = new Circle(D.getCenter(), D.getRadius()*paddingRatio);
-		}
+		Circle D = getMinCircle(points);
 
 		return D;
 	}
 
-	private Circle getMinCircle(SS ss) {
+	private Circle getMinCircle(List<? extends RealLocalizable> p) {
 
+		if(p.size() == 0)
+		{
+			throw new IllegalArgumentException("List of points must be greater than 0.");
+		}
+		List<RealLocalizable> boundary = new Vector<RealLocalizable>(3);
+
+		SS ss = new SS();
+		ss.n = p.size();
+		ss.b = boundary;
+		
 		Stack<SS> stack = new Stack<>();
-		stack.push(ss);
+		stack.push(ss.copy());
 		Circle retVal = null;
+		
 		while(!stack.isEmpty())
 		{
 			SS cur = stack.pop();
@@ -74,10 +76,11 @@ implements Ops.Geometric.SmallestEnclosingCircle {
 			if(cur.stage == 0)
 			{
 				// Make a circle if you can and return
-				Circle D =  makeNextCircle(cur);
+				Circle D =  makeNextCircle(cur, p);
 				if(D != null)
 				{
 					retVal = D.copy();
+					System.out.println(cur.b);
 					continue;
 				}
 				else
@@ -87,16 +90,15 @@ implements Ops.Geometric.SmallestEnclosingCircle {
 
 					// first call: D = miniDisk(ss.getTrimmed());
 					cur.stage = 1;
-					stack.push(cur);
-					SS next = trimmed.copy();
-					next.stage = 0;
-					stack.push(next);
+					stack.push(cur); // Need to push cur here not trimmed.
+					trimmed.stage = 0; // Don't need to copy trimmed because it is already a copy of cur.
+					stack.push(trimmed);
 				}
 			}
 			else if(cur.stage == 1)
 			{
-				if (!retVal.contains(cur.getTestPoint())) {
-					cur.next();
+				if (!retVal.contains(cur.getTestPoint(p))) {
+					cur.next(p);
 
 					// second call: D = miniDisk(cur);
 					SS next = cur.copy();
@@ -110,39 +112,39 @@ implements Ops.Geometric.SmallestEnclosingCircle {
 		return retVal;
 	}
 
-	public Circle makeNextCircle(SS ss)
+	public Circle makeNextCircle(SS ss, List<? extends RealLocalizable> p)
 	{
-		Circle D;
-		if (ss.b.size() == 3) {
-			D = makeCircle3(ss.b);
-			return D;
-			//			System.out.println("A " + D + " p:" + points + " b:" + boundary);
-		} else if (ss.p.size() == 1 && ss.b.size() == 0) {
-			D = makeCircle1(ss.p);
-			return D;
-			//			System.out.println("B " + D + " p:" + points + " b:" + boundary);
-		} else if (ss.p.size() == 0 && ss.b.size() == 2) {
-			D = makeCircle2(ss.b);
-			return D;
-			//			System.out.println("C " + D + " p:" + points + " b:" + boundary);
-		} else if (ss.p.size() == 1 && ss.b.size() == 1) {
-			RealLocalizable p1 = ss.p.get(0);
+		if (ss.b.size() == 3)
+		{
+			return makeCircle3(ss.b);
+		} 
+		else if (ss.n == 1 && ss.b.size() == 0)
+		{
+			return makeCircle1(p.get(0));
+		} 
+		else if (ss.n == 0 && ss.b.size() == 2)
+		{
+			return makeCircle2(ss.b);
+		} 
+		else if (ss.n == 1 && ss.b.size() == 1)
+		{
+			RealLocalizable p1 = p.get(0);
 			RealLocalizable p2 = ss.b.get(0);
 			List<RealLocalizable> pl = new Vector<>();
 			pl.add(p1);
 			pl.add(p2);
-			D = makeCircle2(pl); // pointList and boundary
-			return D;
-			//			System.out.println("D " + D + " p:" + points + " b:" + boundary);
+			return makeCircle2(pl);
 		} 
 		return null;
 	}
 
-	private Circle makeCircle1(List<RealLocalizable> points) {
-		return new Circle(points.get(0), 0);
+	private Circle makeCircle1(RealLocalizable point)
+	{
+		return new Circle(point, 0);
 	}
 
-	private Circle makeCircle2(List<RealLocalizable> points) {
+	private Circle makeCircle2(List<? extends RealLocalizable> points)
+	{
 		double[] pos1 = new double[points.get(0).numDimensions()];
 		double[] pos2 = new double[points.get(0).numDimensions()];
 
@@ -156,13 +158,10 @@ implements Ops.Geometric.SmallestEnclosingCircle {
 		RealPoint center = new RealPoint(x0, y0);
 
 		return new Circle(center, r);
-
 	}
 
-	private Circle makeCircle3(List<RealLocalizable> points) {
-
-		Circle D;
-
+	private Circle makeCircle3(List<? extends RealLocalizable> points)
+	{
 		double[] pos1 = new double[points.get(0).numDimensions()];
 		double[] pos2 = new double[points.get(0).numDimensions()];
 		double[] pos3 = new double[points.get(0).numDimensions()];
@@ -238,7 +237,7 @@ implements Ops.Geometric.SmallestEnclosingCircle {
 
 		// Make circle
 		RealPoint center = new RealPoint(x0, y0);
-		D = new Circle(center, r);
+		Circle D = new Circle(center, r);
 		
 		if (!Double.isFinite(r)) {
 			double d12 = calcDistance(x1, y1, x2, y2);
@@ -260,38 +259,15 @@ implements Ops.Geometric.SmallestEnclosingCircle {
 		return D;
 	}
 
-	private double calcDistance(double xa, double ya, double xb, double yb) {
+	private double calcDistance(double xa, double ya, double xb, double yb)
+	{
 		return Math.sqrt(Math.pow(xb - xa, 2) + Math.pow(yb - ya, 2));
 	}
 
-	private List<RealLocalizable> getInitialPointList(IterableInterval<?> input) {
-		List<RealLocalizable> points;
-		if (center == null)
-			points = new Vector<RealLocalizable>((int) input.size());
-		else
-			points = new Vector<RealLocalizable>(2 * (int) input.size());
-
-		Cursor<?> c = input.cursor();
-		while (c.hasNext()) {
-			c.fwd();
-			RealPoint p = new RealPoint(c);
-			points.add(p);
-			if (center != null) {
-				// Add a mirroring point
-				double[] pos = new double[c.numDimensions()];
-				for (int d = 0; d < c.numDimensions(); d++) {
-					pos[d] = 2 * center.getDoublePosition(d) - p.getDoublePosition(d);
-				}
-				points.add(new RealPoint(pos[0], pos[1]));
-			}
-		}
-		return points;
-	}
-
-
 	class SS
 	{
-		public List<RealLocalizable> p, b;
+		int n = 0;
+		public List<RealLocalizable> b;
 		int stage = 0;
 		RealLocalizable test = null;
 		Circle c = null;
@@ -299,31 +275,25 @@ implements Ops.Geometric.SmallestEnclosingCircle {
 		public SS getTrimmed()
 		{
 			SS ret = this.copy();
-			ret.p = ret.p.subList(0, ret.p.size()-1);
+			ret.n = ret.n-1;
 			return ret;
 		}
 
-		public RealLocalizable getTestPoint()
+		public RealLocalizable getTestPoint(List<? extends RealLocalizable> p)
 		{
-			return this.p.get(this.p.size()-1);
+			return p.get(this.n-1);
 		}
 
-		public SS getNext()
+		public void next(List<? extends RealLocalizable> p)
 		{
-			SS ret = this.copy();
-			ret.b.add(ret.p.remove(ret.p.size()-1));
-			return ret;
-		}
-
-		public void next()
-		{
-			b.add(p.remove(p.size()-1));
+			b.add(p.get(this.n-1));
+			this.n = this.n - 1;
 		}
 
 		public SS copy()
 		{
 			SS ret = new SS();
-			ret.p = new Vector<RealLocalizable>(this.p);
+			ret.n = this.n;
 			ret.b = new Vector<RealLocalizable>(this.b);
 			ret.stage = this.stage;
 			return ret;
@@ -331,7 +301,7 @@ implements Ops.Geometric.SmallestEnclosingCircle {
 
 		public String toString()
 		{
-			return "---- SnapShot ----\n" + stage + "\npoints: " + p + "\nboundary: " + b;
+			return "---- SnapShot ----\n" + stage + "\npoints: " + n + "\nboundary: " + b;
 		}
 	}
 

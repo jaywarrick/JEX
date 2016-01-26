@@ -42,10 +42,7 @@ import net.imglib2.Cursor;
 import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccess;
 import net.imglib2.converter.Converter;
-import net.imglib2.converter.Converters;
 import net.imglib2.img.Img;
-import net.imglib2.roi.IterableRegion;
-import net.imglib2.roi.PositionableIterableRegion;
 import net.imglib2.roi.Regions;
 import net.imglib2.roi.geometric.Polygon;
 import net.imglib2.roi.labeling.ImgLabeling;
@@ -71,7 +68,7 @@ import weka.core.converters.JEXTableWriter;
 		visible = true,
 		description = "Function for testing feature extraction using the ImageJ Ops framework."
 		)
-public class FeatureExtraction<T extends RealType<T>, B extends RealType<B>> extends JEXPlugin {
+public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
 	public ImgOpener imgOpener;
 
@@ -87,7 +84,7 @@ public class FeatureExtraction<T extends RealType<T>, B extends RealType<B>> ext
 	// TODO: Figure out how to get a RandomAccessbleInterval<T> from a
 	// LabelRegion and an Img<T>
 	// public Tamura2DFeatureSet<T,DoubleType> opTamura = null;
-	public ZernikeFeatureSet<B> opZernike = null;
+	public ZernikeFeatureSet<UnsignedByteType> opZernike = null;
 
 	public JEXCSVWriter writer;
 	public Set<String> header = null;
@@ -330,7 +327,7 @@ public class FeatureExtraction<T extends RealType<T>, B extends RealType<B>> ext
 							// Then quantify geometric features of mask
 							DimensionMap temp = noMaskChannelMap
 									.copyAndSet("MaskChannel_ImageChannel=" + mapMask.get(channelName) + "_NA");
-							this.quantifyGeometricFeatures(temp, p.id, majorSubRegion);
+							this.quantifyGeometricFeatures(temp, p.id, majorSubRegion, maskImage);
 							this.count = this.count + 1;
 							this.percentage = (int) (100 * ((double) (count) / ((double) total)));
 							JEXStatics.statusBar.setProgressPercentage(percentage);
@@ -459,7 +456,7 @@ public class FeatureExtraction<T extends RealType<T>, B extends RealType<B>> ext
 	}
 
 	@SuppressWarnings("unchecked")
-	public boolean putZernike(DimensionMap mapM, int id, LabelRegion<Integer> reg, Img<B> mask) {
+	public boolean putZernike(DimensionMap mapM, int id, LabelRegion<Integer> reg, Img<UnsignedByteType> mask) {
 		if (this.isCanceled()) {
 			this.close();
 			return false;
@@ -469,13 +466,8 @@ public class FeatureExtraction<T extends RealType<T>, B extends RealType<B>> ext
 				opZernike = IJ2PluginUtility.ij().op().op(ZernikeFeatureSet.class, Regions.sample(reg, mask), zernikeMomentMin,
 						zernikeMomentMax);
 			}
-
-			PositionableIterableRegion<BoolType> temp = reg;
-			IterableRegion<BoolType> temp2 = temp;
-			IterableInterval<Void> temp3 = temp2;
-			IterableInterval<BitType> convert = Converters.convert(temp3, new MyConverter(), new BitType());
-
-			Map<NamedFeature, DoubleType> results = opZernike.compute1(convert);
+			
+			Map<NamedFeature, DoubleType> results = opZernike.compute1(Regions.sample(reg, mask));
 			for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
 				newMap.put("Id", "" + id);
@@ -769,13 +761,13 @@ public class FeatureExtraction<T extends RealType<T>, B extends RealType<B>> ext
 		this.putMoments(map, id, region, intensityImage);
 	}
 
-	public void quantifyGeometricFeatures(DimensionMap mapM, int id, LabelRegion<Integer> region) {
+	public void quantifyGeometricFeatures(DimensionMap mapM, int id, LabelRegion<Integer> region, Img<UnsignedByteType> mask) {
 		if (region == null || region.size() <= 1) {
 			return;
 		}
 
 		this.putGeometric(mapM, id, region);
-		this.putZernike(mapM, id, region);
+		this.putZernike(mapM, id, region, mask);
 	}
 
 }

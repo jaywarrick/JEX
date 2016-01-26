@@ -14,18 +14,23 @@ import net.imagej.ops.Op;
 import net.imagej.ops.Ops;
 import net.imagej.ops.logic.RealLogic;
 import net.imagej.ops.map.MapIterableIntervalToSamplingRAI;
-import net.imagej.ops.special.Functions;
-import net.imagej.ops.special.UnaryFunctionOp;
+import net.imagej.ops.special.function.Functions;
+import net.imagej.ops.special.function.UnaryFunctionOp;
+import net.imglib2.Cursor;
 import net.imglib2.IterableInterval;
+import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.array.ArrayImgs;
+import net.imglib2.roi.IterableRegion;
 import net.imglib2.roi.Regions;
 import net.imglib2.roi.geometric.Polygon;
 import net.imglib2.roi.labeling.ImgLabeling;
 import net.imglib2.roi.labeling.LabelRegion;
 import net.imglib2.roi.labeling.LabelRegions;
+import net.imglib2.roi.labeling.LabelingType;
+import net.imglib2.type.logic.BoolType;
 import net.imglib2.type.numeric.IntegerType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.IntType;
@@ -40,7 +45,7 @@ import net.imglib2.type.numeric.integer.UnsignedShortType;
  *
  */
 public class FeatureUtils {
-
+	
 	private UnaryFunctionOp<Object, Object> contourFunc;
 
 	public <I extends IntegerType< I >> ImgLabeling<Integer, IntType> getConnectedComponents(final RandomAccessibleInterval<I> inputImg, boolean fourConnected)
@@ -85,16 +90,7 @@ public class FeatureUtils {
 				se);		
 
 		return labeling;
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public <T> Polygon convert(final IterableInterval<T> src) {
-		if (contourFunc == null) {
-			contourFunc = (UnaryFunctionOp) Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.Contour.class, Polygon.class, src, true, true);
-		}
-		final Polygon p = (Polygon) contourFunc.compute1(src);
-		return p;
-	}
+	}	
 
 	//	public static <I extends IntegerType< I >> ImgLabeling<Integer, IntType> getConnectedComponents(RandomAccessibleInterval<UnsignedByteType> reg, Img< I > inputImg, boolean fourConnected)
 	//	{
@@ -169,7 +165,7 @@ public class FeatureUtils {
 				{
 					return null;
 				}
-				if(LabelRegionUtils.contains(region, p)) //poly.contains(p))
+				if(this.contains(region, p)) //poly.contains(p))
 				{
 					PointList pl = labelToPointsMap.get(label);
 					if(pl == null)
@@ -202,6 +198,79 @@ public class FeatureUtils {
 		ImgLabeling<Integer, IntType> cellLabeling = this.getConnectedComponents(mask, reg, fourConnected);
 		LabelRegions<Integer> subRegions = new LabelRegions<Integer>(cellLabeling);
 		return subRegions;
+	}
+
+	public boolean contains(LabelRegion<?> region, IdPoint p)
+	{
+		// Use the random access to directly determine if the label region contains the point.
+		// Should be faster than iterating
+		RandomAccess<BoolType> ra = Regions.iterable(region).randomAccess();
+		ra.setPosition(p);
+		return ra.get().get();
+		//		LabelRegionCursor c = region.localizingCursor();
+		//		region.randomAccess().
+		//		do
+		//		{
+		//			if(c.getIntPosition(0) == p.x && c.getIntPosition(1) == p.y)
+		//			{
+		//				return true;
+		//			}
+		//			c.next();
+		//		} 
+		//		while(c.hasNext());
+		//
+		//		return false;
+	}
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public <T> Polygon convert(final IterableInterval<T> src) {
+		if (contourFunc == null) {
+			contourFunc = (UnaryFunctionOp) Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.Contour.class, Polygon.class, src, true, true);
+		}
+		final Polygon p = (Polygon) contourFunc.compute1(src);
+		return p;
+	}
+
+	/**
+	 * 1) Create a new ImgLabeling. 2) For each pixel location that intersects between the supplied regions and the supplied mask,
+	 * label the new ImgLabeling with the region's label.
+	 * 
+	 * Thus, the new ImgLabeling should be within the boundaries of the supplied regions, but defined within those
+	 * regions by the mask and labeled the same label as the region they intersect with.
+	 * 
+	 * @param regions
+	 * @param innerMask
+	 * @return ImgLabeling representing their intersection, copying labels from regions
+	 */
+	public <I extends RealType<I>> ImgLabeling<Integer,IntType> intersect(LabelRegions<Integer> regions, Img<I> innerMask)
+	{
+		long[] size = new long[innerMask.numDimensions()];
+		innerMask.dimensions(size);
+		final Img< IntType > indexImg = ArrayImgs.ints( size );
+		ImgLabeling<Integer, IntType> ret = new ImgLabeling<Integer, IntType>(indexImg);
+		RandomAccess<LabelingType<Integer>> raRet = ret.randomAccess();
+		RandomAccess<I> raInner = innerMask.randomAccess();
+	
+		// For each region, use a cursor to iterate over the region
+		for(LabelRegion<Integer> region : regions)
+		{
+			IterableRegion<BoolType> itrReg = Regions.iterable(region);
+			Cursor<Void> c = itrReg.cursor();
+			Integer toSet = region.getLabel();
+			while(c.hasNext())
+			{
+				// Note: this is the proper way to use a cursor. Call c.fwd() first before using.
+				c.fwd();
+				// If the innerMask at the cursors location is > 0, then assign the label in region to the new ImgLabeling in that location
+				raInner.setPosition(c);
+				if(raInner.get().getRealDouble() > 0)
+				{
+					raRet.setPosition(c);
+					raRet.get().add(toSet);
+				}
+			}
+		}
+		return ret;
 	}
 }
 

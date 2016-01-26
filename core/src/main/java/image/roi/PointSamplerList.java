@@ -7,6 +7,7 @@ import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.Vector;
@@ -14,9 +15,10 @@ import java.util.Vector;
 import org.jhotdraw.geom.Polygon2D;
 
 import miscellaneous.CSVList;
-import miscellaneous.Copiable;
 import miscellaneous.LSVList;
 import miscellaneous.SSVList;
+import net.imglib2.RealCursor;
+import net.imglib2.RealLocalizable;
 import net.imglib2.RealPoint;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.IntType;
@@ -24,7 +26,7 @@ import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
 
 @SuppressWarnings("unused")
-public class PointSampleList<T extends RealType<T>> extends Vector<PointSample<T>> implements Copiable<PointSampleList<T>> {
+public class PointSamplerList<T extends RealType<T>> extends Vector<PointSampler<T>> {
 	
 	/**
 	 * 
@@ -33,22 +35,32 @@ public class PointSampleList<T extends RealType<T>> extends Vector<PointSample<T
 	
 	private Class<T> type;
 
-	public PointSampleList(Class<T> type)
+	public PointSamplerList(Class<T> type)
 	{
 		super();
 		this.type = type;
 	}
 	
-	public PointSampleList(PointSampleList<T> pl)
+	public PointSamplerList(PointSamplerList<T> pl)
 	{
 		this.type = pl.type;
-		for (PointSample<T> p : pl)
+		for (PointSampler<T> p : pl)
 		{
-			this.add(p.copy());
+			PointSample<T> toAdd = new PointSample<>(p);
+			super.add(toAdd);
 		}
 	}
 	
-	public PointSampleList(String polygonPts, Class<T> type) throws InstantiationException, IllegalAccessException
+	public PointSamplerList(List<? extends RealLocalizable> pl, Class<T> type)
+	{
+		this(type);
+		for (RealLocalizable p : pl)
+		{
+			this.add(p);
+		}
+	}
+	
+	public PointSamplerList(String polygonPts, Class<T> type) throws InstantiationException, IllegalAccessException
 	{
 		this(type);
 		
@@ -63,17 +75,17 @@ public class PointSampleList<T extends RealType<T>> extends Vector<PointSample<T
 					continue;
 				int x = Integer.parseInt(pt.get(0));
 				int y = Integer.parseInt(pt.get(1));
-				int id = 0;
+				int val = 0;
 				if(pt.size() > 2)
 				{
-					id = Integer.parseInt(pt.get(2));
+					val = Integer.parseInt(pt.get(2));
 				}
-				this.add(x, y, id);
+				this.add(x, y, val);
 			}
 		}
 	}
 	
-	public PointSampleList(Point[] pa, Class<T> type)
+	public PointSamplerList(Point[] pa, Class<T> type)
 	{
 		this(type);
 		for (Point p : pa)
@@ -82,7 +94,7 @@ public class PointSampleList<T extends RealType<T>> extends Vector<PointSample<T
 		}
 	}
 	
-	public PointSampleList(RealPoint[] pa, Class<T> type)
+	public PointSamplerList(RealPoint[] pa, Class<T> type)
 	{
 		this(type);
 		for (RealPoint p : pa)
@@ -96,7 +108,7 @@ public class PointSampleList<T extends RealType<T>> extends Vector<PointSample<T
 	//		this(polygonToPointArray(pg));
 	//	}
 	
-	public PointSampleList(Polygon2D pg, Class<T> type)
+	public PointSamplerList(Polygon2D pg, Class<T> type)
 	{
 		this(polygonToRealPointArray(pg), type);
 	}
@@ -113,7 +125,7 @@ public class PointSampleList<T extends RealType<T>> extends Vector<PointSample<T
 	// this.setPoints(pl);
 	// }
 	
-	public boolean add(RealPoint p)
+	public boolean add(RealLocalizable p)
 	{
 		return this.add(new PointSample<T>(p, this.getNewSample(this.size())));
 	}
@@ -128,9 +140,9 @@ public class PointSampleList<T extends RealType<T>> extends Vector<PointSample<T
 		return this.add(x, y, this.size());
 	}
 	
-	public boolean add(double x, double y, double id)
+	public boolean add(double x, double y, double val)
 	{
-		PointSample<T> temp = new PointSample<T>(x, y, this.getNewSample(id));
+		PointSample<T> temp = new PointSample<T>(x, y, this.getNewSample(val));
 		return super.add(temp);
 	}
 	
@@ -152,7 +164,7 @@ public class PointSampleList<T extends RealType<T>> extends Vector<PointSample<T
 		ValuePair<double[],double[]> ret = null;
 		double[] min = null;
 		double[] max = null;
-		for(PointSample<T> p : this)
+		for(PointSampler<T> p : this)
 		{
 			if(min == null || max == null)
 			{
@@ -196,8 +208,8 @@ public class PointSampleList<T extends RealType<T>> extends Vector<PointSample<T
 		double length = 0;
 		if(this.size() > 1)
 		{
-			PointSample<T> start;
-			PointSample<T> end;
+			PointSampler<T> start;
+			PointSampler<T> end;
 			
 			double segment;
 			for (int i = 1; i < this.size(); i++)
@@ -233,11 +245,18 @@ public class PointSampleList<T extends RealType<T>> extends Vector<PointSample<T
 		this.setCenter(newLocation);
 	}
 	
+	public void transform(double thetaDeg, double mag, RealLocalizable newLocation)
+	{
+		this.rotate(thetaDeg);
+		this.scale(mag);
+		this.setCenter(newLocation);
+	}
+	
 	public void translate(double[] distances)
 	{
-		for (PointSample<T> p : this)
+		for (PointSampler<T> p : this)
 		{
-			p.translate(distances);
+			p.move(distances);
 		}
 	}
 	
@@ -248,14 +267,14 @@ public class PointSampleList<T extends RealType<T>> extends Vector<PointSample<T
 	
 	public void setCenter(double[] pos)
 	{
-		PointSampleList<T> l = this.getRealPointListRelativeToCenter();
+		PointSamplerList<T> l = this.getRealPointListRelativeToCenter();
 		l.translate(pos);
 		this.setPoints(l);
 	}
 	
 	public void setCenter(double x, double y)
 	{
-		PointSampleList<T> l = this.getRealPointListRelativeToCenter();
+		PointSamplerList<T> l = this.getRealPointListRelativeToCenter();
 		l.translate(x, y);
 		this.setPoints(l);
 	}
@@ -265,7 +284,7 @@ public class PointSampleList<T extends RealType<T>> extends Vector<PointSample<T
 		this.setCenter(p.x, p.y);
 	}
 	
-	public void setCenter(RealPoint p)
+	public void setCenter(RealLocalizable p)
 	{
 		double[] newCenter = new double[p.numDimensions()];
 		p.localize(newCenter);
@@ -282,7 +301,7 @@ public class PointSampleList<T extends RealType<T>> extends Vector<PointSample<T
 		
 		toApply.transform(srcPts, 0, dstPts, 0, srcPts.length);
 		
-		PointSampleList<T> newl = new PointSampleList<T>(convert(dstPts), this.type);
+		PointSamplerList<T> newl = new PointSamplerList<T>(convert(dstPts), this.type);
 		newl.setCenter(this.getCenter());
 		this.setPoints(newl);
 	}
@@ -297,7 +316,7 @@ public class PointSampleList<T extends RealType<T>> extends Vector<PointSample<T
 		
 		toApply.transform(srcPts, 0, dstPts, 0, srcPts.length);
 		
-		PointSampleList<T> newl = new PointSampleList<T>(convert(dstPts), this.type);
+		PointSamplerList<T> newl = new PointSamplerList<T>(convert(dstPts), this.type);
 		//		newl.setCenter(this.getCenter());
 		this.setPoints(newl);
 	}
@@ -312,7 +331,7 @@ public class PointSampleList<T extends RealType<T>> extends Vector<PointSample<T
 		
 		toApply.transform(srcPts, 0, dstPts, 0, srcPts.length);
 		
-		PointSampleList<T> newl = new PointSampleList<T>(convert(dstPts), this.type);
+		PointSamplerList<T> newl = new PointSamplerList<T>(convert(dstPts), this.type);
 		newl.setCenter(this.getCenter());
 		this.setPoints(newl);
 	}
@@ -327,7 +346,7 @@ public class PointSampleList<T extends RealType<T>> extends Vector<PointSample<T
 		
 		toApply.transform(srcPts, 0, dstPts, 0, srcPts.length);
 		
-		PointSampleList<T> newl = new PointSampleList<T>(convert(dstPts), this.type);
+		PointSamplerList<T> newl = new PointSamplerList<T>(convert(dstPts), this.type);
 		// newl.setCenter(this.getCenter());
 		this.setPoints(newl);
 	}
@@ -339,15 +358,15 @@ public class PointSampleList<T extends RealType<T>> extends Vector<PointSample<T
 	 * @param radius
 	 * @return
 	 */
-	public PointSample<T> nearestPointInRadius(PointSample<T> p, double radius)
+	public PointSampler<T> nearestPointInRadius(PointSample<T> p, double radius)
 	{
-		TreeMap<Double,PointSample<T>> distanceMap = new TreeMap<Double,PointSample<T>>();
+		TreeMap<Double,PointSampler<T>> distanceMap = new TreeMap<Double,PointSampler<T>>();
 		double d = 0;
-		for (PointSample<T> thisP : this)
+		for (PointSampler<T> thisP : this)
 		{
 			distanceMap.put(PointSample.distance(p, thisP), thisP);
 		}
-		Entry<Double,PointSample<T>> ret = distanceMap.firstEntry();
+		Entry<Double,PointSampler<T>> ret = distanceMap.firstEntry();
 		if(ret == null)
 			return null;
 		if(ret.getKey() <= radius)
@@ -363,20 +382,20 @@ public class PointSampleList<T extends RealType<T>> extends Vector<PointSample<T
 	 * @param radius
 	 * @return
 	 */
-	public PointSample<T> nearestPointInCircularRange(PointSample<T> p, double radius)
+	public PointSampler<T> nearestPointInCircularRange(PointSample<T> p, double radius)
 	{
-		TreeMap<Double,PointSample<T>> distanceMap = new TreeMap<Double,PointSample<T>>();
+		TreeMap<Double,PointSampler<T>> distanceMap = new TreeMap<Double,PointSampler<T>>();
 		double d = 0;
-		for (PointSample<T> thisP : this)
+		for (PointSampler<T> thisP : this)
 		{
 			distanceMap.put(PointSample.distance(p,thisP), thisP);
 		}
-		Entry<Double,PointSample<T>> ret = distanceMap.firstEntry();
+		Entry<Double,PointSampler<T>> ret = distanceMap.firstEntry();
 		if(ret == null)
 			return null;
 		double r2 = ret.getKey();
 		double r = Math.sqrt(r2);
-		PointSample<T> retP = ret.getValue();
+		PointSampler<T> retP = ret.getValue();
 		if(r <= radius)
 			return retP;
 		else
@@ -391,10 +410,10 @@ public class PointSampleList<T extends RealType<T>> extends Vector<PointSample<T
 	}
 	
 	@Override
-	public PointSample<T>[] toArray()
+	public PointSampler<T>[] toArray()
 	{
 		@SuppressWarnings("unchecked")
-		PointSample<T>[] ret = new PointSample[this.size()];
+		PointSampler<T>[] ret = new PointSample[this.size()];
 		for (int i = 0; i < this.size(); i++)
 		{
 			ret[i] = this.get(i);
@@ -422,10 +441,10 @@ public class PointSampleList<T extends RealType<T>> extends Vector<PointSample<T
 		return ret;
 	}
 	
-	public PointSampleList<T> getRealPointListCenteredAt(double[] pos)
+	public PointSamplerList<T> getRealPointListCenteredAt(double[] pos)
 	{
-		PointSampleList<T> ret = new PointSampleList<T>(this.type);
-		for (PointSample<T> p : this)
+		PointSamplerList<T> ret = new PointSamplerList<T>(this.type);
+		for (PointSampler<T> p : this)
 		{
 			PointSample<T> toAdd = new PointSample<T>(p);
 			RealPoint center = this.getCenter();
@@ -441,7 +460,7 @@ public class PointSampleList<T extends RealType<T>> extends Vector<PointSample<T
 		return ret;
 	}
 	
-	public PointSampleList<T> getRealPointListRelativeToCenter()
+	public PointSamplerList<T> getRealPointListRelativeToCenter()
 	{
 		double[] zeros = new double[this.get(0).numDimensions()];
 		for(int i = 0; i < zeros.length; i++)
@@ -455,7 +474,7 @@ public class PointSampleList<T extends RealType<T>> extends Vector<PointSample<T
 	{
 		SSVList polygonPts = new SSVList();
 		String pt;
-		for (PointSample<T> temp : this)
+		for (PointSampler<T> temp : this)
 		{
 			pt = temp.toString();
 			polygonPts.add(pt);
@@ -470,7 +489,7 @@ public class PointSampleList<T extends RealType<T>> extends Vector<PointSample<T
 		if(this.size() == 0)
 			return "empty";
 		LSVList ret = new LSVList();
-		for (PointSample<T> p : this)
+		for (PointSampler<T> p : this)
 		{
 			ret.add(p.toString());
 		}
@@ -478,7 +497,8 @@ public class PointSampleList<T extends RealType<T>> extends Vector<PointSample<T
 		return ret.toString();
 	}
 	
-	private static Point2D.Double[] convert(RealPoint[] p)
+	@SuppressWarnings("rawtypes")
+	private static Point2D.Double[] convert(PointSampler[] p)
 	{
 		Point2D.Double[] ret = new Point2D.Double[p.length];
 		for (int i = 0; i < p.length; i++)
@@ -501,9 +521,9 @@ public class PointSampleList<T extends RealType<T>> extends Vector<PointSample<T
 		return ret;
 	}
 	
-	// Copy x,y information but leave id the way it is
+	// Copy x,y information but leave val the way it is
 	// This method is used after transforms to update x,y locations
-	private void setPoints(PointSampleList<T> pl)
+	private void setPoints(PointSamplerList<T> pl)
 	{
 		if(this.size() == 0 || pl.size() == 0 || this.get(0).numDimensions() != pl.get(0).numDimensions())
 		{
@@ -556,22 +576,23 @@ public class PointSampleList<T extends RealType<T>> extends Vector<PointSample<T
 	}
 	
 	@Override
-	public PointSampleList<T> clone()
+	public PointSamplerList<T> clone()
 	{
 		return this.copy();
 	}
 	
-	public PointSampleList<T> copy()
+	public PointSamplerList<T> copy()
 	{
-		PointSampleList<T> ret = new PointSampleList<T>(this.type);
-		for (PointSample<T> p : this)
+		PointSamplerList<T> ret = new PointSamplerList<T>(this.type);
+		for (PointSampler<T> p : this)
 		{
-			ret.add(p.copy());
+			PointSample<T> toAdd = new PointSample<>(p);
+			ret.add(toAdd);
 		}
 		return ret;
 	}
 	
-	public boolean equals(PointSampleList<T> l)
+	public boolean equals(PointSamplerList<T> l)
 	{
 		if(this.size() != l.size())
 			return false;
@@ -586,7 +607,7 @@ public class PointSampleList<T extends RealType<T>> extends Vector<PointSample<T
 		return true;
 	}
 	
-	public boolean matches(PointSampleList<T> l)
+	public boolean matches(PointSamplerList<T> l)
 	{
 		return this.getRealPointListRelativeToCenter().equals(l.getRealPointListRelativeToCenter());
 	}
@@ -601,5 +622,10 @@ public class PointSampleList<T extends RealType<T>> extends Vector<PointSample<T
 			e.printStackTrace();
 			return (T) null;
 		}
+	}
+	
+	public RealCursor<T> cursor()
+	{
+		return new PointSamplerCursor<T>(this);
 	}
 }
