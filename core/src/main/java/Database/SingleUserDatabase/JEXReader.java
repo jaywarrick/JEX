@@ -19,7 +19,7 @@ import net.imglib2.type.numeric.integer.UnsignedByteType;
 
 public class JEXReader {
 	
-	public static ArrayList<ArrayList<String>> readCSVFileToDataMap(File f)
+	public synchronized static ArrayList<ArrayList<String>> readCSVFileToDataMap(File f)
 	{
 		ArrayList<ArrayList<String>> ret = new ArrayList<ArrayList<String>>();
 		try
@@ -45,7 +45,7 @@ public class JEXReader {
 		return ret;
 	}
 	
-	public static  SCIFIOImgPlus<UnsignedByteType> getByteImage(String path)
+	public synchronized static  SCIFIOImgPlus<UnsignedByteType> getByteImage(String path)
 	{
 		ImgOpener imgOpener = new ImgOpener(IJ2PluginUtility.ij().getContext());
 
@@ -64,7 +64,7 @@ public class JEXReader {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static <T extends RealType<T>> Img<T> getSingleImage(String path)
+	public synchronized static <T extends RealType<T>> Img<T> getSingleImage(String path)
 	{
 		if(path == null)
 		{
