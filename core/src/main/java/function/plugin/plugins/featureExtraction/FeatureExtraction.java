@@ -1,6 +1,7 @@
 // Define package name as "plugins" as show here
 package function.plugin.plugins.featureExtraction;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -14,6 +15,7 @@ import Database.DataReader.ImageReader;
 import Database.DataReader.RoiReader;
 import Database.DataWriter.FileWriter;
 import Database.SingleUserDatabase.JEXReader;
+import function.ops.DefaultSmallestEnclosingCircle;
 import function.plugin.IJ2.IJ2PluginUtility;
 import function.plugin.mechanism.InputMarker;
 import function.plugin.mechanism.JEXPlugin;
@@ -30,6 +32,7 @@ import logs.Logs;
 import miscellaneous.JEXCSVReader;
 import miscellaneous.JEXCSVWriter;
 import miscellaneous.Pair;
+import net.imagej.ops.Ops;
 import net.imagej.ops.features.sets.Geometric2DFeatureSet;
 import net.imagej.ops.features.sets.Haralick2DFeatureSet;
 import net.imagej.ops.features.sets.HistogramFeatureSet;
@@ -37,10 +40,14 @@ import net.imagej.ops.features.sets.ImageMomentsFeatureSet;
 import net.imagej.ops.features.sets.StatsFeatureSet;
 import net.imagej.ops.features.sets.ZernikeFeatureSet;
 import net.imagej.ops.featuresets.NamedFeature;
+import net.imagej.ops.geom.geom2d.Circle;
 import net.imagej.ops.image.cooccurrencematrix.MatrixOrientation2D;
+import net.imagej.ops.special.function.Functions;
+import net.imagej.ops.special.function.UnaryFunctionOp;
 import net.imglib2.Cursor;
 import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccess;
+import net.imglib2.RealLocalizable;
 import net.imglib2.converter.Converter;
 import net.imglib2.img.Img;
 import net.imglib2.roi.Regions;
@@ -70,6 +77,8 @@ import weka.core.converters.JEXTableWriter;
 		)
 public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
+	public final String CIRCLE_SMALLEST_ENCLOSING = "Smallest Enclosing", CIRCLE_SMALLEST_AT_CENTER_OF_MASS = "Smallest Enclosing Circle at Center of Mass";
+	
 	public ImgOpener imgOpener;
 
 	public Geometric2DFeatureSet<Polygon, DoubleType> opGeometric = null;
@@ -81,10 +90,11 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	public ImageMomentsFeatureSet<T, DoubleType> opMoments = null;
 	// What about IntensityFeatureSet???
 	public StatsFeatureSet<T, DoubleType> opStats = null;
+	public DefaultSmallestEnclosingCircle opEncircle = null;
 	// TODO: Figure out how to get a RandomAccessbleInterval<T> from a
 	// LabelRegion and an Img<T>
 	// public Tamura2DFeatureSet<T,DoubleType> opTamura = null;
-	public ZernikeFeatureSet<UnsignedByteType> opZernike = null;
+	public ZernikeFeatureSet<T> opZernike = null;
 
 	public JEXCSVWriter writer;
 	public Set<String> header = null;
@@ -173,6 +183,9 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
 	@ParameterMarker(uiOrder = 16, name = "Zernike Max Moment", description = "Max Zernike moment calculate", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "3")
 	int zernikeMomentMax;
+	
+	@ParameterMarker(uiOrder = 17, name = "Enclosing Circle Strategy", description = "Whether to find the absolute smallest enclosing circle or to fin the smallest enclosing circle centered at the center of mass.", ui = MarkerConstants.UI_DROPDOWN, choices = {CIRCLE_SMALLEST_ENCLOSING, CIRCLE_SMALLEST_AT_CENTER_OF_MASS}, defaultChoice=1)
+	String centeringStrategy;
 
 	// Add a primary mask and secondary mask
 
@@ -319,15 +332,18 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 						// newMap.put("Label", "" + idToLabelMap.get(id));
 						// this.write(newMap, (double) subRegionCount);
 						LabelRegion<Integer> majorSubRegion = getMajorSubRegion(region, maskImage);
+						
+						// Get the polygon of the mask feature
+						Polygon polygon = utils.convert(majorSubRegion);
+						IterableInterval<T> intensityVals = Regions.sample(majorSubRegion, intensityImage);
 
-						// quantify intensity features first (for a complete CSV
-						// header)
-						this.quantifyIntensityFeatures(mapMeasure, p.id, majorSubRegion, intensityImage);
+						// quantify intensity features first (for a complete CSV header)
+						this.quantifyIntensityFeatures(mapMeasure, p.id, intensityVals, this.getEnclosingCircle(polygon, majorSubRegion));
 						if (firstTimeThrough) {
 							// Then quantify geometric features of mask
 							DimensionMap temp = noMaskChannelMap
 									.copyAndSet("MaskChannel_ImageChannel=" + mapMask.get(channelName) + "_NA");
-							this.quantifyGeometricFeatures(temp, p.id, majorSubRegion, maskImage);
+							this.quantifyGeometricFeatures(temp, p.id, majorSubRegion, polygon);
 							this.count = this.count + 1;
 							this.percentage = (int) (100 * ((double) (count) / ((double) total)));
 							JEXStatics.statusBar.setProgressPercentage(percentage);
@@ -455,29 +471,6 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		return majorSubRegion;
 	}
 
-	@SuppressWarnings("unchecked")
-	public boolean putZernike(DimensionMap mapM, int id, LabelRegion<Integer> reg, Img<UnsignedByteType> mask) {
-		if (this.isCanceled()) {
-			this.close();
-			return false;
-		}
-		if (zernike) {
-			if (this.opZernike == null) {
-				opZernike = IJ2PluginUtility.ij().op().op(ZernikeFeatureSet.class, Regions.sample(reg, mask), zernikeMomentMin,
-						zernikeMomentMax);
-			}
-			
-			Map<NamedFeature, DoubleType> results = opZernike.compute1(Regions.sample(reg, mask));
-			for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
-				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
-				newMap.put("Id", "" + id);
-				newMap.put("Label", "" + idToLabelMap.get(id));
-				this.write(newMap, result.getValue().get());
-			}
-		}
-		return true;
-	}
-
 	// @SuppressWarnings("unchecked")
 	// public boolean putTamura(DimensionMap mapM, int id, LabelRegion<Integer>
 	// reg, Img<T> image)
@@ -509,23 +502,22 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	// }
 
 	@SuppressWarnings("unchecked")
-	public boolean putGeometric(DimensionMap mapM, int id, LabelRegion<Integer> reg) {
+	public boolean putGeometric(DimensionMap mapM, int id, LabelRegion<Integer> reg, Polygon polygon) {
 		if (this.isCanceled()) {
 			this.close();
 			return false;
 		}
 		if (geometric) {
 			
-			Polygon toCalc = utils.convert(reg);
-			if (toCalc == null) {
+			if (polygon == null) {
 				Logs.log("Encountered a null polygon for geometric2d features. id:" + id + ", label:" + reg.getLabel(),
 						FeatureExtraction.class);
 			}
 			if (opGeometric == null) {
-				opGeometric = IJ2PluginUtility.ij().op().op(Geometric2DFeatureSet.class, toCalc);
+				opGeometric = IJ2PluginUtility.ij().op().op(Geometric2DFeatureSet.class, polygon);
 			}
 
-			Map<NamedFeature, DoubleType> results = opGeometric.compute1(toCalc);
+			Map<NamedFeature, DoubleType> results = opGeometric.compute1(polygon);
 			// Map<NamedFeature, DoubleType> results =
 			// opGeometric.compute1(reg);
 			for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
@@ -544,16 +536,16 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	}
 
 	@SuppressWarnings("unchecked")
-	public boolean putStats(DimensionMap mapM, int id, LabelRegion<Integer> reg, Img<T> image) {
+	public boolean putStats(DimensionMap mapM, int id, IterableInterval<T> vals) {
 		if (this.isCanceled()) {
 			this.close();
 			return false;
 		}
 		if (stats) {
 			if (opStats == null) {
-				opStats = IJ2PluginUtility.ij().op().op(StatsFeatureSet.class, (IterableInterval<T>) image);
+				opStats = IJ2PluginUtility.ij().op().op(StatsFeatureSet.class, vals);
 			}
-			Map<NamedFeature, DoubleType> results = opStats.compute1(Regions.sample(reg, image));
+			Map<NamedFeature, DoubleType> results = opStats.compute1(vals);
 			for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
 				newMap.put("Id", "" + id);
@@ -565,26 +557,26 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	}
 
 	@SuppressWarnings("unchecked")
-	public boolean putHaralick2D(DimensionMap mapM, int id, LabelRegion<Integer> reg, Img<T> image) {
+	public boolean putHaralick2D(DimensionMap mapM, int id, IterableInterval<T> vals) {
 		Map<NamedFeature, DoubleType> results;
 
 		if (haralick2D) {
 			if (opHaralick2DHor == null || opHaralick2DVer == null) {
-				opHaralick2DHor = IJ2PluginUtility.ij().op().op(Haralick2DFeatureSet.class, image, DoubleType.class,
+				opHaralick2DHor = IJ2PluginUtility.ij().op().op(Haralick2DFeatureSet.class, vals, DoubleType.class,
 						(int) haralickGrayLevels, (int) haralickDistance, MatrixOrientation2D.HORIZONTAL);
-				opHaralick2DVer = IJ2PluginUtility.ij().op().op(Haralick2DFeatureSet.class, image,
+				opHaralick2DVer = IJ2PluginUtility.ij().op().op(Haralick2DFeatureSet.class, vals,
 						(int) haralickGrayLevels, (int) haralickDistance, MatrixOrientation2D.VERTICAL);
 				if (haralickNumDirections.equals("4")) {
 					if (opHaralick2DDiag == null || opHaralick2DAntiDiag == null) {
-						opHaralick2DDiag = IJ2PluginUtility.ij().op().op(Haralick2DFeatureSet.class, image,
+						opHaralick2DDiag = IJ2PluginUtility.ij().op().op(Haralick2DFeatureSet.class, vals,
 								(int) haralickGrayLevels, (int) haralickDistance, MatrixOrientation2D.DIAGONAL);
-						opHaralick2DAntiDiag = IJ2PluginUtility.ij().op().op(Haralick2DFeatureSet.class, image,
+						opHaralick2DAntiDiag = IJ2PluginUtility.ij().op().op(Haralick2DFeatureSet.class, vals,
 								(int) haralickGrayLevels, (int) haralickDistance, MatrixOrientation2D.ANTIDIAGONAL);
 					}
 				}
 			}
 
-			results = (Map<NamedFeature, DoubleType>) opHaralick2DHor.compute1(Regions.sample(reg,  image));
+			results = (Map<NamedFeature, DoubleType>) opHaralick2DHor.compute1(vals);
 
 			///// Horizontal /////
 			if (this.isCanceled()) {
@@ -603,7 +595,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 				this.close();
 				return false;
 			}
-			results = opHaralick2DVer.compute1(Regions.sample(reg, image));
+			results = opHaralick2DVer.compute1(vals);
 			for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName() + "_Vertical");
 				newMap.put("Id", "" + id);
@@ -617,7 +609,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 					this.close();
 					return false;
 				}
-				results = opHaralick2DDiag.compute1(Regions.sample(reg, image));
+				results = opHaralick2DDiag.compute1(vals);
 				for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
 					DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName() + "_Diagonal");
 					newMap.put("Id", "" + id);
@@ -630,7 +622,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 					this.close();
 					return false;
 				}
-				results = opHaralick2DAntiDiag.compute1(Regions.sample(reg, image));
+				results = opHaralick2DAntiDiag.compute1(vals);
 				for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
 					DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName() + "_AntiDiagonal");
 					newMap.put("Id", "" + id);
@@ -643,17 +635,16 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	}
 
 	@SuppressWarnings("unchecked")
-	public boolean putHistogram(DimensionMap mapM, int id, LabelRegion<Integer> reg, Img<T> image) {
+	public boolean putHistogram(DimensionMap mapM, int id, IterableInterval<T> vals) {
 		if (this.isCanceled()) {
 			this.close();
 			return false;
 		}
 		if (histogram) {
 			if (opHistogram == null) {
-				opHistogram = IJ2PluginUtility.ij().op().op(HistogramFeatureSet.class, image, histogramBins);
+				opHistogram = IJ2PluginUtility.ij().op().op(HistogramFeatureSet.class, vals, histogramBins);
 			}
-			IterableInterval<T> itr = Regions.sample(reg, image);
-			Map<NamedFeature, LongType> ret = opHistogram.compute1(itr);
+			Map<NamedFeature, LongType> ret = opHistogram.compute1(vals);
 			for (Entry<NamedFeature, LongType> result : ret.entrySet()) {
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
 				newMap.put("Id", "" + id);
@@ -665,12 +656,12 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	}
 
 	@SuppressWarnings("unchecked")
-	public void putMoments(DimensionMap mapM, int id, LabelRegion<Integer> reg, Img<T> image) {
+	public void putMoments(DimensionMap mapM, int id, IterableInterval<T> vals) {
 		if (moments) {
 			if (opMoments == null) {
-				opMoments = IJ2PluginUtility.ij().op().op(ImageMomentsFeatureSet.class, (IterableInterval<T>) image);
+				opMoments = IJ2PluginUtility.ij().op().op(ImageMomentsFeatureSet.class, vals);
 			}
-			Map<NamedFeature, DoubleType> results = opMoments.compute1(Regions.sample(reg, image));
+			Map<NamedFeature, DoubleType> results = opMoments.compute1(vals);
 			for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
 				newMap.put("Id", "" + id);
@@ -680,66 +671,6 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		}
 	}
 
-	// public static boolean contains(LabelRegion<?> region, Point p)
-	// {
-	// LabelRegionCursor c = region.localizingCursor();
-	// do
-	// {
-	// if(c.getIntPosition(0) == p.x && c.getIntPosition(1) == p.y)
-	// {
-	// return true;
-	// }
-	// c.next();
-	// }
-	// while(c.hasNext());
-	//
-	// return false;
-	// }
-
-	// public TreeMap<String, Object> getPixelValues(Wand wand, IdPoint p,
-	// ByteProcessor impMask, FloatProcessor impImage1, FloatProcessor
-	// impImage2)
-	// {
-	// Vector<Double> m1 = null;
-	// PointList pts = null;
-	// if(impMask.getPixel(p.x, p.y) == 255) // if we land on a cell that made
-	// // it through thresholding
-	// {
-	// wand.autoOutline(p.x, p.y); // outline it
-	// if(wand.npoints > 0)
-	// {
-	// // The roi helps for using getLength() (DON'T USE Roi.TRACED_ROI., IT
-	// SCREWS UP THE Polygon OBJECTS!!!! Bug emailed to ImageJ folks
-	// Roi roi = new PolygonRoi(wand.xpoints, wand.ypoints, wand.npoints,
-	// Roi.POLYGON);
-	//
-	// // The polygon helps for using contains()
-	// java.awt.Polygon poly = new java.awt.Polygon(wand.xpoints, wand.ypoints,
-	// wand.npoints);
-	// Rectangle r = roi.getBounds();
-	// m1 = new Vector<Double>();
-	// pts = new PointList();
-	// for(int i = r.x; i < r.x + r.width; i++)
-	// {
-	// for(int j = r.y; j < r.y + r.height; j++)
-	// {
-	// // innerBoundary
-	// if(poly.contains(i, j) && impMask.getPixelValue(i, j) == 255)
-	// {
-	// m1.add((double) impImage1.getPixelValue(i, j));
-	// pts.add(i, j);
-	// // Logs.log("In - " + innerT, this);
-	// }
-	// }
-	// }
-	// }
-	// }
-	// TreeMap<String, Object> ret = new TreeMap<String, Object>();
-	// ret.put("m1", m1);
-	// ret.put("xy", pts);
-	// return ret;
-	// }
-
 	class MyConverter implements Converter<Void, BitType> {
 
 		@Override
@@ -748,26 +679,63 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		}
 	}
 
-	public void quantifyIntensityFeatures(DimensionMap map, int id, LabelRegion<Integer> region,
-			Img<T> intensityImage) {
+	public void quantifyIntensityFeatures(DimensionMap map, int id, IterableInterval<T> vals, Circle circle) {
 		// return false if canceled, which means
-		if (region == null || region.size() <= 1 || intensityImage == null) {
+		if (vals == null || vals.size() <= 1) {
 			return;
 		}
 
-		this.putStats(map, id, region, intensityImage);
-		this.putHaralick2D(map, id, region, intensityImage);
-		this.putHistogram(map, id, region, intensityImage);
-		this.putMoments(map, id, region, intensityImage);
+		this.putStats(map, id, vals);
+		this.putHaralick2D(map, id, vals);
+		this.putHistogram(map, id, vals);
+		this.putMoments(map, id, vals);
+		this.putZernike(map, id, vals, circle);
 	}
 
-	public void quantifyGeometricFeatures(DimensionMap mapM, int id, LabelRegion<Integer> region, Img<UnsignedByteType> mask) {
+	public void quantifyGeometricFeatures(DimensionMap mapM, int id, LabelRegion<Integer> region, Polygon polygon) {
 		if (region == null || region.size() <= 1) {
 			return;
 		}
+		this.putGeometric(mapM, id, region, polygon);
+	}
 
-		this.putGeometric(mapM, id, region);
-		this.putZernike(mapM, id, region, mask);
+	@SuppressWarnings("unchecked")
+	public boolean putZernike(DimensionMap mapM, int id, IterableInterval<T> vals, Circle circle) {
+		if (this.isCanceled()) {
+			this.close();
+			return false;
+		}
+		if (zernike) {
+			if (this.opZernike == null) {
+				opZernike = IJ2PluginUtility.ij().op().op(ZernikeFeatureSet.class, vals, zernikeMomentMin,
+						zernikeMomentMax);
+			}
+			
+			// Set the enclosing circle for this cell
+			opZernike.setEnclosingCircle(circle);
+			
+			Map<NamedFeature, DoubleType> results = opZernike.compute1(vals);
+			for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
+				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
+				newMap.put("Id", "" + id);
+				newMap.put("Label", "" + idToLabelMap.get(id));
+				this.write(newMap, result.getValue().get());
+			}
+		}
+		return true;
+	}
+	
+	public Circle getEnclosingCircle(Polygon p, LabelRegion<Integer> reg)
+	{
+		Circle ret = null;
+		RealLocalizable center = null;
+		if(this.centeringStrategy.equals(CIRCLE_SMALLEST_AT_CENTER_OF_MASS))
+		{
+			center = reg.getCenterOfMass();
+		}
+		UnaryFunctionOp<List<? extends RealLocalizable>,Circle> cirOp = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.SmallestEnclosingCircle.class, Circle.class, p.getVertices(), center);
+		ret = cirOp.compute1(p.getVertices());
+		return ret;
 	}
 
 }

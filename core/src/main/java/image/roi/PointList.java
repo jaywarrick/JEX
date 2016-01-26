@@ -180,6 +180,10 @@ public class PointList extends Vector<IdPoint> implements Copiable<PointList> {
 		this.setCenter(p.x, p.y);
 	}
 	
+	/**
+	 * Rotate the points about the center of their bounding box.
+	 * @param thetaDeg
+	 */
 	public void rotate(double thetaDeg)
 	{
 		AffineTransform toApply = new AffineTransform();
@@ -195,6 +199,10 @@ public class PointList extends Vector<IdPoint> implements Copiable<PointList> {
 		this.setPoints(newl);
 	}
 	
+	/**
+	 * Rotate the points about the origin of their coordinate system.
+	 * @param thetaDeg
+	 */
 	public void rotateRelativeToOrigin(double thetaDeg)
 	{
 		AffineTransform toApply = new AffineTransform();

@@ -3,19 +3,22 @@ package function.plugin.plugins.test;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Vector;
 
 import function.plugin.IJ2.IJ2PluginUtility;
 import image.roi.PointList;
-import image.roi.PointSampler;
 import image.roi.PointSamplerII;
 import image.roi.PointSamplerList;
 import miscellaneous.DirectoryManager;
 import miscellaneous.FileUtility;
 import net.imagej.ops.Ops;
+import net.imagej.ops.features.sets.ZernikeFeatureSet;
 import net.imagej.ops.features.zernike.helper.ZernikeComputer;
 import net.imagej.ops.features.zernike.helper.ZernikeMoment;
+import net.imagej.ops.featuresets.NamedFeature;
 import net.imagej.ops.geom.geom2d.Circle;
 import net.imagej.ops.special.function.Functions;
 import net.imagej.ops.special.function.UnaryFunctionOp;
@@ -26,13 +29,76 @@ import net.imglib2.RealLocalizable;
 import net.imglib2.roi.geometric.PointCollection;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.IntType;
+import net.imglib2.type.numeric.real.DoubleType;
 import rtools.R;
 
 public class TestStuff {
 
 	public static void main (String[] args) throws Exception
 	{
-		tryCircleOp();
+		tryZFeatureSet();
+	}
+
+	public static void tryZFeatureSet()
+	{
+		int maxRadius = 100;
+		int xOffset = 0;
+		int yOffset = 0;
+		int nPoints = 15;
+		int rndSeed = 1234;
+		double rotation = 0;
+		double scale = 1.7;
+
+		//DirectoryManager.setHostDirectory("C:/Users/David Niles/Desktop");
+		DirectoryManager.setHostDirectory("/Users/jaywarrick/Desktop");
+
+		PointSamplerList<IntType> pl = getRandomPoints(maxRadius, xOffset, yOffset, scale, rotation, nPoints, rndSeed);
+
+		IterableInterval<IntType> ii = new PointSamplerII<IntType>(pl);
+
+		UnaryFunctionOp<IterableInterval<IntType>,RealLocalizable> opCenter = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.CenterOfGravity.class, RealLocalizable.class, ii);
+		RealLocalizable center = opCenter.compute1(ii);
+
+		UnaryFunctionOp<RealCursor<IntType>,Circle> opCircle = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.SmallestEnclosingCircle.class, Circle.class, ii.cursor(), center, false, 1234);
+		Circle c = opCircle.compute1(ii.cursor());
+
+		@SuppressWarnings("unchecked")
+		ZernikeFeatureSet<IntType> opZ = IJ2PluginUtility.ij().op().op(ZernikeFeatureSet.class, ii, 1, 5);
+
+		// Perform the calculations
+		opZ.setEnclosingCircle(c);
+		Map<NamedFeature, DoubleType> results1 = opZ.compute1(ii);
+		// Perform the calculations
+		Circle c2 = new Circle(c.getCenter(), c.getRadius()*1.2);
+		opZ.setEnclosingCircle(c2);
+		Map<NamedFeature, DoubleType> results2 = opZ.compute1(ii);
+
+		System.out.println("\n --- SETTINGS ---");
+		System.out.println("offsetXY = (" + xOffset + "," + yOffset + ")");
+		System.out.println("rotation = " + rotation);
+		System.out.println("scale = " + scale);
+		System.out.println("\n --- POINTS ---");
+		for(RealLocalizable p : pl)
+		{
+			System.out.println(p);
+		}
+		System.out.println("\n --- COM ---");
+		System.out.println(center);
+		System.out.println("\n --- CIRCLE ---");
+		System.out.println(c);
+		System.out.println("\n --- RESULTS1 (PaddingRatio=1) ---");
+		for(Entry<NamedFeature, DoubleType> e : results1.entrySet())
+		{
+			System.out.println(e.getKey().getName() + " = " + e.getValue());
+		}
+		System.out.println("\n --- RESULTS1 (PaddingRatio=1.2) ---");
+		for(Entry<NamedFeature, DoubleType> e : results2.entrySet())
+		{
+			System.out.println(e.getKey().getName() + " = " + e.getValue());
+		}
+
+
+
 	}
 
 	public static void tryCircleOp() throws Exception
@@ -42,24 +108,26 @@ public class TestStuff {
 		int yOffset = 0;
 		int nPoints = 100;
 		int rndSeed = 1234;
+		double scale = 1;
+		double rotation = 0;
 
 		//DirectoryManager.setHostDirectory("C:/Users/David Niles/Desktop");
 		DirectoryManager.setHostDirectory("/Users/jaywarrick/Desktop");
 
-		PointSamplerList<IntType> pl = getRandomPoints(maxRadius, xOffset, yOffset, nPoints, rndSeed);
-		
+		PointSamplerList<IntType> pl = getRandomPoints(maxRadius, xOffset, yOffset, scale, rotation, nPoints, rndSeed);
+
 		List<RealLocalizable> theList = new Vector<>();
 		theList.addAll(pl);
 		Collection<RealLocalizable> theCollection = new HashSet<RealLocalizable>();
 		theCollection.addAll(pl);
 		RealCursor<IntType> theCursor = pl.cursor();
-		
-//		UnaryFunctionOp<RealCursor,Circle> opCursor = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.SmallestEnclosingCircle.class, Circle.class, theCursor, (RealLocalizable) null, false, null);
-//		Circle retCursor = opCursor.compute1(theCursor);
-		
-//		UnaryFunctionOp<List,Circle> opList = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.SmallestEnclosingCircle.class, Circle.class, theList, (RealLocalizable) null, false, null);
-//		Circle retList = opList.compute1(theList);
-		
+
+		//		UnaryFunctionOp<RealCursor,Circle> opCursor = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.SmallestEnclosingCircle.class, Circle.class, theCursor, (RealLocalizable) null, false, null);
+		//		Circle retCursor = opCursor.compute1(theCursor);
+
+		//		UnaryFunctionOp<List,Circle> opList = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.SmallestEnclosingCircle.class, Circle.class, theList, (RealLocalizable) null, false, null);
+		//		Circle retList = opList.compute1(theList);
+
 		UnaryFunctionOp<Object,Circle> opCollection = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.SmallestEnclosingCircle.class, Circle.class, theCollection, (RealLocalizable) null, false, null);
 		Circle retCollection = (Circle) IJ2PluginUtility.ij().op().run(opCollection, theCollection, null, false, null);
 
@@ -101,11 +169,13 @@ public class TestStuff {
 		int yOffset = 0;
 		int nPoints = 5;
 		int rndSeed = 1234;
+		double scale = 1;
+		double rotation = 0;
 
 		//DirectoryManager.setHostDirectory("C:/Users/David Niles/Desktop");
 		DirectoryManager.setHostDirectory("/Users/jaywarrick/Desktop");
 
-		PointSamplerList<IntType> pl = getRandomPoints(maxRadius, xOffset, yOffset, nPoints, rndSeed);
+		PointSamplerList<IntType> pl = getRandomPoints(maxRadius, xOffset, yOffset, scale, rotation, nPoints, rndSeed);
 
 		//pl.rotate(90);
 
@@ -165,7 +235,7 @@ public class TestStuff {
 		return (RealLocalizable) IJ2PluginUtility.ij().op().run(Ops.Geometric.CenterOfGravity.class, new PointSamplerII<T>(pl));
 	}
 
-	public static PointSamplerList<IntType> getRandomPoints(int maxRadius, int xOffset, int yOffset, int nPoints, int rndSeed)
+	public static PointSamplerList<IntType> getRandomPoints(int maxRadius, int xOffset, int yOffset, double scale, double rotation, int nPoints, int rndSeed)
 	{
 		PointSamplerList<IntType> pl = new PointSamplerList<>(IntType.class);
 		Random rand = new Random(rndSeed);
@@ -178,6 +248,8 @@ public class TestStuff {
 		}
 
 		pl.translate(xOffset, yOffset);
+		pl.rotate(rotation);
+		pl.scale(scale);
 		return pl;
 	}
 

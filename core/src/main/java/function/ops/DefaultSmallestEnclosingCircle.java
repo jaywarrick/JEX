@@ -31,20 +31,10 @@ implements Ops.Geometric.SmallestEnclosingCircle {
 
 	@Override
 	public Circle compute1(List<? extends RealLocalizable> input) throws IllegalArgumentException {
-		if (center != null && input.size() > Integer.MAX_VALUE / 2) {
-			throw new IllegalArgumentException("Not enough space in the list to add points mirrored about the provided center point.");
-		}
 
-		List<? extends RealLocalizable> points = input;
-		if(center != null)
-		{
-			// Then we must add mirrored points
-			points = new Vector<RealLocalizable>(input);
-		}
-
+		List<RealLocalizable> points = new Vector<RealLocalizable>(input);
 		if(randomizePointRemoval)
 		{
-			points = new Vector<RealLocalizable>(input);
 			Collections.shuffle(points, new Random(rndSeed));
 		}
 
@@ -80,7 +70,7 @@ implements Ops.Geometric.SmallestEnclosingCircle {
 				if(D != null)
 				{
 					retVal = D.copy();
-					System.out.println(cur.b);
+					//System.out.println(cur.b);
 					continue;
 				}
 				else

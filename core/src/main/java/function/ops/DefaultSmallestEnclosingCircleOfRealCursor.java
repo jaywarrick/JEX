@@ -18,7 +18,7 @@ import net.imglib2.RealCursor;
 import net.imglib2.RealLocalizable;
 import net.imglib2.RealPoint;
 
-@Plugin(type = Ops.Geometric.SmallestEnclosingCircle.class, priority = Priority.NORMAL_PRIORITY)
+@Plugin(type = Ops.Geometric.SmallestEnclosingCircle.class, priority = Priority.NORMAL_PRIORITY+4)
 public class DefaultSmallestEnclosingCircleOfRealCursor extends AbstractUnaryFunctionOp<RealCursor<?>, Circle>
 implements Ops.Geometric.SmallestEnclosingCircle {
 
@@ -36,7 +36,7 @@ implements Ops.Geometric.SmallestEnclosingCircle {
 	@Override
 	public void initialize()
 	{
-		op = Functions.unary(ops(), Ops.Geometric.SmallestEnclosingCircle.class, Circle.class, new Vector<RealLocalizable>(), center, randomizePointRemoval, rndSeed);
+		op = Functions.unary(ops(), function.ops.DefaultSmallestEnclosingCircle.class, Circle.class, new Vector<RealLocalizable>(), center, randomizePointRemoval, rndSeed);
 	}
 
 	@Override
@@ -56,25 +56,18 @@ implements Ops.Geometric.SmallestEnclosingCircle {
 	private List<RealLocalizable> getInitialPointList(RealCursor<?> cursor)
 	{
 		List<RealLocalizable> points;
-		if (center == null)
-			points = new Vector<RealLocalizable>();
-		else
-			points = new Vector<RealLocalizable>();
-
+		points = new Vector<RealLocalizable>();
 		while (cursor.hasNext()) {
 			cursor.fwd();
+			// Add this location to the list
+			points.add(new RealPoint(cursor));
 			if (center != null) {
 				// Add a mirroring point
 				double[] pos = new double[cursor.numDimensions()];
 				for (int d = 0; d < cursor.numDimensions(); d++) {
 					pos[d] = 2 * center.getDoublePosition(d) - cursor.getDoublePosition(d);
 				}
-				points.add(new RealPoint(pos[0], pos[1]));
-			}
-			else
-			{
-				// Just add this location to the list
-				points.add(new RealPoint(cursor));
+				points.add(new RealPoint(pos));
 			}
 		}
 		return points;

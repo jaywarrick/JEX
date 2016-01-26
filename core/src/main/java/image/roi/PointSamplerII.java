@@ -100,7 +100,7 @@ public class PointSamplerII<T extends RealType<T>> implements IterableRealInterv
 
 	@Override
 	public long min(int d) {
-		return (long) this.realMin(d);
+		return (long) (this.realMin(d) + 0.5);
 	}
 
 	@Override
@@ -118,7 +118,7 @@ public class PointSamplerII<T extends RealType<T>> implements IterableRealInterv
 
 	@Override
 	public long max(int d) {
-		return (long) this.realMax(d);
+		return (long) (this.realMax(d) + 0.5);
 	}
 
 	@Override
