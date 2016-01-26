@@ -250,12 +250,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		// Calculate expected number of iterations
 		// Assume at least calculating mask features
 		this.total = maskData.getDimTable().mapCount();
-		// Recalculate total if also calculating intensity features
-		if (imageData != null && (stats || haralick2D || histogram || moments)) {
-			this.total = maskData.getDimTable().mapCount()
-					+ maskData.getDimTable().mapCount() * imageData.getDimTable().mapCount();
-		}
-
+		
 		DimTable noMaskChannelTable = maskData.getDimTable().getSubTable(channelName);
 		for (DimensionMap noMaskChannelMap : noMaskChannelTable.getMapIterator()) {
 			DimensionMap mapWholeCellMask = noMaskChannelMap.copyAndSet(channelName + "=" + maskWholeCellChannelValue);
@@ -344,9 +339,9 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 							DimensionMap temp = noMaskChannelMap
 									.copyAndSet("MaskChannel_ImageChannel=" + mapMask.get(channelName) + "_NA");
 							this.quantifyGeometricFeatures(temp, p.id, majorSubRegion, polygon);
-							this.count = this.count + 1;
-							this.percentage = (int) (100 * ((double) (count) / ((double) total)));
-							JEXStatics.statusBar.setProgressPercentage(percentage);
+							//							this.count = this.count + 1;
+							//							this.percentage = (int) (100 * ((double) (count) / ((double) total)));
+							//							JEXStatics.statusBar.setProgressPercentage(percentage);
 						}
 					}
 					this.count = this.count + 1;
@@ -733,7 +728,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		{
 			center = reg.getCenterOfMass();
 		}
-		UnaryFunctionOp<List<? extends RealLocalizable>,Circle> cirOp = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.SmallestEnclosingCircle.class, Circle.class, p.getVertices(), center);
+		UnaryFunctionOp<List<? extends RealLocalizable>,Circle> cirOp = Functions.unary(IJ2PluginUtility.ij().op(), function.ops.DefaultSmallestEnclosingCircle.class, Circle.class, p.getVertices(), center);
 		ret = cirOp.compute1(p.getVertices());
 		return ret;
 	}
