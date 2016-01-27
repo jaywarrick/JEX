@@ -18,11 +18,14 @@ import net.imagej.ops.special.function.Functions;
 import net.imagej.ops.special.function.UnaryFunctionOp;
 import net.imglib2.Cursor;
 import net.imglib2.IterableInterval;
+import net.imglib2.Point;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.converter.Converter;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.array.ArrayImgs;
+import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.roi.IterableRegion;
 import net.imglib2.roi.Regions;
 import net.imglib2.roi.geometric.Polygon;
@@ -30,6 +33,7 @@ import net.imglib2.roi.labeling.ImgLabeling;
 import net.imglib2.roi.labeling.LabelRegion;
 import net.imglib2.roi.labeling.LabelRegions;
 import net.imglib2.roi.labeling.LabelingType;
+import net.imglib2.type.logic.BitType;
 import net.imglib2.type.logic.BoolType;
 import net.imglib2.type.numeric.IntegerType;
 import net.imglib2.type.numeric.RealType;
@@ -112,8 +116,34 @@ public class FeatureUtils {
 	//		
 	//		return labeling;
 	//	}
+	
+	public void showLabelRegion(LabelRegion< ? > region)
+	{
+		long[] dimensions = new long[region.numDimensions()];
+		region.dimensions(dimensions);
+		final Img< UnsignedByteType > indexImg = ArrayImgs.unsignedBytes( dimensions );
+		Cursor<Void> c = region.cursor();
+		Point min = new Point(0,0);
+		Point max = new Point(0,0);
+		Point cur = new Point(0,0);
+		region.min(min);
+		region.max(max);
+		RandomAccess<UnsignedByteType> ra = indexImg.randomAccess();
+		System.out.println(min + ", " + max);
+		while(c.hasNext())
+		{
+			c.fwd();
+			System.out.println("" + (c.getIntPosition(0)-min.getIntPosition(0)) + " , " + (c.getIntPosition(1)-min.getIntPosition(1)));
+			cur.setPosition(c.getIntPosition(0)-min.getIntPosition(0), 0); 
+			cur.setPosition(c.getIntPosition(1)-min.getIntPosition(1), 1);
+			ra.setPosition(cur);
+			ra.get().set(255);
+		}
+		ImageJFunctions.show(indexImg);
+		//ImgLabeling<Integer, UnsignedShortType> labeling = new ImgLabeling<Integer, UnsignedShortType>(indexImg);
+	}
 
-	public <I extends IntegerType< I >> Img< UnsignedShortType > getConnectedComponentsImage(Img< I > inputImg, boolean fourConnected)
+	public <I extends IntegerType< I >> Img< UnsignedShortType > getConnectedComponentsImage(RandomAccessibleInterval< I > inputImg, boolean fourConnected)
 	{
 		StructuringElement se = null;
 		if(fourConnected)
@@ -223,13 +253,22 @@ public class FeatureUtils {
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public <T> Polygon convert(final IterableInterval<T> src) {
+	public Polygon convert(final RandomAccessibleInterval<?> src) {
 		if (contourFunc == null) {
 			contourFunc = (UnaryFunctionOp) Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.Contour.class, Polygon.class, src, true, true);
 		}
 		final Polygon p = (Polygon) contourFunc.compute1(src);
 		return p;
 	}
+	
+	//	public <T> Polygon convert(final LabelRegion<?> src)
+	//	{
+	//		PositionableIterableRegion<BoolType> temp = src;
+	//		IterableRegion<BoolType> temp2 = temp;
+	//		IterableInterval<Void> temp3 = temp2;
+	//		IterableInterval<BitType> convert = Converters.convert(temp3, new MyConverter(), new BitType());
+	//		return convert(convert);
+	//	}
 
 	/**
 	 * 1) Create a new ImgLabeling. 2) For each pixel location that intersects between the supplied regions and the supplied mask,
@@ -271,6 +310,14 @@ public class FeatureUtils {
 			}
 		}
 		return ret;
+	}
+	
+	class MyConverter implements Converter<Void, BitType> {
+
+		@Override
+		public void convert(Void input, BitType output) {
+			output.set(true);
+		}
 	}
 }
 

@@ -32,7 +32,6 @@ import logs.Logs;
 import miscellaneous.JEXCSVReader;
 import miscellaneous.JEXCSVWriter;
 import miscellaneous.Pair;
-import net.imagej.ops.Ops;
 import net.imagej.ops.features.sets.Geometric2DFeatureSet;
 import net.imagej.ops.features.sets.Haralick2DFeatureSet;
 import net.imagej.ops.features.sets.HistogramFeatureSet;
@@ -47,15 +46,15 @@ import net.imagej.ops.special.function.UnaryFunctionOp;
 import net.imglib2.Cursor;
 import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealLocalizable;
-import net.imglib2.converter.Converter;
 import net.imglib2.img.Img;
+import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.roi.Regions;
 import net.imglib2.roi.geometric.Polygon;
 import net.imglib2.roi.labeling.ImgLabeling;
 import net.imglib2.roi.labeling.LabelRegion;
 import net.imglib2.roi.labeling.LabelRegions;
-import net.imglib2.type.logic.BitType;
 import net.imglib2.type.logic.BoolType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.IntType;
@@ -78,7 +77,7 @@ import weka.core.converters.JEXTableWriter;
 public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
 	public final String CIRCLE_SMALLEST_ENCLOSING = "Smallest Enclosing", CIRCLE_SMALLEST_AT_CENTER_OF_MASS = "Smallest Enclosing Circle at Center of Mass";
-	
+
 	public ImgOpener imgOpener;
 
 	public Geometric2DFeatureSet<Polygon, DoubleType> opGeometric = null;
@@ -106,7 +105,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	public TreeMap<DimensionMap, String> maskMap = new TreeMap<DimensionMap, String>();
 	public TreeMap<DimensionMap, ROIPlus> roiMap = new TreeMap<DimensionMap, ROIPlus>();
 	TreeMap<Integer, Integer> idToLabelMap = new TreeMap<Integer, Integer>();
-	
+
 	FeatureUtils utils = new FeatureUtils();
 
 	// Define a constructor that takes no arguments.
@@ -183,7 +182,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
 	@ParameterMarker(uiOrder = 16, name = "Zernike Max Moment", description = "Max Zernike moment calculate", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "3")
 	int zernikeMomentMax;
-	
+
 	@ParameterMarker(uiOrder = 17, name = "Enclosing Circle Strategy", description = "Whether to find the absolute smallest enclosing circle or to fin the smallest enclosing circle centered at the center of mass.", ui = MarkerConstants.UI_DROPDOWN, choices = {CIRCLE_SMALLEST_ENCLOSING, CIRCLE_SMALLEST_AT_CENTER_OF_MASS}, defaultChoice=1)
 	String centeringStrategy;
 
@@ -250,20 +249,25 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		// Calculate expected number of iterations
 		// Assume at least calculating mask features
 		this.total = maskData.getDimTable().mapCount();
-		
+
 		DimTable noMaskChannelTable = maskData.getDimTable().getSubTable(channelName);
 		for (DimensionMap noMaskChannelMap : noMaskChannelTable.getMapIterator()) {
 			DimensionMap mapWholeCellMask = noMaskChannelMap.copyAndSet(channelName + "=" + maskWholeCellChannelValue);
 			Logs.log("Getting whole cell mask: " + mapWholeCellMask, this);
-			Img<UnsignedByteType> wholeCellMaskImage = JEXReader.getByteImage(maskMap.get(mapWholeCellMask));
+			Img<UnsignedByteType> wholeCellMaskImage = JEXReader.getSingleImage(maskMap.get(mapWholeCellMask));
 
 			if (this.isCanceled()) {
 				this.close();
 				return true;
 			}
 
+			// Initialize structures for storing whole-cell mask information and maxima information.
 			ImgLabeling<Integer, IntType> cellLabeling = utils.getConnectedComponents(wholeCellMaskImage, connectedness.equals("4 Connected"));
+			
 			LabelRegions<Integer> cellRegions = new LabelRegions<Integer>(cellLabeling);
+			ImageJFunctions.show(utils.getConnectedComponentsImage(wholeCellMaskImage, true));
+			ImageJFunctions.show(wholeCellMaskImage);
+			
 			idToLabelMap = new TreeMap<Integer, Integer>();
 
 			// Determine which LabelRegions are the ones we want to keep by
@@ -274,11 +278,13 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 					this.close();
 					return true;
 				}
-				RandomAccess<BoolType> ra = Regions.iterable(cellRegion).randomAccess();
+				RandomAccess<BoolType> ra = cellRegion.randomAccess();
 				for (IdPoint p : maxima.pointList) {
 					ra.setPosition(p);
 					if (ra.get().get()) {
 						idToLabelMap.put(p.id, cellRegion.getLabel().intValue());
+						//utils.showLabelRegion(cellRegion);
+						//System.out.println("Getting Major Subregion for " + p.id + " of size " + cellRegion.size() + " at " + p.x + "," + p.y + " for label at " + cellRegion.getCenterOfMass());
 					}
 				}
 			}
@@ -326,9 +332,15 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 						// newMap.put("Id", "" + id);
 						// newMap.put("Label", "" + idToLabelMap.get(id));
 						// this.write(newMap, (double) subRegionCount);
+						System.out.println("Getting Major Subregion for " + p.id + " of size " + region.size() + " at " + p.x + "," + p.y + " for label at " + region.getCenterOfMass());
 						LabelRegion<Integer> majorSubRegion = getMajorSubRegion(region, maskImage);
-						
+
 						// Get the polygon of the mask feature
+						if(majorSubRegion == null)
+						{
+							Logs.log("Encountered a null polygon for geometric2d features. id:" + p.id + ", label:" + region.getLabel(), FeatureExtraction.class);
+							continue;
+						}
 						Polygon polygon = utils.convert(majorSubRegion);
 						IterableInterval<T> intensityVals = Regions.sample(majorSubRegion, intensityImage);
 
@@ -445,22 +457,39 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
 	public LabelRegion<Integer> getMajorSubRegion(LabelRegion<Integer> region, Img<UnsignedByteType> mask) {
 		LabelRegions<Integer> subRegions = utils.getSubRegions(region, mask, connectedness.equals("4 Connected"));
+
 		long maxSize = 1; // This is hopefully to avoid quantifying subregions
-							// that are only a pixel in size.
+		// that are only a pixel in size.
 		LabelRegion<Integer> majorSubRegion = null;
 		RandomAccess<BoolType> ra = Regions.iterable(region).randomAccess();
 		long[] pos = new long[region.numDimensions()];
 		Cursor<Void> c = null;
 		for (LabelRegion<Integer> subRegion : subRegions) {
+
 			c = Regions.iterable(subRegion).cursor();
-			c.fwd(); // This needs to be called to get the cursor into the first
-						// pixel of the region.
-			c.localize(pos); // localize the pos variable to this location
-			ra.setPosition(pos); // set the position of the random accessible to
-									// pos
-			if (subRegion.size() > maxSize && ra.get().get()) {
-				majorSubRegion = subRegion;
-				maxSize = subRegion.size();
+			while(c.hasNext())
+			{
+				c.fwd(); // This needs to be called to get the cursor into the first
+				// pixel of the region.
+				c.localize(pos); // localize the pos variable to this location
+				ra.setPosition(pos); // set the position of the random accessible to pos
+				if (subRegion.size() > maxSize)
+				{
+					if(!ra.get().get())
+					{
+						System.out.println("Out = " + pos[0] + "," + pos[1]);
+						utils.showLabelRegion(region);
+						utils.showLabelRegion(subRegion);
+						System.out.println("Stop.");
+					}
+					else
+					{
+						System.out.println("In = " + pos[0] + "," + pos[1]);
+						majorSubRegion = subRegion;
+						maxSize = subRegion.size();
+						break;
+					}
+				}
 			}
 		}
 		return majorSubRegion;
@@ -503,7 +532,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			return false;
 		}
 		if (geometric) {
-			
+
 			if (polygon == null) {
 				Logs.log("Encountered a null polygon for geometric2d features. id:" + id + ", label:" + reg.getLabel(),
 						FeatureExtraction.class);
@@ -666,14 +695,6 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		}
 	}
 
-	class MyConverter implements Converter<Void, BitType> {
-
-		@Override
-		public void convert(Void input, BitType output) {
-			output.set(true);
-		}
-	}
-
 	public void quantifyIntensityFeatures(DimensionMap map, int id, IterableInterval<T> vals, Circle circle) {
 		// return false if canceled, which means
 		if (vals == null || vals.size() <= 1) {
@@ -705,10 +726,10 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 				opZernike = IJ2PluginUtility.ij().op().op(ZernikeFeatureSet.class, vals, zernikeMomentMin,
 						zernikeMomentMax);
 			}
-			
+
 			// Set the enclosing circle for this cell
 			opZernike.setEnclosingCircle(circle);
-			
+
 			Map<NamedFeature, DoubleType> results = opZernike.compute1(vals);
 			for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
@@ -719,7 +740,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		}
 		return true;
 	}
-	
+
 	public Circle getEnclosingCircle(Polygon p, LabelRegion<Integer> reg)
 	{
 		Circle ret = null;

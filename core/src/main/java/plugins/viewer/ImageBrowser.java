@@ -1172,7 +1172,7 @@ public class ImageBrowser implements PlugInController {
 			{
 				roiRect = "Roi:" + roi.x + "," + roi.y + "," + roi.width + "," + roi.height;
 			}
-			this.statusBar.setText(FileUtility.getFileNameWithExtension(this.imageFilePath) + "   [" + this.imageRect.width + "X" + this.imageRect.height + "]  " + roiRect + "  loc:" + (p.x + 1) + "," + (p.y + 1) + "  Int:" + this.format.format(this.display.getPixelIntensity()));
+			this.statusBar.setText(FileUtility.getFileNameWithExtension(this.imageFilePath) + "   [" + this.imageRect.width + "X" + this.imageRect.height + "]  " + roiRect + "  loc:" + (p.x) + "," + (p.y) + "  Int:" + this.format.format(this.display.getPixelIntensity()));
 			// this.statusBar.setText(this.imageFilePath + "  [" +
 			// this.imageRect.width + "X" + this.imageRect.height + "]  " +
 			// roiRect + "  loc:" + (p.x + 1) + "," + (p.y + 1) + "  Int:" +

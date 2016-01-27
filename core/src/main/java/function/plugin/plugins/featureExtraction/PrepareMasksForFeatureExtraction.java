@@ -193,7 +193,7 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 			clumpMap.putAll(getClumpSize(temp.p2, subMap));
 
 			// Segment and save the union image into finalMap
-			Img<UnsignedByteType> segImage = JEXReader.getByteImage(segMap.get(subMap));
+			Img<UnsignedByteType> segImage = JEXReader.getSingleImage(segMap.get(subMap));
 			
 			Op andOp = IJ2PluginUtility.ij().op().op(RealLogic.And.class, RealType.class, RealType.class);
 			IJ2PluginUtility.ij().op().run(MapIterableIntervalToSamplingRAI.class, union, segImage, andOp);
@@ -226,7 +226,7 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 				{
 					Logs.log("Intersecting remaining images with Segmented Union Image: " + name, this);
 					DimensionMap mapTemp = subMap.copyAndSet(channelDimName + "=" + name);
-					Img<UnsignedByteType> tempMaskImg = JEXReader.getByteImage(maskMap.get(mapTemp));
+					Img<UnsignedByteType> tempMaskImg = JEXReader.getSingleImage(maskMap.get(mapTemp));
 					IJ2PluginUtility.ij().op().run(MapIterableIntervalToSamplingRAI.class, tempMaskImg, union, andOp);
 					path = JEXWriter.saveImage(tempMaskImg);
 					finalMap.put(mapTemp, path);
@@ -253,7 +253,7 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 		for(String name : namesToUnion)
 		{
 			DimensionMap temp = subMap.copyAndSet(channelDimName + "=" + name);
-			Img<UnsignedByteType> mask = JEXReader.getByteImage(maskMap.get(temp));
+			Img<UnsignedByteType> mask = JEXReader.getSingleImage(maskMap.get(temp));
 			if(union == null)
 			{
 				union = mask;
@@ -270,7 +270,7 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 	{
 		Img<UnsignedByteType> ret = union.copy();
 		DimensionMap temp = subMap.copyAndSet(channelDimName + "=" + nameToSubtract);
-		Img<UnsignedByteType> toSubtract = JEXReader.getByteImage(maskMap.get(temp));
+		Img<UnsignedByteType> toSubtract = JEXReader.getSingleImage(maskMap.get(temp));
 		Op lessThanOp = IJ2PluginUtility.ij().op().op(RealLogic.LessThan.class, RealType.class, RealType.class);
 		IJ2PluginUtility.ij().op().run(MapIterableIntervalToSamplingRAI.class, ret, toSubtract, lessThanOp);
 		return ret;
