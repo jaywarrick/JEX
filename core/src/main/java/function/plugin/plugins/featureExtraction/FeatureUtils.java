@@ -4,11 +4,11 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import function.plugin.IJ2.IJ2PluginUtility;
-import function.plugin.plugins.featureExtraction.ConnectedComponents.StructuringElement;
 import image.roi.IdPoint;
 import image.roi.PointList;
 import image.roi.ROIPlus;
 import miscellaneous.Canceler;
+import miscellaneous.FileUtility;
 import miscellaneous.Pair;
 import net.imagej.ops.Op;
 import net.imagej.ops.Ops;
@@ -21,11 +21,12 @@ import net.imglib2.IterableInterval;
 import net.imglib2.Point;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.algorithm.labeling.ConnectedComponents;
+import net.imglib2.algorithm.labeling.ConnectedComponents.StructuringElement;
 import net.imglib2.converter.Converter;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.array.ArrayImgs;
-import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.roi.IterableRegion;
 import net.imglib2.roi.Regions;
 import net.imglib2.roi.geometric.Polygon;
@@ -117,7 +118,7 @@ public class FeatureUtils {
 	//		return labeling;
 	//	}
 	
-	public void showLabelRegion(LabelRegion< ? > region)
+	public void showLabelRegion(LabelRegion< ? > region, boolean defaultApp)
 	{
 		long[] dimensions = new long[region.numDimensions()];
 		region.dimensions(dimensions);
@@ -139,7 +140,8 @@ public class FeatureUtils {
 			ra.setPosition(cur);
 			ra.get().set(255);
 		}
-		ImageJFunctions.show(indexImg);
+		FileUtility.showImg(indexImg, defaultApp);
+		//ImageJFunctions.show(indexImg);
 		//ImgLabeling<Integer, UnsignedShortType> labeling = new ImgLabeling<Integer, UnsignedShortType>(indexImg);
 	}
 

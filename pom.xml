@@ -89,6 +89,7 @@
 		<!--  NB: for outputop-service branch -->
 		<imagej-ops.version>0.24.2-SNAPSHOT</imagej-ops.version>
 		<!-- <imglib2-roi.version>0.4.2</imglib2-roi.version> -->
+		<imglib2.version>2.6.1-SNAPSHOT</imglib2.version>
 	</properties>
 
 	<repositories>

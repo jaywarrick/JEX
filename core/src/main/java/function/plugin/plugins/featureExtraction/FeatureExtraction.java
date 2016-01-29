@@ -29,6 +29,7 @@ import io.scif.img.ImgOpener;
 import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import logs.Logs;
+import miscellaneous.FileUtility;
 import miscellaneous.JEXCSVReader;
 import miscellaneous.JEXCSVWriter;
 import miscellaneous.Pair;
@@ -46,10 +47,8 @@ import net.imagej.ops.special.function.UnaryFunctionOp;
 import net.imglib2.Cursor;
 import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccess;
-import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealLocalizable;
 import net.imglib2.img.Img;
-import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.roi.Regions;
 import net.imglib2.roi.geometric.Polygon;
 import net.imglib2.roi.labeling.ImgLabeling;
@@ -200,7 +199,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	// variables shared between function instances).
 	@Override
 	public int getMaxThreads() {
-		return 1;
+		return 10;
 	}
 
 	// Code the actions of the plugin here using comments for significant
@@ -265,8 +264,8 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			ImgLabeling<Integer, IntType> cellLabeling = utils.getConnectedComponents(wholeCellMaskImage, connectedness.equals("4 Connected"));
 			
 			LabelRegions<Integer> cellRegions = new LabelRegions<Integer>(cellLabeling);
-			ImageJFunctions.show(utils.getConnectedComponentsImage(wholeCellMaskImage, true));
-			ImageJFunctions.show(wholeCellMaskImage);
+			//FileUtility.showImg(utils.getConnectedComponentsImage(wholeCellMaskImage, true), true);
+			//FileUtility.showImg(wholeCellMaskImage, false);
 			
 			idToLabelMap = new TreeMap<Integer, Integer>();
 
@@ -332,7 +331,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 						// newMap.put("Id", "" + id);
 						// newMap.put("Label", "" + idToLabelMap.get(id));
 						// this.write(newMap, (double) subRegionCount);
-						System.out.println("Getting Major Subregion for " + p.id + " of size " + region.size() + " at " + p.x + "," + p.y + " for label at " + region.getCenterOfMass());
+						// System.out.println("Getting Major Subregion for " + p.id + " of size " + region.size() + " at " + p.x + "," + p.y + " for label at " + region.getCenterOfMass());
 						LabelRegion<Integer> majorSubRegion = getMajorSubRegion(region, maskImage);
 
 						// Get the polygon of the mask feature
@@ -455,36 +454,28 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		outputARFF = FileWriter.makeFileObject("temp", null, arffPath);
 	}
 
-	public LabelRegion<Integer> getMajorSubRegion(LabelRegion<Integer> region, Img<UnsignedByteType> mask) {
+	public LabelRegion<Integer> getMajorSubRegion(LabelRegion<Integer> region, Img<UnsignedByteType> mask)
+	{
 		LabelRegions<Integer> subRegions = utils.getSubRegions(region, mask, connectedness.equals("4 Connected"));
-
-		long maxSize = 1; // This is hopefully to avoid quantifying subregions
-		// that are only a pixel in size.
+		
+		long maxSize = 1; // This is hopefully to avoid quantifying subregions that are only a pixel in size.
 		LabelRegion<Integer> majorSubRegion = null;
 		RandomAccess<BoolType> ra = Regions.iterable(region).randomAccess();
 		long[] pos = new long[region.numDimensions()];
 		Cursor<Void> c = null;
-		for (LabelRegion<Integer> subRegion : subRegions) {
-
-			c = Regions.iterable(subRegion).cursor();
-			while(c.hasNext())
+		for (LabelRegion<Integer> subRegion : subRegions)
+		{
+			if(subRegion.size() > maxSize)
 			{
-				c.fwd(); // This needs to be called to get the cursor into the first
-				// pixel of the region.
-				c.localize(pos); // localize the pos variable to this location
-				ra.setPosition(pos); // set the position of the random accessible to pos
-				if (subRegion.size() > maxSize)
+				c = Regions.iterable(subRegion).cursor();
+				while(c.hasNext())
 				{
-					if(!ra.get().get())
+					c.fwd(); // This needs to be called to get the cursor into the first pixel of the region.
+					c.localize(pos); // localize the pos variable to this location
+					ra.setPosition(pos); // set the position of the random accessible to pos
+					if(ra.get().get())
 					{
-						System.out.println("Out = " + pos[0] + "," + pos[1]);
-						utils.showLabelRegion(region);
-						utils.showLabelRegion(subRegion);
-						System.out.println("Stop.");
-					}
-					else
-					{
-						System.out.println("In = " + pos[0] + "," + pos[1]);
+						// if the ra<BoolType> returns true at this location, then it is in the parent region
 						majorSubRegion = subRegion;
 						maxSize = subRegion.size();
 						break;
