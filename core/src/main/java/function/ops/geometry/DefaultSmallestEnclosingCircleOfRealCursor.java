@@ -1,4 +1,4 @@
-package function.ops;
+package function.ops.geometry;
 
 import java.util.Collections;
 import java.util.List;
@@ -36,7 +36,7 @@ implements Ops.Geometric.SmallestEnclosingCircle {
 	@Override
 	public void initialize()
 	{
-		op = Functions.unary(ops(), function.ops.DefaultSmallestEnclosingCircle.class, Circle.class, new Vector<RealLocalizable>(), center, randomizePointRemoval, rndSeed);
+		op = Functions.unary(ops(), function.ops.geometry.DefaultSmallestEnclosingCircle.class, Circle.class, new Vector<RealLocalizable>(), center, randomizePointRemoval, rndSeed);
 	}
 
 	@Override

@@ -4,7 +4,7 @@ import java.util.Iterator;
 
 public class LabelGenerator implements Iterator<Integer>
 {
-	private int current = -1;
+	private int current = 0;
 
 	@Override
 	public boolean hasNext()

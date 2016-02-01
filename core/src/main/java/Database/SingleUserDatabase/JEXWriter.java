@@ -1,10 +1,5 @@
 package Database.SingleUserDatabase;
 
-import function.plugin.IJ2.IJ2PluginUtility;
-import ij.ImagePlus;
-import ij.io.FileSaver;
-import ij.process.ImageProcessor;
-
 import java.awt.image.BufferedImage;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -13,6 +8,14 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 
+import org.apache.commons.io.FileUtils;
+
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import function.plugin.IJ2.IJ2PluginUtility;
+import ij.ImagePlus;
+import ij.io.FileSaver;
+import ij.process.ImageProcessor;
 import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import logs.Logs;
@@ -20,15 +23,11 @@ import miscellaneous.DateUtility;
 import miscellaneous.DirectoryManager;
 import miscellaneous.FileUtility;
 import net.imagej.Dataset;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.RealType;
-
-import org.apache.commons.io.FileUtils;
-
 import preferences.XPreferences;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
 
 public class JEXWriter {
 	
@@ -152,10 +151,25 @@ public class JEXWriter {
 	/**
 	 * Save the image in the temporary database folder
 	 */
-	public static <T extends RealType<T>> String saveImage(Img<T> img)
+	public static <T extends RealType<T>> String saveImage(RandomAccessibleInterval<T> img)
 	{
 		ImagePlus im = ImageJFunctions.wrap(img, "temp");
 		return JEXWriter.saveImage(im);
+	}
+	
+	/**
+	 * Save the image in the temporary database folder
+	 */
+	public static <T extends RealType<T>> void showImage(Img<T> img)
+	{
+		ImagePlus im = ImageJFunctions.wrap(img, "temp");
+		String path = JEXWriter.saveImage(im);
+		try {
+			FileUtility.openFileDefaultApplication(path);
+		} catch (Exception e) {
+			Logs.log("Couldn't save, open, and show the supplied image.", FileUtility.class);
+			e.printStackTrace();
+		}
 	}
 	
 	/**
@@ -173,27 +187,18 @@ public class JEXWriter {
 		}
 		
 		// Save the image
-		boolean canSave = IJ2PluginUtility.ij().dataset().canSave(fullPath);
-		if(canSave)
+		Logs.log("Saving image to: " + fullPath, 1, JEXWriter.class);
+		try
 		{
-			Logs.log("Saving image to: " + fullPath, 1, JEXWriter.class);
-			try
-			{
-				IJ2PluginUtility.ij().dataset().save(im, fullPath);
-			}
-			catch (IOException e)
-			{
-				Logs.log("Error saving image to: " + fullPath, 1, JEXWriter.class);
-				e.printStackTrace();
-				return null;
-			}
-			return fullPath;
+			IJ2PluginUtility.ij().io().save(im, fullPath);
 		}
-		else
+		catch (IOException e)
 		{
 			Logs.log("Error saving image to: " + fullPath, 1, JEXWriter.class);
+			e.printStackTrace();
 			return null;
 		}
+		return fullPath;
 	}
 	
 	/**

@@ -1,11 +1,5 @@
 package image.roi;
 
-import ij.gui.Line;
-import ij.gui.OvalRoi;
-import ij.gui.PointRoi;
-import ij.gui.PolygonRoi;
-import ij.gui.Roi;
-
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Shape;
@@ -13,7 +7,13 @@ import java.awt.geom.Ellipse2D;
 import java.util.HashSet;
 import java.util.Iterator;
 
+import ij.gui.Line;
+import ij.gui.OvalRoi;
+import ij.gui.PointRoi;
+import ij.gui.PolygonRoi;
+import ij.gui.Roi;
 import miscellaneous.Copiable;
+import net.imglib2.roi.geometric.Polygon;
 
 public class ROIPlus implements Copiable<ROIPlus>, Iterable<ROIPlus>, Comparable<ROIPlus> {
 	
@@ -96,6 +96,11 @@ public class ROIPlus implements Copiable<ROIPlus>, Iterable<ROIPlus>, Comparable
 	{
 		this(roi);
 		this.type = type;
+	}
+	
+	public ROIPlus(Polygon pg)
+	{
+		this(new PointList(pg), ROIPlus.ROI_POLYGON);
 	}
 	
 	public ROIPlus(PointList pList, int type)

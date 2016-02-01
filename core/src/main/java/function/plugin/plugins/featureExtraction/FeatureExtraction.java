@@ -15,7 +15,13 @@ import Database.DataReader.ImageReader;
 import Database.DataReader.RoiReader;
 import Database.DataWriter.FileWriter;
 import Database.SingleUserDatabase.JEXReader;
-import function.ops.DefaultSmallestEnclosingCircle;
+import function.ops.featuresets.Geometric2DFeatureSet;
+import function.ops.featuresets.Haralick2DFeatureSet;
+import function.ops.featuresets.HistogramFeatureSet;
+import function.ops.featuresets.ImageMomentsFeatureSet;
+import function.ops.featuresets.StatsFeatureSet;
+import function.ops.featuresets.ZernikeFeatureSet;
+import function.ops.geometry.DefaultSmallestEnclosingCircle;
 import function.plugin.IJ2.IJ2PluginUtility;
 import function.plugin.mechanism.InputMarker;
 import function.plugin.mechanism.JEXPlugin;
@@ -33,12 +39,6 @@ import miscellaneous.FileUtility;
 import miscellaneous.JEXCSVReader;
 import miscellaneous.JEXCSVWriter;
 import miscellaneous.Pair;
-import net.imagej.ops.features.sets.Geometric2DFeatureSet;
-import net.imagej.ops.features.sets.Haralick2DFeatureSet;
-import net.imagej.ops.features.sets.HistogramFeatureSet;
-import net.imagej.ops.features.sets.ImageMomentsFeatureSet;
-import net.imagej.ops.features.sets.StatsFeatureSet;
-import net.imagej.ops.features.sets.ZernikeFeatureSet;
 import net.imagej.ops.featuresets.NamedFeature;
 import net.imagej.ops.geom.geom2d.Circle;
 import net.imagej.ops.image.cooccurrencematrix.MatrixOrientation2D;
@@ -92,7 +92,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	// TODO: Figure out how to get a RandomAccessbleInterval<T> from a
 	// LabelRegion and an Img<T>
 	// public Tamura2DFeatureSet<T,DoubleType> opTamura = null;
-	public ZernikeFeatureSet<T> opZernike = null;
+	
 
 	public JEXCSVWriter writer;
 	public Set<String> header = null;
@@ -340,7 +340,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 							Logs.log("Encountered a null polygon for geometric2d features. id:" + p.id + ", label:" + region.getLabel(), FeatureExtraction.class);
 							continue;
 						}
-						Polygon polygon = utils.convert(majorSubRegion);
+						Polygon polygon = utils.getPolygonFromBoolean(majorSubRegion);
 						IterableInterval<T> intensityVals = Regions.sample(majorSubRegion, intensityImage);
 
 						// quantify intensity features first (for a complete CSV header)
@@ -456,31 +456,16 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
 	public LabelRegion<Integer> getMajorSubRegion(LabelRegion<Integer> region, Img<UnsignedByteType> mask)
 	{
-		LabelRegions<Integer> subRegions = utils.getSubRegions(region, mask, connectedness.equals("4 Connected"));
-		
-		long maxSize = 1; // This is hopefully to avoid quantifying subregions that are only a pixel in size.
+		ImgLabeling<Integer, IntType> labeling = utils.getConnectedComponentsInRegion(region, mask, connectedness.equals("4 Connected"));
+		LabelRegions<Integer> subRegions = new LabelRegions<>(labeling);
+		long maxSize = 1;
 		LabelRegion<Integer> majorSubRegion = null;
-		RandomAccess<BoolType> ra = Regions.iterable(region).randomAccess();
-		long[] pos = new long[region.numDimensions()];
-		Cursor<Void> c = null;
 		for (LabelRegion<Integer> subRegion : subRegions)
 		{
 			if(subRegion.size() > maxSize)
 			{
-				c = Regions.iterable(subRegion).cursor();
-				while(c.hasNext())
-				{
-					c.fwd(); // This needs to be called to get the cursor into the first pixel of the region.
-					c.localize(pos); // localize the pos variable to this location
-					ra.setPosition(pos); // set the position of the random accessible to pos
-					if(ra.get().get())
-					{
-						// if the ra<BoolType> returns true at this location, then it is in the parent region
-						majorSubRegion = subRegion;
-						maxSize = subRegion.size();
-						break;
-					}
-				}
+				majorSubRegion = subRegion;
+				maxSize = subRegion.size();
 			}
 		}
 		return majorSubRegion;
@@ -740,7 +725,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		{
 			center = reg.getCenterOfMass();
 		}
-		UnaryFunctionOp<List<? extends RealLocalizable>,Circle> cirOp = Functions.unary(IJ2PluginUtility.ij().op(), function.ops.DefaultSmallestEnclosingCircle.class, Circle.class, p.getVertices(), center);
+		UnaryFunctionOp<List<? extends RealLocalizable>,Circle> cirOp = Functions.unary(IJ2PluginUtility.ij().op(), function.ops.geometry.DefaultSmallestEnclosingCircle.class, Circle.class, p.getVertices(), center);
 		ret = cirOp.compute1(p.getVertices());
 		return ret;
 	}

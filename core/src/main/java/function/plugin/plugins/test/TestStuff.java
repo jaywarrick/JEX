@@ -3,48 +3,100 @@ package function.plugin.plugins.test;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Vector;
 
+import function.ops.geometry.DefaultSmallestEnclosingCircle;
+import function.ops.zernike.ZernikeComputer;
 import function.plugin.IJ2.IJ2PluginUtility;
+import function.plugin.plugins.featureExtraction.FeatureUtils;
+import ij.ImagePlus;
 import image.roi.PointList;
+import image.roi.PointSample;
+import image.roi.PointSampler;
 import image.roi.PointSamplerII;
 import image.roi.PointSamplerList;
 import miscellaneous.DirectoryManager;
 import miscellaneous.FileUtility;
 import net.imagej.ops.Ops;
-import net.imagej.ops.features.sets.ZernikeFeatureSet;
-import net.imagej.ops.features.zernike.helper.ZernikeComputer;
 import net.imagej.ops.features.zernike.helper.ZernikeMoment;
-import net.imagej.ops.featuresets.NamedFeature;
 import net.imagej.ops.geom.geom2d.Circle;
 import net.imagej.ops.special.function.Functions;
 import net.imagej.ops.special.function.UnaryFunctionOp;
 import net.imglib2.Cursor;
 import net.imglib2.IterableInterval;
+import net.imglib2.RandomAccess;
 import net.imglib2.RealCursor;
 import net.imglib2.RealLocalizable;
+import net.imglib2.img.Img;
+import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.roi.geometric.PointCollection;
+import net.imglib2.roi.labeling.ImgLabeling;
+import net.imglib2.roi.labeling.LabelRegion;
+import net.imglib2.roi.labeling.LabelRegions;
+import net.imglib2.type.logic.BoolType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.IntType;
-import net.imglib2.type.numeric.real.DoubleType;
+import net.imglib2.type.numeric.integer.UnsignedByteType;
 import rtools.R;
 
 public class TestStuff {
 
 	public static void main (String[] args) throws Exception
 	{
-		tryZFeatureSet();
+		trySamplingIterableRegion();
+	}
+	
+	public static void trySamplingIterableRegion() throws Exception
+	{
+		DirectoryManager.setHostDirectory("/Users/jaywarrick/Desktop");
+		PointSamplerList<IntType> pl = new PointSamplerList<IntType>(IntType.class);
+		pl.add(0, 0);
+		IJ2PluginUtility.ij().op().op(DefaultSmallestEnclosingCircle.class, pl);
+		ImagePlus im = new ImagePlus("/Users/jaywarrick/Desktop/For ImageJ Forum/Objects.tif");
+		ImagePlus im2 = new ImagePlus("/Users/jaywarrick/Desktop/For ImageJ Forum/ErodedObjects.tif");
+		Img<UnsignedByteType> img = ImageJFunctions.wrapByte(im);
+		Img<UnsignedByteType> img2 = ImageJFunctions.wrapByte(im2);
+		FeatureUtils utils = new FeatureUtils();
+		//utils.show(img2);
+		ImgLabeling<Integer, IntType> labeling = utils.getConnectedComponents(img, true);
+		//utils.showLabelingImg(labeling, true);
+		ImgLabeling<Integer, IntType> labeling2 = utils.getConnectedComponents(img2, true);
+		LabelRegions<Integer> cellRegions = new LabelRegions<Integer>(labeling);
+		LabelRegions<Integer> cellRegions2 = new LabelRegions<Integer>(labeling2);
+		//FileUtility.showImg(img, false);
+		for(LabelRegion<Integer> region : cellRegions)
+		{
+			for(LabelRegion<Integer> region2 : cellRegions2)
+			{
+				Cursor<Void> reg2 = region2.cursor();
+				reg2.fwd();
+				RandomAccess<BoolType> reg = region.randomAccess();
+				reg.setPosition(reg2);
+				if(reg.get().get())
+				{
+					// Then show the region and intersected region
+					ImgLabeling<Integer,IntType> tempLabeling = utils.getConnectedComponentsInRegion(region, img2, true);
+					utils.show(tempLabeling);
+					System.out.println(region.getLabel());
+					System.out.println(region.size());
+				}
+			}
+			//			System.out.println(region.getLabel());
+			//			System.out.println(region.size());
+			//			ImageJFunctions.show(utils.convertLabelRegionToByteImage(region));
+			//			SamplingIterableRegion<UnsignedByteType> inter = new SamplingIterableRegion<UnsignedByteType>(region, img2);
+			//			ImageJFunctions.show(inter);
+			//			System.out.println(region.getLabel());
+		}
 	}
 
 	public static void tryZFeatureSet()
 	{
 		int maxRadius = 100;
 		int xOffset = 0;
-		int yOffset = 0;
-		int nPoints = 15;
+		int yOffset = 10;
+		int nPoints = 100;
 		int rndSeed = 1234;
 		double rotation = 0;
 		double scale = 1.7;
@@ -53,8 +105,28 @@ public class TestStuff {
 		DirectoryManager.setHostDirectory("/Users/jaywarrick/Desktop");
 
 		PointSamplerList<IntType> pl = getRandomPoints(maxRadius, xOffset, yOffset, scale, rotation, nPoints, rndSeed);
+		
+		
+		PointSamplerList<IntType> pl3 = new PointSamplerList<>(IntType.class);
+		
+		pl3.add(new PointSample<IntType>(0,0,new IntType(1)));
+		pl3.add(new PointSample<IntType>(0,1,new IntType(1)));
+		pl3.add(new PointSample<IntType>(0,2,new IntType(1)));
+		pl3.add(new PointSample<IntType>(1,0,new IntType(1)));
+		pl3.add(new PointSample<IntType>(1,1,new IntType(1)));
+		pl3.add(new PointSample<IntType>(1,2,new IntType(1)));
+		pl3.add(new PointSample<IntType>(2,0,new IntType(1)));
+		pl3.add(new PointSample<IntType>(2,1,new IntType(1)));
+		pl3.add(new PointSample<IntType>(2,2,new IntType(1)));
+		
+		PointSamplerList<IntType> pl2 = new PointSamplerList<>(IntType.class);
+		for(PointSampler<IntType> p : pl)
+		{
+			pl2.add(p);
+			pl2.add(new PointSample<IntType>(-1*p.getDoublePosition(0), -1*p.getDoublePosition(1), new IntType(1)));
+		}
 
-		IterableInterval<IntType> ii = new PointSamplerII<IntType>(pl);
+		IterableInterval<IntType> ii = new PointSamplerII<IntType>(pl2);
 
 		UnaryFunctionOp<IterableInterval<IntType>,RealLocalizable> opCenter = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.CenterOfGravity.class, RealLocalizable.class, ii);
 		RealLocalizable center = opCenter.compute1(ii);
@@ -62,40 +134,49 @@ public class TestStuff {
 		UnaryFunctionOp<RealCursor<IntType>,Circle> opCircle = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.SmallestEnclosingCircle.class, Circle.class, ii.cursor(), center, false, 1234);
 		Circle c = opCircle.compute1(ii.cursor());
 
-		@SuppressWarnings("unchecked")
-		ZernikeFeatureSet<IntType> opZ = IJ2PluginUtility.ij().op().op(ZernikeFeatureSet.class, ii, 1, 5);
+		ZernikeComputer<IntType> comp = new ZernikeComputer<>();
+		comp.setOrder(0);
+		comp.setRepetition(0);
+		comp.setEnclosingCircle(c);
+		
+		ZernikeMoment zm = comp.compute1(ii);
+		System.out.println(zm.getMagnitude());
+		
+		
+		//@SuppressWarnings("unchecked")
+		//ZernikeFeatureSet<IntType> opZ = IJ2PluginUtility.ij().op().op(ZernikeFeatureSet.class, ii, 1, 5);
 
-		// Perform the calculations
-		opZ.setEnclosingCircle(c);
-		Map<NamedFeature, DoubleType> results1 = opZ.compute1(ii);
-		// Perform the calculations
-		Circle c2 = new Circle(c.getCenter(), c.getRadius()*1.2);
-		opZ.setEnclosingCircle(c2);
-		Map<NamedFeature, DoubleType> results2 = opZ.compute1(ii);
-
-		System.out.println("\n --- SETTINGS ---");
-		System.out.println("offsetXY = (" + xOffset + "," + yOffset + ")");
-		System.out.println("rotation = " + rotation);
-		System.out.println("scale = " + scale);
-		System.out.println("\n --- POINTS ---");
-		for(RealLocalizable p : pl)
-		{
-			System.out.println(p);
-		}
-		System.out.println("\n --- COM ---");
-		System.out.println(center);
-		System.out.println("\n --- CIRCLE ---");
-		System.out.println(c);
-		System.out.println("\n --- RESULTS1 (PaddingRatio=1) ---");
-		for(Entry<NamedFeature, DoubleType> e : results1.entrySet())
-		{
-			System.out.println(e.getKey().getName() + " = " + e.getValue());
-		}
-		System.out.println("\n --- RESULTS1 (PaddingRatio=1.2) ---");
-		for(Entry<NamedFeature, DoubleType> e : results2.entrySet())
-		{
-			System.out.println(e.getKey().getName() + " = " + e.getValue());
-		}
+		//		// Perform the calculations
+		//		//opZ.setEnclosingCircle(c);
+		//		Map<NamedFeature, DoubleType> results1 = opZ.compute1(ii);
+		//		// Perform the calculations
+		//		Circle c2 = new Circle(c.getCenter(), c.getRadius()*1.2);
+		//		opZ.setEnclosingCircle(c2);
+		//		Map<NamedFeature, DoubleType> results2 = opZ.compute1(ii);
+		//
+		//		System.out.println("\n --- SETTINGS ---");
+		//		System.out.println("offsetXY = (" + xOffset + "," + yOffset + ")");
+		//		System.out.println("rotation = " + rotation);
+		//		System.out.println("scale = " + scale);
+		//		System.out.println("\n --- POINTS ---");
+		//		for(RealLocalizable p : pl)
+		//		{
+		//			System.out.println(p);
+		//		}
+		//		System.out.println("\n --- COM ---");
+		//		System.out.println(center);
+		//		System.out.println("\n --- CIRCLE ---");
+		//		System.out.println(c);
+		//		System.out.println("\n --- RESULTS1 (PaddingRatio=1) ---");
+		//		for(Entry<NamedFeature, DoubleType> e : results1.entrySet())
+		//		{
+		//			System.out.println(e.getKey().getName() + " = " + e.getValue());
+		//		}
+		//		System.out.println("\n --- RESULTS1 (PaddingRatio=1.2) ---");
+		//		for(Entry<NamedFeature, DoubleType> e : results2.entrySet())
+		//		{
+		//			System.out.println(e.getKey().getName() + " = " + e.getValue());
+		//		}
 
 
 
@@ -120,7 +201,7 @@ public class TestStuff {
 		theList.addAll(pl);
 		Collection<RealLocalizable> theCollection = new HashSet<RealLocalizable>();
 		theCollection.addAll(pl);
-		RealCursor<IntType> theCursor = pl.cursor();
+		//RealCursor<IntType> theCursor = pl.cursor();
 
 		//		UnaryFunctionOp<RealCursor,Circle> opCursor = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.SmallestEnclosingCircle.class, Circle.class, theCursor, (RealLocalizable) null, false, null);
 		//		Circle retCursor = opCursor.compute1(theCursor);
@@ -128,11 +209,11 @@ public class TestStuff {
 		//		UnaryFunctionOp<List,Circle> opList = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.SmallestEnclosingCircle.class, Circle.class, theList, (RealLocalizable) null, false, null);
 		//		Circle retList = opList.compute1(theList);
 
-		UnaryFunctionOp<Object,Circle> opCollection = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.SmallestEnclosingCircle.class, Circle.class, theCollection, (RealLocalizable) null, false, null);
-		Circle retCollection = (Circle) IJ2PluginUtility.ij().op().run(opCollection, theCollection, null, false, null);
+		//UnaryFunctionOp<Object,Circle> opCollection = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.SmallestEnclosingCircle.class, Circle.class, theCollection, (RealLocalizable) null, false, null);
+		//Circle retCollection = (Circle) IJ2PluginUtility.ij().op().run(opCollection, theCollection, null, false, null);
 
 		//Circle result1 = (Circle) IJ2PluginUtility.ij().op().run(Ops.Geometric.SmallestEnclosingCircle.class, col, (RealLocalizable) null, false, null);
-		UnaryFunctionOp<RealCursor,Circle> op = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.SmallestEnclosingCircle.class, Circle.class, pl.cursor(), (RealLocalizable) null, false, null);
+		UnaryFunctionOp<RealCursor<IntType>,Circle> op = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.SmallestEnclosingCircle.class, Circle.class, pl.cursor(), (RealLocalizable) null, false, null);
 
 		//		List<Circle> result = (List<Circle>) op.compute1(plII);
 		Circle result = (Circle) op.compute1(pl.cursor());

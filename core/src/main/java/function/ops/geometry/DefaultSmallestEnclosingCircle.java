@@ -1,4 +1,4 @@
-package function.ops;
+package function.ops.geometry;
 
 import java.util.Collections;
 import java.util.List;

@@ -17,6 +17,7 @@ import miscellaneous.LSVList;
 import miscellaneous.SSVList;
 import net.imglib2.AbstractCursor;
 import net.imglib2.Cursor;
+import net.imglib2.RealLocalizable;
 import net.imglib2.type.numeric.integer.IntType;
 
 @SuppressWarnings("unused")
@@ -37,6 +38,16 @@ public class PointList extends Vector<IdPoint> implements Copiable<PointList> {
 		for (IdPoint p : pl)
 		{
 			this.add(p.x, p.y, p.id);
+		}
+	}
+	
+	public PointList(net.imglib2.roi.geometric.Polygon pg)
+	{
+		int id = 0;
+		for(RealLocalizable p : pg.getVertices())
+		{
+			this.add((int) (p.getDoublePosition(0) + 0.5), (int) (p.getDoublePosition(1) + 0.5), id);
+			id = id + 1;
 		}
 	}
 	

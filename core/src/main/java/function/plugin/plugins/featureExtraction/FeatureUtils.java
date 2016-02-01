@@ -3,6 +3,8 @@ package function.plugin.plugins.featureExtraction;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import function.ops.intervals.CroppedRealRAI;
+import function.ops.intervals.IntersectedBooleanRAI;
 import function.plugin.IJ2.IJ2PluginUtility;
 import image.roi.IdPoint;
 import image.roi.PointList;
@@ -24,16 +26,18 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.labeling.ConnectedComponents;
 import net.imglib2.algorithm.labeling.ConnectedComponents.StructuringElement;
 import net.imglib2.converter.Converter;
+import net.imglib2.converter.read.ConvertedRandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.array.ArrayImgs;
+import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.roi.IterableRegion;
 import net.imglib2.roi.Regions;
 import net.imglib2.roi.geometric.Polygon;
 import net.imglib2.roi.labeling.ImgLabeling;
 import net.imglib2.roi.labeling.LabelRegion;
 import net.imglib2.roi.labeling.LabelRegions;
-import net.imglib2.roi.labeling.LabelingType;
+import net.imglib2.type.BooleanType;
 import net.imglib2.type.logic.BitType;
 import net.imglib2.type.logic.BoolType;
 import net.imglib2.type.numeric.IntegerType;
@@ -41,6 +45,8 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.IntType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
+import net.imglib2.view.IntervalView;
+import net.imglib2.view.Views;
 
 /**
  * Had to copy this class out temporarily while SNAPSHOTS conflict and this code is in flux.
@@ -50,8 +56,12 @@ import net.imglib2.type.numeric.integer.UnsignedShortType;
  *
  */
 public class FeatureUtils {
-	
+
 	private UnaryFunctionOp<Object, Object> contourFunc;
+	
+	/////////////////////////////////////////
+	//////// Connected Components ///////////
+	/////////////////////////////////////////
 
 	public <I extends IntegerType< I >> ImgLabeling<Integer, IntType> getConnectedComponents(final RandomAccessibleInterval<I> inputImg, boolean fourConnected)
 	{
@@ -69,103 +79,210 @@ public class FeatureUtils {
 		inputImg.dimensions(dimensions);
 		final Img< IntType > indexImg = ArrayImgs.ints( dimensions );
 		ImgLabeling<Integer, IntType> labeling = new ImgLabeling<Integer, IntType>(indexImg);
-		ConnectedComponents.labelAllConnectedComponents(inputImg, labeling, new LabelGenerator(), 
-				se);		
+		ConnectedComponents.labelAllConnectedComponents(Views.offsetInterval(inputImg, inputImg), labeling, new LabelGenerator(), se);		
 
 		return labeling;
 	}
 
-	public <I extends IntegerType< I >> ImgLabeling<Integer, IntType> getConnectedComponents(final RandomAccessibleInterval<I> inputImg, IterableInterval<Void> region, boolean fourConnected)
+	public <T extends BooleanType<T>> ImgLabeling<Integer, IntType> getConnectedComponentsInRegion(RandomAccessibleInterval<T> reg, Img<UnsignedByteType> mask, boolean fourConnected)
 	{
-		StructuringElement se = null;
-		if(fourConnected)
+		CroppedRealRAI<T, UnsignedByteType> cropped = new CroppedRealRAI<>(reg, mask);
+		IntervalView<UnsignedByteType> v = Views.offsetInterval(cropped, cropped);
+		ImgLabeling<Integer, IntType> cellLabeling = this.getConnectedComponents(v, fourConnected);
+		return cellLabeling;
+	}
+	
+	/////////////////////////////////////////
+	///////////// Show Images ///////////////
+	/////////////////////////////////////////
+
+	public void showRegion(LabelRegion<?> region)
+	{
+		this.showRegion(region, "Label = " + region.getLabel() + " at pos: " + ((int) (region.getCenterOfMass().getDoublePosition(0) + 0.5)) + ", " + ((int) (region.getCenterOfMass().getDoublePosition(1) + 0.5)));
+	}
+
+	public <T extends BooleanType<T>> void showRegion(RandomAccessibleInterval<T> region)
+	{
+		this.showRegion(region, "Region");
+	}
+
+	public <T extends BooleanType<T>> void showRegion(RandomAccessibleInterval<T> region, String title)
+	{
+		ImageJFunctions.showUnsignedByte(region, new BooleanTypeToUnsignedByteTypeConverter<T>(), title);
+	}
+
+	public <T extends RealType<T>> void show(RandomAccessibleInterval< T > rai)
+	{
+		this.show(rai, false);
+	}
+
+	public <T extends RealType<T>> void show(RandomAccessibleInterval< T > rai, boolean defaultApp)
+	{
+		FileUtility.showImg(rai, defaultApp);
+	}
+
+	public void showRegion(IterableInterval< Void > region)
+	{
+		this.show(this.makeImgFromVoidII(region), false);
+	}
+
+	public void show(ImgLabeling<Integer,IntType> labeling)
+	{
+		this.show(labeling, false);
+	}
+
+	public void show(ImgLabeling<Integer,IntType> labeling, boolean asMask)
+	{
+		if(asMask)
 		{
-			se = StructuringElement.FOUR_CONNECTED;
+			FileUtility.showImg(this.makeImgMaskFromLabeling(labeling), false);
 		}
 		else
 		{
-			se = StructuringElement.EIGHT_CONNECTED;
+			FileUtility.showImg(this.makeImgFromLabeling(labeling), true);
 		}
+	}
 
-		long[] dimensions = new long[inputImg.numDimensions()];
-		inputImg.dimensions(dimensions);
-		final Img< IntType > indexImg = ArrayImgs.ints( dimensions );
-		ImgLabeling<Integer, IntType> labeling = new ImgLabeling<Integer, IntType>(new SamplingIterableRegion<IntType>(region, indexImg));
-		ConnectedComponents.labelAllConnectedComponents(inputImg, labeling, new LabelGenerator(), 
-				se);		
+	/////////////////////////////////////////
+	///////////// Make Images ///////////////
+	/////////////////////////////////////////
 
-		return labeling;
-	}	
+	public Img<UnsignedShortType> makeImgFromShortII(IterableInterval<UnsignedShortType> ii)
+	{
+		long[] dims = new long[ii.numDimensions()];
+		ii.dimensions(dims);
+		Img<UnsignedShortType> img = ArrayImgs.unsignedShorts(dims);
+		Cursor<UnsignedShortType> c = ii.cursor();
+		RandomAccess<UnsignedShortType> ra = img.randomAccess();
+		while(c.hasNext())
+		{
+			c.fwd();
+			ra.setPosition(c);
+			ra.get().set(c.get());
+		}
+		return img;
+	}
 
-	//	public static <I extends IntegerType< I >> ImgLabeling<Integer, IntType> getConnectedComponents(RandomAccessibleInterval<UnsignedByteType> reg, Img< I > inputImg, boolean fourConnected)
-	//	{
-	//		StructuringElement se = null;
-	//		if(fourConnected)
-	//		{
-	//			se = StructuringElement.FOUR_CONNECTED;
-	//		}
-	//		else
-	//		{
-	//			se = StructuringElement.EIGHT_CONNECTED;
-	//		}
-	//		
-	//		long[] dimensions = new long[reg.numDimensions()];
-	//		reg.dimensions(dimensions);
-	//		final Img< IntType > indexImg = ArrayImgs.ints( dimensions );
-	//		ImgLabeling<Integer, IntType> labeling = new ImgLabeling<Integer, IntType>(Regions.sample(reg, inputImg));
-	//		ConnectedComponents.labelAllConnectedComponents(inputImg, labeling, new LabelGenerator(), se);
-	//		
-	//		return labeling;
-	//	}
-	
-	public void showLabelRegion(LabelRegion< ? > region, boolean defaultApp)
+	public Img<UnsignedByteType> makeImgFromByteII(IterableInterval<UnsignedByteType> ii)
+	{
+		long[] dims = new long[ii.numDimensions()];
+		ii.dimensions(dims);
+		Img<UnsignedByteType> img = ArrayImgs.unsignedBytes(dims);
+		Cursor<UnsignedByteType> c = ii.cursor();
+		RandomAccess<UnsignedByteType> ra = img.randomAccess();
+		while(c.hasNext())
+		{
+			c.fwd();
+			ra.setPosition(c);
+			ra.get().set(c.get());
+		}
+		return img;
+	}
+
+	public Img<UnsignedByteType> makeImgFromByteRAI(RandomAccessibleInterval<UnsignedByteType> src)
+	{
+		RandomAccessibleInterval<UnsignedByteType> rai = Views.offsetInterval(src, src);
+		long[] dims = new long[rai.numDimensions()];
+		rai.dimensions(dims);
+		Img<UnsignedByteType> img = ArrayImgs.unsignedBytes(dims);
+		Cursor<UnsignedByteType> c = img.cursor();
+		RandomAccess<UnsignedByteType> ra = rai.randomAccess();
+		while(c.hasNext())
+		{
+			c.fwd();
+			ra.setPosition(c);
+			c.get().set(ra.get());
+		}
+		return img;
+	}
+
+	public Img<UnsignedByteType> makeImgFromVoidII(IterableInterval< Void > region)
 	{
 		long[] dimensions = new long[region.numDimensions()];
 		region.dimensions(dimensions);
-		final Img< UnsignedByteType > indexImg = ArrayImgs.unsignedBytes( dimensions );
+		final Img<UnsignedByteType> ret = ArrayImgs.unsignedBytes( dimensions );
 		Cursor<Void> c = region.cursor();
 		Point min = new Point(0,0);
 		Point max = new Point(0,0);
 		Point cur = new Point(0,0);
 		region.min(min);
 		region.max(max);
-		RandomAccess<UnsignedByteType> ra = indexImg.randomAccess();
-		System.out.println(min + ", " + max);
+		RandomAccess<UnsignedByteType> ra = ret.randomAccess();
+		//System.out.println(min + ", " + max);
 		while(c.hasNext())
 		{
 			c.fwd();
-			System.out.println("" + (c.getIntPosition(0)-min.getIntPosition(0)) + " , " + (c.getIntPosition(1)-min.getIntPosition(1)));
+			//System.out.println("" + (c.getIntPosition(0)-min.getIntPosition(0)) + " , " + (c.getIntPosition(1)-min.getIntPosition(1)));
 			cur.setPosition(c.getIntPosition(0)-min.getIntPosition(0), 0); 
 			cur.setPosition(c.getIntPosition(1)-min.getIntPosition(1), 1);
 			ra.setPosition(cur);
 			ra.get().set(255);
 		}
-		FileUtility.showImg(indexImg, defaultApp);
-		//ImageJFunctions.show(indexImg);
-		//ImgLabeling<Integer, UnsignedShortType> labeling = new ImgLabeling<Integer, UnsignedShortType>(indexImg);
+		return ret;
 	}
 
-	public <I extends IntegerType< I >> Img< UnsignedShortType > getConnectedComponentsImage(RandomAccessibleInterval< I > inputImg, boolean fourConnected)
+	public Img<UnsignedByteType> makeImgMaskFromLabeling(ImgLabeling<Integer,IntType> labeling)
 	{
-		StructuringElement se = null;
-		if(fourConnected)
+		LabelRegions<Integer> regions = new LabelRegions<>(labeling);
+		long[] dims = new long[labeling.numDimensions()];
+		labeling.dimensions(dims);
+		final Img< UnsignedByteType > ret = ArrayImgs.unsignedBytes(dims);
+		RandomAccess<UnsignedByteType> ra = ret.randomAccess();
+		for(LabelRegion<Integer> region : regions)
 		{
-			se = ConnectedComponents.StructuringElement.FOUR_CONNECTED;
+			Cursor<Void> c = region.cursor();
+			while(c.hasNext())
+			{
+				c.fwd();
+				ra.setPosition(c);
+				ra.get().set(255);
+			}
 		}
-		else
-		{
-			se = ConnectedComponents.StructuringElement.EIGHT_CONNECTED;
-		}
-
-		long[] dimensions = new long[inputImg.numDimensions()];
-		inputImg.dimensions(dimensions);
-		final Img< UnsignedShortType > indexImg = ArrayImgs.unsignedShorts( dimensions );
-		//ImgLabeling<Integer, UnsignedShortType> labeling = new ImgLabeling<Integer, UnsignedShortType>(indexImg);
-		ConnectedComponents.labelAllConnectedComponents(inputImg, indexImg, se);
-
-		return indexImg;
+		return ret;
 	}
 
+	public Img<UnsignedShortType> makeImgFromLabeling(ImgLabeling<Integer,IntType> labeling)
+	{
+		LabelRegions<Integer> regions = new LabelRegions<>(labeling);
+		long[] dims = new long[labeling.numDimensions()];
+		labeling.dimensions(dims);
+		final Img< UnsignedShortType > ret = ArrayImgs.unsignedShorts(dims);
+		RandomAccess<UnsignedShortType> ra = ret.randomAccess();
+		for(LabelRegion<Integer> region : regions)
+		{
+			Cursor<Void> c = region.cursor();
+			while(c.hasNext())
+			{
+				c.fwd();
+				ra.setPosition(c);
+				ra.get().setInteger(region.getLabel());
+			}
+		}
+		return ret;
+	}
+	
+	/////////////////////////////////////////
+	//////////// 'Get' Helpers //////////////
+	/////////////////////////////////////////
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public <T extends BooleanType<T>> Polygon getPolygonFromBoolean(final RandomAccessibleInterval<T> src) {
+		if (contourFunc == null) {
+			contourFunc = (UnaryFunctionOp) Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.Contour.class, Polygon.class, src, true, true);
+		}
+		final Polygon p = (Polygon) contourFunc.compute1(src);
+		return p;
+	}
+
+	public <T extends RealType<T>> Polygon getPolygonFromReal(final RandomAccessibleInterval<T> src)
+	{
+		return this.getPolygonFromBoolean(this.convertRealToBoolTypeRAI(src));
+	}
+	
+	/////////////////////////////////////////
+	//////////// Sub-routines ///////////////
+	/////////////////////////////////////////
+	
 	public Pair<Img<UnsignedByteType>,TreeMap<Integer,PointList>> keepRegionsWithMaxima(Img<UnsignedByteType> mask, boolean fourConnected, ROIPlus maxima, Canceler canceler)
 	{
 		// Create a blank image
@@ -225,11 +342,13 @@ public class FeatureUtils {
 		return ret;
 	}
 	
-	public LabelRegions<Integer> getSubRegions(LabelRegion<Integer> reg, Img<UnsignedByteType> mask, boolean fourConnected)
+	/////////////////////////////////////////
+	///////// Region Manipulation ///////////
+	/////////////////////////////////////////
+	
+	public <T extends BooleanType<T>, R extends RealType<R>> RandomAccessibleInterval<R> cropRealRAI(RandomAccessibleInterval<T> region, RandomAccessibleInterval<R> img)
 	{
-		ImgLabeling<Integer, IntType> cellLabeling = this.getConnectedComponents(mask, reg, fourConnected);
-		LabelRegions<Integer> subRegions = new LabelRegions<Integer>(cellLabeling);
-		return subRegions;
+		return new CroppedRealRAI<T,R>(region, img);
 	}
 
 	public boolean contains(LabelRegion<?> region, IdPoint p)
@@ -239,86 +358,70 @@ public class FeatureUtils {
 		RandomAccess<BoolType> ra = Regions.iterable(region).randomAccess();
 		ra.setPosition(p);
 		return ra.get().get();
-		//		LabelRegionCursor c = region.localizingCursor();
-		//		region.randomAccess().
-		//		do
-		//		{
-		//			if(c.getIntPosition(0) == p.x && c.getIntPosition(1) == p.y)
-		//			{
-		//				return true;
-		//			}
-		//			c.next();
-		//		} 
-		//		while(c.hasNext());
-		//
-		//		return false;
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public Polygon convert(final RandomAccessibleInterval<?> src) {
-		if (contourFunc == null) {
-			contourFunc = (UnaryFunctionOp) Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.Contour.class, Polygon.class, src, true, true);
-		}
-		final Polygon p = (Polygon) contourFunc.compute1(src);
-		return p;
-	}
-	
-	//	public <T> Polygon convert(final LabelRegion<?> src)
-	//	{
-	//		PositionableIterableRegion<BoolType> temp = src;
-	//		IterableRegion<BoolType> temp2 = temp;
-	//		IterableInterval<Void> temp3 = temp2;
-	//		IterableInterval<BitType> convert = Converters.convert(temp3, new MyConverter(), new BitType());
-	//		return convert(convert);
-	//	}
-
-	/**
-	 * 1) Create a new ImgLabeling. 2) For each pixel location that intersects between the supplied regions and the supplied mask,
-	 * label the new ImgLabeling with the region's label.
-	 * 
-	 * Thus, the new ImgLabeling should be within the boundaries of the supplied regions, but defined within those
-	 * regions by the mask and labeled the same label as the region they intersect with.
-	 * 
-	 * @param regions
-	 * @param innerMask
-	 * @return ImgLabeling representing their intersection, copying labels from regions
-	 */
-	public <I extends RealType<I>> ImgLabeling<Integer,IntType> intersect(LabelRegions<Integer> regions, Img<I> innerMask)
+	public <T extends BooleanType<T>> IterableRegion<T> intersect(IterableRegion<T> a, IterableRegion<T> b)
 	{
-		long[] size = new long[innerMask.numDimensions()];
-		innerMask.dimensions(size);
-		final Img< IntType > indexImg = ArrayImgs.ints( size );
-		ImgLabeling<Integer, IntType> ret = new ImgLabeling<Integer, IntType>(indexImg);
-		RandomAccess<LabelingType<Integer>> raRet = ret.randomAccess();
-		RandomAccess<I> raInner = innerMask.randomAccess();
-	
-		// For each region, use a cursor to iterate over the region
-		for(LabelRegion<Integer> region : regions)
-		{
-			IterableRegion<BoolType> itrReg = Regions.iterable(region);
-			Cursor<Void> c = itrReg.cursor();
-			Integer toSet = region.getLabel();
-			while(c.hasNext())
-			{
-				// Note: this is the proper way to use a cursor. Call c.fwd() first before using.
-				c.fwd();
-				// If the innerMask at the cursors location is > 0, then assign the label in region to the new ImgLabeling in that location
-				raInner.setPosition(c);
-				if(raInner.get().getRealDouble() > 0)
-				{
-					raRet.setPosition(c);
-					raRet.get().add(toSet);
-				}
-			}
-		}
-		return ret;
+		RandomAccessibleInterval<T> temp = intersect(a, b);
+		return Regions.iterable(temp);
 	}
+
+	public <T extends BooleanType<T>> RandomAccessibleInterval<T> intersect(RandomAccessibleInterval<T> a, RandomAccessibleInterval<T> b)
+	{
+		return new IntersectedBooleanRAI<T>(a, b);
+	}
+
+	/////////////////////////////////////////
+	////////////// Conversion ///////////////
+	/////////////////////////////////////////
 	
-	class MyConverter implements Converter<Void, BitType> {
+	public <T extends BooleanType<T>> RandomAccessibleInterval<UnsignedByteType> convertBooleanTypeToByteRAI(RandomAccessibleInterval<T> rai)
+	{
+		return new ConvertedRandomAccessibleInterval<T, UnsignedByteType>(rai, new BooleanTypeToUnsignedByteTypeConverter<T>(), new UnsignedByteType(0));
+	}
+
+	public <R extends RealType<R>> RandomAccessibleInterval<BoolType> convertRealToBoolTypeRAI(RandomAccessibleInterval<R> rai)
+	{
+		return new ConvertedRandomAccessibleInterval<>(rai, new RealTypeToBoolTypeConverter<R>(), new BoolType(false));
+	}
+
+	class VoidToBitTypeConverter implements Converter<Void, BitType> {
 
 		@Override
 		public void convert(Void input, BitType output) {
 			output.set(true);
+		}
+	}
+
+	class BooleanTypeToUnsignedByteTypeConverter<T extends BooleanType<T>> implements Converter<T, UnsignedByteType> {
+
+		@Override
+		public void convert(T input, UnsignedByteType output) {
+			if(input.get())
+			{
+				output.set(255);
+			}
+			else
+			{
+				output.set(0);
+			}
+
+		}
+	}
+
+	class RealTypeToBoolTypeConverter<R extends RealType<R>> implements Converter<R, BoolType> {
+
+		@Override
+		public void convert(R input, BoolType output) {
+			if(input.getRealDouble() > 0)
+			{
+				output.set(true);
+			}
+			else
+			{
+				output.set(false);
+			}
+
 		}
 	}
 }

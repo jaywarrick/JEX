@@ -16,11 +16,18 @@ import javax.swing.JOptionPane;
 import org.apache.commons.io.FileUtils;
 
 import Database.SingleUserDatabase.JEXWriter;
+import ij.ImagePlus;
 import jex.statics.JEXStatics;
 import logs.Logs;
+import net.imglib2.Cursor;
+import net.imglib2.Point;
+import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
+import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.integer.UnsignedByteType;
 
 public class FileUtility implements Comparator<File> {
 	
@@ -30,7 +37,7 @@ public class FileUtility implements Comparator<File> {
 		System.out.println("Executed ! ");
 	}
 	
-	public static <T extends RealType<T>> void showImg(Img<T> img, boolean defaultApp)
+	public static <T extends RealType<T>> void showImg(RandomAccessibleInterval<T> img, boolean defaultApp)
 	{
 		if(defaultApp)
 		{

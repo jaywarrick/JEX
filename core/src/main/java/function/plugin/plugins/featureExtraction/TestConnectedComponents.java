@@ -1,14 +1,9 @@
 package function.plugin.plugins.featureExtraction;
 
 import java.io.File;
-import java.util.TreeMap;
 
 import ij.ImagePlus;
 import ij.io.FileSaver;
-import image.roi.IdPoint;
-import image.roi.ROIPlus;
-import miscellaneous.FileUtility;
-import net.imglib2.RandomAccess;
 import net.imglib2.algorithm.labeling.ConnectedComponents;
 import net.imglib2.algorithm.labeling.ConnectedComponents.StructuringElement;
 import net.imglib2.img.Img;
@@ -17,7 +12,6 @@ import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.roi.labeling.ImgLabeling;
 import net.imglib2.roi.labeling.LabelRegion;
 import net.imglib2.roi.labeling.LabelRegions;
-import net.imglib2.type.logic.BoolType;
 import net.imglib2.type.numeric.integer.IntType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
@@ -65,8 +59,8 @@ public class TestConnectedComponents {
 		
 		
 		LabelRegions<Integer> cellRegions = new LabelRegions<Integer>(cellLabeling);
-		FileUtility.showImg(utils.getConnectedComponentsImage(objects, true), true);
-		FileUtility.showImg(objects, false);
+		utils.show(utils.getConnectedComponents(objects, true), false);
+		utils.show(objects, false);
 		
 		// Determine which LabelRegions are the ones we want to keep by
 		// testing if our maxima of interest are contained.

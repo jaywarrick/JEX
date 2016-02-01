@@ -21,26 +21,26 @@ public class Geom extends AbstractNamespace {
 	}
 
 	@OpMethod(
-			op = function.ops.DefaultSmallestEnclosingCircle.class)
+			op = function.ops.geometry.DefaultSmallestEnclosingCircle.class)
 	public Circle smallestenclosingboundingbox(final List<? extends RealLocalizable> in, RealLocalizable center, boolean randomizePointRemoval, int rndSeed) {
 		final Circle result = (Circle) ops().run(
-				function.ops.DefaultSmallestEnclosingCircle.class, in, center, randomizePointRemoval, rndSeed);
+				function.ops.geometry.DefaultSmallestEnclosingCircle.class, in, center, randomizePointRemoval, rndSeed);
 		return result;
 	}
 	
 	@OpMethod(
-			op = function.ops.DefaultSmallestEnclosingCircleOfCollection.class)
+			op = function.ops.geometry.DefaultSmallestEnclosingCircleOfCollection.class)
 	public Circle smallestenclosingboundingbox(final Collection<? extends RealLocalizable> in, RealLocalizable center, boolean randomizePointRemoval, int rndSeed) {
 		final Circle result = (Circle) ops().run(
-				function.ops.DefaultSmallestEnclosingCircleOfCollection.class, in, center, randomizePointRemoval, rndSeed);
+				function.ops.geometry.DefaultSmallestEnclosingCircleOfCollection.class, in, center, randomizePointRemoval, rndSeed);
 		return result;
 	}
 	
 	@OpMethod(
-			op = function.ops.DefaultSmallestEnclosingCircleOfRealCursor.class)
+			op = function.ops.geometry.DefaultSmallestEnclosingCircleOfRealCursor.class)
 	public Circle smallestenclosingboundingbox(final RealCursor<?> in, RealLocalizable center, boolean randomizePointRemoval, int rndSeed) {
 		final Circle result = (Circle) ops().run(
-				function.ops.DefaultSmallestEnclosingCircleOfRealCursor.class, in, center, randomizePointRemoval, rndSeed);
+				function.ops.geometry.DefaultSmallestEnclosingCircleOfRealCursor.class, in, center, randomizePointRemoval, rndSeed);
 		return result;
 	}
 
