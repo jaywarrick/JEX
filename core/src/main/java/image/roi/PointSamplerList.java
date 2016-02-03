@@ -20,6 +20,7 @@ import miscellaneous.SSVList;
 import net.imglib2.RealCursor;
 import net.imglib2.RealLocalizable;
 import net.imglib2.RealPoint;
+import net.imglib2.roi.geometric.Polygon;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.IntType;
 import net.imglib2.util.Pair;
@@ -33,9 +34,9 @@ public class PointSamplerList<T extends RealType<T>> extends Vector<PointSampler
 	 */
 	private static final long serialVersionUID = 1L;
 	
-	private Class<T> type;
+	private T type;
 
-	public PointSamplerList(Class<T> type)
+	public PointSamplerList(T type)
 	{
 		super();
 		this.type = type;
@@ -51,7 +52,7 @@ public class PointSamplerList<T extends RealType<T>> extends Vector<PointSampler
 		}
 	}
 	
-	public PointSamplerList(List<? extends RealLocalizable> pl, Class<T> type)
+	public PointSamplerList(List<? extends RealLocalizable> pl, T type)
 	{
 		this(type);
 		for (RealLocalizable p : pl)
@@ -60,7 +61,7 @@ public class PointSamplerList<T extends RealType<T>> extends Vector<PointSampler
 		}
 	}
 	
-	public PointSamplerList(String polygonPts, Class<T> type) throws InstantiationException, IllegalAccessException
+	public PointSamplerList(String polygonPts, T type) throws InstantiationException, IllegalAccessException
 	{
 		this(type);
 		
@@ -85,7 +86,7 @@ public class PointSamplerList<T extends RealType<T>> extends Vector<PointSampler
 		}
 	}
 	
-	public PointSamplerList(Point[] pa, Class<T> type)
+	public PointSamplerList(Point[] pa, T type)
 	{
 		this(type);
 		for (Point p : pa)
@@ -94,7 +95,7 @@ public class PointSamplerList<T extends RealType<T>> extends Vector<PointSampler
 		}
 	}
 	
-	public PointSamplerList(RealPoint[] pa, Class<T> type)
+	public PointSamplerList(RealPoint[] pa, T type)
 	{
 		this(type);
 		for (RealPoint p : pa)
@@ -108,9 +109,14 @@ public class PointSamplerList<T extends RealType<T>> extends Vector<PointSampler
 	//		this(polygonToPointArray(pg));
 	//	}
 	
-	public PointSamplerList(Polygon2D pg, Class<T> type)
+	public PointSamplerList(Polygon2D pg, T type)
 	{
 		this(polygonToRealPointArray(pg), type);
+	}
+	
+	public PointSamplerList(Polygon pg, T type)
+	{
+		this(pg.getVertices(), type);
 	}
 	
 	// public RealPointList<T>(XRealPointList<T> pl)
@@ -614,14 +620,9 @@ public class PointSamplerList<T extends RealType<T>> extends Vector<PointSampler
 	
 	private T getNewSample(double val)
 	{
-		try {
-			T ret = this.type.newInstance();
-			ret.setReal(val);
-			return ret;
-		} catch (InstantiationException | IllegalAccessException e) {
-			e.printStackTrace();
-			return (T) null;
-		}
+		T ret = this.type.copy();
+		ret.setReal(val);
+		return ret;
 	}
 	
 	public RealCursor<T> cursor()

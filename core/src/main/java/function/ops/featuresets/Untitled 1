@@ -1,0 +1,60 @@
+Pseudo-code
+
+Parameters padding, fixed size
+
+For each WholeCellMask
+
+	Store
+
+	Gather WholeCellRegions And IdToLabelMap
+
+	For each IMAGE (IMAGE DimTable filtered on (WholeCellMask - ChannelDim))
+	
+		If Nuc Exists
+			
+			Get major subregion
+			QuantifyFeatures (Region = Nuc, circle = null, firstTimeThrough) [storing COM & equivalentRadius]
+			
+		For WholeCell
+		
+			QuantifyFeatures (Region = WholeCell, circle = nucCircle || null, firstTimeThrough)
+			
+		For each Other
+		
+			Get major subregion
+			QuantifyFeatures (Region = Other, circle = null, firstTimeThrough)
+		
+
+QuantifyFeatures
+	
+		If firstTimeThrough
+		
+			QuantifyGeometricFeatures
+		
+		QuantifyIntensityFeatures
+		
+			-- In Zernike --
+	
+			QuantifyZernike (circle = fixed@thisCOM)
+			QuantifyZernike (circle = thisSEC@thisCOM)
+			
+			if(NucMASK)
+			
+				QuantifyZernike (region = nuc, circle = paddedNucER@nucCOM)
+				
+			if(WholeCellMASK && circle != null)
+					
+				QuantifyZernike (region = WC, circle = fixed@nucCOM)
+				QuantifyZernike (region = WC, circle = wcSEC@nucCOM)
+				QauntifyZernike (region = WC, circle = paddedNucER@nucCOM)
+				QuantifyZernike (region = WC, circle = wcER&nucER@nucCOM)
+			
+			if(!NucMASK && circle != null)
+					
+				QuantifyZernike (region = other, circle = fixed@nucCOM)
+				QuantifyZernike (region = other, circle = thisSEC@nucCOM)
+				QauntifyZernike (region = other, circle = paddedNucER@nucCOM)
+				
+			
+				
+				

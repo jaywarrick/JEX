@@ -8,12 +8,14 @@ import function.ops.intervals.IntersectedBooleanRAI;
 import function.plugin.IJ2.IJ2PluginUtility;
 import image.roi.IdPoint;
 import image.roi.PointList;
+import image.roi.PointSamplerList;
 import image.roi.ROIPlus;
 import miscellaneous.Canceler;
 import miscellaneous.FileUtility;
 import miscellaneous.Pair;
 import net.imagej.ops.Op;
 import net.imagej.ops.Ops;
+import net.imagej.ops.geom.geom2d.Circle;
 import net.imagej.ops.logic.RealLogic;
 import net.imagej.ops.map.MapIterableIntervalToSamplingRAI;
 import net.imagej.ops.special.function.Functions;
@@ -23,6 +25,8 @@ import net.imglib2.IterableInterval;
 import net.imglib2.Point;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.RealCursor;
+import net.imglib2.RealLocalizable;
 import net.imglib2.algorithm.labeling.ConnectedComponents;
 import net.imglib2.algorithm.labeling.ConnectedComponents.StructuringElement;
 import net.imglib2.converter.Converter;
@@ -58,6 +62,7 @@ import net.imglib2.view.Views;
 public class FeatureUtils {
 
 	private UnaryFunctionOp<Object, Object> contourFunc;
+	private UnaryFunctionOp<RealCursor<IntType>,Circle> cirOp;
 	
 	/////////////////////////////////////////
 	//////// Connected Components ///////////
@@ -262,7 +267,7 @@ public class FeatureUtils {
 	}
 	
 	/////////////////////////////////////////
-	//////////// 'Get' Helpers //////////////
+	///////// Geometry Functions ////////////
 	/////////////////////////////////////////
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -277,6 +282,30 @@ public class FeatureUtils {
 	public <T extends RealType<T>> Polygon getPolygonFromReal(final RandomAccessibleInterval<T> src)
 	{
 		return this.getPolygonFromBoolean(this.convertRealToBoolTypeRAI(src));
+	}
+	
+	/**
+	 * If center is null the circle is the smallest enclosing circle.
+	 * If not, the circle is the smallest enclosing circle with a center at 'center'.
+	 * @param pg
+	 * @param center
+	 * @return
+	 */
+	public Circle getCircle(Polygon pg, RealLocalizable center)
+	{
+		PointSamplerList<IntType> psl = new PointSamplerList<>(pg.getVertices(), new IntType(0));
+		if(this.cirOp == null)
+		{
+			cirOp = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.SmallestEnclosingCircle.class, Circle.class, psl.cursor(), center);
+		}
+		UnaryFunctionOp<RealCursor<IntType>,Circle> cirOp = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.SmallestEnclosingCircle.class, Circle.class, psl.cursor(), center);
+		return cirOp.compute1(psl.cursor());
+	}
+	
+	public <T extends BooleanType<T>> Circle getCircle(RandomAccessibleInterval<T> region, RealLocalizable center)
+	{
+		Polygon p = this.getPolygonFromBoolean(region);
+		return this.getCircle(p, center);
 	}
 	
 	/////////////////////////////////////////

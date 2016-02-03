@@ -360,7 +360,11 @@ public class DimTable extends ArrayList<Dim> implements Copiable<DimTable> {
 	{
 		if(this.size() == 0)
 		{
-			return 0;
+			// An object always holds at least one piece of data.
+			// If the dimTable is empty, the iterator will return one
+			// dimension map that is empty, so the map count is one
+			// for this special case.
+			return 1; 
 		}
 		int total = this.get(0).size();
 		for (int i = 1; i < this.size(); i++)

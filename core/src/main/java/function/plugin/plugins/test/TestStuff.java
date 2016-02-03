@@ -50,7 +50,7 @@ public class TestStuff {
 	public static void trySamplingIterableRegion() throws Exception
 	{
 		DirectoryManager.setHostDirectory("/Users/jaywarrick/Desktop");
-		PointSamplerList<IntType> pl = new PointSamplerList<IntType>(IntType.class);
+		PointSamplerList<IntType> pl = new PointSamplerList<IntType>(new IntType(0));
 		pl.add(0, 0);
 		IJ2PluginUtility.ij().op().op(DefaultSmallestEnclosingCircle.class, pl);
 		ImagePlus im = new ImagePlus("/Users/jaywarrick/Desktop/For ImageJ Forum/Objects.tif");
@@ -107,7 +107,7 @@ public class TestStuff {
 		PointSamplerList<IntType> pl = getRandomPoints(maxRadius, xOffset, yOffset, scale, rotation, nPoints, rndSeed);
 		
 		
-		PointSamplerList<IntType> pl3 = new PointSamplerList<>(IntType.class);
+		PointSamplerList<IntType> pl3 = new PointSamplerList<>(new IntType(0));
 		
 		pl3.add(new PointSample<IntType>(0,0,new IntType(1)));
 		pl3.add(new PointSample<IntType>(0,1,new IntType(1)));
@@ -119,7 +119,7 @@ public class TestStuff {
 		pl3.add(new PointSample<IntType>(2,1,new IntType(1)));
 		pl3.add(new PointSample<IntType>(2,2,new IntType(1)));
 		
-		PointSamplerList<IntType> pl2 = new PointSamplerList<>(IntType.class);
+		PointSamplerList<IntType> pl2 = new PointSamplerList<>(new IntType(0));
 		for(PointSampler<IntType> p : pl)
 		{
 			pl2.add(p);
@@ -318,7 +318,7 @@ public class TestStuff {
 
 	public static PointSamplerList<IntType> getRandomPoints(int maxRadius, int xOffset, int yOffset, double scale, double rotation, int nPoints, int rndSeed)
 	{
-		PointSamplerList<IntType> pl = new PointSamplerList<>(IntType.class);
+		PointSamplerList<IntType> pl = new PointSamplerList<>(new IntType(0));
 		Random rand = new Random(rndSeed);
 
 		for(int i = 0; i < nPoints; i++)

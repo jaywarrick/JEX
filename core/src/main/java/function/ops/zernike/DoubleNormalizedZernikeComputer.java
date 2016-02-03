@@ -35,13 +35,10 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
 import net.imagej.ops.Op;
-import net.imagej.ops.Ops;
 import net.imagej.ops.features.zernike.helper.Polynom;
 import net.imagej.ops.features.zernike.helper.ZernikeMoment;
 import net.imagej.ops.geom.geom2d.Circle;
 import net.imagej.ops.special.function.AbstractUnaryFunctionOp;
-import net.imagej.ops.special.function.Functions;
-import net.imagej.ops.special.function.UnaryFunctionOp;
 import net.imagej.types.BigComplex;
 import net.imglib2.IterableInterval;
 import net.imglib2.RealCursor;
@@ -56,18 +53,48 @@ import net.imglib2.type.numeric.RealType;
  * @author jaywarrick (added ability to define and calculate enclosing circle)
  */
 @Plugin(type = Op.class)
-public class ZernikeComputer<T extends RealType<T>> extends
-	AbstractUnaryFunctionOp<IterableInterval<T>, ZernikeMoment>
+public class DoubleNormalizedZernikeComputer<T extends RealType<T>> extends
+AbstractUnaryFunctionOp<IterableInterval<T>, ZernikeMoment>
 {	
 	@Parameter
 	private int order;
 
 	@Parameter
 	private int repetition;
+
+	@Parameter(label = "The inner circle inside which radius will be normalized between 0 and the user-defined perimeter value (< 1)")
+	private Circle innerCircle;
 	
-	@Parameter(required = false)
-	private Circle enclosingCircle = null;
+	@Parameter(label = "The outer circle. Between the inner and outer circle radius will be normalized between the inner circle perimeter value and 1")
+	private Circle outerCircle;
 	
+	@Parameter(required = false, label = "The value of a normalized radius at the perimeter of the inner circle.")
+	private double intermediateNormalizedValue = 0.5;
+
+	private double x1, y1, c;
+	
+	/*
+	 * Notes:
+	 * 
+	 * r1 is radius of inner circle
+	 * r2 is radius of outer circle
+	 * r is the distance from the center of circle 1 to the point to be calculated
+	 * theta is the angle from the center of the inner circle through the point be calculated
+	 * R is the distance from the center of the inner circle to the perimeter of the outer circle at an angle theta
+	 * x1 is the horizontal component of the vector from the center of the inner circle to the outer circle
+	 * y1 is the vertical component of the vector from the center of the inner circle to the outer circle
+	 * x2 is the horizontal component of the vector from the center of the inner circle to the point to be calculated
+	 * y2 is the vertical component of the vector from the center of the inner circle to the point to be calculated
+	 * 
+	 * The equation for an offset circle in polar coordinates is r2^2 = (R*cos(theta) - x1)^2 + (R*sin(theta) - y1)
+	 * This is solved for using the quadratic formula. The angle theta is atan2(y2, x2)
+	 * 
+	 * Inside the inner circle, the radius is normalized to between 0 and this.intermediateNormalizedValue.
+	 * Outside the inner circle (but inside the outer circle), the radius is normalized to between this.intermediateNormalizedValue and 1.
+	 * Outside the outer circle, pixels are ignored.
+	 * 
+	 */
+
 	@Override
 	public void initialize() {
 		super.initialize();
@@ -75,16 +102,6 @@ public class ZernikeComputer<T extends RealType<T>> extends
 
 	@Override
 	public ZernikeMoment compute1(IterableInterval<T> ii) {
-		
-		Circle circle = enclosingCircle;
-		if(circle == null)
-		{
-			UnaryFunctionOp<RealCursor<T>,Circle> cirOp = Functions.unary(ops(), Ops.Geometric.SmallestEnclosingCircle.class, Circle.class, in().cursor(), (RealLocalizable) null);
-			circle = cirOp.compute1(ii.cursor());
-		}
-		
-		final double centerX = circle.getCenter().getDoublePosition(0);
-		final double centerY = circle.getCenter().getDoublePosition(1);
 
 		// Compute pascal's triangle for binomal coefficients: d[x][y] equals (x
 		// over y)
@@ -103,17 +120,24 @@ public class ZernikeComputer<T extends RealType<T>> extends
 		while (cur.hasNext()) {
 			cur.fwd();
 
-			// get 2d centered coordinates
-			final double x = cur.getDoublePosition(0);
-			final double y = cur.getDoublePosition(1);
+			double[] radii = this.getRadii(cur);
 
-			final double xm = (x - centerX) / circle.getRadius();
-			final double ym = (y - centerY) / circle.getRadius();
+			final double r1 = innerCircle.getRadius();
 
-			final double r = Math.sqrt(xm * xm + ym * ym);
-
-			// calculate theta for this position
-			final double theta = Math.atan2(ym, xm);
+			double normRad = -1;
+			if(radii[0] <= r1)
+			{
+				normRad = (1.0/this.intermediateNormalizedValue)*(radii[0]/r1);
+			}
+			else if(radii[0] <= 1.5*radii[1])
+			{
+				normRad = (1-(1.0/this.intermediateNormalizedValue))*((radii[0]-r1)/(radii[1]-r1)) + (1.0/this.intermediateNormalizedValue);
+			}
+			else
+			{
+				// Skip the pixel and exclude it from the calculation
+				continue;
+			}
 
 			// get current pixel value
 			double pixel = cur.get().getRealDouble();
@@ -124,10 +148,10 @@ public class ZernikeComputer<T extends RealType<T>> extends
 
 				// calculate the desired moment
 				// evaluate radial polynom at position r
-				final double rad = moment.getP().evaluate(r);
+				final double rad = moment.getP().evaluate(normRad);
 
 				// p * rad * exp(-1i * m * theta);
-				final BigComplex product = multiplyExp(pixel, rad, theta, moment.getM());
+				final BigComplex product = multiplyExp(pixel, rad, radii[2], moment.getM());
 
 				// add together
 				moment.getZm().add(product);
@@ -287,9 +311,14 @@ public class ZernikeComputer<T extends RealType<T>> extends
 	public void setRepetition(int repetition) {
 		this.repetition = repetition;
 	}
-	
-	public void setEnclosingCircle(Circle circle) {
-		this.enclosingCircle = circle;
+
+	public void setEnclosingCircles(Circle inner, Circle outer) {
+		this.innerCircle = inner;
+		this.outerCircle = outer;
+		//this.a = 1;
+		this.x1 = outer.getCenter().getDoublePosition(0)-inner.getCenter().getDoublePosition(0);
+		this.y1 = outer.getCenter().getDoublePosition(1)-inner.getCenter().getDoublePosition(1);
+		this.c = x1*x1 + y1*y1 - outer.getRadius()*outer.getRadius();
 	}
 
 	/**
@@ -311,6 +340,36 @@ public class ZernikeComputer<T extends RealType<T>> extends
 			result.setCoefficient(pos, computeBinomialFactorial(_n, _m, s, _d));
 		}
 		return result;
+	}
+
+	public double[] getRadii(RealLocalizable p)
+	{
+		final double dx2 = p.getDoublePosition(0) - this.innerCircle.getCenter().getDoublePosition(0);
+		final double dy2 = p.getDoublePosition(1) - this.innerCircle.getCenter().getDoublePosition(1);
+		final double r = Math.sqrt(dx2*dx2+dy2*dy2);
+		final double theta = Math.atan2(dy2, dx2);
+		double R = 0;
+		if(r > this.innerCircle.getRadius())
+		{
+			final double b = -2*Math.cos(theta)*this.x1 -2*Math.sin(theta)*this.y1;
+			// Calculate quandratic formula
+			if(b*b > 4*this.c)
+			{
+				R = (-1*b + Math.sqrt(b*b-4.0*this.c))/(2.0);
+			}
+			else
+			{
+				R = (-1*b - Math.sqrt(b*b-4.0*this.c))/(2.0);
+			}
+		}
+		
+		// Return results
+		final double[] ret = new double[3];
+		ret[0] = r;
+		ret[1] = R;
+		ret[2] = theta;
+		return ret;
+
 	}
 
 }

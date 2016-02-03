@@ -1,6 +1,5 @@
 package function.plugin.plugins.R;
 
-import java.io.File;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
@@ -12,13 +11,10 @@ import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.FileReader;
 import Database.DataReader.LabelReader;
-import Database.DataWriter.FileWriter;
 import Database.Definition.TypeName;
-import Database.SingleUserDatabase.JEXWriter;
 import function.plugin.mechanism.InputMarker;
 import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.MarkerConstants;
-import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
 import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
@@ -43,19 +39,19 @@ import tables.DimensionMap;
  */
 @Plugin(
 		type = JEXPlugin.class,
-		name="Convert ARFF File (R)",
+		name="Plot ARFF File (R)",
 		menuPath="R",
 		visible=true,
-		description="Gather label information into the table, optionally reorganize tables and save as csv."
+		description="Gather label information into the table, open web-based data browser."
 		)
-public class ConvertARFFtoCSV_R extends JEXPlugin {
+public class PlotARFFTable_R extends JEXPlugin {
 
-	public ConvertARFFtoCSV_R()
+	public PlotARFFTable_R()
 	{}
 
 	/////////// Define Inputs ///////////
 
-	@InputMarker(uiOrder=1, name="ARFF Table", type=MarkerConstants.TYPE_FILE, description="ARFF Table(s) to be converted.", optional=false)
+	@InputMarker(uiOrder=1, name="ARFF Table", type=MarkerConstants.TYPE_FILE, description="ARFF Table to be plotted.", optional=false)
 	JEXData fileData;
 
 	/////////// Define Parameters ///////////
@@ -66,22 +62,16 @@ public class ConvertARFFtoCSV_R extends JEXPlugin {
 	@ParameterMarker(uiOrder=2, name="Add Experiment, X, and Y Info?", description="Whether to add columns with the Experiment name and Array X and Y locations in the database.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
 	boolean addExperimentInfo;
 
-	@ParameterMarker(uiOrder=3, name="Convert table from long to wide format?", description="Whether or not to convert the table from long format (one column for all measurement names) to wide format (one column for each measurement).", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
-	boolean reorganize;
-
 	@ParameterMarker(uiOrder=4, name="Reorg: Id Col Name(s)", description="Comma separated list of column names that identify unique rows for the resultant table (i.e., the unique identifiers for each row of information like Id, Experiment, Array.X, Array.Y).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Id,Label")
 	String idCols;
 
-	@ParameterMarker(uiOrder=5, name="Reorg: Measurement Col Name(s)", description="Comma separate list of column names of the ARFF table that describes the measurements in the 'Value' column(s). (Almost always 'Measurement')", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Measurement")
+	@ParameterMarker(uiOrder=5, name="Reorg: Measurement Col Name(s)", description="Comma separate list of column names of the ARFF table that describes the measurements in the 'Value' column(s). (Almost always 'Measurement')", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Measurement,MaskChannel_ImageChannel")
 	String nameCols;
 
 	@ParameterMarker(uiOrder=6, name="Reorg: Value Col Name(s)", description="Name of the column of the ARFF table that stores the values of each 'Measurement'. (Almost always 'Value')", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Value")
 	String valueCols;
 
 	/////////// Define Outputs ///////////
-
-	@OutputMarker(uiOrder=1, name="Converted Table", type=MarkerConstants.TYPE_FILE, flavor="", description="The resultant converted table", enabled=true)
-	JEXData output;
 
 	@Override
 	public int getMaxThreads()
@@ -128,85 +118,79 @@ public class ConvertARFFtoCSV_R extends JEXPlugin {
 		}
 
 		TreeMap<DimensionMap,String> tables = FileReader.readObjectToFilePathTable(fileData);
-		TreeMap<DimensionMap,String> outputTables = new TreeMap<>();
 		double count = 0;
-		double total = tables.size()*4;
+		double total = 4;
 		double percentage = 0;
 
 		R.initializeWorkspace();
 		ScriptRepository.sourceGitHubFile("jaywarrick", "R-General", "master", ".Rprofile");
 		R.load("foreign");
 		R.load("data.table");
-		for (DimensionMap map : tables.keySet())
+		
+		/////////////////// Read the data
+		if(this.isCanceled())
 		{
-			/////////////////// Read the data
-			if(this.isCanceled())
-			{
-				return false;
-			}
-			R.eval("temp <- data.table(read.arff(file=" + R.quotedPath(tables.get(map)) + "))");
-			count = count + 1;
-			percentage = 100 * count / total;
-			JEXStatics.statusBar.setProgressPercentage((int) percentage);
-
-			/////////////////// Append additional labels
-			if(this.isCanceled())
-			{
-				return false;
-			}
-			for(Pair<String,String> newCol : newCols)
-			{
-				R.eval("temp$" + newCol.p1 + " <- " + newCol.p2);
-			}
-			count = count + 1;
-			percentage = 100 * count / total;
-			JEXStatics.statusBar.setProgressPercentage((int) percentage);
-
-			/////////////////// Reorganize if needed
-			if(this.isCanceled())
-			{
-				return false;
-			}
-			if(reorganize)
-			{
-				String measurements = this.getRText(nameCols);
-				String ids = this.getRText(idCols);
-				String values = this.getValuesText(valueCols);
-				if(measurements == null)
-				{
-					JEXDialog.messageDialog("This function requires at least one 'Measurement' column name. (see ?dcast of data.table in R, formula = Id ~ Measurment and value.var= Value). Aborting.");
-					return false;
-				}
-				if(ids == null)
-				{
-					JEXDialog.messageDialog("This function requires at least one 'Id' column name. (see ?dcast of data.table in R, formula = Id ~ Measurment and value.var= Value). Aborting.");
-					return false;
-				}
-				if(values == null)
-				{
-					values = "NULL"; // this causes R to guess what the value column is.
-				}
-				R.eval("temp <- dcast(temp, " + ids + " ~ " + measurements + ", value.var = c(" + values + "))");
-			}
-			count = count + 1;
-			percentage = 100 * count / total;
-			JEXStatics.statusBar.setProgressPercentage((int) percentage);
-
-			/////////////////// Save and store path
-			if(this.isCanceled())
-			{
-				return false;
-			}
-			String path = JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getUniqueRelativeTempPath("csv");
-			R.eval("write.csv(temp, file=" + R.quotedPath(path) + ", row.names=FALSE)");
-			outputTables.put(map, path);
-			count = count + 1;
-			percentage = 100 * count / total;
-			JEXStatics.statusBar.setProgressPercentage((int) percentage);
+			return false;
 		}
-		this.output = FileWriter.makeFileObject("temp", null, outputTables);
+		JEXStatics.statusBar.setStatusText("Reading the table...");
+		R.eval("temp <- data.table(read.arff(file=" + R.quotedPath(tables.firstEntry().getValue()) + "))");
+		count = count + 1;
+		percentage = 100 * count / total;
+		JEXStatics.statusBar.setProgressPercentage((int) percentage);
+		
 
-		// Return status
+		/////////////////// Append additional labels
+		if(this.isCanceled())
+		{
+			return false;
+		}
+		JEXStatics.statusBar.setStatusText("Appending labels as columns to the table...");
+		for(Pair<String,String> newCol : newCols)
+		{
+			R.eval("temp$" + newCol.p1 + " <- " + R.sQuote(newCol.p2));
+		}
+		count = count + 1;
+		percentage = 100 * count / total;
+		JEXStatics.statusBar.setProgressPercentage((int) percentage);
+
+		/////////////////// Reorganize if needed
+		if(this.isCanceled())
+		{
+			return false;
+		}
+		JEXStatics.statusBar.setStatusText("Reorganizing the table...");
+		String measurements = this.getRText(nameCols);
+		String ids = this.getRText(idCols);
+		String values = this.getValuesText(valueCols);
+		if(measurements == null)
+		{
+			JEXDialog.messageDialog("This function requires at least one 'Measurement' column name. (see ?dcast of data.table in R, formula = Id ~ Measurment and value.var= Value). Aborting.");
+			return false;
+		}
+		if(ids == null)
+		{
+			JEXDialog.messageDialog("This function requires at least one 'Id' column name. (see ?dcast of data.table in R, formula = Id ~ Measurment and value.var= Value). Aborting.");
+			return false;
+		}
+		if(values == null)
+		{
+			values = "NULL"; // this causes R to guess what the value column is.
+		}
+		R.eval("shinyData <- dcast(temp, " + ids + " ~ " + measurements + ", value.var = c(" + values + "))");
+		count = count + 1;
+		percentage = 100 * count / total;
+		JEXStatics.statusBar.setProgressPercentage((int) percentage);
+		
+		/////////////////// Start the data browser
+		JEXStatics.statusBar.setStatusText("Starting the Browser...");
+		ScriptRepository.sourceGitHubFile("jaywarrick", "R-General", "master", "DataBrowser/ui.R");
+		ScriptRepository.sourceGitHubFile("jaywarrick", "R-General", "master", "DataBrowser/server.R");
+		R.eval("shinyApp(ui=myUI, server=myServer)");
+		count = count + 1;
+		percentage = 100 * count / total;
+		JEXStatics.statusBar.setProgressPercentage((int) percentage);
+
+		/////////////////// Return status
 		return true;
 	}
 
@@ -231,7 +215,7 @@ public class ConvertARFFtoCSV_R extends JEXPlugin {
 		}
 		return ret;
 	}
-	
+
 	public String getValuesText(String param)
 	{
 		CSVList items = StringUtility.getCSVListAndRemoveWhiteSpaceOnEnds(param);

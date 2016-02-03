@@ -45,26 +45,7 @@ public class JEXReader {
 	{
 		Logs.log("Opening image - " + path, JEXReader.class);
 		ImagePlus im = new ImagePlus(path);
-		return ImageJFunctions.wrapReal(im);
-		//		if(path == null)
-		//		{
-		//			return null;
-		//		}
-		//		
-		//		ImgOpener imgOpener = new ImgOpener(IJ2PluginUtility.ij().getContext());
-		//
-		//		// Always get the first image because that is how JEX stores images.
-		//		Img<T> img;
-		//		try
-		//		{
-		//			img = (Img<T>) imgOpener.openImgs(path).get(0);
-		//			return img;
-		//		} catch(ImgIOException e)
-		//		{
-		//			JEXDialog.messageDialog("Couldn't open file as image. Check input images. File = " + path );
-		//			e.printStackTrace();
-		//			return null;
-		//		}		
+		return ImageJFunctions.wrapReal(im);	
 	}
 	
 }
