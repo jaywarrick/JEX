@@ -53,6 +53,7 @@ import net.imglib2.type.numeric.integer.IntType;
 import net.imglib2.type.numeric.integer.LongType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.real.DoubleType;
+import net.imglib2.view.Views;
 import tables.Dim;
 import tables.DimTable;
 import tables.DimensionMap;
@@ -421,8 +422,8 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		}
 		mapM_Intensity.put("ImageChannel", imageChannelValue);
 
-		IterableInterval<T> ii = Regions.sample(this.subCellRegion, this.image);
-
+		IterableInterval<T> ii = Regions.sample(this.subCellRegion, Views.offsetInterval(this.image, this.wholeCellRegion));
+		
 		this.putStats(mapM_Intensity, ii);
 		if (this.isCanceled()) { this.close(); return false;}
 		this.putHaralick2D(mapM_Intensity, ii);
@@ -459,7 +460,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		//		QauntifyZernike (region = WC, circle = paddedNucER@nucCOM)
 		//		QuantifyZernike (region = WC, circle = wcER&nucER@nucCOM)
 
-		else if(mapMask.get(channelName).equals(this.maskWholeCellChannelValue))
+		else if(mapMask.get(channelName).equals(this.maskWholeCellChannelValue) && this.nucExists)
 		{
 			this.putZernike(mapM_Intensity, ii, new Circle(this.nuclearInfo.get(this.pId).p2, this.zernikeFixedDiameter/2.0), "_NUCwFIXED", firstTimeThrough);
 			if (this.isCanceled()) { this.close(); return false;}
