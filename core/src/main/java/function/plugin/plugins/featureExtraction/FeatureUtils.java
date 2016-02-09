@@ -125,10 +125,25 @@ public class FeatureUtils {
 	{
 		FileUtility.showImg(rai, defaultApp);
 	}
-
-	public void showRegion(IterableInterval< Void > region)
+	
+	public void showVoidII(IterableInterval< Void > region, boolean defaultApp)
 	{
-		this.show(this.makeImgFromVoidII(region), false);
+		this.show(this.makeImgFromVoidII(region), defaultApp);
+	}
+
+	public void showVoidII(IterableInterval< Void > region)
+	{
+		this.showVoidII(region, false);
+	}
+	
+	public <T extends RealType<T>>void showRealII(IterableInterval< T > region, boolean defaultApp)
+	{
+		this.show(this.makeImgFromRealII(region), defaultApp);
+	}
+	
+	public <T extends RealType<T>>void showRealII(IterableInterval< T > region)
+	{
+		this.showRealII(region, true);
 	}
 
 	public void show(ImgLabeling<Integer,IntType> labeling)
@@ -199,6 +214,31 @@ public class FeatureUtils {
 			c.get().set(ra.get());
 		}
 		return img;
+	}
+	
+	public <T extends RealType<T>> Img<UnsignedShortType> makeImgFromRealII(IterableInterval< T > region)
+	{
+		long[] dimensions = new long[region.numDimensions()];
+		region.dimensions(dimensions);
+		final Img<UnsignedShortType> ret = ArrayImgs.unsignedShorts( dimensions );
+		Cursor<T> c = region.cursor();
+		Point min = new Point(0,0);
+		Point max = new Point(0,0);
+		Point cur = new Point(0,0);
+		region.min(min);
+		region.max(max);
+		RandomAccess<UnsignedShortType> ra = ret.randomAccess();
+		//System.out.println(min + ", " + max);
+		while(c.hasNext())
+		{
+			c.fwd();
+			//System.out.println("" + (c.getIntPosition(0)-min.getIntPosition(0)) + " , " + (c.getIntPosition(1)-min.getIntPosition(1)));
+			cur.setPosition(c.getIntPosition(0)-min.getIntPosition(0), 0); 
+			cur.setPosition(c.getIntPosition(1)-min.getIntPosition(1), 1);
+			ra.setPosition(cur);
+			ra.get().setReal(c.get().getRealDouble());
+		}
+		return ret;
 	}
 
 	public Img<UnsignedByteType> makeImgFromVoidII(IterableInterval< Void > region)
