@@ -364,7 +364,14 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		{
 			this.wholeCellRegion = this.wholeCellRegions.getLabelRegion(labelToGet);
 			this.subCellRegion = this.getMajorSubRegion(this.wholeCellRegion, this.mask);
-			this.polygon = utils.getPolygonFromBoolean(this.subCellRegion);
+			if(this.subCellRegion == null)
+			{
+				this.polygon = null;
+			}
+			else
+			{
+				this.polygon = utils.getPolygonFromBoolean(this.subCellRegion);
+			}
 		}
 	}
 
@@ -447,7 +454,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		//	
 		//		QuantifyZernike (region = nuc, circle = paddedNucER@nucCOM)
 
-		if(mapMask.get(channelName).equals(this.maskNuclearChannelValue))
+		if(mapMask.get(channelName).equals(this.maskNuclearChannelValue) && this.nuclearInfo.get(this.pId) != null)
 		{
 			this.putZernike(mapM_Intensity, ii, new Circle(this.subCellRegion.getCenterOfMass(), this.nuclearInfo.get(this.pId).p1 * (this.zernikeFixedDiameter / this.zernikeNucDiameter)), "_NUCwPADDEDNUC", firstTimeThrough);
 			if (this.isCanceled()) { this.close(); return false;}
@@ -460,7 +467,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		//		QauntifyZernike (region = WC, circle = paddedNucER@nucCOM)
 		//		QuantifyZernike (region = WC, circle = wcER&nucER@nucCOM)
 
-		else if(mapMask.get(channelName).equals(this.maskWholeCellChannelValue) && this.nucExists)
+		else if(mapMask.get(channelName).equals(this.maskWholeCellChannelValue) && this.nucExists && this.nuclearInfo.get(this.pId) != null)
 		{
 			this.putZernike(mapM_Intensity, ii, new Circle(this.nuclearInfo.get(this.pId).p2, this.zernikeFixedDiameter/2.0), "_NUCwFIXED", firstTimeThrough);
 			if (this.isCanceled()) { this.close(); return false;}
@@ -478,7 +485,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		//		QuantifyZernike (region = other, circle = thisSEC@nucCOM)
 		//		QauntifyZernike (region = other, circle = paddedNucER@nucCOM)
 
-		else if(!mapMask.get(channelName).equals(this.maskNuclearChannelValue) && this.nucExists)
+		else if(!mapMask.get(channelName).equals(this.maskNuclearChannelValue) && this.nucExists && this.nuclearInfo.get(this.pId) != null)
 		{
 			this.putZernike(mapM_Intensity, ii, new Circle(this.nuclearInfo.get(this.pId).p2, this.zernikeFixedDiameter/2.0), "_NUCwFIXED", firstTimeThrough);
 			if (this.isCanceled()) { this.close(); return false;}
