@@ -93,6 +93,13 @@ public class ImageMomentsFeatureSet<T, O extends RealType<O>> extends AbstractOp
 			@Attr(name = ATTR_TYPE, value = PKG + "CentralMoment30") })
 	private boolean isCentralMoment30Active = true;
 	
+	/*
+	 * The NormalizedCentralMoments can be calculated directly from the central moments, therefore it is more efficient
+	 * perform these calculations in post processing but one can enable them if desired. Further, this feature
+	 * makes sense to calculate when altering magnification, not necessarily cell size. For cell size,
+	 * there is an assumption that integrated intensity increases linearly with increase in area. This
+	 * assumption my not hold for cells.
+	 */
 	@Parameter(required = false, label = "NormalizedCentralMoment02", attrs = { @Attr(name = ATTR_FEATURE),
 			@Attr(name = ATTR_TYPE, value = PKG + "NormalizedCentralMoment02") })
 	private boolean isNormalizedCentralMoment02Active = true;
@@ -121,49 +128,57 @@ public class ImageMomentsFeatureSet<T, O extends RealType<O>> extends AbstractOp
 			@Attr(name = ATTR_TYPE, value = PKG + "NormalizedCentralMoment30") })
 	private boolean isNormalizedCentralMoment30Active = true;
 	
+	/*
+	 * The Hu Moments can be calculated directly from the central moments, therefore it is more efficient
+	 * perform these calculations in post processing but one can enable them if desired.
+	 */
 	@Parameter(required = false, label = "HuMoment1", attrs = { @Attr(name = ATTR_FEATURE),
 			@Attr(name = ATTR_TYPE, value = PKG + "HuMoment1") })
-	private boolean isHuMoment1Active = true;
+	private boolean isHuMoment1Active = false;
 	
 	@Parameter(required = false, label = "HuMoment2", attrs = { @Attr(name = ATTR_FEATURE),
 			@Attr(name = ATTR_TYPE, value = PKG + "HuMoment2") })
-	private boolean isHuMoment2Active = true;
+	private boolean isHuMoment2Active = false;
 	
 	@Parameter(required = false, label = "HuMoment3", attrs = { @Attr(name = ATTR_FEATURE),
 			@Attr(name = ATTR_TYPE, value = PKG + "HuMoment3") })
-	private boolean isHuMoment3Active = true;
+	private boolean isHuMoment3Active = false;
 	
 	@Parameter(required = false, label = "HuMoment4", attrs = { @Attr(name = ATTR_FEATURE),
 			@Attr(name = ATTR_TYPE, value = PKG + "HuMoment4") })
-	private boolean isHuMoment4Active = true;
+	private boolean isHuMoment4Active = false;
 	
 	@Parameter(required = false, label = "HuMoment5", attrs = { @Attr(name = ATTR_FEATURE),
 			@Attr(name = ATTR_TYPE, value = PKG + "HuMoment5") })
-	private boolean isHuMoment5Active = true;
+	private boolean isHuMoment5Active = false;
 	
 	@Parameter(required = false, label = "HuMoment6", attrs = { @Attr(name = ATTR_FEATURE),
 			@Attr(name = ATTR_TYPE, value = PKG + "HuMoment6") })
-	private boolean isHuMoment6Active = true;
+	private boolean isHuMoment6Active = false;
 	
 	@Parameter(required = false, label = "HuMoment7", attrs = { @Attr(name = ATTR_FEATURE),
 			@Attr(name = ATTR_TYPE, value = PKG + "HuMoment7") })
-	private boolean isHuMoment7Active = true;
+	private boolean isHuMoment7Active = false;
 	
+	/*
+	 * The Raw Moments are not calculated relative to the center of the object. Typically,
+	 * the central moments are desired over these moments.
+	 */
 	@Parameter(required = false, label = "Moment00", attrs = { @Attr(name = ATTR_FEATURE),
 			@Attr(name = ATTR_TYPE, value = PKG + "Moment00") })
-	private boolean isMoment00Active = true;
+	private boolean isMoment00Active = false;
 	
 	@Parameter(required = false, label = "Moment01", attrs = { @Attr(name = ATTR_FEATURE),
 			@Attr(name = ATTR_TYPE, value = PKG + "Moment01") })
-	private boolean isMoment01Active = true;
+	private boolean isMoment01Active = false;
 	
 	@Parameter(required = false, label = "Moment10", attrs = { @Attr(name = ATTR_FEATURE),
 			@Attr(name = ATTR_TYPE, value = PKG + "Moment10") })
-	private boolean isMoment10Active = true;
+	private boolean isMoment10Active = false;
 	
 	@Parameter(required = false, label = "Moment11", attrs = { @Attr(name = ATTR_FEATURE),
 			@Attr(name = ATTR_TYPE, value = PKG + "Moment11") })
-	private boolean isMoment11Active = true;
+	private boolean isMoment11Active = false;
 
 	public ImageMomentsFeatureSet() {
 		// NB: Empty cofstruction
