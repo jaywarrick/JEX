@@ -141,8 +141,8 @@ public class PointSample<T extends RealType<T>> extends RealPoint implements Poi
 	
 	public static PointSample<IntType> getCenter(Rectangle2D.Double r)
 	{
-		double x = ((double) r.x + r.width) / 2.0;
-		double y = ((double) r.y + r.height) / 2.0;
+		double x = (r.x + r.x + r.width) / 2.0;
+		double y = (r.y + r.y + r.height) / 2.0;
 		return new PointSample<IntType>(x, y, new IntType(0));
 	}
 }
