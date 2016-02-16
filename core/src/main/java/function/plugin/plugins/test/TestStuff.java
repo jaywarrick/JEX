@@ -38,13 +38,292 @@ import net.imglib2.type.logic.BoolType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.IntType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
+import net.imglib2.type.numeric.real.DoubleType;
 import rtools.R;
 
 public class TestStuff {
 
 	public static void main (String[] args) throws Exception
 	{
-		trySamplingIterableRegion();
+		tryMomentInvariance();
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static <T extends RealType<T>> void tryMomentInvariance() throws Exception
+	{
+		
+		//### Results
+		/*
+		 * For Hu3, using getAbsNormDiff and getAbsSum made the diffHu the same as the HuDiff 
+		 * 
+		 * For Hu2, 
+		 */
+		DirectoryManager.setHostDirectory("/Users/jaywarrick/Desktop");
+		PointSamplerList<DoubleType> pl1a = getRCGrid(4,3,1);
+		PointSamplerList<DoubleType> pl1b = getRCGrid(4,3,1);
+		pl1b.rotate(180);
+		double[] origin = new double[]{0,0};
+		pl1b = pl1b.getRealPointListCenteredAt(origin);
+		PointSamplerList<DoubleType> pl1c = getDiff(pl1a, pl1b);
+		System.out.println(pl1a);
+		System.out.println(pl1b);
+		System.out.println(pl1c);
+		
+		PointSamplerList<DoubleType> pl2a = pl1a.copy();
+		pl2a.rotate(37);
+		pl2a = pl2a.getRealPointListCenteredAt(origin);
+		PointSamplerList<DoubleType> pl2b = pl1b.copy();
+		pl2b.rotate(37);
+		pl2b = pl2b.getRealPointListCenteredAt(origin);
+		PointSamplerList<DoubleType> pl2c = pl1c.copy();
+		pl2c.rotate(37);
+		pl2c = pl2c.getRealPointListCenteredAt(origin);
+		//System.out.println(pl2a);
+		//System.out.println(pl2b);
+		System.out.println(pl2c);
+		
+		PointSamplerII<DoubleType> ii = new PointSamplerII<DoubleType>(pl1a);
+		UnaryFunctionOp<IterableInterval<DoubleType>, DoubleType> op11 = (UnaryFunctionOp<IterableInterval<DoubleType>, DoubleType>) IJ2PluginUtility.ij().op().op(Ops.ImageMoments.Moment11.class, ii);
+		UnaryFunctionOp<IterableInterval<DoubleType>, DoubleType> op20 = (UnaryFunctionOp<IterableInterval<DoubleType>, DoubleType>) IJ2PluginUtility.ij().op().op(Ops.ImageMoments.CentralMoment20.class, ii);
+		UnaryFunctionOp<IterableInterval<DoubleType>, DoubleType> op02 = (UnaryFunctionOp<IterableInterval<DoubleType>, DoubleType>) IJ2PluginUtility.ij().op().op(Ops.ImageMoments.CentralMoment02.class, ii);
+		UnaryFunctionOp<IterableInterval<DoubleType>, DoubleType> op30 = (UnaryFunctionOp<IterableInterval<DoubleType>, DoubleType>) IJ2PluginUtility.ij().op().op(Ops.ImageMoments.CentralMoment30.class, ii);
+		UnaryFunctionOp<IterableInterval<DoubleType>, DoubleType> op03 = (UnaryFunctionOp<IterableInterval<DoubleType>, DoubleType>) IJ2PluginUtility.ij().op().op(Ops.ImageMoments.CentralMoment03.class, ii);
+		UnaryFunctionOp<IterableInterval<DoubleType>, DoubleType> op21 = (UnaryFunctionOp<IterableInterval<DoubleType>, DoubleType>) IJ2PluginUtility.ij().op().op(Ops.ImageMoments.CentralMoment21.class, ii);
+		UnaryFunctionOp<IterableInterval<DoubleType>, DoubleType> op12 = (UnaryFunctionOp<IterableInterval<DoubleType>, DoubleType>) IJ2PluginUtility.ij().op().op(Ops.ImageMoments.CentralMoment12.class, ii);
+		
+		double val20, val02, bval20, bval02, cval20, cval02, val11, bval11, cval11, val30, val03, val21, val12, bval30, bval03, bval21, bval12, cval30, cval03, cval21, cval12, suma, sumb, sumc;
+		
+		ii = new PointSamplerII<DoubleType>(pl1a);
+		val11 = op11.compute1(ii).getRealDouble();
+		val02 = op02.compute1(ii).getRealDouble();
+		val20 = op20.compute1(ii).getRealDouble();
+		val03 = op03.compute1(ii).getRealDouble();
+		val30 = op30.compute1(ii).getRealDouble();
+		val21 = op21.compute1(ii).getRealDouble();
+		val12 = op12.compute1(ii).getRealDouble();
+		suma = getSum(ii);
+		printInfo2(val20, val02, val11, suma);
+		//printInfo3(val30, val03, val21, val12, suma);
+		ii = new PointSamplerII<DoubleType>(pl1b);
+		bval11 = op11.compute1(ii).getRealDouble();
+		bval02 = op02.compute1(ii).getRealDouble();
+		bval20 = op20.compute1(ii).getRealDouble();
+		bval03 = op03.compute1(ii).getRealDouble();
+		bval30 = op30.compute1(ii).getRealDouble();
+		bval21 = op21.compute1(ii).getRealDouble();
+		bval12 = op12.compute1(ii).getRealDouble();
+		sumb = getSum(ii);
+		printInfo2(bval20, bval02, bval11, sumb);
+		//printInfo3(bval30, bval03, bval21, bval12, sumb);
+		ii = new PointSamplerII<DoubleType>(pl1c);
+		cval11 = op11.compute1(ii).getRealDouble();
+		cval02 = op02.compute1(ii).getRealDouble();
+		cval20 = op20.compute1(ii).getRealDouble();
+		cval03 = op03.compute1(ii).getRealDouble();
+		cval30 = op30.compute1(ii).getRealDouble();
+		cval21 = op21.compute1(ii).getRealDouble();
+		cval12 = op12.compute1(ii).getRealDouble();
+		sumc = getAbsSum(ii);
+		printInfo2(cval20, cval02, cval11, sumc);
+		//printInfo3(cval30, cval03, cval21, cval12, sumc);
+		//System.out.println("Hu3(Diff)=" + getHu3(val30-bval30, val03-bval03, val21-bval21, val12-bval12));
+		//System.out.println("Hu3(Diff)=" + getHu3(val30/suma-bval30/sumb, val03/suma-bval03/sumb, val21/suma-bval21/sumb, val12/suma-bval12/sumb));
+		
+		ii = new PointSamplerII<DoubleType>(pl2a);
+		val11 = op11.compute1(ii).getRealDouble();
+		val02 = op02.compute1(ii).getRealDouble();
+		val20 = op20.compute1(ii).getRealDouble();
+		val03 = op03.compute1(ii).getRealDouble();
+		val30 = op30.compute1(ii).getRealDouble();
+		val21 = op21.compute1(ii).getRealDouble();
+		val12 = op12.compute1(ii).getRealDouble();
+		suma = getSum(ii);
+		printInfo2(val20, val02, val11, suma);
+		//printInfo3(val30, val03, val21, val12, suma);
+		ii = new PointSamplerII<DoubleType>(pl2b);
+		bval11 = op11.compute1(ii).getRealDouble();
+		bval02 = op02.compute1(ii).getRealDouble();
+		bval20 = op20.compute1(ii).getRealDouble();
+		bval03 = op03.compute1(ii).getRealDouble();
+		bval30 = op30.compute1(ii).getRealDouble();
+		bval21 = op21.compute1(ii).getRealDouble();
+		bval12 = op12.compute1(ii).getRealDouble();
+		sumb = getSum(ii);
+		printInfo2(bval20, bval02, bval11, sumb);
+		//printInfo3(bval30, bval03, bval21, bval12, sumb);
+		ii = new PointSamplerII<DoubleType>(pl2c);
+		cval11 = op11.compute1(ii).getRealDouble();
+		cval02 = op02.compute1(ii).getRealDouble();
+		cval20 = op20.compute1(ii).getRealDouble();
+		cval03 = op03.compute1(ii).getRealDouble();
+		cval30 = op30.compute1(ii).getRealDouble();
+		cval21 = op21.compute1(ii).getRealDouble();
+		cval12 = op12.compute1(ii).getRealDouble();
+		sumc = getAbsSum(ii);
+		printInfo2(cval20, cval02, cval11, sumc);
+		//System.out.println("Hu3(Diff)=" + getHu3(val30-bval30, val03-bval03, val21-bval21, val12-bval12));
+		//System.out.println("Hu3(Diff)=" + getHu3(val30/suma-bval30/sumb, val03/suma-bval03/sumb, val21/suma-bval21/sumb, val12/suma-bval12/sumb));
+		
+	}
+	
+	public static PointSamplerList<DoubleType> getDiff(PointSamplerList<DoubleType> pl1, PointSamplerList<DoubleType> pl2)
+	{
+		PointSamplerList<DoubleType> ret = new PointSamplerList<DoubleType>(new DoubleType(0));
+		for(PointSampler<DoubleType> p1 : pl1)
+		{
+			for(PointSampler<DoubleType> p2 : pl2)
+			{
+				if(p2.getDoublePosition(0) == p1.getDoublePosition(0) && p2.getDoublePosition(1) == p1.getDoublePosition(1))
+				{
+					PointSampler<DoubleType> toAdd = new PointSample<DoubleType>(p1);
+					toAdd.get().set(p1.get().getRealDouble() - p2.get().getRealDouble());
+					ret.add(toAdd);
+				}
+			}
+		}
+		return ret;
+	}
+	
+	public static PointSamplerList<DoubleType> getAbsDiff(PointSamplerList<DoubleType> pl1, PointSamplerList<DoubleType> pl2)
+	{
+		PointSamplerList<DoubleType> ret = new PointSamplerList<DoubleType>(new DoubleType(0));
+		for(PointSampler<DoubleType> p1 : pl1)
+		{
+			for(PointSampler<DoubleType> p2 : pl2)
+			{
+				if(p2.getDoublePosition(0) == p1.getDoublePosition(0) && p2.getDoublePosition(1) == p1.getDoublePosition(1))
+				{
+					PointSampler<DoubleType> toAdd = new PointSample<DoubleType>(p1);
+					toAdd.get().set(Math.abs(p1.get().getRealDouble() - p2.get().getRealDouble()));
+					ret.add(toAdd);
+				}
+			}
+		}
+		return ret;
+	}
+	
+	public static PointSamplerList<DoubleType> getAbsNormDiff(PointSamplerList<DoubleType> pl1, PointSamplerList<DoubleType> pl2)
+	{
+		double sum1 = getSum(pl1);
+		double sum2 = getSum(pl2);
+		PointSamplerList<DoubleType> ret = new PointSamplerList<DoubleType>(new DoubleType(0));
+		for(PointSampler<DoubleType> p1 : pl1)
+		{
+			for(PointSampler<DoubleType> p2 : pl2)
+			{
+				if(p2.getDoublePosition(0) == p1.getDoublePosition(0) && p2.getDoublePosition(1) == p1.getDoublePosition(1))
+				{
+					PointSampler<DoubleType> toAdd = new PointSample<DoubleType>(p1);
+					toAdd.get().set(Math.abs(p1.get().getRealDouble()/sum1 - p2.get().getRealDouble()/sum2));
+					ret.add(toAdd);
+				}
+			}
+		}
+		return ret;
+	}
+	
+	public static PointSamplerList<DoubleType> getNormDiff(PointSamplerList<DoubleType> pl1, PointSamplerList<DoubleType> pl2)
+	{
+		double sum1 = getSum(pl1);
+		double sum2 = getSum(pl2);
+		PointSamplerList<DoubleType> ret = new PointSamplerList<DoubleType>(new DoubleType(0));
+		for(PointSampler<DoubleType> p1 : pl1)
+		{
+			for(PointSampler<DoubleType> p2 : pl2)
+			{
+				if(p2.getDoublePosition(0) == p1.getDoublePosition(0) && p2.getDoublePosition(1) == p1.getDoublePosition(1))
+				{
+					PointSampler<DoubleType> toAdd = new PointSample<DoubleType>(p1);
+					toAdd.get().set(p1.get().getRealDouble()/sum1 - p2.get().getRealDouble()/sum2);
+					ret.add(toAdd);
+				}
+			}
+		}
+		return ret;
+	}
+	
+	public static double getSum(PointSamplerII<DoubleType> ii)
+	{
+		double tot = 0;
+		for(PointSampler<DoubleType> p : ii.pl)
+		{
+			tot = tot + p.get().getRealDouble();
+		}
+		return tot;
+	}
+	public static double getAbsSum(PointSamplerII<DoubleType> ii)
+	{
+		double tot = 0;
+		for(PointSampler<DoubleType> p : ii.pl)
+		{
+			tot = tot + Math.abs(p.get().getRealDouble());
+		}
+		return tot;
+	}
+	public static double getSum(PointSamplerList<DoubleType> pl)
+	{
+		double tot = 0;
+		for(PointSampler<DoubleType> p : pl)
+		{
+			tot = tot + p.get().getRealDouble();
+		}
+		return tot;
+	}
+	
+	public static double getAbsSum(PointSamplerList<DoubleType> pl)
+	{
+		double tot = 0;
+		for(PointSampler<DoubleType> p : pl)
+		{
+			tot = tot + Math.abs(p.get().getRealDouble());
+		}
+		return tot;
+	}
+	
+	public static void printInfo3(double n30, double n03, double n21, double n12, double sum)
+	{
+		System.out.println("val30=" + n30 + ", val03=" + n03 + ", val21=" + n21 + ", val12=" + n12 + ", Hu3=" + getHu3(n30/sum, n03/sum, n21/sum, n12/sum));
+	}
+	
+	public static void printInfo2(double n20, double n02, double n11, double sum)
+	{
+		System.out.println("val20=" + n20 + ", val02=" + n02 + ", val11=" + n11 + ", Hu2=" + getHu2(n20/sum, n02/sum, n11/sum));
+	}
+	
+	public static double getHu3(double n30, double n03, double n21, double n12)
+	{
+		double ret = (n30 - 3*n12) * (n30 - 3*n12) + (3*n21 - n03) * (3*n21 - n03);
+		return ret;
+	}
+	
+	public static double getHu2(double n20, double n02, double n11)
+	{
+		double ret = (n20 - n02) * (n20 - n02) + 4 * n11 * n11;
+		return ret;
+	}
+	
+	public static PointSamplerList<DoubleType> getRCGrid(int r, int c, double intensity)
+	{
+		PointSamplerList<DoubleType> pl = new PointSamplerList<DoubleType>(new DoubleType(0.0));
+		double sum = 0;
+		for(int i = -r; i <= r; i++)
+		{
+			for(int j = -c; j <= c; j++)
+			{
+				if(i > 0)
+				{
+					pl.add(i, j, i*intensity);
+					sum = sum + i*intensity;
+				}
+				else
+				{
+					pl.add(i, j, intensity);
+					sum = sum + intensity;
+				}
+			}
+		}
+		System.out.println(sum);
+		return pl;
 	}
 	
 	public static void trySamplingIterableRegion() throws Exception
