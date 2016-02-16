@@ -17,7 +17,9 @@ import function.ops.featuresets.Geometric2DFeatureSet;
 import function.ops.featuresets.Haralick2DFeatureSet;
 import function.ops.featuresets.HistogramFeatureSet;
 import function.ops.featuresets.ImageMomentsFeatureSet;
+import function.ops.featuresets.LBPHistogramFeatureSet;
 import function.ops.featuresets.StatsFeatureSet;
+import function.ops.featuresets.Tamura2DFeatureSet;
 import function.ops.featuresets.ZernikeFeatureSet;
 import function.ops.featuresets.wrappers.WriterWrapper;
 import function.ops.featuresets.wrappers.ZernikeWrapper;
@@ -40,6 +42,7 @@ import net.imagej.ops.geom.geom2d.Circle;
 import net.imagej.ops.image.cooccurrencematrix.MatrixOrientation2D;
 import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealLocalizable;
 import net.imglib2.img.Img;
 import net.imglib2.roi.Regions;
@@ -100,9 +103,8 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	// What about IntensityFeatureSet???
 	public StatsFeatureSet<T, DoubleType> opStats = null;
 	public DefaultSmallestEnclosingCircle opEncircle = null;
-	// TODO: Figure out how to get a RandomAccessbleInterval<T> from a
-	// LabelRegion and an Img<T>
-	// public Tamura2DFeatureSet<T,DoubleType> opTamura = null;
+	public Tamura2DFeatureSet<T,DoubleType> opTamura = null;
+	public LBPHistogramFeatureSet<T> opLBP = null;
 
 	public int total = 0, count = 0;
 	public int percentage = 0;
@@ -157,6 +159,12 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
 	@ParameterMarker(uiOrder = 8, name = "** Compute Moments Features?", description = "Whether to quantify image moment statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean moments;
+	
+	@ParameterMarker(uiOrder = 8, name = "** Compute LBP Features?", description = "Whether to quantify linear binary pattern (LBP) statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	boolean lbp;
+	
+	@ParameterMarker(uiOrder = 8, name = "** Compute Tamura Features?", description = "Whether to quantify Tamura statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	boolean tamura;
 
 	// @ParameterMarker(uiOrder = 5, name = "** Compute 2D Tamura Features?",
 	// description = "Whether to quantify Tamura statistics", ui =
@@ -178,10 +186,10 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	@ParameterMarker(uiOrder = 13, name = "Haralick Number of Directions", description = "(Orthogonals and Diagonals etc) 2 performs horizontal and vertical. 4 adds the 2 diagonals as well.", ui = MarkerConstants.UI_DROPDOWN, choices = {"2", "4" }, defaultChoice = 1)
 	String haralickNumDirections;
 
-	@ParameterMarker(uiOrder = 14, name = "Histogram Number of Bins", description = "Number of bins for the histogram created for each cell region", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "256")
+	@ParameterMarker(uiOrder = 14, name = "Haralick Hist. Num. Bins", description = "Number of bins for the histogram created for each cell region", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "256")
 	int histogramBins;
 
-	@ParameterMarker(uiOrder = 15, name = "Tamura 2D Number of Bins", description = "Number of bins for the histogram created for each cell region for the directionality feature", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "256")
+	@ParameterMarker(uiOrder = 15, name = "Tamura 2D Num. Bins", description = "Number of bins for the histogram created for each cell region for the directionality feature", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "256")
 	int tamuraBins;
 
 	@ParameterMarker(uiOrder = 16, name = "Zernike Min Moment", description = "Min Zernike moment calculate", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "1")
@@ -414,6 +422,9 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
 		if(!this.putIntensityFeatures(firstTimeThrough))
 			return false;
+		
+		if(!putBinaryTextureFeatures())
+			return false;
 
 		return true;
 
@@ -494,7 +505,30 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			this.putZernike(mapM_Intensity, ii, new Circle(this.nuclearInfo.get(this.pId).p2, this.nuclearInfo.get(this.pId).p1 * (this.zernikeFixedDiameter / this.zernikeNucDiameter)), "_NUCwPADDEDNUC", firstTimeThrough);
 			if (this.isCanceled()) { this.close(); return false;}
 		}
+		
+		// Now do the binary texture patter stats
+		
 
+		return true;
+	}
+	
+	public boolean putBinaryTextureFeatures()
+	{
+		DimensionMap mapM_Intensity = this.mapMask_NoChannel.copyAndSet("MaskChannel=" + mapMask.get(channelName));
+		String imageChannelValue = this.mapImage.get(channelName);
+		if(imageChannelValue == null)
+		{
+			imageChannelValue = "None";
+		}
+		mapM_Intensity.put("ImageChannel", imageChannelValue);
+
+		RandomAccessibleInterval<T> vals = utils.cropRealRAI(this.subCellRegion, Views.offsetInterval(this.image, this.wholeCellRegion));
+		
+		this.putTamura(mapM_Intensity, vals);
+		if (this.isCanceled()) { this.close(); return false;}
+		this.putLBPHistogram(mapM_Intensity, vals);
+		if (this.isCanceled()) { this.close(); return false;}
+		
 		return true;
 	}
 
@@ -692,6 +726,23 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			}
 		}
 	}
+	
+	@SuppressWarnings("unchecked")
+	public void putTamura(DimensionMap mapM, RandomAccessibleInterval<T> vals)
+	{
+		if (tamura) {
+			if (opTamura == null) {
+				opTamura = IJ2PluginUtility.ij().op().op(Tamura2DFeatureSet.class, vals, tamuraBins);
+			}
+			Map<NamedFeature, DoubleType> results = opTamura.compute1(vals);
+			for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
+				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
+				newMap.put("Id", "" + this.pId);
+				newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
+				this.write(newMap, result.getValue().get());
+			}
+		}
+	}
 
 	@SuppressWarnings("unchecked")
 	public void putHistogram(DimensionMap mapM, IterableInterval<T> vals)
@@ -701,6 +752,23 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 				opHistogram = IJ2PluginUtility.ij().op().op(HistogramFeatureSet.class, vals, histogramBins);
 			}
 			Map<NamedFeature, LongType> ret = opHistogram.compute1(vals);
+			for (Entry<NamedFeature, LongType> result : ret.entrySet()) {
+				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
+				newMap.put("Id", "" + this.pId);
+				newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
+				this.write(newMap, result.getValue().getRealDouble());
+			}
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	public void putLBPHistogram(DimensionMap mapM, RandomAccessibleInterval<T> vals)
+	{
+		if (lbp) {
+			if (opLBP == null) {
+				opLBP = IJ2PluginUtility.ij().op().op(LBPHistogramFeatureSet.class, vals);
+			}
+			Map<NamedFeature, LongType> ret = opLBP.compute1(vals);
 			for (Entry<NamedFeature, LongType> result : ret.entrySet()) {
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
 				newMap.put("Id", "" + this.pId);
