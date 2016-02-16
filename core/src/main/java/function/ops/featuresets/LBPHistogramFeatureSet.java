@@ -31,11 +31,14 @@
 
 package function.ops.featuresets;
 
+import java.util.ArrayList;
+
 import org.scijava.plugin.Plugin;
 
 import function.ops.lbp.Default8BitUniformLBP2D;
 import net.imagej.ops.featuresets.AbstractIteratingFeatureSet;
 import net.imagej.ops.featuresets.FeatureSet;
+import net.imagej.ops.image.histogram.HistogramCreate;
 import net.imagej.ops.special.function.Functions;
 import net.imagej.ops.special.function.UnaryFunctionOp;
 import net.imglib2.RandomAccessibleInterval;
@@ -54,20 +57,25 @@ public class LBPHistogramFeatureSet<I extends RealType<I>> extends AbstractItera
 		implements FeatureSet<RandomAccessibleInterval<I>, LongType> {
 
 	@SuppressWarnings("rawtypes")
-	private UnaryFunctionOp<RandomAccessibleInterval<I>, Histogram1d> lbpFunc;
+	private UnaryFunctionOp<RandomAccessibleInterval<I>, ArrayList> lbpFunc;
+	
+	@SuppressWarnings("rawtypes")
+	private UnaryFunctionOp<ArrayList, Histogram1d> histFunc;
 
 	private Histogram1d<I> histogram;
 
 	@Override
 	public void initialize() {
 		super.initialize();
-		lbpFunc = Functions.unary(ops(), Default8BitUniformLBP2D.class, Histogram1d.class, in(), 59);
+		histFunc = Functions.unary(ops(), HistogramCreate.class, Histogram1d.class, ArrayList.class, 59);
+		lbpFunc = Functions.unary(ops(), Default8BitUniformLBP2D.class, ArrayList.class, in());
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	protected void preCompute(final RandomAccessibleInterval<I> input) {
-		histogram = lbpFunc.compute1(input);
+		ArrayList<LongType> codes = lbpFunc.compute1(input);
+		histogram = histFunc.compute1(codes);
 	}
 
 	@Override

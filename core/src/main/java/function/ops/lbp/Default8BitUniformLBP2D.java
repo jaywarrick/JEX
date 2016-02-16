@@ -32,7 +32,6 @@ package function.ops.lbp;
  */
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 import org.scijava.Priority;
 import org.scijava.plugin.Plugin;
@@ -41,11 +40,9 @@ import net.imagej.ops.Ops;
 import net.imagej.ops.features.lbp2d.AbstractLBP2DFeature;
 import net.imagej.ops.features.lbp2d.DefaultLBP2D;
 import net.imagej.ops.features.lbp2d.LBP2DFeature;
-import net.imagej.ops.image.histogram.HistogramCreate;
 import net.imagej.ops.special.function.Functions;
 import net.imagej.ops.special.function.UnaryFunctionOp;
 import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.histogram.Histogram1d;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.LongType;
 
@@ -79,17 +76,13 @@ public class Default8BitUniformLBP2D<I extends RealType<I>> extends AbstractLBP2
 			42, 43, 58, 44, 58, 58, 58, 45, 58, 58, 58, 58, 58, 58, 58, 46,
 			47, 48, 58, 49, 58, 58, 58, 50, 51, 52, 58, 53, 54, 55, 56, 57 };
 
-
-	@SuppressWarnings("rawtypes")
-	private UnaryFunctionOp<ArrayList, Histogram1d> histOp;
+	
 	@SuppressWarnings("rawtypes")
 	private UnaryFunctionOp<RandomAccessibleInterval, ArrayList> lbp2dOp;
 
 	@Override
 	public void initialize() {
-		histOp = Functions.unary(ops(), HistogramCreate.class, Histogram1d.class,
-				ArrayList.class, 59);
-		lbp2dOp = Functions.unary(ops(), DefaultLBP2D.class, ArrayList.class, RandomAccessibleInterval.class, 1, 256);
+		lbp2dOp = Functions.unary(ops(), DefaultLBP2D.class, ArrayList.class, in(), 1, 256);
 	}
 
 	@Override
@@ -103,15 +96,11 @@ public class Default8BitUniformLBP2D<I extends RealType<I>> extends AbstractLBP2
 		ArrayList<LongType> output)
 	{
 		ArrayList<LongType> numberList = lbp2dOp.compute1(input);
-		ArrayList<LongType> numberList2 = new ArrayList<>();
-		for(LongType l : numberList)
+		for(int i = 0; i < numberList.size(); i++)
 		{
-			numberList2.add(new LongType(uniformLookupTable[(int)l.get()]));
-		}
-		Histogram1d<Integer> hist = histOp.compute1(numberList2);
-		Iterator<LongType> c = hist.iterator();
-		while (c.hasNext()) {
-			output.add(new LongType(c.next().get()));
+			long num = numberList.get(i).getIntegerLong();
+			for(long l = 0; l < num; l++)
+			output.add(new LongType(uniformLookupTable[i]));
 		}
 	}
 }
