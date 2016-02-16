@@ -186,7 +186,7 @@ public class PointSamplerList<T extends RealType<T>> extends Vector<PointSampler
 				{
 					min[i] = p.getDoublePosition(i);
 				}
-				if(p.getDoublePosition(i) > min[i])
+				if(p.getDoublePosition(i) > max[i])
 				{
 					max[i] = p.getDoublePosition(i);
 				}
