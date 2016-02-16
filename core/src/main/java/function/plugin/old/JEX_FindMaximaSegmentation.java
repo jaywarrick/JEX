@@ -1,25 +1,10 @@
 package function.plugin.old;
 
-import ij.ImagePlus;
-import ij.gui.Roi;
-import ij.plugin.filter.RankFilters;
-import ij.process.ByteProcessor;
-import ij.process.FloatProcessor;
-import image.roi.IdPoint;
-import image.roi.PointList;
-import image.roi.ROIPlus;
-
 import java.awt.Shape;
 import java.io.File;
 import java.util.HashMap;
 import java.util.TreeMap;
 
-import jex.statics.JEXStatics;
-import logs.Logs;
-import miscellaneous.JEXCSVWriter;
-import tables.DimTable;
-import tables.DimensionMap;
-import weka.core.converters.JEXTableWriter;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;
@@ -33,6 +18,22 @@ import Database.Definition.TypeName;
 import Database.SingleUserDatabase.JEXWriter;
 import function.JEXCrunchable;
 import function.imageUtility.MaximumFinder;
+import ij.ImagePlus;
+import ij.gui.Roi;
+import ij.plugin.filter.RankFilters;
+import ij.process.ByteProcessor;
+import ij.process.FloatProcessor;
+import ij.process.ImageProcessor;
+import image.roi.IdPoint;
+import image.roi.PointList;
+import image.roi.ROIPlus;
+import jex.statics.JEXDialog;
+import jex.statics.JEXStatics;
+import logs.Logs;
+import miscellaneous.JEXCSVWriter;
+import tables.DimTable;
+import tables.DimensionMap;
+import weka.core.converters.JEXTableWriter;
 
 
 /**
@@ -241,7 +242,6 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 			}
 			
 			
-			
 			/* GATHER PARAMETERS */
 			double despeckleR = Double.parseDouble(this.parameters.getValueOfParameter("Pre-Despeckle Radius"));
 			double smoothR = Double.parseDouble(this.parameters.getValueOfParameter("Pre-Smoothing Radius"));
@@ -256,6 +256,11 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 			boolean lightBackground = !Boolean.parseBoolean(this.parameters.getValueOfParameter("Particles Are White?"));
 			boolean maximaOnly = Boolean.parseBoolean(this.parameters.getValueOfParameter("Output Maxima Only?"));
 			
+			if(!nuclearDimValue.equals("") && segDimValue.equals(""))
+			{
+				Logs.log("Found a blank segmentation dimension value even though a maxima dim value was specified. Using the maxima dim value as the segmentation dim value.", this);
+				segDimValue = nuclearDimValue;
+			}
 			
 			
 			/* RUN THE FUNCTION */
@@ -410,7 +415,7 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 					// // Create the segemented image
 					DimensionMap segMap = map.copy();
 					segMap.put(colorDimName, segDimValue);
-					FloatProcessor toSeg = ip;
+					ImageProcessor toSeg = ip;
 					if(!segDimValue.equals(nuclearDimValue))
 					{
 						if(this.isCanceled())
@@ -423,7 +428,7 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 						JEXStatics.statusBar.setProgressPercentage(percentage);
 						counter = counter + 1;
 						
-						toSeg = (FloatProcessor) (new ImagePlus(imageMap.get(segMap))).getProcessor().convertToFloat();
+						toSeg = new ImagePlus(imageMap.get(segMap)).getProcessor();
 						ImagePlus imToSeg = new ImagePlus("toSeg", toSeg);
 						if(despeckleR > 0)
 						{
