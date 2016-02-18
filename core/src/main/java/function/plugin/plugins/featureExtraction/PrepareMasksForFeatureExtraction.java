@@ -13,6 +13,7 @@ import Database.DataWriter.FileWriter;
 import Database.DataWriter.ImageWriter;
 import Database.SingleUserDatabase.JEXReader;
 import Database.SingleUserDatabase.JEXWriter;
+import function.ops.intervals.MapIIToSamplingRAI;
 import function.plugin.IJ2.IJ2PluginUtility;
 import function.plugin.mechanism.InputMarker;
 import function.plugin.mechanism.JEXPlugin;
@@ -30,7 +31,6 @@ import miscellaneous.CSVList;
 import miscellaneous.Pair;
 import net.imagej.ops.Op;
 import net.imagej.ops.logic.RealLogic;
-import net.imagej.ops.map.MapIterableIntervalToSamplingRAI;
 import net.imglib2.img.Img;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
@@ -196,7 +196,7 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 			Img<UnsignedByteType> segImage = JEXReader.getSingleImage(segMap.get(subMap));
 			
 			Op andOp = IJ2PluginUtility.ij().op().op(RealLogic.And.class, RealType.class, RealType.class);
-			IJ2PluginUtility.ij().op().run(MapIterableIntervalToSamplingRAI.class, union, segImage, andOp);
+			IJ2PluginUtility.ij().op().run(MapIIToSamplingRAI.class, union, segImage, andOp);
 			
 			//ImageJFunctions.show(segImage);
 			//ImageJFunctions.show(union);
@@ -227,7 +227,7 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 					Logs.log("Intersecting remaining images with Segmented Union Image: " + name, this);
 					DimensionMap mapTemp = subMap.copyAndSet(channelDimName + "=" + name);
 					Img<UnsignedByteType> tempMaskImg = JEXReader.getSingleImage(maskMap.get(mapTemp));
-					IJ2PluginUtility.ij().op().run(MapIterableIntervalToSamplingRAI.class, tempMaskImg, union, andOp);
+					IJ2PluginUtility.ij().op().run(MapIIToSamplingRAI.class, tempMaskImg, union, andOp);
 					path = JEXWriter.saveImage(tempMaskImg);
 					finalMap.put(mapTemp, path);
 				}
@@ -260,7 +260,7 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 			}
 			else
 			{
-				IJ2PluginUtility.ij().op().run(MapIterableIntervalToSamplingRAI.class, union, mask, orOp);
+				IJ2PluginUtility.ij().op().run(MapIIToSamplingRAI.class, union, mask, orOp);
 			}
 		}
 		return union;
@@ -272,7 +272,7 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 		DimensionMap temp = subMap.copyAndSet(channelDimName + "=" + nameToSubtract);
 		Img<UnsignedByteType> toSubtract = JEXReader.getSingleImage(maskMap.get(temp));
 		Op lessThanOp = IJ2PluginUtility.ij().op().op(RealLogic.LessThan.class, RealType.class, RealType.class);
-		IJ2PluginUtility.ij().op().run(MapIterableIntervalToSamplingRAI.class, ret, toSubtract, lessThanOp);
+		IJ2PluginUtility.ij().op().run(MapIIToSamplingRAI.class, ret, toSubtract, lessThanOp);
 		return ret;
 	}
 	

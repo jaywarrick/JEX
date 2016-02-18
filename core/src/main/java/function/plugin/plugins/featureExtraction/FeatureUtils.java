@@ -5,6 +5,7 @@ import java.util.TreeSet;
 
 import function.ops.intervals.CroppedRealRAI;
 import function.ops.intervals.IntersectedBooleanRAI;
+import function.ops.intervals.MapIIToSamplingRAI;
 import function.plugin.IJ2.IJ2PluginUtility;
 import image.roi.IdPoint;
 import image.roi.PointList;
@@ -17,7 +18,6 @@ import net.imagej.ops.Op;
 import net.imagej.ops.Ops;
 import net.imagej.ops.geom.geom2d.Circle;
 import net.imagej.ops.logic.RealLogic;
-import net.imagej.ops.map.MapIterableIntervalToSamplingRAI;
 import net.imagej.ops.special.function.Functions;
 import net.imagej.ops.special.function.UnaryFunctionOp;
 import net.imglib2.Cursor;
@@ -402,7 +402,7 @@ public class FeatureUtils {
 			LabelRegion<Integer> region = regions.getLabelRegion(label);
 			//			ImageJFunctions.show(new SamplingIterableRegion(region, mask));
 			Op op = IJ2PluginUtility.ij().op().op(RealLogic.Or.class, RealType.class, RealType.class);
-			IJ2PluginUtility.ij().op().run(MapIterableIntervalToSamplingRAI.class, blank, Regions.sample(region, mask), op);
+			IJ2PluginUtility.ij().op().run(MapIIToSamplingRAI.class, blank, Regions.sample(region, mask), op);
 		}
 
 		Pair<Img<UnsignedByteType>,TreeMap<Integer,PointList>> ret = new Pair<Img<UnsignedByteType>,TreeMap<Integer,PointList>>();

@@ -79,7 +79,7 @@ import net.imagej.ops.Ops;
 import net.imagej.ops.image.cooccurrencematrix.MatrixOrientation;
 import net.imagej.ops.image.cooccurrencematrix.MatrixOrientation2D;
 import net.imagej.ops.image.cooccurrencematrix.MatrixOrientation3D;
-import net.imagej.ops.map.MapIIAndRAIToRAI;
+import net.imagej.ops.map.MapBinaryComputers.IIAndRAIToRAI;
 import net.imagej.ops.special.function.Functions;
 import net.imagej.ops.special.function.UnaryFunctionOp;
 import net.imagej.options.OptionsChannels;
@@ -177,7 +177,7 @@ public class PointTester {// extends URLClassLoader {
 		ImageJFunctions.show(dot2);
 
 		Op op = IJ2PluginUtility.ij().op().op(net.imagej.ops.math.RealBinaryMath.Divide.class, RealType.class, RealType.class, RealType.class, 50.0);
-		IJ2PluginUtility.ij().op().run(MapIIAndRAIToRAI.class, dot2, dot1, dot2, op);
+		IJ2PluginUtility.ij().op().run(IIAndRAIToRAI.class, dot2, dot1, dot2, op);
 		
 		ImageJFunctions.show(dot1);
 		ImageJFunctions.show(dot2);
