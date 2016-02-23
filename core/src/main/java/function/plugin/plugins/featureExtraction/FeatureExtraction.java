@@ -75,8 +75,6 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
 	public WriterWrapper wrapWriter = new WriterWrapper();
 
-	public ZernikeWrapper<T> wrapZernike;
-
 	private Img<UnsignedByteType> wholeCellMaskImage;
 	private Img<UnsignedByteType> mask;
 	private Img<T> image;
