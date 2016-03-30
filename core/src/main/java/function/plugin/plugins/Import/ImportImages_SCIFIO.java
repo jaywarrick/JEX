@@ -1,5 +1,26 @@
 package function.plugin.plugins.Import;
 
+import java.awt.Rectangle;
+import java.io.File;
+import java.io.IOException;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.TreeMap;
+import java.util.Vector;
+
+import org.scijava.plugin.Plugin;
+
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DataWriter.FileWriter;
+import Database.DataWriter.ImageWriter;
+import Database.SingleUserDatabase.JEXWriter;
+import function.plugin.IJ2.IJ2PluginUtility;
+import function.plugin.mechanism.JEXPlugin;
+import function.plugin.mechanism.MarkerConstants;
+import function.plugin.mechanism.OutputMarker;
+import function.plugin.mechanism.ParameterMarker;
 import ij.process.Blitter;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
@@ -11,40 +32,19 @@ import io.scif.Plane;
 import io.scif.Reader;
 import io.scif.SCIFIO;
 import io.scif.config.SCIFIOConfig;
-
-import java.awt.Rectangle;
-import java.io.File;
-import java.io.IOException;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.TreeMap;
-import java.util.Vector;
-
 import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import loci.common.DataTools;
 import logs.Logs;
 import miscellaneous.Canceler;
 import miscellaneous.FileUtility;
+import miscellaneous.LSVList;
 import miscellaneous.SimpleFileFilter;
 import net.imagej.axis.Axes;
 import net.imagej.axis.CalibratedAxis;
-
-import org.scijava.plugin.Plugin;
-
 import tables.Dim;
 import tables.DimTable;
 import tables.DimensionMap;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DataWriter.ImageWriter;
-import Database.SingleUserDatabase.JEXWriter;
-import function.plugin.IJ2.IJ2PluginUtility;
-import function.plugin.mechanism.JEXPlugin;
-import function.plugin.mechanism.MarkerConstants;
-import function.plugin.mechanism.OutputMarker;
-import function.plugin.mechanism.ParameterMarker;
 
 @Plugin(
 		type = JEXPlugin.class,
@@ -90,6 +90,11 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 	
 	@OutputMarker(uiOrder=1, name="Imported Image", type=MarkerConstants.TYPE_IMAGE, flavor="", description="The imported image object", enabled=true)
 	JEXData output;
+	
+	@OutputMarker(uiOrder=2, name="Metadata", type=MarkerConstants.TYPE_FILE, flavor="", description="The imported image object metadata", enabled=true)
+	JEXData meta;
+	
+	private TreeMap<DimensionMap,String> metaDataFiles = new TreeMap<DimensionMap,String>();
 	
 	@Override
 	public int getMaxThreads()
@@ -259,6 +264,10 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 		}
 		
 		// OUTPUT PROCESSING
+		if(transferNames)
+		{
+			meta = FileWriter.makeFileObject("temp", null, metaDataFiles);
+		}
 		output = ImageWriter.makeImageStackFromPaths(output.name, multiMap);
 		if (table != null) {
 			DimTable toSet = new DimTable(multiMap);
@@ -319,7 +328,7 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 		
 	}
 	
-	private static DimTable getDimTableFromReader(Reader r, boolean transferNames)
+	private DimTable getDimTableFromReader(Reader r, boolean transferNames)
 	{
 		DimTable ret = new DimTable();
 		try
@@ -340,14 +349,23 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 		
 		if(transferNames)
 		{
+			if(this.metaDataFiles == null)
+			{
+				this.metaDataFiles = new TreeMap<DimensionMap,String>();
+			}
 			TreeMap<String,String> colors = new TreeMap<String,String>();
+			LSVList info = new LSVList();
 			for(Entry<String,Object> e : r.getMetadata().getTable().entrySet())
 			{
+				info.add(e.getKey() + " = " + e.getValue().toString().trim());
+				
 				if(e.getKey().contains("Name #"))
 				{
 					colors.put(e.getKey().toString().trim(), e.getValue().toString().trim());
 				}
 			}
+			String path = JEXWriter.saveText(info.toString(), "txt");
+			this.metaDataFiles.put(new DimensionMap("File=" + FileUtility.getFileNameWithoutExtension(r.getCurrentFile())), path);
 			try
 			{
 				String[] colorNames = ((String[]) colors.values().toArray(new String[]{}));
