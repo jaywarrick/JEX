@@ -99,8 +99,11 @@ public class ImageStackStitcher extends JEXPlugin {
 
 	@ParameterMarker(uiOrder=6, name="Output Bit Depth", description="Depth of the outputted image", ui=MarkerConstants.UI_DROPDOWN, choices={ "8", "16", "32" }, defaultChoice=1)
 	int bitDepth;
+	
+	@ParameterMarker(uiOrder=7, name="Stitched Image BG Intensity", description="Intensity to set for the background of the stitched image.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0")
+	double background;
 
-	@ParameterMarker(uiOrder=7, name="Normalize Intensities Fit Bit Depth", description="Scale intensities to go from 0 to max value determined by new bit depth (\'true\' overrides intensity multiplier).", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	@ParameterMarker(uiOrder=8, name="Normalize Intensities Fit Bit Depth", description="Scale intensities to go from 0 to max value determined by new bit depth (\'true\' overrides intensity multiplier).", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
 	boolean normalize;
 
 
@@ -218,7 +221,7 @@ public class ImageStackStitcher extends JEXPlugin {
 			try
 			{
 				List<DimensionMap> mapsToGet = getMapsForStitching(locDim, partialMap);
-				File stitchedFile = stitch(entry, imageData, mapsToGet, imageCoords, scale, normalize, multiplier, bitDepth);
+				File stitchedFile = stitch(entry, imageData, mapsToGet, imageCoords, scale, normalize, multiplier, bitDepth, background);
 				stitchedImageFilePaths.put(partialMap, stitchedFile.getAbsolutePath());
 			}
 			catch (Exception e)
@@ -353,9 +356,14 @@ public class ImageStackStitcher extends JEXPlugin {
 		return dim;
 	}
 
-	public static File stitch(JEXEntry entry, JEXData imageData, List<DimensionMap> imageDimMaps, PointList imageDisplacements, double scale, boolean normalize, double multiplier, int bits)
+	public static File stitch(JEXEntry entry, JEXData imageData, List<DimensionMap> imageDimMaps, PointList imageDisplacements, double scale, boolean normalize, double multiplier, int bits, double background)
 	{
-		// /// prepare a blank image on which to copy the others
+		/// prepare a blank image on which to copy the others
+		if(imageData == null || ImageReader.readObjectToImagePath(imageData, imageDimMaps.get(0)) == null)
+		{
+			Logs.log("Couldn't find the first image in the image data provided. Can't calculate prototypical image size. Aborting.", ImageStackStitcher.class);
+			return null;
+		}
 		ImagePlus original = new ImagePlus(ImageReader.readObjectToImagePath(imageData, imageDimMaps.get(0)));
 		double imSizeX = original.getWidth() * scale;
 		double imSizeY = original.getHeight() * scale;
@@ -364,6 +372,7 @@ public class ImageStackStitcher extends JEXPlugin {
 		int totalHeight = (rect.height + ((int) imSizeY));
 		FloatProcessor stitchIP = null;
 		stitchIP = new FloatProcessor(totalWidth, totalHeight);
+		stitchIP.set(background);
 		ImagePlus stitch = new ImagePlus("Stitch", stitchIP);
 
 		PointList xy = imageDisplacements;
@@ -377,28 +386,29 @@ public class ImageStackStitcher extends JEXPlugin {
 		{
 			DimensionMap map = itr.next();
 			// //// Prepare float processor
-			Logs.log("Getting file " + ImageReader.readObjectToImagePath(imageData, map) + " in entry " + entry.getTrayX() + "," + entry.getTrayY() + " for dim " + map.toString(), 0, JEX_ImageTools_Stitch_Coord.class);
-			im = new ImagePlus(ImageReader.readObjectToImagePath(imageData, map));
-			imp = (FloatProcessor) im.getProcessor().convertToFloat(); // should
-			// be a
-			// float
-			// processor
-
-			// //// Begin Actual Function
-			if(scale != 1.0)
+			String path = ImageReader.readObjectToImagePath(imageData, map);			
+			if(path != null)
 			{
-				imp.setInterpolationMethod(ImageProcessor.BILINEAR);
-				imp = (FloatProcessor) imp.resize((int) imSizeX, (int) imSizeY);
-			}
-			Point p = itrXY.next();
-			// System.out.println(p);
-			stitchIP.copyBits(imp, p.x, p.y, Blitter.COPY);
-			// //// End Actual Function
+				Logs.log("Getting file " + path + " in entry " + entry.getTrayX() + "," + entry.getTrayY() + " for dim " + map.toString(), 0, JEX_ImageTools_Stitch_Coord.class);
+				im = new ImagePlus(path);
+				imp = (FloatProcessor) im.getProcessor().convertToFloat(); // should be a float processor
 
+				// //// Begin Actual Function
+				if(scale != 1.0)
+				{
+					imp.setInterpolationMethod(ImageProcessor.BILINEAR);
+					imp = (FloatProcessor) imp.resize((int) imSizeX, (int) imSizeY);
+				}
+				Point p = itrXY.next();
+				// System.out.println(p);
+				stitchIP.copyBits(imp, p.x, p.y, Blitter.COPY);
+				// //// End Actual Function
+				im.flush();
+			}
 			count = count + 1;
 			percentage = (int) (100 * ((count) / ((double) imageDimMaps.size() + 1)));
 			JEXStatics.statusBar.setProgressPercentage(percentage);
-			im.flush();
+			
 		}
 
 		// //// Save the results
