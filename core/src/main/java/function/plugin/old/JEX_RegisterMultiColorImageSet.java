@@ -392,14 +392,9 @@ public class JEX_RegisterMultiColorImageSet extends JEXCrunchable {
 						imp = im.getProcessor();
 						imp.setRoi(cropRoiDims);
 						imp = imp.crop();
-						String path = JEXWriter.saveImage(imp);
-						outputMap.put(newMap.copy(), path);
 					}
-					else
-					{
-						String path = JEXWriter.saveImage(im);
-						outputMap.put(newMap, path);
-					}
+					String path = JEXWriter.saveImage(im);
+					outputMap.put(newMap.copy(), path);
 					
 					imp = null;
 					im.killRoi();
