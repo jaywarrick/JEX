@@ -119,7 +119,7 @@ public class AdjustImageMultiChannel extends JEXPlugin {
 		
 		if(channelDim.size() != oldMinsList.size() || channelDim.size() != oldMaxsList.size() || channelDim.size() != newMinsList.size() || channelDim.size() != newMaxsList.size() || channelDim.size() != gammasList.size())
 		{
-			JEXDialog.messageDialog("The number of intensity values listed for each of the mins and maxs must be the same size as the number of channels in the image. Aborting.");
+			JEXDialog.messageDialog("The number of intensity values listed for each of the mins and maxs etc must be the same size as the number of channels in the image. Aborting.");
 			return false;
 		}
 		
