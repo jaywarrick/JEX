@@ -129,7 +129,6 @@ public class Montage1Dim extends JEXPlugin {
 			ImagePlus montage = makeMontageFromJEXStack(mapsToGet, imageMap, cols);
 
 			// Save the montage
-
 			String path = JEXWriter.saveImage(montage);
 
 			// Return the result to the database
@@ -139,6 +138,10 @@ public class Montage1Dim extends JEXPlugin {
 		{
 			for (DimensionMap partialMap : partialTable.getDimensionMaps())
 			{
+				if(this.isCanceled())
+				{
+					return false;
+				}
 				List<DimensionMap> mapsToGet = this.getMapsForStitching(stackDim, partialMap);
 
 				// Then make montage
