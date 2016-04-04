@@ -60,7 +60,7 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 	@InputMarker(uiOrder = 2, name = "Maxima", type = MarkerConstants.TYPE_ROI, description = "Maxima ROI", optional = false)
 	JEXData roiData;
 
-	@InputMarker(uiOrder = 1, name = "Segmentation Lines", type = MarkerConstants.TYPE_IMAGE, description = "Mask images (SHOULD have channel dimension)", optional = false)
+	@InputMarker(uiOrder = 1, name = "Segmentation Lines", type = MarkerConstants.TYPE_IMAGE, description = "Mask images (SHOULD have channel dimension)", optional = true)
 	JEXData segData;
 
 	@InputMarker(uiOrder = 1, name = "Thresholded Images", type = MarkerConstants.TYPE_IMAGE, description = "Mask that encompasses the entire cell or groups of cells (i.e., prior to segmentation).", optional = false)
@@ -111,7 +111,7 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 	{
 
 		// Check input validity
-		if(!isInputValid(roiData, JEXData.ROI) || !isInputValid(segData, JEXData.IMAGE) || !isInputValid(maskData, JEXData.IMAGE))
+		if(!isInputValid(roiData, JEXData.ROI) || !isInputValid(maskData, JEXData.IMAGE))
 		{
 			return false;
 		}
@@ -159,7 +159,15 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 		CSVList channelsToRemoveList = new CSVList(channelsToRemove);
 
 		TreeMap<DimensionMap, ROIPlus> roiMap = RoiReader.readObjectToRoiMap(roiData);
-		TreeMap<DimensionMap, String> segMap = ImageReader.readObjectToImagePathTable(segData);
+		TreeMap<DimensionMap, String> segMap = null;
+		if(isInputValid(segData, JEXData.IMAGE))
+		{
+			segMap = ImageReader.readObjectToImagePathTable(segData);
+		}
+		else
+		{
+			Logs.log("NO SEGMENTATION IMAGE FOUND. GOING AHEAD WITHOUT IT.", this);
+		}
 		TreeMap<DimensionMap, String> maskMap = ImageReader.readObjectToImagePathTable(maskData);
 
 		TreeMap<DimensionMap, String> finalMap = new TreeMap<DimensionMap,String>();
@@ -191,12 +199,16 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 			
 			// Get clump stats
 			clumpMap.putAll(getClumpSize(temp.p2, subMap));
-
-			// Segment and save the union image into finalMap
-			Img<UnsignedByteType> segImage = JEXReader.getSingleImage(segMap.get(subMap));
 			
+			// Create a union/and op for use in a couple places
 			Op andOp = IJ2PluginUtility.ij().op().op(RealLogic.And.class, RealType.class, RealType.class);
-			IJ2PluginUtility.ij().op().run(MapIIToSamplingRAI.class, union, segImage, andOp);
+
+			// Segment and save the union image into finalMap (if there is a segmentation image to use)
+			if(segMap != null)
+			{
+				Img<UnsignedByteType> segImage = JEXReader.getSingleImage(segMap.get(subMap));
+				IJ2PluginUtility.ij().op().run(MapIIToSamplingRAI.class, union, segImage, andOp);
+			}
 			
 			//ImageJFunctions.show(segImage);
 			//ImageJFunctions.show(union);
@@ -224,7 +236,7 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 				}
 				if(!(channelsToRemoveList.contains(name)))
 				{
-					Logs.log("Intersecting remaining images with Segmented Union Image: " + name, this);
+					Logs.log("Intersecting remaining images with (Segmented) Union Image: " + name, this);
 					DimensionMap mapTemp = subMap.copyAndSet(channelDimName + "=" + name);
 					Img<UnsignedByteType> tempMaskImg = JEXReader.getSingleImage(maskMap.get(mapTemp));
 					IJ2PluginUtility.ij().op().run(MapIIToSamplingRAI.class, tempMaskImg, union, andOp);
