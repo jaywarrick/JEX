@@ -155,7 +155,7 @@ public class LabelDistributionPanel implements ActionListener {
 			return null;
 		}
 		JEXData currentLabel = JEXStatics.jexManager.getDataOfTypeNameInEntry(new TypeName(JEXData.LABEL, selectedLabelName), e);
-		if(currentLabel == null)
+		if(currentLabel == null || currentLabel.getDataMap().size() == 0)
 		{
 			return null;
 		}
