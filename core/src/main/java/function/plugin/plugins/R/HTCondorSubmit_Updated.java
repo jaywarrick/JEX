@@ -109,26 +109,35 @@ public class HTCondorSubmit_Updated extends JEXPlugin {
 		return 1; // R doesn't like multiple threads
 	}
 
-	private static File dir = null;
-	private String dataset = null;
-	private File submitFile = null;
-	private File shFile = null;
+	private static File localDatasetDir = null;
+	private static File submitFile = null;
+	private static File shFile = null;
+	
 	private File getDirPath(JEXEntry optionalEntry)
 	{
-		if(dir == null)
+		if(localDatasetDir == null)
 		{
-			dir = new File(JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getUniqueRelativeTempPath(null) + File.separator + StringUtility.removeAllWhitespace(optionalEntry.getEntryExperiment()));
+			localDatasetDir = new File(JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getUniqueRelativeTempPath(null) + File.separator + StringUtility.removeAllWhitespace(optionalEntry.getEntryExperiment()));
 		}
-		return dir;
+		return localDatasetDir;
+	}
+	
+	private static String datasetName()
+	{
+		return localDatasetDir.getName();
 	}
 	
 	@Override
 	public boolean run(JEXEntry optionalEntry)
 	{
+		if(!isInputValid(rScript, JEXData.FILE))
+		{
+			JEXDialog.messageDialog("A proper file object for the R script was not found but is required. Aborting for this entry: " + optionalEntry.getEntryExperiment() + " - " + optionalEntry.getTrayX() + "," + optionalEntry.getTrayY());
+			return false;
+		}
 		try {
 			
 			File dir = this.getDirPath(optionalEntry);
-			this.dataset = dir.getName();
 
 			if(firstTimeCalled)
 			{
@@ -138,23 +147,37 @@ public class HTCondorSubmit_Updated extends JEXPlugin {
 			}
 			
 			// Generate the .sh file to be executed for each entry
-			this.shFile = this.genScript();
+			shFile = this.genScript();
 
 			// Now add the items specific to this entry into our prepared folder structure
 			CSVList filesToR = new CSVList();
+			CSVList objectsToR = new CSVList();
 			filesToR.add(readObjectToFilePathTable(rScript).firstEntry().getValue());
-			filesToR.add(readObjectToFilePathTable(file1).firstEntry().getValue());
-			filesToR.add(readObjectToFilePathTable(file2).firstEntry().getValue());
-			filesToR.add(readObjectToFilePathTable(file3).firstEntry().getValue());
+			objectsToR.add(StringUtility.removeAllWhitespace(rScript.getTypeName().getName()));
+			if(isInputValid(file1, JEXData.FILE))
+			{
+				filesToR.add(readObjectToFilePathTable(file1).firstEntry().getValue());
+				objectsToR.add(StringUtility.removeAllWhitespace(file1.getTypeName().getName()));
+			}
+			if(isInputValid(file2, JEXData.FILE))
+			{
+				filesToR.add(readObjectToFilePathTable(file2).firstEntry().getValue());
+				objectsToR.add(StringUtility.removeAllWhitespace(file2.getTypeName().getName()));
+			}
+			if(isInputValid(file3, JEXData.FILE))
+			{
+				filesToR.add(readObjectToFilePathTable(file3).firstEntry().getValue());
+				objectsToR.add(StringUtility.removeAllWhitespace(file3.getTypeName().getName()));
+			}
 			
 			// Generate the .sub submit file to be submitted to condor.
-			this.submitFile = this.genSubmit(dataset, filesToR);
+			submitFile = this.genSubmit(objectsToR);
 			
 			// Copy each file to the temp folder as ..<DB>/temp/<Dataset>/<ID>/<File>
-			for(String filePath : filesToR)
+			for(int i = 0; i < filesToR.size(); i++)
 			{
-				File fileToProcess = new File(filePath);
-				File dstFile = new File(dir.getAbsolutePath() + File.separator + optionalEntry.getEntryID() + File.separator + StringUtility.removeAllWhitespace(FileUtility.getFileNameWithExtension(filePath)));
+				File fileToProcess = new File(filesToR.get(i));
+				File dstFile = new File(dir.getAbsolutePath() + File.separator + optionalEntry.getEntryID() + File.separator + StringUtility.removeAllWhitespace(objectsToR.get(i) + "." + FileUtility.getFileNameExtension(filesToR.get(i))));
 				dstFile.getParentFile().mkdirs();
 				FileUtils.copyFile(fileToProcess, dstFile);
 			}
@@ -175,7 +198,7 @@ public class HTCondorSubmit_Updated extends JEXPlugin {
 		}
 	}
 
-	public void runCommands(String... commands)
+	public void runSSHCommands(String... commands)
 	{
 		try {
 			LSVList cmdList = new LSVList();
@@ -233,23 +256,29 @@ public class HTCondorSubmit_Updated extends JEXPlugin {
 		}
 	}
 	
-	public File genSubmit(String dataset, CSVList filesToR)
+	public File genSubmit(CSVList objectsToR)
 	{
+		
+		CSVList inputs = new CSVList();
+		for(String objectToR : objectsToR)
+		{
+			inputs.add(FileUtility.getFileNameWithExtension(objectToR));
+		}
 		
 		LSVList submitCode = new LSVList();
 		submitCode.add("universe = vanilla\nlog = jex_$(Cluster).log");
 		submitCode.add("error = jex_$(Cluster)_$(Process).err");
-		submitCode.add("executable = " + dataset + ".sh");
+		submitCode.add("executable = script_" + datasetName() + ".sh");
 		submitCode.add("arguments = jex_$(Process)");
 		submitCode.add("output = jex_$(Cluster)_$(Process).out");
 		submitCode.add("should_transfer_files = YES");
 		submitCode.add("when_to_transfer_output = ON_EXIT");
-		submitCode.add("transfer_input_files = " + filesToR.toString());
+		submitCode.add("transfer_input_files = " + inputs.toString());
 		submitCode.add("request_cpus = " + cpus ); // 1
 		submitCode.add("request_memory = " + memory + "GB"); // 4GB
 		submitCode.add("request_disk = " + disk + "MB"); // 4000MB
 		submitCode.add("initialdir=$(directory)");
-		submitCode.add("queue directory matching" + dataset + "/*");
+		submitCode.add("queue directory matching " + datasetName() + "/*");
 		submitCode.add("");
 		
 		File subFile = new File(JEXWriter.saveText(submitCode.toString(), "sub"));
@@ -273,7 +302,7 @@ public class HTCondorSubmit_Updated extends JEXPlugin {
 		return new File(shFile);
 	}
 	
-	public void transferFile(File src, String dst)
+	public void transferFile(File src, String dstFolder, String dstFileName)
 	{
 		try{
 			JSch ssh = new JSch();
@@ -286,8 +315,8 @@ public class HTCondorSubmit_Updated extends JEXPlugin {
 			Channel channel = session.openChannel("sftp");
 			channel.connect();
 			ChannelSftp channelSftp = (ChannelSftp)channel;
-			channelSftp.cd(dst);
-			channelSftp.put(new FileInputStream(src), src.getName());
+			channelSftp.cd(dstFolder);
+			channelSftp.put(new FileInputStream(src), dstFileName);
 
 			channel.disconnect();
 			session.disconnect();		
@@ -304,10 +333,10 @@ public class HTCondorSubmit_Updated extends JEXPlugin {
 		try {
 			// Remove existing directory on CHTC
 			String cmd1 = "cd " + this.submitFolder;
-			String cmd2 = "rm -rf " + StringUtility.removeAllWhitespace(this.dataset);
-			String cmd3 = "rm -rf " + StringUtility.removeAllWhitespace(this.dataset) + "OUT";
-			String cmd4 = "rm -rf " + StringUtility.removeAllWhitespace(this.dataset) + "Results";
-			this.runCommands(cmd1, cmd2, cmd3, cmd4);
+			String cmd2 = "rm -rf " + StringUtility.removeAllWhitespace(datasetName());
+			String cmd3 = "rm -rf " + StringUtility.removeAllWhitespace(datasetName()) + "OUT";
+			String cmd4 = "rm -rf " + StringUtility.removeAllWhitespace(datasetName()) + "Results";
+			this.runSSHCommands(cmd1, cmd2, cmd3, cmd4);
 
 			// Get the RScript
 			//			File rScriptFile = FileReader.readFileObjectToFile(rScript);
@@ -380,22 +409,26 @@ public class HTCondorSubmit_Updated extends JEXPlugin {
 
 	public void finalizeTicket(Ticket ticket)
 	{
-		File dir = this.getDirPath(ticket.getOutputList().firstEntry().getKey());
-		//String cmd1 = "cd "+ JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getTempFolderName();
-		//String cmd2 = "zip -r " + "zipfile.zip" +" " + R.sQuote(StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment()));
-		String cmd2 = "tar -zcvf " + "tarfile.tar.gz" +" " + R.sQuote(dir.getName());
-		ScriptRepository.runSysCommand(new String[]{"sh", "-c", cmd2}, dir.getParent());
-		transferFile(new File(dir.getParent() + File.separator + "tarfile.tar.gz"), submitFolder);
+		// File dir = this.getDirPath(ticket.getOutputList().firstEntry().getKey());
+		// String cmd1 = "cd "+ JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getTempFolderName();
+		// String cmd2 = "zip -r " + "zipfile.zip" +" " + R.sQuote(StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment()));
+		String cmd2 = "tar -zcvf " + "tarfile.tar.gz" +" " + R.sQuote(localDatasetDir.getName());
+		ScriptRepository.runSysCommand(new String[]{"sh", "-c", cmd2}, localDatasetDir.getParent()); // Compress the files
+		
+		this.runSSHCommands("mkdir -p " + submitFolder); // Make sure the directory exists
+		transferFile(new File(localDatasetDir.getParent() + File.separator + "tarfile.tar.gz"), submitFolder, "tarfile.tar.gz");
 		//this.runCommands("cd ChtcRun", "unzip zipfile.zip", "rm zipfile.zip","./mkdag --data="+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+" --outputdir="+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+"OUT --resultdir=" +StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment()) + "Results --cmdtorun=rScript.R --pattern="+outFile+" --type=R --version=R-3.2.0", "cd "+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+"OUT", "condor_submit_dag mydag.dag" );
-		this.runCommands("cd " + this.submitFolder, "tar -zxvf tarfile.tar.gz", "rm tarfile.tar.gz");
-		transferFile(this.submitFile, submitFolder);
-		transferFile(this.shFile, submitFolder);
-		this.runCommands("cd" + this.submitFolder, "dos2unix script_" + this.dataset + ".sh", "chmod +x script_" + this.dataset + ".sh", "condor_submit submit_" + this.dataset +".sub");
+		this.runSSHCommands("cd " + this.submitFolder, "tar -zxvf tarfile.tar.gz", "rm tarfile.tar.gz");
+		transferFile(submitFile, submitFolder, "submit_" + datasetName() + ".sub");
+		transferFile(shFile, submitFolder,  "script_" + datasetName() + ".sh");
+		this.runSSHCommands("cd" + this.submitFolder, "dos2unix script_" + datasetName() + ".sh", "chmod +x script_" + datasetName() + ".sh", "condor_submit submit_" + datasetName() +".sub");
 		// this.runCommands("cd " + submitFolder + "/" + StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment()) +"/shared", "chmod 664 sl6-RLIBS.tar.gz");
 		// this.runCommands("cd ChtcRun", "./mkdag --data="+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+" --outputdir="+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+"OUT --resultdir=" +StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment()) + "Results --cmdtorun=rScript.R --pattern="+outFile+" --type=R --version=R-3.2.0", "cd "+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+"OUT", "condor_submit_dag mydag.dag" );
 		
 		firstTimeCalled = true;
-		dir = null;
+		localDatasetDir = null;
+		submitFile = null;
+		shFile = null;
 	}
 
 
