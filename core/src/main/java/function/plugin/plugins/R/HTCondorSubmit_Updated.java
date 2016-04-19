@@ -154,24 +154,24 @@ public class HTCondorSubmit_Updated extends JEXPlugin {
 			CSVList objectsToR = new CSVList();
 			filesToR.add(readObjectToFilePathTable(rScript).firstEntry().getValue());
 			objectsToR.add(StringUtility.removeAllWhitespace(rScript.getTypeName().getName()));
-			if(isInputValid(file1, JEXData.FILE))
+			if(isInputValid(file1, JEXData.FILE) || isInputValid(file1, JEXData.ROI))
 			{
 				filesToR.add(readObjectToFilePathTable(file1).firstEntry().getValue());
 				objectsToR.add(StringUtility.removeAllWhitespace(file1.getTypeName().getName()));
 			}
-			if(isInputValid(file2, JEXData.FILE))
+			if(isInputValid(file2, JEXData.FILE) || isInputValid(file1, JEXData.ROI))
 			{
 				filesToR.add(readObjectToFilePathTable(file2).firstEntry().getValue());
 				objectsToR.add(StringUtility.removeAllWhitespace(file2.getTypeName().getName()));
 			}
-			if(isInputValid(file3, JEXData.FILE))
+			if(isInputValid(file3, JEXData.FILE) || isInputValid(file1, JEXData.ROI))
 			{
 				filesToR.add(readObjectToFilePathTable(file3).firstEntry().getValue());
 				objectsToR.add(StringUtility.removeAllWhitespace(file3.getTypeName().getName()));
 			}
 			
 			// Generate the .sub submit file to be submitted to condor.
-			submitFile = this.genSubmit(objectsToR);
+			submitFile = this.genSubmit(filesToR, objectsToR);
 			
 			// Copy each file to the temp folder as ..<DB>/temp/<Dataset>/<ID>/<File>
 			for(int i = 0; i < filesToR.size(); i++)
@@ -256,13 +256,15 @@ public class HTCondorSubmit_Updated extends JEXPlugin {
 		}
 	}
 	
-	public File genSubmit(CSVList objectsToR)
+	public File genSubmit(CSVList filesToR, CSVList objectsToR)
 	{
 		
 		CSVList inputs = new CSVList();
-		for(String objectToR : objectsToR)
+		for(int i = 0; i < objectsToR.size(); i++)
 		{
-			inputs.add(FileUtility.getFileNameWithExtension(objectToR));
+			String objectToR = objectsToR.get(i);
+			String fileToR = filesToR.get(i);
+			inputs.add(FileUtility.getFileNameWithExtension(objectToR) + "." + FileUtility.getFileNameExtension(fileToR));
 		}
 		
 		LSVList submitCode = new LSVList();
@@ -290,9 +292,11 @@ public class HTCondorSubmit_Updated extends JEXPlugin {
 	{
 		
 		LSVList submitCode = new LSVList();
+		submitCode.add("#!/bin/bash");
 		submitCode.add("wget http://proxy.chtc.wisc.edu/SQUID/tedegroot/R.tar.gz");
 		submitCode.add("tar -xzvf R.tar.gz");
 		submitCode.add("export PATH=$(pwd)/R/bin:$PATH");
+		submitCode.add("unzip ParticleTracking_0.1.0.zip -d R/library");
 		submitCode.add("R CMD BATCH rScript.R");
 		submitCode.add("rm R.tar.gz");
 		submitCode.add("");
@@ -421,7 +425,7 @@ public class HTCondorSubmit_Updated extends JEXPlugin {
 		this.runSSHCommands("cd " + this.submitFolder, "tar -zxvf tarfile.tar.gz", "rm tarfile.tar.gz");
 		transferFile(submitFile, submitFolder, "submit_" + datasetName() + ".sub");
 		transferFile(shFile, submitFolder,  "script_" + datasetName() + ".sh");
-		this.runSSHCommands("cd" + this.submitFolder, "dos2unix script_" + datasetName() + ".sh", "chmod +x script_" + datasetName() + ".sh", "condor_submit submit_" + datasetName() +".sub");
+		this.runSSHCommands("cd " + this.submitFolder, "dos2unix script_" + datasetName() + ".sh", "chmod +x script_" + datasetName() + ".sh", "condor_submit submit_" + datasetName() +".sub");
 		// this.runCommands("cd " + submitFolder + "/" + StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment()) +"/shared", "chmod 664 sl6-RLIBS.tar.gz");
 		// this.runCommands("cd ChtcRun", "./mkdag --data="+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+" --outputdir="+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+"OUT --resultdir=" +StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment()) + "Results --cmdtorun=rScript.R --pattern="+outFile+" --type=R --version=R-3.2.0", "cd "+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+"OUT", "condor_submit_dag mydag.dag" );
 		
