@@ -269,10 +269,10 @@ public class HTCondorSubmit_Updated extends JEXPlugin {
 		
 		LSVList submitCode = new LSVList();
 		submitCode.add("universe = vanilla\nlog = jex_$(Cluster).log");
-		submitCode.add("error = jex_$(Cluster)_$(Process).err");
+		submitCode.add("error = jex_$(Cluster).err");
 		submitCode.add("executable = script_" + datasetName() + ".sh");
 		submitCode.add("arguments = jex_$(Process)");
-		submitCode.add("output = jex_$(Cluster)_$(Process).out");
+		submitCode.add("output = jex_$(Cluster).out");
 		submitCode.add("should_transfer_files = YES");
 		submitCode.add("when_to_transfer_output = ON_EXIT");
 		submitCode.add("transfer_input_files = " + inputs.toString());
