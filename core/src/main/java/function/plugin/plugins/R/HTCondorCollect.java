@@ -76,6 +76,9 @@ public class HTCondorCollect extends JEXPlugin {
 
 	@ParameterMarker(uiOrder=3, name="Condor Submit Node", description="Which submit node are you using for HTCondor?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="submit-5.chtc.wisc.edu")
 	String host;
+	
+	@ParameterMarker(uiOrder=4, name="Submit Folder To Collect From", description="Which submit node folder are you collecting data from?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="CHTCRun")
+	String submitFolder;
 
 	/////////// Define Outputs ///////////
 
@@ -100,13 +103,13 @@ public class HTCondorCollect extends JEXPlugin {
 		exptName = StringUtility.removeAllWhitespace(optionalEntry.getEntryExperiment());
 
 		// Zip the file contents
-		String cmd1 = "cd " + R.sQuote("ChtcRun/" + exptName+"Results");
+		String cmd1 = "cd " + R.sQuote(this.submitFolder + "/" + exptName+"Results");
 		String cmd2 = "zip -r " + id + ".zip " + id + "/"; 
 		this.runCommands(cmd1, cmd2);
 
 		// Transfer the zip to the temp folder and umpack the files
 		String uniqueFolder = JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getUniqueRelativeTempPath(null);
-		this.transferFile("ChtcRun/" + exptName + "Results", id + ".zip", uniqueFolder);
+		this.transferFile(this.submitFolder + "/" + exptName + "Results", id + ".zip", uniqueFolder);
 		//String cmd3 = "scp " + username + "@" + host + ":" + R.sQuote("ChtcRun/" + exptName + "/" + id + ".zip") + " " + R.sQuote(uniqueFolder + File.separator + id + ".zip");
 		String cmd3 = "unzip -d " + R.sQuote(uniqueFolder) + " " + R.sQuote(uniqueFolder + File.separator + id + ".zip");
 		String cmd4 = "rm -rf " + R.sQuote(uniqueFolder + File.separator + id + ".zip");
