@@ -279,6 +279,8 @@ public class HTCondorSubmit_Updated extends JEXPlugin {
 		submitCode.add("request_cpus = " + cpus ); // 1
 		submitCode.add("request_memory = " + memory + "GB"); // 4GB
 		submitCode.add("request_disk = " + disk + "MB"); // 4000MB
+		submitCode.add("+WantFlocking = true");
+		submitCode.add("+WantGlideIn = true");
 		submitCode.add("initialdir=$(directory)");
 		submitCode.add("queue directory matching " + datasetName() + "/*");
 		submitCode.add("");
