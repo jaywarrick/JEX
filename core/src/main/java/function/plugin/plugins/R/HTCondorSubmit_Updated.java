@@ -159,12 +159,12 @@ public class HTCondorSubmit_Updated extends JEXPlugin {
 				filesToR.add(readObjectToFilePathTable(file1).firstEntry().getValue());
 				objectsToR.add(StringUtility.removeAllWhitespace(file1.getTypeName().getName()));
 			}
-			if(isInputValid(file2, JEXData.FILE) || isInputValid(file1, JEXData.ROI))
+			if(isInputValid(file2, JEXData.ANY) || isInputValid(file2, JEXData.ROI))
 			{
 				filesToR.add(readObjectToFilePathTable(file2).firstEntry().getValue());
 				objectsToR.add(StringUtility.removeAllWhitespace(file2.getTypeName().getName()));
 			}
-			if(isInputValid(file3, JEXData.FILE) || isInputValid(file1, JEXData.ROI))
+			if(isInputValid(file3, JEXData.FILE) || isInputValid(file3, JEXData.ROI))
 			{
 				filesToR.add(readObjectToFilePathTable(file3).firstEntry().getValue());
 				objectsToR.add(StringUtility.removeAllWhitespace(file3.getTypeName().getName()));
