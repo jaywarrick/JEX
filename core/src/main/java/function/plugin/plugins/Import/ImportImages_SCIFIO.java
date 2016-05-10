@@ -13,7 +13,6 @@ import org.scijava.plugin.Plugin;
 
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
-import Database.DataWriter.FileWriter;
 import Database.DataWriter.ImageWriter;
 import Database.SingleUserDatabase.JEXWriter;
 import function.plugin.IJ2.IJ2PluginUtility;
@@ -90,16 +89,12 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 
 	@OutputMarker(uiOrder=1, name="Imported Image", type=MarkerConstants.TYPE_IMAGE, flavor="", description="The imported image object", enabled=true)
 	JEXData output;
-<<<<<<< HEAD
-
-=======
 	
 	@OutputMarker(uiOrder=2, name="Metadata", type=MarkerConstants.TYPE_FILE, flavor="", description="The imported image object metadata", enabled=true)
 	JEXData meta;
 	
 	private TreeMap<DimensionMap,String> metaDataFiles = new TreeMap<DimensionMap,String>();
-	
->>>>>>> master
+
 	@Override
 	public int getMaxThreads()
 	{
@@ -131,168 +126,10 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 			pendingImageFiles = new Vector<File>();
 			pendingImageFiles.add(filePath);
 		}
-<<<<<<< HEAD
 
 		// DO something
 		output = importFiles(pendingImageFiles, this.separator, this.fileExtension, this.imRows, this.imCols, "ImRow", "ImCol", this.transferNames, this);
 
-
-
-
-=======
-		
-		TreeMap<DimensionMap,String> multiMap = new TreeMap<DimensionMap,String>();
-		boolean fileNotFound = false;
-		for (File f: pendingImageFiles)
-		{
-			if(!f.exists())
-			{
-				fileNotFound = true;
-				continue;
-			}
-			
-			if(this.isCanceled())
-			{
-				return false;
-			}
-			// usually x and y coordinate map
-			DimensionMap baseMap = this.getMapFromPath(f.getAbsolutePath(), separator);
-			
-			// get reader for image file
-			final SCIFIO scifio = new SCIFIO(IJ2PluginUtility.ij().getContext());
-			Reader reader = null;
-			try
-			{
-				reader = scifio.initializer().initializeReader(f.getAbsolutePath(), new SCIFIOConfig().checkerSetOpen(true));
-			}
-			catch (Exception e)
-			{
-				Logs.log("Couldn't initialize reader for file " + filePath, Logs.ERROR, this);
-				e.printStackTrace();
-				return false;
-			}
-			// 	get table from reader		
-			table = getDimTableFromReader(reader, autoNameGathering);
-			if(table == null)
-			{
-				JEXDialog.messageDialog("Function canceled manually OR due to issues with determining dimensions of the image.");
-				return false;
-			}
-			
-			if(reader.getImageCount() > 1)
-			{
-				Dim loc = new Dim("Location",reader.getImageCount());
-				table.add(0, loc);
-			}
-			Iterator<DimensionMap> itr = table.getMapIterator().iterator();
-			double total = reader.getImageCount() * reader.getPlaneCount(0);
-			double count = 0;
-			
-			JEXStatics.statusBar.setProgressPercentage(0);
-			for (int i = 0; i < reader.getImageCount(); i++) {
-				for (int j = 0; j < reader.getPlaneCount(i); j++) {
-					Plane plane;
-					try
-					{
-						plane = reader.openPlane(i, j);
-					}
-					catch (Exception e)
-					{
-						Logs.log("Couldn't read image " + i + " plane " + j + " in " + f.getAbsolutePath() + ". Skipping to next plane.", Logs.ERROR, this);
-						e.printStackTrace();
-						continue;
-					}
-					ImageMetadata d = plane.getImageMetadata();
-					long[] dims = d.getAxesLengthsPlanar();
-					ImageProcessor ip = null;
-					if(d.getBitsPerPixel() <= 8)
-					{
-						byte[] converted = (byte[]) DataTools.makeDataArray(plane.getBytes(), 1, false, d.isLittleEndian());
-						ip = new ByteProcessor((int)dims[0], (int)dims[1], converted, null);
-					}
-					else if(d.getBitsPerPixel() >= 9 && d.getBitsPerPixel() <= 16)
-					{
-						short[] converted = (short[]) DataTools.makeDataArray(plane.getBytes(), 2, false, d.isLittleEndian());
-						ip = new ShortProcessor((int)dims[0], (int)dims[1], converted, null);
-					}
-					else if(d.getBitsPerPixel() >= 17 && d.getBitsPerPixel() <= 32)
-					{
-						float[] converted = (float[]) DataTools.makeDataArray(plane.getBytes(), 4, true, d.isLittleEndian());
-						ip = new FloatProcessor((int)dims[0], (int)dims[1], converted, null);
-					}
-					else
-					{
-						Logs.log("Couldn't handle writing of image with this particular bits-per-pixel: " + d.getBitsPerPixel(), Logs.ERROR, this);
-						return false;
-					}
-					
-					
-					if(this.isCanceled())
-					{
-						return false;
-					}
-					
-					// For each image split it if necessary
-					if(imRows * imCols > 1)
-					{
-						TreeMap<DimensionMap,ImageProcessor> splitImages = splitRowsAndCols(ip, imRows, imCols, this);
-						// The above might return null because of being canceled. Catch cancel condition and move on.
-						if(this.isCanceled())
-						{
-							return false;
-						}
-						DimensionMap map = itr.next().copy();
-						for(Entry<DimensionMap,ImageProcessor> e : splitImages.entrySet())
-						{
-							String filename = JEXWriter.saveImage(e.getValue());
-							map.putAll(e.getKey());
-							multiMap.put(map.copy(),filename);
-							Logs.log(map.toString() + " :: " + filename, this);
-						}
-						splitImages.clear();
-					}
-					else
-					{
-						String filename = JEXWriter.saveImage(ip);
-						DimensionMap map = itr.next().copy();
-						map.putAll(baseMap.copy());
-						multiMap.put(map,filename);
-						Logs.log(map.toString() + " = " + filename, this);
-						ip = null;
-					}					
-					
-					JEXStatics.statusBar.setProgressPercentage((int) (100.0 * count / total));
-					count = count + 1;
-				}
-			}
-		}
-		
-		if(fileNotFound)
-		{
-			JEXDialog.messageDialog("Warning! At least one of the files specified for this function was not found.");
-		}
-		
-		// OUTPUT PROCESSING
-		if(transferNames)
-		{
-			meta = FileWriter.makeFileObject("temp", null, metaDataFiles);
-		}
-		output = ImageWriter.makeImageStackFromPaths(output.name, multiMap);
-		if (table != null) {
-			DimTable toSet = new DimTable(multiMap);
-			for(Dim d : table)
-			{
-				toSet.removeDimWithName(d.dimName);
-			}
-			for(Dim d : table)
-			{
-				toSet.add(d.copy());
-			}
-			output.setDimTable(toSet);
-		}
-		
-		// TODO Auto-generated method stub
->>>>>>> master
 		return true;
 	}
 
@@ -337,13 +174,8 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 		return dimMap;
 
 	}
-<<<<<<< HEAD
-
-	private static DimTable getDimTableFromReader(Reader r, boolean transferNames)
-=======
 	
 	private DimTable getDimTableFromReader(Reader r, boolean transferNames)
->>>>>>> master
 	{
 		DimTable ret = new DimTable();
 		try
@@ -479,7 +311,7 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 		return ret;
 	}
 
-	public static JEXData importFiles(List<File> pendingImageFiles, String parseFileNameSeparator, String fileExtension, int imRows, int imCols, String rowName, String colName, boolean autoNameGathering, Canceler canceler)
+	public JEXData importFiles(List<File> pendingImageFiles, String parseFileNameSeparator, String fileExtension, int imRows, int imCols, String rowName, String colName, boolean autoNameGathering, Canceler canceler)
 	{
 		DimTable table = null;
 		
@@ -515,7 +347,7 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 				return null;
 			}
 			// 	get table from reader		
-			table = getDimTableFromReader(reader, autoNameGathering);
+			table = this.getDimTableFromReader(reader, autoNameGathering);
 			if(table == null)
 			{
 				JEXDialog.messageDialog("Function canceled manually OR due to issues with determining dimensions of the image.", ImportImages_SCIFIO.class);

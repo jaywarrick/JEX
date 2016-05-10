@@ -170,7 +170,9 @@ public class ImportByImagesLabel extends JEXPlugin {
 			return false;
 		}
 		
-		output = ImportImages_SCIFIO.importFiles(pendingImageFiles, this.separator, this.fileExtension, this.imRows, this.imCols, "ImRow", "ImCol", this.transferNames, this);
+		ImportImages_SCIFIO temp = new ImportImages_SCIFIO();
+		
+		output = temp.importFiles(pendingImageFiles, this.separator, this.fileExtension, this.imRows, this.imCols, "ImRow", "ImCol", this.transferNames, this);
 		
 		return true;
 	}

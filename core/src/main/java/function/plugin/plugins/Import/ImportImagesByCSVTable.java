@@ -159,7 +159,8 @@ public class ImportImagesByCSVTable extends JEXPlugin {
 		{
 			Vector<File> tempList = new Vector<>();
 			tempList.add(new File(e.getValue()));
-			JEXData temp = ImportImages_SCIFIO.importFiles(tempList, "", FileUtility.getFileNameExtension(e.getValue()), this.imRows, this.imCols, "ImRow", "ImCol", this.transferNames, this);
+			ImportImages_SCIFIO tempFunc = new ImportImages_SCIFIO();
+			JEXData temp = tempFunc.importFiles(tempList, "", FileUtility.getFileNameExtension(e.getValue()), this.imRows, this.imCols, "ImRow", "ImCol", this.transferNames, this);
 			for(Entry<DimensionMap,String> e2 : ImageReader.readObjectToImagePathTable(temp).entrySet())
 			{
 				DimensionMap toPut = e2.getKey().copy();
