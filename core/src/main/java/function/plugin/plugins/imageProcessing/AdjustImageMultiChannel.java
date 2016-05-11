@@ -57,22 +57,22 @@ public class AdjustImageMultiChannel extends JEXPlugin {
 	@ParameterMarker(uiOrder=1, name="Channel Dim Name", description="Name of the 'Channel' dimension for this image object.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Channel")
 	String channelDimName;
 	
-	@ParameterMarker(uiOrder=1, name="Old Min", description="Current 'min' to be mapped to new min value. Comma separated list of image intensity values or one value to apply to all channels.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
+	@ParameterMarker(uiOrder=2, name="Old Min", description="Current 'min' to be mapped to new min value. Comma separated list of image intensity values or one value to apply to all channels.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
 	String oldMins;
 	
-	@ParameterMarker(uiOrder=2, name="Old Max", description="Current 'max' to be mapped to new max value. Comma separated list of image intensity values or one value to apply to all channels.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="4095.0")
+	@ParameterMarker(uiOrder=3, name="Old Max", description="Current 'max' to be mapped to new max value. Comma separated list of image intensity values or one value to apply to all channels.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="4095.0")
 	String oldMaxs;
 	
-	@ParameterMarker(uiOrder=3, name="New Min", description="New value for current 'min'. Comma separated list of image intensity values or one value to apply to all channels.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
+	@ParameterMarker(uiOrder=4, name="New Min", description="New value for current 'min'. Comma separated list of image intensity values or one value to apply to all channels.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
 	String newMins;
 	
-	@ParameterMarker(uiOrder=4, name="New Max", description="New value for current 'max'. Comma separated list of image intensity values or one value to apply to all channels.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="65535.0")
+	@ParameterMarker(uiOrder=5, name="New Max", description="New value for current 'max'. Comma separated list of image intensity values or one value to apply to all channels.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="65535.0")
 	String newMaxs;
 	
-	@ParameterMarker(uiOrder=5, name="Gamma", description="0.1-5.0, value of 1 results in no change. Comma separated list of values or one value to apply to all channels.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1.0")
+	@ParameterMarker(uiOrder=6, name="Gamma", description="0.1-5.0, value of 1 results in no change. Comma separated list of values or one value to apply to all channels.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1.0")
 	String gammas;
 	
-	@ParameterMarker(uiOrder=6, name="Output Bit Depth", description="Depth of the outputted image for all channels.", ui=MarkerConstants.UI_DROPDOWN, choices={ "8", "16", "32" }, defaultChoice=1)
+	@ParameterMarker(uiOrder=7, name="Output Bit Depth", description="Depth of the outputted image for all channels.", ui=MarkerConstants.UI_DROPDOWN, choices={ "8", "16", "32" }, defaultChoice=1)
 	int bitDepth;
 	
 	/////////// Define Outputs ///////////
