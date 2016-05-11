@@ -420,14 +420,14 @@ public class HTCondorSubmit_Updated_windows extends JEXPlugin {
 		// String cmd1 = "cd "+ JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getTempFolderName();
 		// String cmd2 = "zip -r " + "zipfile.zip" +" " + R.sQuote(StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment()));
 		//String cmd1 = "start chrome";
-		String cmd1 = "cd " + R.dQuote(localDatasetDir.getPath());
+		String cmd1 = "cd " + R.dQuote(localDatasetDir.getParentFile().getPath());
 		String cmd2 = "tar -zcvf " + "tarfile.tar.gz" +" " + localDatasetDir.getName();
 		//String cmd1 = "cd D:\\Teddy\\Jex\\Brightfield Adhesion\\temp\\JEXData0000000008";
 		//String cmd2 = "tar -zcvf tarfile.tar.gz 2016-03-15MMAdhesionPatient612";
 		
 		
 		try {
-			String[] things = {"cmd.exe", "D:", cmd1, "cd ..", cmd2, "/C"};
+			String[] things = {"cmd.exe", "D:", cmd1, cmd2, "/C"};
 			ProcessBuilder dunkey = new ProcessBuilder(things);
 			dunkey = dunkey.directory(new File("D:\\"));
 			Process p = dunkey.start();
