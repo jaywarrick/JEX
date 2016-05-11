@@ -268,8 +268,8 @@ public class JEX_SingleCell_MeasureMaxima extends JEXCrunchable {
 			{
 				min = Math.min(point.id, min);
 				max = Math.max(point.id, max);
-				totalPoints = totalPoints + e.getValue().getPointList().size();
 			}
+			totalPoints = totalPoints + e.getValue().getPointList().size();
 		}
 		Dim pDim = new Dim("Point", 0, max);
 		dataTable.add(pDim);
