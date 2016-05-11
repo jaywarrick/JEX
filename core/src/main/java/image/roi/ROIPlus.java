@@ -380,7 +380,7 @@ public class ROIPlus implements Copiable<ROIPlus>, Iterable<ROIPlus>, Comparable
 		return result;
 	}
 	
-	public Iterator<ROIPlus> patternRoiIterator()
+	public PatternRoiIterator patternRoiIterator()
 	{
 		return new PatternRoiIterator(this);
 	}
