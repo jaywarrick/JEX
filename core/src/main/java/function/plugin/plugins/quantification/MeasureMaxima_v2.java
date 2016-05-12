@@ -2,12 +2,12 @@ package function.plugin.plugins.quantification;
 
 import java.awt.Shape;
 import java.text.DecimalFormat;
+import java.util.Collection;
 import java.util.Map.Entry;
-
-import org.scijava.plugin.Plugin;
-
 import java.util.TreeMap;
 import java.util.Vector;
+
+import org.scijava.plugin.Plugin;
 
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
@@ -151,11 +151,11 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 		Vector<String> measurementNames = new Vector<>();
 		if(colorDim == null)
 		{
-			measurementNames.add(this.measurementType);
+			measurementNames.add(this.normalizeName(this.measurementType));
 		}
 		else
 		{
-			measurementNames.addAll(colorDim.dimValues);
+			measurementNames.addAll(this.normalizeNames(colorDim.dimValues));
 		}
 		measurementNames.add(SingleCellUtility.x);
 		measurementNames.add(SingleCellUtility.y);
@@ -377,6 +377,23 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 			}
 		}
 	}
+	
+	private String normalizeName(String name)
+	{
+		name = name.replaceAll("\\s+","");
+		name = name.replace('.','_');
+		return(name);
+	}
+	
+	private Collection<String> normalizeNames(Collection<String> names)
+	{
+		Vector<String> newNames = new Vector<>();
+		for(String name : names)
+		{
+			newNames.add(this.normalizeName(name));
+		}
+		return(newNames);
+	}
 
 	private void writeData(JEXTableWriter writer, DimensionMap mapToSave, ImageStatistics stats, IdPoint p, double nominal, String measurementType)
 	{
@@ -386,8 +403,7 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 		// Normalize the string for good behavior in tables and data analysis software.
 		if(color != null)
 		{
-			color = color.replaceAll("\\s+","");
-			color = color.replace('.','_');
+			this.normalizeName(color);
 		}
 		
 		double measurement = stats.mean;
