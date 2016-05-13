@@ -590,10 +590,10 @@ public class DimTable extends ArrayList<Dim> implements Copiable<DimTable> {
 	// }
 	
 	/**
-	 * returned an iterator of DimValues, given dimName in this DimTable
+	 * returned an iterator of DimTables, providing a new table for each subtable associated with each value in the specified Dim.
 	 * 
 	 * @param dimName DimName
-	 * @return an iterator of DimValues, given dimName in this DimTable
+	 * @return an iterator of DimTables, given dimName in this DimTable
 	 */
 	public DimTableIterable getSubTableIterator(String dimName)
 	{
