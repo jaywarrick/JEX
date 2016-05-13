@@ -138,6 +138,12 @@ public class AdjustImageMultiChannel extends JEXPlugin {
 			String tempPath;
 			for (DimensionMap map : imageMap.keySet())
 			{
+				// Check if canceled
+				if(this.isCanceled())
+				{
+					return false;
+				}
+				
 				// Call helper method
 				tempPath = saveAdjustedImage(imageMap.get(map), oldMinsMap.get(map.get(channelDimName)), oldMaxsMap.get(map.get(channelDimName)), newMinsMap.get(map.get(channelDimName)), newMaxsMap.get(map.get(channelDimName)), gammasMap.get(map.get(channelDimName)), bitDepth);
 				if(tempPath != null)
