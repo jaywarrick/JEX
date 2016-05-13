@@ -57,13 +57,13 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 
 	// ///////// Define Inputs here ///////////
 
-	@InputMarker(uiOrder = 2, name = "Maxima", type = MarkerConstants.TYPE_ROI, description = "Maxima ROI", optional = false)
+	@InputMarker(uiOrder = 1, name = "Maxima", type = MarkerConstants.TYPE_ROI, description = "Maxima ROI", optional = false)
 	JEXData roiData;
 
-	@InputMarker(uiOrder = 1, name = "Segmentation Lines", type = MarkerConstants.TYPE_IMAGE, description = "Mask images (SHOULD have channel dimension)", optional = true)
+	@InputMarker(uiOrder = 2, name = "Segmentation Lines", type = MarkerConstants.TYPE_IMAGE, description = "Mask images (SHOULD have channel dimension)", optional = true)
 	JEXData segData;
 
-	@InputMarker(uiOrder = 1, name = "Thresholded Images", type = MarkerConstants.TYPE_IMAGE, description = "Mask that encompasses the entire cell or groups of cells (i.e., prior to segmentation).", optional = false)
+	@InputMarker(uiOrder = 3, name = "Thresholded Images", type = MarkerConstants.TYPE_IMAGE, description = "Mask that encompasses the entire cell or groups of cells (i.e., prior to segmentation).", optional = false)
 	JEXData maskData;	
 
 
@@ -95,7 +95,7 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 	@OutputMarker(uiOrder = 1, name = "Prepared Masks", type = MarkerConstants.TYPE_IMAGE, flavor = "", description = "Thresholded images segmented by the segmentation lines and cleaned up to only show regions associated with cells.", enabled = true)
 	JEXData outputImage;
 
-	@OutputMarker(uiOrder = 1, name = "Clump Data", type = MarkerConstants.TYPE_FILE, flavor = "", description = "Test table output (i.e., for Weka etc).", enabled = true)
+	@OutputMarker(uiOrder = 2, name = "Clump Data", type = MarkerConstants.TYPE_FILE, flavor = "", description = "Test table output (i.e., for Weka etc).", enabled = true)
 	JEXData outputFile;
 
 	// Define threading capability here (set to 1 if using non-final static variables shared between function instances).
@@ -160,7 +160,7 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 
 		TreeMap<DimensionMap, ROIPlus> roiMap = RoiReader.readObjectToRoiMap(roiData);
 		TreeMap<DimensionMap, String> segMap = null;
-		if(isInputValid(segData, JEXData.IMAGE))
+		if(segData != null && segData.getTypeName().getType().equals(JEXData.IMAGE))
 		{
 			segMap = ImageReader.readObjectToImagePathTable(segData);
 		}
