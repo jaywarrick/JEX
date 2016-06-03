@@ -139,8 +139,8 @@ public class CompileArffTables extends JEXPlugin {
 		compiledMap = new DimensionMap();
 		compiledMap.put("Experiment", optionalEntry.getEntryExperiment());
 		// compiledMap.put("Array Name", entry.getEntryTrayName());
-		compiledMap.put("Array X", "" + optionalEntry.getTrayX());
-		compiledMap.put("Array Y", "" + optionalEntry.getTrayY());
+		compiledMap.put("ArrayX", "" + optionalEntry.getTrayX());
+		compiledMap.put("ArrayY", "" + optionalEntry.getTrayY());
 		for (String labelName : sortingLabels)
 		{
 			JEXData label = JEXStatics.jexManager.getDataOfTypeNameInEntry(new TypeName(JEXData.LABEL, labelName), optionalEntry);

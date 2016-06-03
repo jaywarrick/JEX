@@ -344,6 +344,17 @@ public class JEX_OverlayStack extends JEXCrunchable {
 			FloatProcessor imp = null, bfImp = null;
 			Integer w = null, h = null;
 			
+			if(bfPath == null && rPath == null && gPath == null && bPath == null)
+			{
+				Logs.log("Finished processing " + (count + 1) + " of " + total + ".", 1, canceler);
+				count++;
+				
+				// Status bar
+				int percentage = (int) (100 * ((double) count / (double) maps.size()));
+				JEXStatics.statusBar.setProgressPercentage(percentage);
+				continue;
+			}
+			
 			// Fix Brightfield
 			if(bfPath != null)
 			{

@@ -88,7 +88,7 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 	@ParameterMarker(uiOrder=6, name="Channel Dim Name (optional)", description="Name of the channel/color dimension of the image.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Channel")
 	String colorDimName;
 
-	@ParameterMarker(uiOrder=7, name="Nominal Offset Value Of Images", description="Value which has been added to the images to avoid clipping negative values.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="100")
+	@ParameterMarker(uiOrder=7, name="Offset", description="Value to offset all values by. Useful if the image does not have a zero background. (final value = measured value + offset)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0")
 	double nominal;
 
 	/////////// Define Outputs ///////////
@@ -309,7 +309,7 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 						}
 					}
 				}
-				else
+				else if(regionRoiData == null)
 				{
 					// Just do all the points
 					this.quantifyPoints(im, maximaRoi, templateRoi, formatD, imMap, writer, -1);
@@ -403,7 +403,7 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 		// Normalize the string for good behavior in tables and data analysis software.
 		if(color != null)
 		{
-			this.normalizeName(color);
+			color = this.normalizeName(color);
 		}
 		
 		double measurement = stats.mean;
