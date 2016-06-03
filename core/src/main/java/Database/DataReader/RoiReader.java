@@ -1,13 +1,12 @@
 package Database.DataReader;
 
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXDataSingle;
-import image.roi.ROIPlus;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXDataSingle;
+import image.roi.ROIPlus;
 import tables.DimensionMap;
 
 public class RoiReader {

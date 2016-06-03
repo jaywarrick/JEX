@@ -58,14 +58,14 @@ public abstract class JEXPlugin implements SciJavaPlugin, Canceler, Cancelable {
 	{
 		if(data == null || !data.getTypeName().getType().equals(type))
 		{
-			if(data == null)
-			{
-				JEXDialog.messageDialog("A required object of type '" + type.toString() + " 'is missing! Aborting.");
-			}
-			else
-			{
-				JEXDialog.messageDialog(data.getTypeName().getName() + " was expected to be a " + type.toString() + " but is a " + data.getTypeName().getType().toString() + ". Aborting.");
-			}
+			//			if(data == null)
+			//			{
+			//				JEXDialog.messageDialog("A required object of type '" + type.toString() + " 'is missing! Aborting.");
+			//			}
+			//			else
+			//			{
+			//				JEXDialog.messageDialog(data.getTypeName().getName() + " was expected to be a " + type.toString() + " but is a " + data.getTypeName().getType().toString() + ". Aborting.");
+			//			}
 			return false;
 		}
 		return true;

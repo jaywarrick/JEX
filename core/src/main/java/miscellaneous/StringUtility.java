@@ -275,6 +275,11 @@ public class StringUtility implements Comparator<String> {
 		return temp;
 	}
 	
+	public static String removeAllWhitespace(String toFix)
+	{
+		return toFix.replaceAll("\\s+","");
+	}
+	
 	/**
 	 * Alphanumeric string sorter
 	 * 

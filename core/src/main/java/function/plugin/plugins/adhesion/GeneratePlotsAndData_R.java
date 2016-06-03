@@ -111,9 +111,10 @@ public class GeneratePlotsAndData_R extends JEXPlugin {
 		{
 			return false;
 		}
-
+		
 		R.eval("rm(list=ls())"); // Start with a clean slate and start R session if necessary
-		AdhesionUtility.loadAdhesionScripts(); // Load necessary R scripts
+		R.eval("library(ParticleTracking)");
+		//AdhesionUtility.loadAdhesionScripts(); // Load necessary R scripts
 
 		count = count + 1;
 		percentage = (int) (100 * ((double) (count) / (total)));

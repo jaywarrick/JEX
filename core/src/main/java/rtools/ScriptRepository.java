@@ -128,12 +128,25 @@ public class ScriptRepository {
 		}
 
 	}
-
+	
 	public static void runSysCommand(String[] cmds)
+	{
+		runSysCommand(cmds, null);
+	}
+
+	public static void runSysCommand(String[] cmds, String workingDir)
 	{
 		try
 		{
-			Process p = Runtime.getRuntime().exec(cmds);
+			Process p;
+			if(workingDir != null)
+			{
+				p = Runtime.getRuntime().exec(cmds, null, new File(workingDir));
+			}
+			else
+			{
+				p = Runtime.getRuntime().exec(cmds);
+			}
 
 			// // Debug code only... causes process to stall waiting for more
 			// lines to be read from the process.

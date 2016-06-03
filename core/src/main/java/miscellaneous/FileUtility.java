@@ -290,7 +290,11 @@ public class FileUtility implements Comparator<File> {
 		}
 		return suffix;
 	}
-	
+	/**
+	 * Function assumes function does not contain "\"
+	 * @param pathOrFilename
+	 * @return
+	 */
 	public static String getFileNameWithExtension(String pathOrFilename)
 	{
 		if(pathOrFilename == null)
@@ -301,7 +305,13 @@ public class FileUtility implements Comparator<File> {
 		File temp = new File(pathOrFilename);
 		temp = temp.getAbsoluteFile();
 		String fileName = temp.getName();
+		String[] items= fileName.split("\\\\"); 
+		if (items.length > 1){
+			return items[items.length-1];
+		}
 		return fileName;
+		
+		
 	}
 	
 	public static String getFileNameExtension(String pathOrFilename)
