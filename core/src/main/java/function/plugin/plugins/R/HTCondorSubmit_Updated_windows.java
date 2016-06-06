@@ -318,7 +318,7 @@ public class HTCondorSubmit_Updated_windows extends JEXPlugin {
 			java.util.Properties config = new java.util.Properties(); 
 			config.put("StrictHostKeyChecking", "no");
 			session.setConfig(config);
-			session.connect(3000);
+			session.connect(30000);
 			Channel channel = session.openChannel("sftp");
 			channel.connect();
 			ChannelSftp channelSftp = (ChannelSftp)channel;
@@ -422,14 +422,14 @@ public class HTCondorSubmit_Updated_windows extends JEXPlugin {
 		//String cmd1 = "start chrome";
 		String cmd1 = "cd " + R.dQuote(localDatasetDir.getParentFile().getPath());
 		String cmd2 = "tar -zcvf " + "tarfile.tar.gz" +" " + localDatasetDir.getName();
-		//String cmd1 = "cd D:\\Teddy\\Jex\\Brightfield Adhesion\\temp\\JEXData0000000008";
+		//String cmd1 = "cd D:\\Teddy\\Jex\\Brightfield Adhesion\\temp\\JEXData0000000411";
 		//String cmd2 = "tar -zcvf tarfile.tar.gz 2016-03-15MMAdhesionPatient612";
 		
 		
 		try {
-			String[] things = {"cmd.exe", "D:", cmd1, cmd2, "/C"};
+			String[] things = {"cmd.exe", "/c", "D: && " + cmd1 + " && " + cmd2};
 			ProcessBuilder dunkey = new ProcessBuilder(things);
-			dunkey = dunkey.directory(new File("D:\\"));
+			//dunkey = dunkey.directory(new File("D:\\"));
 			Process p = dunkey.start();
 			
 			
