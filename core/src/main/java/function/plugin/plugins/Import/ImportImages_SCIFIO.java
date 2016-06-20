@@ -13,6 +13,7 @@ import org.scijava.plugin.Plugin;
 
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
+import Database.DataWriter.FileWriter;
 import Database.DataWriter.ImageWriter;
 import Database.SingleUserDatabase.JEXWriter;
 import function.plugin.IJ2.IJ2PluginUtility;
@@ -129,6 +130,8 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 
 		// DO something
 		output = importFiles(pendingImageFiles, this.separator, this.fileExtension, this.imRows, this.imCols, "ImRow", "ImCol", this.transferNames, this);
+		
+		this.meta = FileWriter.makeFileObject("temp", null, this.metaDataFiles);
 
 		return true;
 	}
