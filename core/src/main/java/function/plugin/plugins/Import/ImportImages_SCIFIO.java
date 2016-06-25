@@ -15,6 +15,7 @@ import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataWriter.FileWriter;
 import Database.DataWriter.ImageWriter;
+import Database.DataWriter.ValueWriter;
 import Database.SingleUserDatabase.JEXWriter;
 import function.plugin.IJ2.IJ2PluginUtility;
 import function.plugin.mechanism.JEXPlugin;
@@ -91,7 +92,10 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 	@OutputMarker(uiOrder=1, name="Imported Image", type=MarkerConstants.TYPE_IMAGE, flavor="", description="The imported image object", enabled=true)
 	JEXData output;
 	
-	@OutputMarker(uiOrder=2, name="Metadata", type=MarkerConstants.TYPE_FILE, flavor="", description="The imported image object metadata", enabled=true)
+	@OutputMarker(uiOrder=2, name="List of Imported Files", type=MarkerConstants.TYPE_VALUE, flavor="", description="The list of imported files.", enabled=true)
+	JEXData inputFileList;
+	
+	@OutputMarker(uiOrder=3, name="Metadata", type=MarkerConstants.TYPE_FILE, flavor="", description="The imported image object metadata", enabled=true)
 	JEXData meta;
 	
 	private TreeMap<DimensionMap,String> metaDataFiles = new TreeMap<DimensionMap,String>();
@@ -130,7 +134,7 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 
 		// DO something
 		output = importFiles(pendingImageFiles, this.separator, this.fileExtension, this.imRows, this.imCols, "ImRow", "ImCol", this.transferNames, this);
-		
+		this.inputFileList = ValueWriter.makeValueObject("temp", this.getFileList(pendingImageFiles).toString());
 		this.meta = FileWriter.makeFileObject("temp", null, this.metaDataFiles);
 
 		return true;
@@ -282,6 +286,16 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 			}
 		}
 		return ret;
+	}
+	
+	private LSVList getFileList(List<File> filesToImport)
+	{
+		LSVList fileList = new LSVList();
+		for(File f : filesToImport)
+		{
+			fileList.add(f.getAbsolutePath());
+		}
+		return fileList;
 	}
 
 	public static TreeMap<DimensionMap,ImageProcessor> splitRowsAndCols(ImageProcessor imp, int rows, int cols, String rowName, String colName, Canceler canceler)
