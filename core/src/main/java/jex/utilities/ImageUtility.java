@@ -106,7 +106,7 @@ public class ImageUtility {
 		long curCount = stats.getHistogram()[0];
 		Double minThresh = null;
 		Double maxThresh = null;
-		for (int i = 1; i < stats.histogram.length - 1; i++)
+		for (int i = 1; i < stats.histogram.length; i++)
 		{
 			curCount = curCount + stats.getHistogram()[i];
 			if(curCount > minCount && minThresh == null)
