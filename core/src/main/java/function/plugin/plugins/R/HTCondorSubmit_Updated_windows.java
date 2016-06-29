@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.ServerSocket;
 import java.util.TreeMap;
 
 import org.apache.commons.io.FileUtils;
@@ -66,16 +67,16 @@ public class HTCondorSubmit_Updated_windows extends JEXPlugin {
 
 	@InputMarker(uiOrder=1, name="R Script", type=MarkerConstants.TYPE_FILE, description="This is your R script .R file that R will run in condor", optional=true)
 	JEXData rScript;
-	
+
 	@InputMarker(uiOrder=2, name="Input File 1", type=MarkerConstants.TYPE_ANY, description="JEXData (File, Image, or ROI) to be passed to R to run in Condor", optional=true)
 	JEXData file1;
-	
+
 	@InputMarker(uiOrder=3, name="Input File 2", type=MarkerConstants.TYPE_ANY, description="JEXData (File, Image, or ROI) to be passed to R to run in Condor", optional=true)
 	JEXData file2;
-	
+
 	@InputMarker(uiOrder=4, name="Input File 3", type=MarkerConstants.TYPE_ANY, description="JEXData (File, Image, or ROI) to be passed to R to run in Condor", optional=true)
 	JEXData file3;
-	
+
 	/////////// Define Parameters ///////////
 
 	@ParameterMarker(uiOrder=1, name="Username", description="This is your condor user name, which is the same is your Wisc user name, if you don't have one, you can't really use this.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="bbadger")
@@ -86,16 +87,16 @@ public class HTCondorSubmit_Updated_windows extends JEXPlugin {
 
 	@ParameterMarker(uiOrder=3, name="Condor Submit Node", description="Which submit node are you using for HTCondor?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="submit-5.chtc.wisc.edu")
 	String host;
-	
+
 	@ParameterMarker(uiOrder=4, name="Submit Node Folder", description="Folder on submit node to run this job from", ui=MarkerConstants.UI_TEXTFIELD, defaultText="CHTCRun")
 	String submitFolder;
-	
+
 	@ParameterMarker(uiOrder=5, name="# of CPUs", description="# of CPUs to request", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
 	int cpus;
-	
+
 	@ParameterMarker(uiOrder=6, name="RAM [GB]", description="Amount of RAM to request", ui=MarkerConstants.UI_TEXTFIELD, defaultText="2")
 	int memory;
-	
+
 	@ParameterMarker(uiOrder=7, name="Disk Space [MB]", description="Amount of disk space to request", ui=MarkerConstants.UI_TEXTFIELD, defaultText="4000")
 	int disk;
 
@@ -111,7 +112,7 @@ public class HTCondorSubmit_Updated_windows extends JEXPlugin {
 	private static File localDatasetDir = null;
 	private static File submitFile = null;
 	private static File shFile = null;
-	
+
 	private File getDirPath(JEXEntry optionalEntry)
 	{
 		if(localDatasetDir == null)
@@ -120,12 +121,12 @@ public class HTCondorSubmit_Updated_windows extends JEXPlugin {
 		}
 		return localDatasetDir;
 	}
-	
+
 	private static String datasetName()
 	{
 		return localDatasetDir.getName();
 	}
-	
+
 	@Override
 	public boolean run(JEXEntry optionalEntry)
 	{
@@ -135,7 +136,7 @@ public class HTCondorSubmit_Updated_windows extends JEXPlugin {
 			return false;
 		}
 		try {
-			
+
 			File dir = this.getDirPath(optionalEntry);
 
 			if(firstTimeCalled)
@@ -144,7 +145,7 @@ public class HTCondorSubmit_Updated_windows extends JEXPlugin {
 				this.prepareFolderStructure(dir);
 				firstTimeCalled = false;
 			}
-			
+
 			// Generate the .sh file to be executed for each entry
 			shFile = this.genScript();
 
@@ -168,10 +169,10 @@ public class HTCondorSubmit_Updated_windows extends JEXPlugin {
 				filesToR.add(readObjectToFilePathTable(file3).firstEntry().getValue());
 				objectsToR.add(StringUtility.removeAllWhitespace(file3.getTypeName().getName()));
 			}
-			
+
 			// Generate the .sub submit file to be submitted to condor.
 			submitFile = this.genSubmit(filesToR, objectsToR);
-			
+
 			// Copy each file to the temp folder as ..<DB>/temp/<Dataset>/<ID>/<File>
 			for(int i = 0; i < filesToR.size(); i++)
 			{
@@ -180,7 +181,7 @@ public class HTCondorSubmit_Updated_windows extends JEXPlugin {
 				dstFile.getParentFile().mkdirs();
 				FileUtils.copyFile(fileToProcess, dstFile);
 			}
-	
+
 			// transferFolder(new File(dir.getAbsolutePath() + File.separator + optionalEntry.getEntryID()), submitFolder + "/" + StringUtility.removeAllWhitespace(optionalEntry.getEntryExperiment()) + File.separator + optionalEntry.getEntryID());
 			//		String cmd4 = "scp -r " + R.sQuote(dir.getAbsolutePath()) + " " + username + "@" + host + ":~/ChtcRun/" + StringUtility.removeAllWhitespace(optionalEntry.getEntryExperiment());
 			//		String cmd5 = password;
@@ -197,69 +198,90 @@ public class HTCondorSubmit_Updated_windows extends JEXPlugin {
 		}
 	}
 
-	public void runSSHCommands(String... commands)
+	public synchronized void runSSHCommands(String... commands)
 	{
-		try {
-			LSVList cmdList = new LSVList();
-			for(String command : commands)
+		int tries = 3;
+		boolean success = false;
+		Session session = null;
+		ChannelExec channel = null;
+		for(int i = 0; i < tries; i++)
+		{
+			if(!success)
 			{
-				cmdList.add(command);
-			}
-			String commandString = cmdList.toString();
+				Logs.log("Try # " + (i + 1), this);
+				try {
+					LSVList cmdList = new LSVList();
+					for(String command : commands)
+					{
+						cmdList.add(command);
+					}
+					String commandString = cmdList.toString();
 
-			Logs.log("Attempting ssh commands...", this);
-			System.out.println(commandString);
+					Logs.log("Attempting ssh commands...", this);
+					System.out.println(commandString);
 
-			JSch ssh = new JSch();
-			Session session = ssh.getSession(username, host, 22);
-			session.setPassword(password);
-			java.util.Properties config = new java.util.Properties(); 
-			config.put("StrictHostKeyChecking", "no");
-			session.setConfig(config);
-			session.connect(30000);
-			
-			
-			ChannelExec channel= (ChannelExec) session.openChannel("exec");
-/*			
-					channel.setInputStream(System.in);
+					JSch ssh = new JSch();
+					ServerSocket ssock = new ServerSocket(22);
+					int port = ssock.getLocalPort();
+					ssock.close();
+					session = ssh.getSession(username, host, port);
+					session.setPassword(password);
+					java.util.Properties config = new java.util.Properties(); 
+					config.put("StrictHostKeyChecking", "no");
+					session.setConfig(config);
+					session.connect(10000);
+
+
+					channel = (ChannelExec) session.openChannel("exec");
+					/*			
+							channel.setInputStream(System.in);
+
+						      // a hack for MS-DOS prompt on Windows.
+						      channel.setInputStream(new FilterInputStream(System.in){
+						          public int read(byte[] b, int off, int len)throws IOException{
+						            return in.read(b, off, (len>1024?1024:len));
+						          }
+						        });
+
+
+							channel.setOutputStream(System.out);
+					 */
+					channel.setCommand(commandString);
+					BufferedReader in=new BufferedReader(new InputStreamReader(channel.getInputStream()));
+					channel.connect(10000);
 					
-				      // a hack for MS-DOS prompt on Windows.
-				      channel.setInputStream(new FilterInputStream(System.in){
-				          public int read(byte[] b, int off, int len)throws IOException{
-				            return in.read(b, off, (len>1024?1024:len));
-				          }
-				        });
-					
-			
-					channel.setOutputStream(System.out);
-*/
-			channel.setCommand(commandString);
-			BufferedReader in=new BufferedReader(new InputStreamReader(channel.getInputStream()));
-			channel.connect();
 
-
-			String msg=null;
-			while((msg=in.readLine())!=null){
-				Logs.log(msg, this);
+					String msg=null;
+					while((msg=in.readLine())!=null){
+						Logs.log(msg, this);
+					}
+					success = true;
+				} catch (JSchException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				finally
+				{
+					if(channel != null && channel.isConnected())
+					{
+						channel.disconnect();
+					}
+					if(session != null && session.isConnected())
+					{
+						session.disconnect();
+					}
+				}
 			}
-
-			channel.disconnect();
-			session.disconnect();
 		}
-		catch (JSchException e)
-		{
-			e.printStackTrace();
-			JEXDialog.messageDialog("Couldn't login to the HTCondor");
-		}
-		catch (IOException e)
-		{
-			e.printStackTrace();
-		}
+		
 	}
-	
+
 	public File genSubmit(CSVList filesToR, CSVList objectsToR)
 	{
-		
+
 		CSVList inputs = new CSVList();
 		for(int i = 0; i < objectsToR.size(); i++)
 		{
@@ -267,7 +289,7 @@ public class HTCondorSubmit_Updated_windows extends JEXPlugin {
 			String fileToR = filesToR.get(i);
 			inputs.add(FileUtility.getFileNameWithExtension(objectToR) + "." + FileUtility.getFileNameExtension(fileToR));
 		}
-		
+
 		LSVList submitCode = new LSVList();
 		submitCode.add("universe = vanilla\nlog = jex_$(Cluster).log");
 		submitCode.add("error = jex_$(Cluster)_$(Process).err");
@@ -285,52 +307,60 @@ public class HTCondorSubmit_Updated_windows extends JEXPlugin {
 		submitCode.add("initialdir=$(directory)");
 		submitCode.add("queue directory matching " + datasetName() + "/*");
 		submitCode.add("");
-		
+
 		File subFile = new File(JEXWriter.saveText(submitCode.toString(), "sub"));
-		
+
 		return subFile;
 	}
-	
+
 	public File genScript()
 	{
-		
+
 		LSVList submitCode = new LSVList();
 		submitCode.add("#!/bin/bash");
 		submitCode.add("wget http://proxy.chtc.wisc.edu/SQUID/tedegroot/R.tar.gz");
+		submitCode.add("wget http://proxy.chtc.wisc.edu/SQUID/tedegroot/ParticleTracking_0.1.0.tar.gz.zip");
 		submitCode.add("tar -xzvf R.tar.gz");
 		submitCode.add("export PATH=$(pwd)/R/bin:$PATH");
-		submitCode.add("unzip ParticleTracking_0.1.0.zip -d R/library");
+		submitCode.add("unzip ParticleTracking_0.1.0.tar.gz.zip -d R/library");
 		submitCode.add("R CMD BATCH rScript.R");
 		submitCode.add("rm R.tar.gz");
+		submitCode.add("rm ParticleTracking_0.1.0.tar.gz.zip");
 		submitCode.add("");
-		
+
 		String shFile = JEXWriter.saveText(submitCode.toString(), "sh");
-		
+
 		return new File(shFile);
 	}
-	
-	public void transferFile(File src, String dstFolder, String dstFileName)
+
+	public synchronized void transferFile(File src, String dstFolder, String dstFileName) throws Exception
 	{
+		Session session = null;
+		Channel channel = null;
 		try{
 			JSch ssh = new JSch();
-			Session session = ssh.getSession(username, host, 22);
+			session = ssh.getSession(username, host, 22);
 			session.setPassword(password);
 			java.util.Properties config = new java.util.Properties(); 
 			config.put("StrictHostKeyChecking", "no");
 			session.setConfig(config);
 			session.connect(30000);
-			Channel channel = session.openChannel("sftp");
-			channel.connect();
+			channel = session.openChannel("sftp");
+			channel.connect(30000);
 			ChannelSftp channelSftp = (ChannelSftp)channel;
 			channelSftp.cd(dstFolder);
 			channelSftp.put(new FileInputStream(src), dstFileName);
-
-			channel.disconnect();
-			session.disconnect();		
-
-		}catch(Exception ex){
-			ex.printStackTrace();
-			JEXDialog.messageDialog("Couldn't transfer the files", this);
+		 }
+		finally
+		{
+			if(channel != null && channel.isConnected())
+			{
+				channel.disconnect();
+			}
+			if(session != null && session.isConnected())
+			{
+				session.disconnect();
+			}
 		}
 
 	}
@@ -382,7 +412,7 @@ public class HTCondorSubmit_Updated_windows extends JEXPlugin {
 			return false;
 		}
 	}
-	
+
 	private static TreeMap<DimensionMap,String> readObjectToFilePathTable(JEXData data)
 	{
 		TreeMap<DimensionMap,String> result = new TreeMap<DimensionMap,String>();
@@ -403,10 +433,10 @@ public class HTCondorSubmit_Updated_windows extends JEXPlugin {
 				result.put(map, path);
 			}
 		}
-		
+
 		return result;
 	}
-	
+
 	private static String readToPath(String dataFolder, JEXDataSingle ds)
 	{
 		String fileName = FileUtility.getFileNameWithExtension(ds.get(JEXDataSingle.RELATIVEPATH));
@@ -424,35 +454,55 @@ public class HTCondorSubmit_Updated_windows extends JEXPlugin {
 		String cmd2 = "tar -zcvf " + "tarfile.tar.gz" +" " + localDatasetDir.getName();
 		//String cmd1 = "cd D:\\Teddy\\Jex\\Brightfield Adhesion\\temp\\JEXData0000000411";
 		//String cmd2 = "tar -zcvf tarfile.tar.gz 2016-03-15MMAdhesionPatient612";
-		
-		
+
+
 		try {
 			String[] things = {"cmd.exe", "/c", "D: && " + cmd1 + " && " + cmd2};
 			ProcessBuilder dunkey = new ProcessBuilder(things);
 			//dunkey = dunkey.directory(new File("D:\\"));
 			Process p = dunkey.start();
 			
-			
-			//Process p = Runtime.getRuntime().exec(new String[]{cmd2}, null, new File(localDatasetDir.getParent()));
 			p.waitFor();
+			
+			
+			String[] reset = {"cmd.exe", "/c", "ipconfig /flushdns"};
+			ProcessBuilder resetter = new ProcessBuilder(reset);
+		
+			Process poop = resetter.start();
+			poop.waitFor();
+			
+			
+			Thread.sleep(30000);
+			this.runSSHCommands("mkdir -p " + submitFolder); // Make sure the directory exists
+			Thread.sleep(30000);
+			transferFile(new File(localDatasetDir.getParent() + File.separator + "tarfile.tar.gz"), submitFolder, "tarfile.tar.gz");
+			p.waitFor();
+			Thread.sleep(30000);
+			////this.runCommands("cd ChtcRun", "unzip zipfile.zip", "rm zipfile.zip","./mkdag --data="+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+" --outputdir="+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+"OUT --resultdir=" +StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment()) + "Results --cmdtorun=rScript.R --pattern="+outFile+" --type=R --version=R-3.2.0", "cd "+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+"OUT", "condor_submit_dag mydag.dag" );
+
+			this.runSSHCommands("cd " + this.submitFolder, "tar -zxvf tarfile.tar.gz", "rm tarfile.tar.gz");
+			Thread.sleep(30000);
+			transferFile(submitFile, submitFolder, "submit_" + datasetName() + ".sub");
+			Thread.sleep(30000);
+			transferFile(shFile, submitFolder,  "script_" + datasetName() + ".sh");
+			Thread.sleep(30000);
+			this.runSSHCommands("cd " + this.submitFolder, "dos2unix script_" + datasetName() + ".sh", "chmod +x script_" + datasetName() + ".sh", "condor_submit submit_" + datasetName() +".sub");
+			// this.runCommands("cd " + submitFolder + "/" + StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment()) +"/shared", "chmod 664 sl6-RLIBS.tar.gz");
+			// this.runCommands("cd ChtcRun", "./mkdag --data="+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+" --outputdir="+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+"OUT --resultdir=" +StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment()) + "Results --cmdtorun=rScript.R --pattern="+outFile+" --type=R --version=R-3.2.0", "cd "+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+"OUT", "condor_submit_dag mydag.dag" );
+
+			//Process p = Runtime.getRuntime().exec(new String[]{cmd2}, null, new File(localDatasetDir.getParent()));
+			
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
-		
-		this.runSSHCommands("mkdir -p " + submitFolder); // Make sure the directory exists
-		transferFile(new File(localDatasetDir.getParent() + File.separator + "tarfile.tar.gz"), submitFolder, "tarfile.tar.gz");
-		//this.runCommands("cd ChtcRun", "unzip zipfile.zip", "rm zipfile.zip","./mkdag --data="+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+" --outputdir="+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+"OUT --resultdir=" +StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment()) + "Results --cmdtorun=rScript.R --pattern="+outFile+" --type=R --version=R-3.2.0", "cd "+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+"OUT", "condor_submit_dag mydag.dag" );
-		this.runSSHCommands("cd " + this.submitFolder, "tar -zxvf tarfile.tar.gz", "rm tarfile.tar.gz");
-		transferFile(submitFile, submitFolder, "submit_" + datasetName() + ".sub");
-		transferFile(shFile, submitFolder,  "script_" + datasetName() + ".sh");
-		this.runSSHCommands("cd " + this.submitFolder, "dos2unix script_" + datasetName() + ".sh", "chmod +x script_" + datasetName() + ".sh", "condor_submit submit_" + datasetName() +".sub");
-		// this.runCommands("cd " + submitFolder + "/" + StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment()) +"/shared", "chmod 664 sl6-RLIBS.tar.gz");
-		// this.runCommands("cd ChtcRun", "./mkdag --data="+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+" --outputdir="+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+"OUT --resultdir=" +StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment()) + "Results --cmdtorun=rScript.R --pattern="+outFile+" --type=R --version=R-3.2.0", "cd "+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+"OUT", "condor_submit_dag mydag.dag" );
-		
+
 		firstTimeCalled = true;
 		localDatasetDir = null;
 		submitFile = null;

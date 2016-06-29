@@ -419,7 +419,7 @@ public class HTCondorSubmit_Updated extends JEXPlugin {
 		// String cmd1 = "cd "+ JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getTempFolderName();
 		// String cmd2 = "zip -r " + "zipfile.zip" +" " + R.sQuote(StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment()));
 		String cmd2 = "tar -zcvf " + "tarfile.tar.gz" +" " + R.sQuote(localDatasetDir.getName());
-		ScriptRepository.runSysCommand(new String[]{"sh", "-c", cmd2}, localDatasetDir.getParent()); // Compress the files
+		ScriptRepository.runSysCommandApache(new String[]{"sh", "-c", cmd2}, localDatasetDir.getParent()); // Compress the files
 		
 		this.runSSHCommands("mkdir -p " + submitFolder); // Make sure the directory exists
 		transferFile(new File(localDatasetDir.getParent() + File.separator + "tarfile.tar.gz"), submitFolder, "tarfile.tar.gz");
