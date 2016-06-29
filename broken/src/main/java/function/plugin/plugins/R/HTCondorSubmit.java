@@ -320,7 +320,7 @@ public class HTCondorSubmit extends JEXPlugin {
 		//String cmd1 = "cd "+ JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getTempFolderName();
 		//String cmd2 = "zip -r " + "zipfile.zip" +" " + R.sQuote(StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment()));
 		String cmd2 = "tar -zcvf " + "tarfile.tar.gz" +" " + R.sQuote(dir.getName());
-		ScriptRepository.runSysCommand(new String[]{"sh", "-c", cmd2}, dir.getParent());
+		ScriptRepository.runSysCommandApache(new String[]{"sh", "-c", cmd2}, dir.getParent());
 		transferFile(new File(dir.getParent() + File.separator + "tarfile.tar.gz"), "ChtcRun");
 		//this.runCommands("cd ChtcRun", "unzip zipfile.zip", "rm zipfile.zip","./mkdag --data="+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+" --outputdir="+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+"OUT --resultdir=" +StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment()) + "Results --cmdtorun=rScript.R --pattern="+outFile+" --type=R --version=R-3.2.0", "cd "+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+"OUT", "condor_submit_dag mydag.dag" );
 		this.runCommands("cd ChtcRun", "tar zxvf tarfile.tar.gz", "rm tarfile.tar.gz");

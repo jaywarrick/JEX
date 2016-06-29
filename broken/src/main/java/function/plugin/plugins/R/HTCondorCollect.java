@@ -106,15 +106,25 @@ public class HTCondorCollect extends JEXPlugin {
 		String cmd1 = "cd " + R.sQuote(this.submitFolder + "/" + exptName);
 		String cmd2 = "zip -r " + id + ".zip " + id + "/"; 
 		this.runCommands(cmd1, cmd2);
+		try {
+		    Thread.sleep(30000);                
+		} catch(InterruptedException ex) {
+		    Thread.currentThread().interrupt();
+		};
 
 		// Transfer the zip to the temp folder and umpack the files
 		String uniqueFolder = JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getUniqueRelativeTempPath(null);
 		this.transferFile(this.submitFolder + "/" + exptName, id + ".zip", uniqueFolder);
+		try {
+		    Thread.sleep(30000);                
+		} catch(InterruptedException ex) {
+		    Thread.currentThread().interrupt();
+		};
 		//String cmd3 = "scp " + username + "@" + host + ":" + R.sQuote("ChtcRun/" + exptName + "/" + id + ".zip") + " " + R.sQuote(uniqueFolder + File.separator + id + ".zip");
 		String cmd3 = "unzip -d " + R.sQuote(uniqueFolder) + " " + R.sQuote(uniqueFolder + File.separator + id + ".zip");
 		String cmd4 = "rm -rf " + R.sQuote(uniqueFolder + File.separator + id + ".zip");
-		ScriptRepository.runSysCommand(new String[]{"sh", "-c", cmd3});
-		ScriptRepository.runSysCommand(new String[]{"sh", "-c", cmd4});
+		ScriptRepository.runSysCommandApache(new String[]{"sh", "-c", cmd3});
+		ScriptRepository.runSysCommandApache(new String[]{"sh", "-c", cmd4});
 		
 		
 		
