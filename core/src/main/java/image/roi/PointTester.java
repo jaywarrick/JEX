@@ -104,8 +104,9 @@ import tables.DimensionMap;
 import updates.Updater;
 import weka.core.converters.JEXTableWriter;
 
-public class PointTester {// extends URLClassLoader {
+public class PointTester {
 
+	public static String thing = "yourPassWord";
 	static
 	{
 		LegacyInjector.preinit();
@@ -113,9 +114,15 @@ public class PointTester {// extends URLClassLoader {
 
 	public static void main(String[] args) throws Exception
 	{
-		tryConvertingStringToMatrixOrientation();
+		testApache();
+		System.out.println("Yay!");
 	}
 	
+	public static void testApache()
+	{
+		ScriptRepository.runSysCommandApache(new String[]{"ls", "unzip 2016-04-21MMAdhesionPt616.zip"}, "D:/Teddy/Jex/Brightfield Adhesion/temp/JEXData0000001500");
+	}
+
 	public static void tryConvertingStringToMatrixOrientation()
 	{
 		ImageJ ij = new ImageJ();
@@ -123,21 +130,21 @@ public class PointTester {// extends URLClassLoader {
 		Logs.log(""+ij.convert().supports(String.class, MatrixOrientation2D.class), PointTester.class);
 		Logs.log(""+ij.convert().supports(String.class, MatrixOrientation.class), PointTester.class);
 	}
-	
+
 	public static void tryImageMoments()
 	{
 		Img<UnsignedByteType> img = createImg();
-		
+
 		ImageJ ij = new ImageJ();
 		DoubleType d = ij.op().imagemoments().huMoment2(img);
-		
+
 		Logs.log(d.toString(), PointTester.class);
 	}
 
 	public static Img<UnsignedByteType> createImg() {
 
 		Img<UnsignedByteType> tmp =
-			ArrayImgs.unsignedBytes(new long[] { 100, 100 });
+				ArrayImgs.unsignedBytes(new long[] { 100, 100 });
 
 		Random rand = new Random(1234567890L);
 		final Cursor<UnsignedByteType> cursor = tmp.cursor();
@@ -148,7 +155,7 @@ public class PointTester {// extends URLClassLoader {
 		return tmp;
 
 	}
-	
+
 	public static void tryPolygonSizeOp()
 	{
 		PointList pl = new PointList();
@@ -157,13 +164,13 @@ public class PointTester {// extends URLClassLoader {
 		pl.add(1, 1);
 		pl.add(1, 0);
 		Polygon p = new Polygon(pl);
-		
+
 		UnaryFunctionOp<Polygon,DoubleType> op = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.Size.class, DoubleType.class,  p);
 		DoubleType d = op.compute1(p);
-		
+
 		Logs.log(d.toString(), PointTester.class);
 	}
-	
+
 	public static void tryBooleanImageCalc2() throws ImgIOException
 	{
 		String path1 = "/Users/jaywarrick/Pictures/TIFFS/Dot.tif";
@@ -178,10 +185,10 @@ public class PointTester {// extends URLClassLoader {
 
 		Op op = IJ2PluginUtility.ij().op().op(net.imagej.ops.math.RealBinaryMath.Divide.class, RealType.class, RealType.class, RealType.class, 50.0);
 		IJ2PluginUtility.ij().op().run(IIAndRAIToRAI.class, dot2, dot1, dot2, op);
-		
+
 		ImageJFunctions.show(dot1);
 		ImageJFunctions.show(dot2);
-		
+
 		List<PluginInfo<Op>> infos = IJ2PluginUtility.ij().op().getPlugins();
 		for(PluginInfo<Op> info : infos)
 		{
@@ -203,10 +210,10 @@ public class PointTester {// extends URLClassLoader {
 
 		Op andOp = IJ2PluginUtility.ij().op().op(Ops.Logic.LogicalEqual.class, dot2, dot1);
 		andOp.run();
-		
+
 		ImageJFunctions.show(dot1);
 		ImageJFunctions.show(dot2);
-		
+
 		List<PluginInfo<Op>> infos = IJ2PluginUtility.ij().op().getPlugins();
 		for(PluginInfo<Op> info : infos)
 		{

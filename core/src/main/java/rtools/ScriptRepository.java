@@ -9,7 +9,14 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 
+import org.apache.commons.exec.CommandLine;
+import org.apache.commons.exec.DefaultExecuteResultHandler;
+import org.apache.commons.exec.DefaultExecutor;
+import org.apache.commons.exec.ExecuteException;
+import org.apache.commons.exec.PumpStreamHandler;
+import org.apache.commons.exec.environment.EnvironmentUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.output.ByteArrayOutputStream;
 
 import Database.SingleUserDatabase.JEXWriter;
 import jex.statics.JEXDialog;
@@ -46,10 +53,71 @@ public class ScriptRepository {
 			e.printStackTrace();
 		}
 	}
-
-	public static void runRScript(String[] expressions)
+	
+	public static void runSysCommandApache(String[] cmds)
 	{
-		String[] cmds = new String[2*expressions.length + 1];
+		runSysCommandApache(cmds, null, true);
+	}
+	
+	public static void runSysCommandApache(String[] cmds, String directory)
+	{
+		runSysCommandApache(cmds, directory, true);
+	}
+
+	public static void runSysCommandApache(String[] cmds, String directory, boolean wait)
+	{
+		try
+		{
+			DefaultExecutor executor = new DefaultExecutor();
+			if(directory != null )
+			{
+				File dir = new File(directory);
+				if(dir.isDirectory() && dir.exists())
+				{
+					executor.setWorkingDirectory(new File(directory));
+				}
+				else
+				{
+					throw new IOException("Couldn't find the specified working directory.");
+				}
+			}
+
+			for(String cmd : cmds)
+			{
+				DefaultExecuteResultHandler resultHandler = new DefaultExecuteResultHandler();
+				ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+				PumpStreamHandler streamHandler = new PumpStreamHandler(outputStream);
+				executor.setStreamHandler(streamHandler);
+				executor.execute(CommandLine.parse(cmd), EnvironmentUtils.getProcEnvironment(), resultHandler);
+				if(wait)
+				{
+					resultHandler.waitFor();
+					if(resultHandler.getException() != null)
+					{
+						Logs.log(resultHandler.getException().getMessage(), Logs.ERROR, ScriptRepository.class);
+					}
+					else
+					{
+						Logs.log(outputStream.toString(), ScriptRepository.class);
+					}
+				}
+			}
+		}
+		catch(ExecuteException e){
+			e.printStackTrace();
+		}
+		catch(IOException e2){
+			e2.printStackTrace();
+		}
+		catch (InterruptedException e)
+		{
+			e.printStackTrace();
+		}
+	}
+
+	public static void runRScript(String[] scriptFilePaths)
+	{
+		String[] cmds = new String[2*scriptFilePaths.length + 1];
 		cmds[0] = "Rscript";
 		int j = 0;
 		for(int i = 1; i < cmds.length; i++)
@@ -60,13 +128,13 @@ public class ScriptRepository {
 			}
 			else
 			{
-				cmds[i] = expressions[j];
+				cmds[i] = scriptFilePaths[j];
 				j++;
 			}
 		}
-		runSysCommand(cmds);
+		runSysCommandApache(cmds);
 	}
-	
+
 	private static File getScriptFile(String resourcePath)
 	{
 		// e.g., resourcePath = "rtools/StartRserve.R";
@@ -114,79 +182,19 @@ public class ScriptRepository {
 			return null;
 		}
 	}
-	
+
 	public static void startRServe()
 	{
 		File scriptfile = getScriptFile("rtools/StartRserve.R");
 		if(scriptfile != null && scriptfile.exists())
 		{
-			runSysCommand(new String[] { "R", "CMD", "Rscript", scriptfile.getAbsolutePath() });
+			runSysCommandApache(new String[] { "R CMD Rscript " + R.dQuote(scriptfile.getAbsolutePath()) }, null, false);
 		}
 		else
 		{
 			Logs.log("Couldn't find the script file to start R! This is where I tried to look: " + scriptfile.getAbsolutePath(), ScriptRepository.class);
 		}
 
-	}
-	
-	public static void runSysCommand(String[] cmds)
-	{
-		runSysCommand(cmds, null);
-	}
-
-	public static void runSysCommand(String[] cmds, String workingDir)
-	{
-		try
-		{
-			Process p;
-			if(workingDir != null)
-			{
-				p = Runtime.getRuntime().exec(cmds, null, new File(workingDir));
-			}
-			else
-			{
-				p = Runtime.getRuntime().exec(cmds);
-			}
-
-			// // Debug code only... causes process to stall waiting for more
-			// lines to be read from the process.
-			// BufferedReader stdInput = new BufferedReader(new
-			// InputStreamReader(p.getInputStream()));
-			// BufferedReader stdError = new BufferedReader(new
-			// InputStreamReader(p.getErrorStream()));
-			//
-			// // read the output from the command
-			// JEXStatics.logManager.log("Here is the standard output of the command (if any):\n",
-			// 0, ScriptRepository.class.getSimpleName());
-			// while ((s = stdInput.readLine()) != null)
-			// {
-			// JEXStatics.logManager.log(s, 0,
-			// ScriptRepository.class.getSimpleName());
-			// }
-			//
-			// // read any errors from the attempted command
-			// JEXStatics.logManager.log("Here is the standard error of the command (if any):\n",
-			// 0, ScriptRepository.class.getSimpleName());
-			// while ((s = stdError.readLine()) != null)
-			// {
-			// JEXStatics.logManager.log(s, 0,
-			// ScriptRepository.class.getSimpleName());
-			// }
-			//
-			// stdInput.close();
-			// stdError.close();
-
-			p.waitFor();
-		}
-		catch (IOException e)
-		{
-			System.out.println("exception happened - here's what I know: ");
-			e.printStackTrace();
-		}
-		catch (InterruptedException e)
-		{
-			e.printStackTrace();
-		}
 	}
 
 }
