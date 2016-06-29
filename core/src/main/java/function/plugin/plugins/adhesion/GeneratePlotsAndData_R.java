@@ -1,14 +1,14 @@
 package function.plugin.plugins.adhesion;
 
 import java.io.File;
+import java.util.Map;
 import java.util.TreeMap;
 
-import jex.statics.JEXStatics;
-
+import org.jruby.RubyProcess.Sys;
+import org.rosuda.REngine.REXP;
+import org.rosuda.REngine.REXPMismatchException;
 import org.scijava.plugin.Plugin;
 
-import rtools.R;
-import tables.DimensionMap;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.FileReader;
@@ -20,6 +20,9 @@ import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.MarkerConstants;
 import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
+import jex.statics.JEXStatics;
+import rtools.R;
+import tables.DimensionMap;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions
@@ -95,7 +98,7 @@ public class GeneratePlotsAndData_R extends JEXPlugin {
 
 	@Override
 	public boolean run(JEXEntry optionalEntry)
-	{
+	{        
 		TreeMap<DimensionMap,String> phasePlots = new TreeMap<DimensionMap,String>();
 
 		// Validate the input data
@@ -146,7 +149,8 @@ public class GeneratePlotsAndData_R extends JEXPlugin {
 		//		lines(fitCurveData$t, fitCurveData$v, col='red')
 
 		R.eval("bestFit <- trackList$meta$bestFit");
-		R.eval("fitCurveData <- getSweep(amplitude=bestFit$par[['amplitude']], phaseShift=bestFit$par[['phaseShift']], sweepDuration=(1/bestFit$par[['timeScalingFactor']])*trackList$meta$sweepDuration, offset=0, sin=trackList$meta$sin, ti=bestFit$par[['ti']], fi=trackList$meta$fi, ff=trackList$meta$ff, t=trackList$meta$tAll, guess=NULL)");
+		// getSweep <- function(amplitude=1, phaseShift=0, offset=0, sin=FALSE, ti=0, fi=2, ff=0.1, sweepDuration=300, t=seq(0,300,0.05), guess=NULL, calcVelocity=TRUE, flipped=TRUE)
+		R.eval("fitCurveData <- getSweep(amplitude=bestFit$par[['amplitude']], phaseShift=bestFit$par[['phaseShift']], offset=0, sin=trackList$meta$sin, ti=bestFit$par[['ti']], fi=trackList$meta$fi, ff=trackList$meta$ff, sweepDuration=trackList$meta$sweepDuration, t=trackList$meta$tAll, guess=NULL, calcVelocity=TRUE, flipped=TRUE)");
 
 		count = count + 1;
 		percentage = (int) (100 * ((double) (count) / (total)));
@@ -158,17 +162,20 @@ public class GeneratePlotsAndData_R extends JEXPlugin {
 
 		// Plot the trackList velocities and the fitted curve
 		String plotPath = R.startPlot("tif", 7, 5, 600, 10, "Arial", "lzw");
-		R.eval("trackList$plotTrackList(slot='vx', ylim=c(-500,500), rel=FALSE, validOnly=FALSE, xlim=c(0,300))");
+		// plotTrackList = function(slot='vx', fun=NULL, rel=FALSE, ...)
+		R.eval("trackList$plotTrackList(slot='vxs', ylim=c(-500,500), rel=FALSE, validOnly=FALSE, xlim=c(0,300))");
 		R.eval("lines(fitCurveData$t, fitCurveData$v, col='red')");
 		R.endPlot();
 		phasePlots.put(new DimensionMap("i=0"), plotPath);
 		plotPath = R.startPlot("tif", 7, 5, 600, 10, "Arial", "lzw");
-		R.eval("trackList$plotTrackList(slot='vx', ylim=c(-500,500), rel=FALSE, validOnly=FALSE, xlim=c(0,5))");
+		// plotTrackList = function(slot='vx', fun=NULL, rel=FALSE, ...)
+		R.eval("trackList$plotTrackList(slot='vxs', ylim=c(-500,500), rel=FALSE, validOnly=FALSE, xlim=c(0,5))");
 		R.eval("lines(fitCurveData$t, fitCurveData$v, col='red')");
 		R.endPlot();
 		phasePlots.put(new DimensionMap("i=1"), plotPath);
 		plotPath = R.startPlot("tif", 7, 5, 600, 10, "Arial", "lzw");
-		R.eval("trackList$plotTrackList(slot='vx', ylim=c(-50,50), rel=FALSE, validOnly=FALSE, xlim=c(125,300))");
+		// plotTrackList = function(slot='vx', fun=NULL, rel=FALSE, ...)
+		R.eval("trackList$plotTrackList(slot='vxs', ylim=c(-50,50), rel=FALSE, validOnly=FALSE, xlim=c(125,300))");
 		R.eval("lines(fitCurveData$t, fitCurveData$v, col='red')");
 		R.endPlot();
 		phasePlots.put(new DimensionMap("i=2"), plotPath);
@@ -187,7 +194,8 @@ public class GeneratePlotsAndData_R extends JEXPlugin {
 		//		plot(results$time, results$percentAdhered, xlab='Time [s]', ylab='Percent Adhered [%]', pch=20, cex=0.75, ylim=c(0,100))
 
 		// Get the percent adhered
-		R.eval("adhesionResults <- trackList$getPercentAdhered(velocityThreshold=" + velocityThreshold + ")");
+		// getPercentAdhered = function(velocityThreshold=3)
+		R.eval("adhesionResults <- trackList$getPercentAdhered(velocityThreshold=" + velocityThreshold + ", slot='vxs')");
 		
 		count = count + 1;
 		percentage = (int) (100 * ((double) (count) / (total)));
@@ -198,7 +206,9 @@ public class GeneratePlotsAndData_R extends JEXPlugin {
 		}
 
 		// Fit the data
-		R.eval("adhesionResults$f <- getFrequencies(adhesionResults$time)$f");
+		// getFrequencies <- function(t=seq(0,300,0.035), fi=1, ff=0.01, duration=300)
+		R.eval("adhesionResults$f <- getFrequencies(adhesionResults$time, fi=trackList$meta$fi, ff=trackList$meta$ff, duration=trackList$meta$sweepDuration)$f");
+		// fitLogNormGS <- function(x, y, mu=lseq(0.0001, 0.5, 50), sigma=seq(0.01,1.51,0.01), alphaGuess=0.9, mu2Guess=-1, sigma2Guess=-1, method='L-BFGS-B', cores=1)
 		R.eval("fitResults <- fitLogNormGS(x=adhesionResults$f, y=adhesionResults$percentAdhered/100, mu=lseq(" + muRange + "), sigma=seq(" + sigmaRange + "), alphaGuess=" + alphaGuess + ", mu2Guess=" + mu2Guess + ", sigma2Guess=" + sigma2Guess + ", cores=" + cores + ")");
 		R.eval("fit1y <- do.call(logNorm, c(list(x=adhesionResults$f), fitResults$par1))");
 		R.eval("fit2y <- do.call(logNorm2, c(list(x=adhesionResults$f), fitResults$par2))");
