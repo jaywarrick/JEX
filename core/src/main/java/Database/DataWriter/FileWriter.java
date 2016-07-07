@@ -54,7 +54,7 @@ public class FileWriter {
 		data.addData(new DimensionMap(), ds);
 
 		// Test to see that the data was well inputed in the new JEXData, else return null
-		if(data.datamap.size() == 0)
+		if(data.getDataMap().size() == 0)
 		{
 			return null;
 		}
@@ -94,7 +94,7 @@ public class FileWriter {
 		}
 
 		// Test to see that the data was well inputed in the new JEXData, else return null
-		if(data.datamap.size() == 0)
+		if(data.getDataMap().size() == 0)
 		{
 			return null;
 		}

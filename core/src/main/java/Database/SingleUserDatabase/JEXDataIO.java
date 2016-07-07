@@ -267,7 +267,7 @@ public class JEXDataIO {
 		}
 		
 		// Fill the datamap
-		data.datamap = new TreeMap<DimensionMap,JEXDataSingle>();
+		data.setDataMap(new TreeMap<DimensionMap,JEXDataSingle>());
 		for (XDataSingle ds : singles)
 		{
 			JEXDataSingle dataSingle = JEXDBIO.XDataSingleToDatabaseObject(ds, data);
@@ -306,8 +306,8 @@ public class JEXDataIO {
 			data.setDataID(newData.getDataID());
 			
 			data.setDimTable(newData.getDimTable());
-			data.datamap.clear();
-			data.datamap.putAll(newData.datamap);
+			data.getDataMap().clear();
+			data.getDataMap().putAll(newData.getDataMap());
 		}
 	}
 	
@@ -341,14 +341,14 @@ public class JEXDataIO {
 			 * object doesn't actually contain any data.
 			 */
 			data.setDimTable(new DimTable());
-			data.datamap = new TreeMap<DimensionMap,JEXDataSingle>();
+			data.setDataMap(new TreeMap<DimensionMap,JEXDataSingle>());
 			return;
 		}
 		Table<String> table = JEXTableReader.getStringTable(fullpath);
 		DimTable temp = table.dimTable.copy();
 		Dim metaDim = temp.removeDimWithName(JEXTableWriter.METADATA);
 		data.setDimTable(temp);
-		data.datamap = new TreeMap<DimensionMap,JEXDataSingle>();
+		data.setDataMap(new TreeMap<DimensionMap,JEXDataSingle>());
 		if(temp.size() == 0)
 		{
 			DimensionMap map = new DimensionMap();

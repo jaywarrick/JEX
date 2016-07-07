@@ -48,7 +48,7 @@ public class JEXData {
 	public Type type;
 	public String name;
 	public HashMap<String,String> info = new HashMap<String,String>();;
-	public TreeMap<DimensionMap,JEXDataSingle> datamap = null;
+	private TreeMap<DimensionMap,JEXDataSingle> datamap = null;
 	public DimTable dimTable;
 	public String eid;
 	
@@ -510,6 +510,14 @@ public class JEXData {
 		// OR IT IS AN OLD XML FILE THAT HAS BEEN LOADED BUT DOESN'T HAVE A
 		// DETACHED FILE
 		return this.datamap;
+	}
+	
+	/**
+	 * Set the datamap for this JEXData
+	 */
+	public void setDataMap(TreeMap<DimensionMap,JEXDataSingle> newDataMap)
+	{
+		this.datamap = newDataMap;
 	}
 	
 	/**
