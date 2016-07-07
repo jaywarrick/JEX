@@ -206,6 +206,11 @@ public class JEX_ImageMath extends JEXCrunchable {
 		int percentage = 0;
 		for (DimensionMap map : imageMap.keySet())
 		{
+			if(this.isCanceled())
+			{
+				return false;
+			}
+			
 			FloatProcessor imp = (FloatProcessor) (new ImagePlus(imageMap.get(map))).getProcessor().convertToFloat();
 			// Calculate the differential
 			if(op.equals("ADD"))
