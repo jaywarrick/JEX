@@ -78,7 +78,7 @@ public class LogFreqSweep {
 		while(true)
 		{
 			Double t = getTimeForPeriodDistance((frame-1)*periodInterval);
-			if(t == null || t > tf)
+			if(t == null || !Double.isFinite(t) || t > tf)
 			{
 				break;
 			}
@@ -95,7 +95,7 @@ public class LogFreqSweep {
 	{
 		try
 		{
-			if(ff >= fi)
+			if(ff == fi)
 			{
 				double ret = T/(4*fi);
 				return ret;

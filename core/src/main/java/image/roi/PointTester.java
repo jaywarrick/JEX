@@ -18,6 +18,7 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.Vector;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -34,6 +35,7 @@ import function.plugin.IJ2.IJ2PluginUtility;
 import function.plugin.mechanism.JEXCrunchablePlugin;
 import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.JEXPluginInfo;
+import function.plugin.plugins.adhesion.LogFreqSweep;
 import function.singleCellAnalysis.SingleCellUtility;
 import ij.ImagePlus;
 import ij.gui.PolygonRoi;
@@ -61,6 +63,7 @@ import io.scif.img.ImgIOException;
 import io.scif.img.ImgOpener;
 import io.scif.img.SCIFIOImgPlus;
 import jex.statics.JEXDialog;
+import jex.utilities.ImageUtility;
 import jex.utilities.ROIUtility;
 import loci.common.DataTools;
 import logs.Logs;
@@ -113,7 +116,18 @@ public class PointTester {// extends URLClassLoader {
 
 	public static void main(String[] args) throws Exception
 	{
-		tryConvertingStringToMatrixOrientation();
+		tryLogFreqSweep();
+	}
+	
+	public static void tryLogFreqSweep()
+	{
+		LogFreqSweep lfs = new LogFreqSweep(0.01,1,300);
+		TreeSet<Integer> tfs = lfs.getTrueFrames(8750, 0.035, 30);
+		System.out.println("(A)");
+		for(Integer i : tfs)
+		{
+			System.out.println(i);
+		}	
 	}
 	
 	public static void tryConvertingStringToMatrixOrientation()
