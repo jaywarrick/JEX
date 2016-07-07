@@ -133,7 +133,7 @@ public class RoiWriter {
 			// result.put("roiType",""+roi.type);
 		}
 		
-		if(data.datamap.size() == 0)
+		if(data.getDataMap().size() == 0)
 		{
 			return null;
 		}
@@ -188,7 +188,7 @@ public class RoiWriter {
 			
 		}
 		
-		if(data.datamap.size() == 0)
+		if(data.getDataMap().size() == 0)
 		{
 			return null;
 		}

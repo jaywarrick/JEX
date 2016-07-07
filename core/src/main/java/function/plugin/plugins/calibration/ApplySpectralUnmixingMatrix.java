@@ -34,7 +34,7 @@ import function.plugin.mechanism.ParameterMarker;
 		name="Apply Spectral Unmixing Matrix",
 		menuPath="Calibration",
 		visible=true,
-		description="Treat an image object as a stack, calculate the median/mean of subgroups of images, take the mean of the subgroups, and smooth if desired. Result of the first successful entry is copied to all selected entries if desired."
+		description="Apply a spectral matrix to convert the image from color space to material space (i.e., each channel represents the 'amount' of each material in each pixel). This is essentially compensation as done for flow cytometry."
 		)
 public class ApplySpectralUnmixingMatrix extends JEXPlugin {
 	

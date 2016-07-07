@@ -76,7 +76,7 @@ public class RoiTrackWriter {
 			}
 		}
 		
-		if(data.datamap.size() == 0)
+		if(data.getDataMap().size() == 0)
 		{
 			return null;
 		}
@@ -146,7 +146,7 @@ public class RoiTrackWriter {
 			trackkey += 1;
 		}
 		
-		if(data.datamap.size() == 0)
+		if(data.getDataMap().size() == 0)
 		{
 			return null;
 		}
