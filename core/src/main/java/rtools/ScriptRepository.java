@@ -8,12 +8,15 @@ import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Vector;
 
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecuteResultHandler;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.ExecuteException;
+import org.apache.commons.exec.ExecuteWatchdog;
 import org.apache.commons.exec.PumpStreamHandler;
+import org.apache.commons.exec.ShutdownHookProcessDestroyer;
 import org.apache.commons.exec.environment.EnvironmentUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.output.ByteArrayOutputStream;
@@ -27,6 +30,8 @@ public class ScriptRepository {
 
 	public static String R_COMMON = "RCommon.R", LAPJV = "LAPJV", MAXIMA = "Maxima", MAXIMA_LIST = "MaximaList", PACKAGE_FUNCTIONS = "PackageFunctions", START_R_SERVE = "StartRServe", TRACK = "Track", TRACK_FILTERS = "TrackFilters", TRACK_FITTING = "TrackFitting", TRACKING = "Tracking", TRACK_LIST = "TrackList";
 
+	private static Vector<DefaultExecutor> executors = new Vector<>();
+	
 	public static void sourceGitHubFile(String user, String repository, String branch, String fileName)
 	{
 		// https://github.com/user/repository/raw/branch/filename
@@ -69,6 +74,10 @@ public class ScriptRepository {
 		try
 		{
 			DefaultExecutor executor = new DefaultExecutor();
+			executor.setProcessDestroyer(new ShutdownHookProcessDestroyer());
+			ExecuteWatchdog watchdog = new ExecuteWatchdog(ExecuteWatchdog.INFINITE_TIMEOUT);
+			executor.setWatchdog(watchdog);
+			ScriptRepository.executors.addElement(executor);
 			if(directory != null )
 			{
 				File dir = new File(directory);
@@ -102,6 +111,7 @@ public class ScriptRepository {
 					}
 				}
 			}
+			//return executor;
 		}
 		catch(ExecuteException e){
 			e.printStackTrace();
@@ -113,6 +123,7 @@ public class ScriptRepository {
 		{
 			e.printStackTrace();
 		}
+		//return null;
 	}
 
 	public static void runRScript(String[] scriptFilePaths)

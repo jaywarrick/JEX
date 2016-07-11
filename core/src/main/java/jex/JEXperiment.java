@@ -1,9 +1,5 @@
 package jex;
 
-import guiObject.DialogGlassPane;
-import guiObject.SignalMenuButton;
-import icons.IconRepository;
-
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Container;
@@ -37,6 +33,11 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.WindowConstants;
 
+import Database.SingleUserDatabase.JEXDBIO;
+import cruncher.Cruncher;
+import guiObject.DialogGlassPane;
+import guiObject.SignalMenuButton;
+import icons.IconRepository;
 import jex.jexTabPanel.JEXTabPanelController;
 import jex.jexTabPanel.creationPanel.JEXCreationPanelController;
 import jex.jexTabPanel.jexDistributionPanel.JEXDistributionPanelController;
@@ -58,8 +59,6 @@ import preferences.XPreferences;
 import rtools.R;
 import signals.SSCenter;
 import updates.Updater;
-import Database.SingleUserDatabase.JEXDBIO;
-import cruncher.Cruncher;
 
 public class JEXperiment extends JFrame implements ActionListener, WindowListener, WindowFocusListener, KeyEventDispatcher {
 	
@@ -113,6 +112,7 @@ public class JEXperiment extends JFrame implements ActionListener, WindowListene
 		
 		// Properties of this window
 		this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+		this.addWindowListener(this);
 		this.setVisible(false);
 		this.setTitle("Je'Xperiment - Databasing made for the biologist");
 		
@@ -908,10 +908,7 @@ public class JEXperiment extends JFrame implements ActionListener, WindowListene
 	 */
 	public void quit()
 	{
-		if(R.isConnected())
-		{
-			R.close();
-		}
+		R.close();
 		this.dispose();
 		System.exit(0);
 	}
@@ -994,7 +991,9 @@ public class JEXperiment extends JFrame implements ActionListener, WindowListene
 	
 	@Override
 	public void actionPerformed(ActionEvent e)
-	{}
+	{
+		System.out.println("Closing JEX");
+	}
 	
 	public void savePrefs()
 	{
@@ -1052,6 +1051,10 @@ public class JEXperiment extends JFrame implements ActionListener, WindowListene
 	
 	@Override
 	public void windowClosed(WindowEvent e)
+	{}
+	
+	@Override
+	public void windowClosing(WindowEvent e)
 	{
 		if(e.getSource() == this)
 		{
@@ -1062,28 +1065,31 @@ public class JEXperiment extends JFrame implements ActionListener, WindowListene
 		{
 			PrefsUtility.reloadPrefs();
 		}
-		
 	}
 	
 	@Override
-	public void windowClosing(WindowEvent e)
-	{}
-	
-	@Override
 	public void windowDeactivated(WindowEvent e)
-	{}
+	{
+		System.out.println("Look at this photograph");
+	}
 	
 	@Override
 	public void windowDeiconified(WindowEvent e)
-	{}
+	{
+		System.out.println("Every time I do it makes me laugh");
+	}
 	
 	@Override
 	public void windowIconified(WindowEvent e)
-	{}
+	{
+		System.out.println("Window Iconified");
+	}
 	
 	@Override
 	public void windowOpened(WindowEvent e)
-	{}
+	{
+		System.out.println("Window Event");
+	}
 	
 	// -------------------------------------
 	// --------- Main functions ---------

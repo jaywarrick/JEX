@@ -7,24 +7,24 @@ import java.util.TreeMap;
 import java.util.Vector;
 import java.util.regex.Pattern;
 
-import logs.Logs;
-import miscellaneous.CSVList;
-import miscellaneous.DirectoryManager;
-import miscellaneous.FileUtility;
-import miscellaneous.LSVList;
-
 import org.rosuda.REngine.REXP;
 import org.rosuda.REngine.REXPMismatchException;
 import org.rosuda.REngine.REngineException;
 import org.rosuda.REngine.Rserve.RConnection;
 import org.rosuda.REngine.Rserve.RserveException;
 
-import tables.DimensionMap;
-import tables.Table;
 import Database.DBObjects.JEXData;
 import Database.DataWriter.FileWriter;
 import Database.DataWriter.ImageWriter;
 import Database.SingleUserDatabase.JEXWriter;
+import jex.statics.OsVersion;
+import logs.Logs;
+import miscellaneous.CSVList;
+import miscellaneous.DirectoryManager;
+import miscellaneous.FileUtility;
+import miscellaneous.LSVList;
+import tables.DimensionMap;
+import tables.Table;
 
 public class R {
 	
@@ -113,7 +113,20 @@ public class R {
 	
 	public static void close()
 	{
-		R.rConnection.close();
+		if(R.isConnected())
+		{
+			R.rConnection.close();
+		}
+		// Try to kill Rserve if possible.
+		else if(OsVersion.IS_WINDOWS)
+		{
+			try {
+				Runtime.getRuntime().exec("taskkill /F /IM Rserve.exe");
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		}
 	}
 	
 	public static REXP eval(String command)
