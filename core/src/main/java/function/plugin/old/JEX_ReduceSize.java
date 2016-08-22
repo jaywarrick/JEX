@@ -139,11 +139,13 @@ public class JEX_ReduceSize extends JEXCrunchable {
 	{
 		Parameter p1 = new Parameter("Binning", "Factor of image reduction", "2.0");
 		Parameter p2 = new Parameter("Output Bit Depth", "Depth of the outputted image", Parameter.DROPDOWN, new String[] { "8", "16", "32" }, 1);
+		Parameter p3 = new Parameter("Normalize Intensities?", "Normalize the intensities after binning?", Parameter.CHECKBOX, false);
 		
 		// Make an array of the parameters and return it
 		ParameterSet parameterArray = new ParameterSet();
 		parameterArray.addParameter(p1);
 		parameterArray.addParameter(p2);
+		parameterArray.addParameter(p3);
 		return parameterArray;
 	}
 	
@@ -182,6 +184,7 @@ public class JEX_ReduceSize extends JEXCrunchable {
 		// //// Get params
 		double binning = Double.parseDouble(parameters.getValueOfParameter("Binning"));
 		int depth = Integer.parseInt(parameters.getValueOfParameter("Output Bit Depth"));
+		boolean normalize = Boolean.parseBoolean(parameters.getValueOfParameter("Normalize Intensities?"));
 		
 		// Run the function
 		TreeMap<DimensionMap,String> images = ImageReader.readObjectToImagePathTable(data);
@@ -203,7 +206,6 @@ public class JEX_ReduceSize extends JEXCrunchable {
 			// get the image
 			ImagePlus im = new ImagePlus(path);
 			ij.process.ImageProcessor imProc = im.getProcessor();
-			boolean shouldNormalize = im.getBitDepth() != depth;
 			if(imProc == null)
 				continue;
 			FloatProcessor imp = (FloatProcessor) im.getProcessor().convertToFloat(); // should
@@ -223,7 +225,7 @@ public class JEX_ReduceSize extends JEXCrunchable {
 			// String finalPath = localDir + File.separator + newFileName;
 			// FunctionUtility.imSave(imp, "true", depth, finalPath);
 
-			ImagePlus toSave = FunctionUtility.makeImageToSave(imp, ""+shouldNormalize, depth);
+			ImagePlus toSave = FunctionUtility.makeImageToSave(imp, ""+normalize, depth);
 
 			String finalPath = JEXWriter.saveImage(toSave);
 			
