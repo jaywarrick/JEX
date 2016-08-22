@@ -310,9 +310,9 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 			Roi roi;
 			ROIPlus roip;
 			int count = 0, percentage = 0, counter = 0;
-			MaximumFinder mf = new MaximumFinder();
 			for (DimensionMap map : filteredTable.getMapIterator())
 			{
+				MaximumFinder mf = new MaximumFinder();
 				if(this.isCanceled())
 				{
 					return false;
