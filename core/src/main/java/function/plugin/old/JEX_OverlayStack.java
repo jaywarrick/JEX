@@ -366,11 +366,8 @@ public class JEX_OverlayStack extends JEXCrunchable {
 					bfImp.log();
 					bfImp.multiply(255 / Math.log(255));
 				}
-				if(w == null)
-				{
-					w = bfImp.getWidth();
-					h = bfImp.getHeight();
-				}
+				w = bfImp.getWidth();
+				h = bfImp.getHeight();
 			}
 			
 			// Fix Red
@@ -380,11 +377,8 @@ public class JEX_OverlayStack extends JEXCrunchable {
 				im = new ImagePlus(rPath);
 				imp = (FloatProcessor) im.getProcessor().convertToFloat(); // should be a float processor
 				FunctionUtility.imAdjust(imp, rMin, rMax, 0d, 255d, 1d);
-				if(w == null)
-				{
-					w = imp.getWidth();
-					h = imp.getHeight();
-				}
+				w = imp.getWidth();
+				h = imp.getHeight();
 				im.flush();
 				im = null;
 			}
@@ -398,11 +392,8 @@ public class JEX_OverlayStack extends JEXCrunchable {
 				im = new ImagePlus(gPath);
 				imp = (FloatProcessor) im.getProcessor().convertToFloat(); // should be a float processor
 				FunctionUtility.imAdjust(imp, gMin, gMax, 0d, 255d, 1d);
-				if(w == null)
-				{
-					w = imp.getWidth();
-					h = imp.getHeight();
-				}
+				w = imp.getWidth();
+				h = imp.getHeight();
 				im.flush();
 				im = null;
 			}
@@ -416,11 +407,8 @@ public class JEX_OverlayStack extends JEXCrunchable {
 				im = new ImagePlus(bPath);
 				imp = (FloatProcessor) im.getProcessor().convertToFloat(); // should be a float processor
 				FunctionUtility.imAdjust(imp, bMin, bMax, 0d, 255d, 1d);
-				if(w == null)
-				{
-					w = imp.getWidth();
-					h = imp.getHeight();
-				}
+				w = imp.getWidth();
+				h = imp.getHeight();
 				im.flush();
 				im = null;
 			}
