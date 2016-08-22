@@ -21,6 +21,7 @@ import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.MarkerConstants;
 import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
+import jex.statics.JEXStatics;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions
@@ -109,11 +110,23 @@ public class ReMergeObject extends JEXPlugin {
 		
 		JEXData ret = new JEXData(new Type(type), newName);
 		
+		int tot = 0;
+		for(Entry<DimensionMap,JEXData> e1 : objectsToMerge.entrySet())
+		{
+			tot = tot + e1.getValue().getDataMap().size();
+		}
+			
+		int count = 0;
+		int percentage = 0;
 		for(Entry<DimensionMap,JEXData> e1 : objectsToMerge.entrySet())
 		{
 			TreeMap<DimensionMap,JEXDataSingle> temp = e1.getValue().getDataMap();
 			for(Entry<DimensionMap,JEXDataSingle> e2 : temp.entrySet())
 			{
+				if(this.isCanceled())
+				{
+					return false;
+				}
 				JEXDataSingle toAdd = e2.getValue().copy();
 				if(e1.getValue().getTypeName().getType().matches(JEXData.FILE) || e1.getValue().getTypeName().getType().matches(JEXData.IMAGE) || e1.getValue().getTypeName().getType().matches(JEXData.MOVIE) || e1.getValue().getTypeName().getType().matches(JEXData.SOUND))
 				{
@@ -137,6 +150,10 @@ public class ReMergeObject extends JEXPlugin {
 				DimensionMap newMap = e1.getKey().copy();
 				newMap.putAll(e2.getKey());
 				ret.addData(newMap, toAdd);
+				// Status bar
+				count = count + 1;
+				percentage = (int) (100 * ((double) count / (double) tot));
+				JEXStatics.statusBar.setProgressPercentage(percentage);
 			}
 		}
 		
