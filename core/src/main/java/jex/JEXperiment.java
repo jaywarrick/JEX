@@ -1070,25 +1070,25 @@ public class JEXperiment extends JFrame implements ActionListener, WindowListene
 	@Override
 	public void windowDeactivated(WindowEvent e)
 	{
-		System.out.println("Look at this photograph");
+		// System.out.println("Look at this photograph");
 	}
 	
 	@Override
 	public void windowDeiconified(WindowEvent e)
 	{
-		System.out.println("Every time I do it makes me laugh");
+		// System.out.println("Every time I do it makes me laugh");
 	}
 	
 	@Override
 	public void windowIconified(WindowEvent e)
 	{
-		System.out.println("Window Iconified");
+		// System.out.println("Window Iconified");
 	}
 	
 	@Override
 	public void windowOpened(WindowEvent e)
 	{
-		System.out.println("Window Event");
+		// System.out.println("Window Event");
 	}
 	
 	// -------------------------------------
