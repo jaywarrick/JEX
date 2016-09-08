@@ -364,37 +364,43 @@ public class JEX_SingleCell_BackGroundCorrectCalibrated extends JEXCrunchable {
 			}
 			
 			// //// Subtract the background from the filtered (Image-DF)
-			FloatProcessor impTemp = new FloatProcessor(imp.getFloatArray());
-			RankFilters rF = new RankFilters();
-			rF.rank(impTemp, bgPresmoothRadius, RankFilters.MEAN);
+			if(bgRadius > 0)
+			{
+				FloatProcessor impTemp = new FloatProcessor(imp.getFloatArray());
+				RankFilters rF = new RankFilters();
+				rF.rank(impTemp, bgPresmoothRadius, RankFilters.MEAN);
+				
+				BackgroundSubtracter bS = new BackgroundSubtracter();			
+				bS.rollingBallBackground(impTemp, bgRadius, true, bgInverse, bgParaboloid, bgPresmooth, true);
+				
+				// subtract the calculated background from the image
+				blit.copyBits(impTemp, 0, 0, FloatBlitter.SUBTRACT);
+				
+				// Release memory of impTemp
+				impTemp = null;
+			}
 			
-			BackgroundSubtracter bS = new BackgroundSubtracter();			
-			bS.rollingBallBackground(impTemp, bgRadius, true, bgInverse, bgParaboloid, bgPresmooth, true);
-			
-			// subtract the calculated background from the image
-			blit.copyBits(impTemp, 0, 0, FloatBlitter.SUBTRACT);
-			
-			// Release memory of impTemp
-			impTemp = null;
 			
 			// //// Subtract off remaining background because subtraction method
 			// //subtracts off the MINIMUM of the background, we want the mean of
 			// //the background to be zero
-			double remainderMean = ImageUtility.getHistogramPeakBin(imp, -sigma, sigma, -1, false);
-			
-			// try
-			// {
-			// FileUtility.openFileDefaultApplication(JEXWriter.saveImage(imp));
-			// }
-			// catch (Exception e)
-			// {
-			// // TODO Auto-generated catch block
-			// e.printStackTrace();
-			// }
-			
-			// Subtract off the remainder of the background before division with
-			// the illumination field
-			imp.add(-1 * remainderMean);
+			if(sigma > 0)
+			{
+				double remainderMean = ImageUtility.getHistogramPeakBin(imp, -sigma, sigma, -1, false);
+				// try
+				// {
+				// FileUtility.openFileDefaultApplication(JEXWriter.saveImage(imp));
+				// }
+				// catch (Exception e)
+				// {
+				// // TODO Auto-generated catch block
+				// e.printStackTrace();
+				// }
+				
+				// Subtract off the remainder of the background before division with
+				// the illumination field
+				imp.add(-1 * remainderMean);
+			}
 			
 			if(illumImp != null)
 			{
