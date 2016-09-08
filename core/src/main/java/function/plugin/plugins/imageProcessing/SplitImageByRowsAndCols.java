@@ -40,7 +40,7 @@ import function.plugin.plugins.Import.ImportImages_SCIFIO;
 		name="Split Image by Rows and Cols",
 		menuPath="Image Processing",
 		visible=true,
-		description="Divide up the original image by rows and columns into separate images."
+		description="Divide up the original image into i rows and j columns, forming separate images for each tile."
 		)
 public class SplitImageByRowsAndCols extends JEXPlugin {
 
@@ -54,18 +54,25 @@ public class SplitImageByRowsAndCols extends JEXPlugin {
 
 	/////////// Define Parameters ///////////
 
-	@ParameterMarker(uiOrder=1, name="Rows", description="Image Intensity Value", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
+	@ParameterMarker(uiOrder=1, name="Rows", description="Number of rows into which the image should be divided.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="2")
 	int rows;
 
-	@ParameterMarker(uiOrder=3, name="New Row Dim Name", description="Image Intensity Value", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
+	@ParameterMarker(uiOrder=2, name="Cols", description="Number of cols into which the image should be divided.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="2")
+	int cols;
+	
+	@ParameterMarker(uiOrder=3, name="New Row Dim Name", description="Name for the new row dimension.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="ImRow")
 	String rowName;
 
-	@ParameterMarker(uiOrder=2, name="Cols", description="Image Intensity Value", ui=MarkerConstants.UI_TEXTFIELD, defaultText="4095.0")
-	int cols;
-
-	@ParameterMarker(uiOrder=3, name="New Col Dim Name", description="Image Intensity Value", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
+	@ParameterMarker(uiOrder=4, name="New Col Dim Name", description="Name for the new col dimension", ui=MarkerConstants.UI_TEXTFIELD, defaultText="ImCol")
 	String colName;
 
+	@ParameterMarker(uiOrder=5, name="Binning", description="Amount to bin the pixels to reduce image size. Value of 1 skips binning. Partial values converted to scale operation (e.g., bin=3.5 is converted to scale=1/3.5)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
+	double binning;
+	
+	@ParameterMarker(uiOrder=6, name="Binning Method", description="Method for binning the image.", ui=MarkerConstants.UI_DROPDOWN, choices={"NONE", "NEAREST NEIGHBOR", "BILINEAR", "BICUBIC"}, defaultChoice = 2)
+	String binMethod;
+
+	
 	/////////// Define Outputs ///////////
 
 	@OutputMarker(uiOrder=1, name="Split Image", type=MarkerConstants.TYPE_IMAGE, flavor="", description="The resultant split images", enabled=true)
@@ -76,6 +83,8 @@ public class SplitImageByRowsAndCols extends JEXPlugin {
 	{
 		return 10;
 	}
+	
+	private ImportImages_SCIFIO io = new ImportImages_SCIFIO();
 
 	@Override
 	public boolean run(JEXEntry optionalEntry)
@@ -103,7 +112,7 @@ public class SplitImageByRowsAndCols extends JEXPlugin {
 			// For each image split it if necessary
 			if(rows * cols > 1)
 			{
-				TreeMap<DimensionMap,ImageProcessor> splitImages = ImportImages_SCIFIO.splitRowsAndCols(im.getProcessor(), rows, cols, rowName, colName, this);
+				TreeMap<DimensionMap,ImageProcessor> splitImages = io.splitRowsAndCols(im.getProcessor(), binning, binMethod, rows, cols, rowName, colName, this);
 				// The above might return null because of being canceled. Catch cancel condition and move on.
 				if(this.isCanceled())
 				{
