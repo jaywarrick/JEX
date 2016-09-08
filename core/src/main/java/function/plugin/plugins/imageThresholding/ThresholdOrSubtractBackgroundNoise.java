@@ -175,15 +175,31 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 				ImagePlus im = new ImagePlus(imageMap.get(map));
 				FloatProcessor ip = (FloatProcessor) im.getProcessor().convertToFloat();
 
-				// Threshold it
-				FunctionUtility.imThresh(ip, thresh, false);
-				if(this.isCanceled())
+				String path = null;
+				if(this.threshold)
 				{
-					success = false;
-					return this.makeTreeMap("Success", false);
+					FunctionUtility.imThresh(ip, thresh, false);
+					if(this.isCanceled())
+					{
+						success = false;
+						return this.makeTreeMap("Success", false);
+					}
+					path = JEXWriter.saveImage(FunctionUtility.makeImageToSave(ip, "false", 8)); // Creating black and white image
 				}
-				String path = JEXWriter.saveImage(FunctionUtility.makeImageToSave(ip, "false", 8)); // Creating black and white image
-				outputMap.put(map.copy(), path);
+				else
+				{
+					ip.subtract(thresh);
+					if(this.isCanceled())
+					{
+						success = false;
+						return this.makeTreeMap("Success", false);
+					}
+					path = JEXWriter.saveImage(FunctionUtility.makeImageToSave(ip, ""+false, this.bitDepth)); // Creating black and white image
+				}
+				if(path != null)
+				{
+					outputMap.put(map, path);
+				}
 			}
 
 			// Combine rest of new data with current output data
@@ -276,7 +292,7 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 						success = false;
 						return this.makeTreeMap("Success", false);
 					}
-					path = JEXWriter.saveImage(FunctionUtility.makeImageToSave(ip, ""+false, bitDepth)); // Creating black and white image
+					path = JEXWriter.saveImage(FunctionUtility.makeImageToSave(ip, ""+false, this.bitDepth)); // Creating black and white image
 				}
 				if(path != null)
 				{
