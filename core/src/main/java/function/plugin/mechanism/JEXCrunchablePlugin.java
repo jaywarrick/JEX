@@ -1,7 +1,6 @@
 package function.plugin.mechanism;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -9,14 +8,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Vector;
 
-import jex.statics.JEXStatics;
-import logs.Logs;
-import miscellaneous.Canceler;
-
 import org.scijava.InstantiableException;
 import org.scijava.util.ClassUtils;
 import org.scijava.util.ConversionUtils;
-import org.scijava.util.GenericUtils;
 
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
@@ -25,6 +19,9 @@ import Database.Definition.TypeName;
 import cruncher.Ticket;
 import function.JEXCrunchable;
 import function.plugin.IJ2.IJ2PluginUtility;
+import jex.statics.JEXStatics;
+import logs.Logs;
+import miscellaneous.Canceler;
 
 
 public class JEXCrunchablePlugin extends JEXCrunchable {
