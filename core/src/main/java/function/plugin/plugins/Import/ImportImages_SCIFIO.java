@@ -22,7 +22,6 @@ import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.MarkerConstants;
 import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
-import ij.process.Blitter;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
@@ -40,6 +39,7 @@ import logs.Logs;
 import miscellaneous.Canceler;
 import miscellaneous.FileUtility;
 import miscellaneous.LSVList;
+import miscellaneous.Pair;
 import miscellaneous.SimpleFileFilter;
 import net.imagej.axis.Axes;
 import net.imagej.axis.CalibratedAxis;
@@ -73,16 +73,25 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 	@ParameterMarker(uiOrder=1, name="File Extension", description="The type of file that is being imported. Default is tif. Not necessary if importing a single file.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="tif")
 	String fileExtension;
 
-	@ParameterMarker(uiOrder=2, name="File Name Parse Separator", description="Charactor that separates dimension names in the image name (e.g., '_' in X002_Y003.tif). Use blank (i.e., no character) to avoid parsing.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="_")
-	String separator;
+	@ParameterMarker(uiOrder=2, name="Name-Value Pair Separator", description="Charactor that separates dimension name-value pairs in the image name (e.g., '_' in X.002_Y.003.tif). Use blank (i.e., no character) to avoid parsing anything whatsoever.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
+	String dimSeparator;
+	
+	@ParameterMarker(uiOrder=3, name="Name-Value Separator", description="Charactor that separates the name and value of the name-value pair in the image name (e.g., '.' in X.002_Y.003.tif). Use blank (i.e., no character) to split on first numeric character.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
+	String valueSeparator;
 
-	@ParameterMarker(uiOrder=3, name="Montage Rows", description="If this image is a montage and is to be split, how many rows are in the image.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
+	@ParameterMarker(uiOrder=4, name="Montage Rows", description="If this image is a montage and is to be split, how many rows are in the image.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
 	int imRows;
 
-	@ParameterMarker(uiOrder=4, name="Montage Cols", description="If this image is a montage and is to be split, how many cols are in the image.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
+	@ParameterMarker(uiOrder=5, name="Montage Cols", description="If this image is a montage and is to be split, how many cols are in the image.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
 	int imCols;
 
-	@ParameterMarker(uiOrder=5, name="Gather channel names (and other metadata)?", description="Transfer the name of each channel (e.g. DAPI, FITC, etc) if available in the metadata of the image. Otherwise, channels are named by index in the order they were provided by the image. Text from the entire metadata is saved as a file.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	@ParameterMarker(uiOrder=6, name="Binning", description="Amount to bin the pixels to reduce image size. Value of 1 skips binning. Partial values converted to scale operation (e.g., bin=3.5 is converted to scale=1/3.5)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
+	double binning;
+
+	@ParameterMarker(uiOrder=7, name="Binning Method", description="Method for binning the image.", ui=MarkerConstants.UI_DROPDOWN, choices={"NONE", "NEAREST NEIGHBOR", "BILINEAR", "BICUBIC"}, defaultChoice = 2)
+	String binMethod;
+
+	@ParameterMarker(uiOrder=8, name="Gather channel names (and other metadata)?", description="Transfer the name of each channel (e.g. DAPI, FITC, etc) if available in the metadata of the image. Otherwise, channels are named by index in the order they were provided by the image. Text from the entire metadata is saved as a file.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
 	boolean transferNames;
 
 
@@ -91,14 +100,12 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 
 	@OutputMarker(uiOrder=1, name="Imported Image", type=MarkerConstants.TYPE_IMAGE, flavor="", description="The imported image object", enabled=true)
 	JEXData output;
-	
+
 	@OutputMarker(uiOrder=2, name="List of Imported Files", type=MarkerConstants.TYPE_VALUE, flavor="", description="The list of imported files.", enabled=true)
 	JEXData inputFileList;
-	
+
 	@OutputMarker(uiOrder=3, name="Metadata", type=MarkerConstants.TYPE_FILE, flavor="", description="The imported image object metadata", enabled=true)
 	JEXData meta;
-	
-	private TreeMap<DimensionMap,String> metaDataFiles = new TreeMap<DimensionMap,String>();
 
 	@Override
 	public int getMaxThreads()
@@ -131,11 +138,21 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 			pendingImageFiles = new Vector<File>();
 			pendingImageFiles.add(filePath);
 		}
+		
+		if(this.valueSeparator.equals("."))
+		{
+			this.valueSeparator = "\\.";
+		}
+		if(this.dimSeparator.equals("."))
+		{
+			this.dimSeparator = "\\.";
+		}
 
 		// DO something
-		this.output = importFiles(pendingImageFiles, this.separator, this.fileExtension, this.imRows, this.imCols, "ImRow", "ImCol", this.transferNames, this);
+		Pair<JEXData, JEXData> imagesAndMetaData = importFiles(pendingImageFiles, this.dimSeparator, this.valueSeparator, this.fileExtension, this.imRows, this.imCols, binning, binMethod, "ImRow", "ImCol", this.transferNames, this);
+		this.output = imagesAndMetaData.p1;
 		this.inputFileList = ValueWriter.makeValueObject("temp", this.getFileList(pendingImageFiles).toString());
-		this.meta = FileWriter.makeFileObject("temp", null, this.metaDataFiles);
+		this.meta = imagesAndMetaData.p2;
 
 		return true;
 	}
@@ -143,47 +160,70 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 	/**
 	 * Create DimensionMap of a given image 
 	 * The image name should be in certain format, ex. Image_x001_y002_z004.tif
+	 * If the value separator is null or "", then it is assumed that the value begins with a number.
+	 * If no number exists that case, that chuck of string is ignored. For example "Well_Channel1"
+	 * would produce Channel=1 while "Well_ChannelBF" would produce an empty dimension map.
 	 * 
 	 * @param filePath image Path and Name
-	 * @param separator separator of the image Name
+	 * @param dimSeparator separator between the name-value pairs
+	 * @param valueSeparator separator between the dimension name and the dimension value
 	 * @return
 	 */
-	public static DimensionMap getMapFromPath(String filePath, String separator) {
+	public DimensionMap getMapFromPath(String filePath, String dimSeparator, String valueSeparator) {
 		String name = FileUtility.getFileNameWithoutExtension(filePath);
-		String[] names = name.split(separator);
+		String[] names = name.split(dimSeparator);
 
 		DimensionMap dimMap = new DimensionMap();
 		String dimValue, dimName, temp;
 		int splitIndex = 0;
 
-		for (int i = 0; i < names.length; i++){
-			temp = names[i];
+		if(valueSeparator == null || valueSeparator.equals(""))
+		{
+			// Do the old method.
+			for (int i = 0; i < names.length; i++){
+				temp = names[i];
 
-			// find the first Digit in the string in order to separate dimName and dimValue
-			for (int j = 0; j < temp.length(); j++){
-				if (Character.isDigit(temp.charAt(j))){
-					splitIndex = j;
-					break;
+				// find the first Digit in the string in order to separate dimName and dimValue
+				for (int j = 0; j < temp.length(); j++){
+					if (Character.isDigit(temp.charAt(j))){
+						splitIndex = j;
+						break;
+					}
+					else
+						splitIndex = 0;
 				}
-				else
-					splitIndex = 0;
-			}
 
-			// if the string is not a dimName followed by a dimValue then skip it.
-			if (splitIndex != 0) {
-				dimName = temp.substring(0, splitIndex);
-				dimValue = temp.substring(splitIndex);
+				// if the string is not a dimName followed by a dimValue then skip it.
+				if (splitIndex != 0) {
+					dimName = temp.substring(0, splitIndex);
+					dimValue = temp.substring(splitIndex);
 
-				dimMap.put(dimName, dimValue);
+					dimMap.put(dimName, dimValue);
+				}
 			}
 		}
+		else
+		{
+			// Do the new method with two separator characters
+			for (int i = 0; i < names.length; i++){
+				temp = names[i];
+				String[] nameValue = temp.split(valueSeparator);
+				// if the string is not a name value pair then skip it.
+				if(nameValue.length == 2)
+				{
+					dimMap.put(nameValue[0], nameValue[1]);
+				}
+			}
+		}
+
 
 		return dimMap;
 
 	}
-	
-	private DimTable getDimTableFromReader(Reader r, boolean transferNames)
+
+	public Pair<DimTable,Pair<DimensionMap,String>> getDimTableFromReader(Reader r, boolean transferNames)
 	{
+		Pair<DimensionMap,String> metaDataFile = null;
 		DimTable ret = new DimTable();
 		try
 		{
@@ -203,23 +243,21 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 
 		if(transferNames)
 		{
-			if(this.metaDataFiles == null)
-			{
-				this.metaDataFiles = new TreeMap<DimensionMap,String>();
-			}
+			metaDataFile = new Pair<DimensionMap,String>();
 			TreeMap<String,String> colors = new TreeMap<String,String>();
 			LSVList info = new LSVList();
 			for(Entry<String,Object> e : r.getMetadata().getTable().entrySet())
 			{
 				info.add(e.getKey() + " = " + e.getValue().toString().trim());
-				
+
 				if(e.getKey().contains("Name #"))
 				{
 					colors.put(e.getKey().toString().trim(), e.getValue().toString().trim());
 				}
 			}
 			String path = JEXWriter.saveText(info.toString(), "txt");
-			this.metaDataFiles.put(new DimensionMap("File=" + FileUtility.getFileNameWithoutExtension(r.getCurrentFile())), path);
+			metaDataFile.p1 = new DimensionMap("File=" + FileUtility.getFileNameWithoutExtension(r.getCurrentFile()));
+			metaDataFile.p2 = path;
 			try
 			{
 				String[] colorNames = ((String[]) colors.values().toArray(new String[]{}));
@@ -285,10 +323,10 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 				// Don't worry about it.
 			}
 		}
-		return ret;
+		return new Pair<DimTable, Pair<DimensionMap,String>>(ret, metaDataFile);
 	}
-	
-	private LSVList getFileList(List<File> filesToImport)
+
+	public LSVList getFileList(List<File> filesToImport)
 	{
 		LSVList fileList = new LSVList();
 		for(File f : filesToImport)
@@ -298,7 +336,19 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 		return fileList;
 	}
 
-	public static TreeMap<DimensionMap,ImageProcessor> splitRowsAndCols(ImageProcessor imp, int rows, int cols, String rowName, String colName, Canceler canceler)
+	/**
+	 * 
+	 * @param imp ImageProcessor to split
+	 * @param binning double amount to bin the image (scale = 1/bin)
+	 * @param binMethod "NONE" or "NEAREST NEIGHBOR" or "BILINEAR" or "BICUBIC"
+	 * @param rows int number of rows to split into
+	 * @param cols int number of cols to split into
+	 * @param rowName String name of the row dimension to create
+	 * @param colName String name of the col dimension to create
+	 * @param canceler Canceler object for interrupting if necessary (checked in each loop)
+	 * @return
+	 */
+	public TreeMap<DimensionMap,ImageProcessor> splitRowsAndCols(ImageProcessor imp, double binning, String binMethod, int rows, int cols, String rowName, String colName, Canceler canceler)
 	{
 		TreeMap<DimensionMap,ImageProcessor> ret = new TreeMap<DimensionMap,ImageProcessor>();
 
@@ -319,20 +369,43 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 				int y = r * h;
 				Rectangle rect = new Rectangle(x, y, w, h);
 				imp.setRoi(rect);
-				ImageProcessor toCopy = imp.crop();
-				ImageProcessor toSave = imp.createProcessor(w, h);
-				toSave.copyBits(toCopy, 0, 0, Blitter.COPY);
+				ImageProcessor toSave = imp.crop();
+				if(binning != 1)
+				{
+					double scale = 1/binning;
+					double width = toSave.getWidth();
+					int newWidth = (int) (scale * width);
+					if(binMethod.equals("NONE"))
+					{
+						toSave.setInterpolationMethod(ImageProcessor.NONE);
+					}
+					else if(binMethod.equals("BILINEAR"))
+					{
+						toSave.setInterpolationMethod(ImageProcessor.BILINEAR);
+					}
+					else if(binMethod.equals("NEAREST NEIGHBOR"))
+					{
+						toSave.setInterpolationMethod(ImageProcessor.NEAREST_NEIGHBOR);
+					}
+					else // do BICUBIC
+					{
+						toSave.setInterpolationMethod(ImageProcessor.BICUBIC);
+					}
+					toSave = toSave.resize(newWidth);
+				}
+
 				ret.put(new DimensionMap(rowName + "=" + r + "," + colName + "=" + c), toSave);
 			}
 		}
 		return ret;
 	}
 
-	public JEXData importFiles(List<File> pendingImageFiles, String parseFileNameSeparator, String fileExtension, int imRows, int imCols, String rowName, String colName, boolean autoNameGathering, Canceler canceler)
+	public Pair<JEXData,JEXData> importFiles(List<File> pendingImageFiles, String dimSeparator, String valueSeparator, String fileExtension, int imRows, int imCols, double binning, String binMethod, String rowName, String colName, boolean autoNameGathering, Canceler canceler)
 	{
 		DimTable table = null;
-		
-		TreeMap<DimensionMap,String> multiMap = new TreeMap<DimensionMap,String>();
+
+		TreeMap<DimensionMap,String> multiMap = new TreeMap<>();
+		TreeMap<DimensionMap,String> metaDataMap = new TreeMap<>();
 		boolean fileNotFound = false;
 		for (int fi = 0; fi < pendingImageFiles.size(); fi++)
 		{
@@ -348,7 +421,7 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 				return null;
 			}
 			// usually x and y coordinate map
-			DimensionMap baseMap = getMapFromPath(f.getAbsolutePath(), parseFileNameSeparator);
+			DimensionMap baseMap = getMapFromPath(f.getAbsolutePath(), dimSeparator, valueSeparator);
 
 			// get reader for image file
 			final SCIFIO scifio = new SCIFIO(IJ2PluginUtility.ij().getContext());
@@ -364,10 +437,15 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 				return null;
 			}
 			// 	get table from reader		
-			table = this.getDimTableFromReader(reader, autoNameGathering);
-			if(table == null)
+			Pair<DimTable, Pair<DimensionMap,String>> tableAndMetaData = getDimTableFromReader(reader, autoNameGathering);
+			table = tableAndMetaData.p1;
+			if(tableAndMetaData.p2 != null)
 			{
-				JEXDialog.messageDialog("Function canceled manually OR due to issues with determining dimensions of the image.", ImportImages_SCIFIO.class);
+				metaDataMap.put(tableAndMetaData.p2.p1, tableAndMetaData.p2.p2);
+			}
+			if(tableAndMetaData.p1 == null)
+			{
+				JEXDialog.messageDialog("Function canceled manually OR due to issues with determining dimensions of the image OR with getting file metadata.", ImportImages_SCIFIO.class);
 				return null;
 			}
 
@@ -418,23 +496,23 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 						return null;
 					}
 
-
 					if(canceler.isCanceled())
 					{
 						return null;
 					}
 
+					DimensionMap map = itr.next().copy();
+					int imageCounter = 1;
+					TreeMap<DimensionMap,ImageProcessor> splitImages = splitRowsAndCols(ip, binning, binMethod, imRows, imCols, rowName, colName, canceler);
+					// The above might return null because of being canceled. Catch cancel condition and move on.
+					if(canceler.isCanceled())
+					{
+						return null;
+					}
+					
 					// For each image split it if necessary
 					if(imRows * imCols > 1)
 					{
-						TreeMap<DimensionMap,ImageProcessor> splitImages = splitRowsAndCols(ip, imRows, imCols, rowName, colName, canceler);
-						// The above might return null because of being canceled. Catch cancel condition and move on.
-						if(canceler.isCanceled())
-						{
-							return null;
-						}
-						DimensionMap map = itr.next().copy();
-						int imageCounter = 0;
 						for(Entry<DimensionMap,ImageProcessor> e : splitImages.entrySet())
 						{
 							String filename = JEXWriter.saveImage(e.getValue());
@@ -442,30 +520,19 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 							map.putAll(e.getKey());
 							if(pendingImageFiles.size() > 1)
 							{
-								if(reader.getImageCount() > 1)
+								// Then save a dimension for Loc
+								if(dimSeparator.equals(""))
 								{
-									if(parseFileNameSeparator.equals(""))
-									{
-										map.put("Loc", ""+fi);
-										map.put("Loc 2", ""+imageCounter);
-										imageCounter = imageCounter + 1;
-									}
-									else
-									{
-										map.put("Loc", ""+imageCounter);
-										imageCounter = imageCounter + 1;
-									}
+									// Then call FileIndex dimension "FileIndex"
+									map.put("SplitImageIndex", "" + imageCounter);
+									map.put("FileIndex", "" + (fi + 1)); // fi starts at 0
+									imageCounter = imageCounter + 1;
 								}
 								else
 								{
-									if(parseFileNameSeparator.equals(""))
-									{
-										map.put("Loc", ""+fi);
-									}
-									else
-									{
-										// Do nothing, the multi-file "Loc" dimension(s) is/are created through parsing of the file names
-									}
+									// Else the FileIndex dimension is already taken care of / named by parsing file names.
+									map.put("SplitImageIndex", "" + imageCounter);
+									imageCounter = imageCounter + 1;
 								}
 							}
 							multiMap.put(map.copy(),filename);
@@ -475,36 +542,22 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 					}
 					else
 					{
+						// Otherwise we don't split each image or save a SplitImageIndex dimension
 						String filename = JEXWriter.saveImage(ip);
-						DimensionMap map = itr.next().copy();
 						map.putAll(baseMap.copy());
-						int imageCounter = 0;
 						if(pendingImageFiles.size() > 1)
 						{
-							if(reader.getImageCount() > 1)
+							// Then save a dimension for FileIndex
+							if(dimSeparator.equals(""))
 							{
-								if(parseFileNameSeparator.equals(""))
-								{
-									map.put("Loc", ""+fi);
-									map.put("Loc 2", ""+imageCounter);
-									imageCounter = imageCounter + 1;
-								}
-								else
-								{
-									map.put("Loc", ""+imageCounter);
-									imageCounter = imageCounter + 1;
-								}
+								// Then call FileIndex dimension "FileIndex"
+								map.put("FileIndex", "" + (fi + 1)); // fi starts at 0
+								imageCounter = imageCounter + 1;
 							}
 							else
 							{
-								if(parseFileNameSeparator.equals(""))
-								{
-									map.put("Loc", ""+fi);
-								}
-								else
-								{
-									// Do nothing, the multi-file "Loc" dimension(s) is/are created through parsing of the file names
-								}
+								// Else the FileIndex dimension is already taken care of / named by parsing file names.
+								imageCounter = imageCounter + 1;
 							}
 						}
 						multiMap.put(map,filename);
@@ -536,7 +589,9 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 			}
 			output.setDimTable(toSet);
 		}
-		
-		return output;
+
+		JEXData metaDataOutput = FileWriter.makeFileObject("temp", null, metaDataMap);
+
+		return new Pair<JEXData, JEXData>(output, metaDataOutput);
 	}
 }
