@@ -138,14 +138,16 @@ public class JEX_ReduceSize extends JEXCrunchable {
 	public ParameterSet requiredParameters()
 	{
 		Parameter p1 = new Parameter("Binning", "Factor of image reduction", "2.0");
-		Parameter p2 = new Parameter("Output Bit Depth", "Depth of the outputted image", Parameter.DROPDOWN, new String[] { "8", "16", "32" }, 1);
-		Parameter p3 = new Parameter("Normalize Intensities?", "Normalize the intensities after binning?", Parameter.CHECKBOX, false);
+		Parameter p2 = new Parameter("Binning Method", "Method of binning.", Parameter.DROPDOWN, new String[] { "NONE", "NEAREST NEIGHBOR", "BILINEAR", "BICUBIC" }, 2);
+		Parameter p3 = new Parameter("Output Bit Depth", "Depth of the outputted image", Parameter.DROPDOWN, new String[] { "8", "16", "32" }, 1);
+		Parameter p4 = new Parameter("Normalize Intensities?", "Normalize the intensities after binning?", Parameter.CHECKBOX, false);
 		
 		// Make an array of the parameters and return it
 		ParameterSet parameterArray = new ParameterSet();
 		parameterArray.addParameter(p1);
 		parameterArray.addParameter(p2);
 		parameterArray.addParameter(p3);
+		parameterArray.addParameter(p4);
 		return parameterArray;
 	}
 	
@@ -183,6 +185,7 @@ public class JEX_ReduceSize extends JEXCrunchable {
 		
 		// //// Get params
 		double binning = Double.parseDouble(parameters.getValueOfParameter("Binning"));
+		String binMethod = parameters.getValueOfParameter("Binning Method");
 		int depth = Integer.parseInt(parameters.getValueOfParameter("Output Bit Depth"));
 		boolean normalize = Boolean.parseBoolean(parameters.getValueOfParameter("Normalize Intensities?"));
 		
@@ -215,7 +218,23 @@ public class JEX_ReduceSize extends JEXCrunchable {
 			// processor
 			
 			int newWidth = (int) (imp.getWidth() / binning);
-			imp.setInterpolationMethod(ImageProcessor.BILINEAR);
+			if(binMethod.equals("NONE"))
+			{
+				imp.setInterpolationMethod(ImageProcessor.NONE);
+			}
+			else if(binMethod.equals("NEAREST NEIGHBOR"))
+			{
+				imp.setInterpolationMethod(ImageProcessor.NEAREST_NEIGHBOR);
+			}
+			else if(binMethod.equals("BILINEAR"))
+			{
+				imp.setInterpolationMethod(ImageProcessor.BILINEAR);
+			}
+			else // BICUBIC
+			{
+				imp.setInterpolationMethod(ImageProcessor.BICUBIC);
+			}
+			
 			imp = (FloatProcessor) imp.resize(newWidth);
 			
 			// //// Save the results
