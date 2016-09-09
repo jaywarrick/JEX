@@ -11,11 +11,8 @@ import org.scijava.plugin.Plugin;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DBObjects.JEXLabel;
-import Database.DataReader.FileReader;
-import Database.DataReader.ImageReader;
 import Database.DataReader.LabelReader;
 import Database.DataWriter.FileWriter;
-import Database.DataWriter.ImageWriter;
 import Database.DataWriter.ValueWriter;
 import function.plugin.mechanism.InputMarker;
 import function.plugin.mechanism.JEXPlugin;
@@ -89,17 +86,23 @@ public class ImportImagesByCSVTable extends JEXPlugin {
 
 	@ParameterMarker(uiOrder=9, name="Overwrite?", description="Overwrite existing object of the same name if it exists in that particular entry?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
 	boolean overwrite;
+	
+	@ParameterMarker(uiOrder=10, name="Dimension to separate (optional)", description="Optionally name a dimension of the image set to separate into different image objects.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
+	String dimensionToSplit;
 
 	/////////// Define Outputs ///////////
 
 	@OutputMarker(uiOrder=1, name="Imported Image", type=MarkerConstants.TYPE_IMAGE, flavor="", description="The imported image object", enabled=true)
 	JEXData output;
-	
+
 	@OutputMarker(uiOrder=2, name="List of Imported Files", type=MarkerConstants.TYPE_VALUE, flavor="", description="The list of imported files.", enabled=true)
 	JEXData inputFileList;
-	
+
 	@OutputMarker(uiOrder=3, name="Metadata", type=MarkerConstants.TYPE_FILE, flavor="", description="The imported image object metadata", enabled=true)
 	JEXData meta;
+	
+	@OutputMarker(uiOrder=4, name="Split Imported Image", type=MarkerConstants.TYPE_IMAGE, flavor="", description="The imported image objects", enabled=true)
+	Vector<JEXData> output2 = new Vector<JEXData>();
 
 
 	@Override
@@ -171,35 +174,30 @@ public class ImportImagesByCSVTable extends JEXPlugin {
 			return false;
 		}
 
-		TreeMap<DimensionMap,String> toOutput = new TreeMap<>();
-		TreeMap<DimensionMap,String> metaToOutput = new TreeMap<>();
 		TreeMap<DimensionMap,String> valueTable = new TreeMap<>();
+		
+		Vector<File> tempList = new Vector<>();
 		for(Entry<DimensionMap,String> e : filteredFiles.entrySet())
 		{
-			Vector<File> tempList = new Vector<>();
 			tempList.add(new File(e.getValue()));
-			ImportImages_SCIFIO io = new ImportImages_SCIFIO();
-			Pair<JEXData, JEXData> imagesAndMetadata = io.importFiles(tempList, "", "", FileUtility.getFileNameExtension(e.getValue()), this.imRows, this.imCols, this.binning, this.binMethod, "ImRow", "ImCol", this.transferNames, this);
-			for(Entry<DimensionMap,String> e2 : ImageReader.readObjectToImagePathTable(imagesAndMetadata.p1).entrySet())
-			{
-				DimensionMap toPut = e2.getKey().copy();
-				toPut.putAll(e.getKey());
-				toOutput.put(toPut, e2.getValue());
-			}
-			for(Entry<DimensionMap,String> e2 : FileReader.readObjectToFilePathTable(imagesAndMetadata.p2).entrySet())
-			{
-				DimensionMap toPut = e2.getKey().copy();
-				toPut.putAll(e.getKey());
-				metaToOutput.put(toPut, e2.getValue());
-			}
-			DimensionMap toPut = e.getKey().copy();
-			metaToOutput.put(toPut, io.getFileList(tempList).toString());
 		}
-
+		
 		// DO something
-		this.output = ImageWriter.makeImageStackFromPaths("temp", toOutput);
+		ImportImages_SCIFIO io = new ImportImages_SCIFIO();
+		Pair<Vector<JEXData>, JEXData> imagesAndMetaData = io.importFiles(this.output.getDataObjectName(), tempList, "", "", FileUtility.getFileNameExtension(filteredFiles.firstEntry().getValue()), this.imRows, this.imCols, this.binning, this.binMethod, "ImRow", "ImCol", this.transferNames, this, this.dimensionToSplit);
+		if(imagesAndMetaData.p1.get(0) == null || (imagesAndMetaData.p1.size() < 2 && imagesAndMetaData.p1.get(0).getDataObjectName().equals(this.output.getDataObjectName())))
+		{
+			// We have a single output to return.
+			this.output = imagesAndMetaData.p1.get(0);
+		}
+		else
+		{
+			// We have multiple outputs to return due to splitting the 
+			this.output2 = imagesAndMetaData.p1;
+		}
+		
 		this.inputFileList = ValueWriter.makeValueTable("temp", valueTable);
-		this.meta = FileWriter.makeFileObject("temp", null, metaToOutput);
+		this.meta = FileWriter.makeFileObject("temp", null, imagesAndMetaData.p2);
 
 		return true;
 	}

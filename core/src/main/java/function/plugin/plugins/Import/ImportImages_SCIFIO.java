@@ -36,6 +36,7 @@ import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import loci.common.DataTools;
 import logs.Logs;
+import miscellaneous.CSVList;
 import miscellaneous.Canceler;
 import miscellaneous.FileUtility;
 import miscellaneous.LSVList;
@@ -75,7 +76,7 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 
 	@ParameterMarker(uiOrder=2, name="Name-Value Pair Separator", description="Charactor that separates dimension name-value pairs in the image name (e.g., '_' in X.002_Y.003.tif). Use blank (i.e., no character) to avoid parsing anything whatsoever.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
 	String dimSeparator;
-	
+
 	@ParameterMarker(uiOrder=3, name="Name-Value Separator", description="Charactor that separates the name and value of the name-value pair in the image name (e.g., '.' in X.002_Y.003.tif). Use blank (i.e., no character) to split on first numeric character.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
 	String valueSeparator;
 
@@ -94,6 +95,8 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 	@ParameterMarker(uiOrder=8, name="Gather channel names (and other metadata)?", description="Transfer the name of each channel (e.g. DAPI, FITC, etc) if available in the metadata of the image. Otherwise, channels are named by index in the order they were provided by the image. Text from the entire metadata is saved as a file.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
 	boolean transferNames;
 
+	@ParameterMarker(uiOrder=9, name="Dimension to separate (optional)", description="Optionally name a dimension of the image set to separate into different image objects.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
+	String dimensionToSplit;
 
 
 	/////////// Define Outputs ///////////
@@ -106,6 +109,9 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 
 	@OutputMarker(uiOrder=3, name="Metadata", type=MarkerConstants.TYPE_FILE, flavor="", description="The imported image object metadata", enabled=true)
 	JEXData meta;
+	
+	@OutputMarker(uiOrder=4, name="Split Imported Image", type=MarkerConstants.TYPE_IMAGE, flavor="", description="The imported image objects", enabled=true)
+	Vector<JEXData> output2 = new Vector<JEXData>();
 
 	@Override
 	public int getMaxThreads()
@@ -138,19 +144,20 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 			pendingImageFiles = new Vector<File>();
 			pendingImageFiles.add(filePath);
 		}
-		
-		if(this.valueSeparator.equals("."))
-		{
-			this.valueSeparator = "\\.";
-		}
-		if(this.dimSeparator.equals("."))
-		{
-			this.dimSeparator = "\\.";
-		}
 
 		// DO something
-		Pair<JEXData, JEXData> imagesAndMetaData = importFiles(pendingImageFiles, this.dimSeparator, this.valueSeparator, this.fileExtension, this.imRows, this.imCols, binning, binMethod, "ImRow", "ImCol", this.transferNames, this);
-		this.output = imagesAndMetaData.p1;
+		Pair<Vector<JEXData>, JEXData> imagesAndMetaData = importFiles(this.output.getDataObjectName(), pendingImageFiles, this.dimSeparator, this.valueSeparator, this.fileExtension, this.imRows, this.imCols, binning, binMethod, "ImRow", "ImCol", this.transferNames, this, this.dimensionToSplit);
+		if(imagesAndMetaData.p1.get(0) == null || (imagesAndMetaData.p1.size() < 2 && imagesAndMetaData.p1.get(0).getDataObjectName().equals(this.output.getDataObjectName())))
+		{
+			// We have a single output to return.
+			this.output = imagesAndMetaData.p1.get(0);
+		}
+		else
+		{
+			// We have multiple outputs to return due to splitting the 
+			this.output2 = imagesAndMetaData.p1;
+		}
+		
 		this.inputFileList = ValueWriter.makeValueObject("temp", this.getFileList(pendingImageFiles).toString());
 		this.meta = imagesAndMetaData.p2;
 
@@ -400,8 +407,17 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 		return ret;
 	}
 
-	public Pair<JEXData,JEXData> importFiles(List<File> pendingImageFiles, String dimSeparator, String valueSeparator, String fileExtension, int imRows, int imCols, double binning, String binMethod, String rowName, String colName, boolean autoNameGathering, Canceler canceler)
+	public Pair<Vector<JEXData>,JEXData> importFiles(String objectName, List<File> pendingImageFiles, String dimSeparator, String valueSeparator, String fileExtension, int imRows, int imCols, double binning, String binMethod, String rowName, String colName, boolean autoNameGathering, Canceler canceler, String dimensionToSplit)
 	{
+		if(valueSeparator.equals("."))
+		{
+			valueSeparator = "\\.";
+		}
+		if(dimSeparator.equals("."))
+		{
+			dimSeparator = "\\.";
+		}		
+		
 		DimTable table = null;
 
 		TreeMap<DimensionMap,String> multiMap = new TreeMap<>();
@@ -509,7 +525,7 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 					{
 						return null;
 					}
-					
+
 					// For each image split it if necessary
 					if(imRows * imCols > 1)
 					{
@@ -576,8 +592,9 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 		}
 
 		// OUTPUT PROCESSING
-		JEXData output = ImageWriter.makeImageStackFromPaths("temp", multiMap);
-		if (table != null) {
+
+		if (table != null)
+		{
 			DimTable toSet = new DimTable(multiMap);
 			for(Dim d : table)
 			{
@@ -587,11 +604,59 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 			{
 				toSet.add(d.copy());
 			}
-			output.setDimTable(toSet);
+			table = toSet.copy();
+		}
+
+
+		Vector<JEXData> ret = new Vector<JEXData>();
+		if(!dimensionToSplit.equals(""))
+		{
+			Dim toSplit = table.getDimWithName(dimensionToSplit);
+			if(toSplit != null)
+			{
+				Vector<DimTable> separateDimTables = new Vector<>();
+				for(String val : toSplit.dimValues)
+				{
+					separateDimTables.add(table.getSubTable(new DimensionMap(dimensionToSplit + "=" + val)));
+				}
+				Vector<TreeMap<DimensionMap,String>> subImageSets = new Vector<>();
+				for(DimTable dt : separateDimTables)
+				{
+					TreeMap<DimensionMap,String> toSave = new TreeMap<>();
+					for(DimensionMap map : dt.getMapIterator())
+					{
+						toSave.put(map, multiMap.get(map));
+					}
+					subImageSets.add(toSave);
+				}
+				// Create a JEXData for each subImageSet appending the Dim Value to the object name.
+				for(int i = 0; i < subImageSets.size(); i++)
+				{
+					JEXData temp = ImageWriter.makeImageStackFromPaths(objectName + " " + dimensionToSplit + " " + toSplit.valueAt(i), subImageSets.get(i));
+					temp.setDimTable(separateDimTables.get(i));
+					ret.add(temp);
+				}
+			}
+			else
+			{
+				// We didn't find the dimension to split in the image set and don't know what to do so skip splitting.
+				CSVList csvl = new CSVList();
+				for(Dim d : table)
+				{
+					csvl.add(d.dimName);
+				}
+				JEXDialog.messageDialog("I Couldn't split the image objects on the specified dimension. Specified = " + dimensionToSplit + "; Dims Present = " + csvl.toString(), this);
+				ret.add(ImageWriter.makeImageStackFromPaths(objectName, multiMap));
+			}
+		}
+		else
+		{
+			// No need to split the images into separate objects. Just return the image object.
+			ret.add(ImageWriter.makeImageStackFromPaths(objectName, multiMap));
 		}
 
 		JEXData metaDataOutput = FileWriter.makeFileObject("temp", null, metaDataMap);
-
-		return new Pair<JEXData, JEXData>(output, metaDataOutput);
+		
+		return new Pair<Vector<JEXData>, JEXData>(ret, metaDataOutput);
 	}
 }
