@@ -69,14 +69,11 @@ public class CompileArffTables extends JEXPlugin {
 	@ParameterMarker(uiOrder=3, name="If CSV, Reorganize Table?", description="(REQUIRES R/RSERVE!) If saving as a CSV, should the table be 'reorganized' to put each 'Measurement' as a column of the table?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
 	boolean reorganize;
 	
-	@ParameterMarker(uiOrder=4, name="Reorg: Measurement Col Name", description="Name of the column of the ARFF table that describes the measurement in the 'Value' column. (Almost always 'Measurement')", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Measurement")
+	@ParameterMarker(uiOrder=4, name="Reorg: Measurement Col Name(s)", description="Name(s) of the column(s) of the ARFF table that describes the measurement in the 'Value' column. (Almost always 'Measurement' or 'Measurement,Channel')", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Measurement")
 	String nameCol;
 	
 	@ParameterMarker(uiOrder=5, name="Reorg: Value Col Name", description="Name of the column of the ARFF table that stores the values of each 'Measurement'. (Almost always 'Value')", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Value")
 	String valueCol;
-	
-	@ParameterMarker(uiOrder=6, name="Reorg: List of 'Special' Cols", description="List of column names who's values should be concatenated with the values of the 'Measurement' column to form the final column name. (e.g., 'Channel' if you have measurements such as mean intensity across multiple channels)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Channel")
-	String specialCols;
 
 	/////////// Define Outputs ///////////
 
@@ -194,7 +191,11 @@ public class CompileArffTables extends JEXPlugin {
 			
 			if(this.reorganize)
 			{
-				R.eval("temp <- reorganizeFeatureTable(temp, specialNames = c(" + R.sQuote(this.specialCols) + "), convertToNumeric = FALSE, nameCol = " + R.sQuote(this.nameCol) + ", valueCol = " + R.sQuote(this.valueCol) + ")");
+				// Make sure there is nothing in nameCol that has a hyphen that would be misconstrued as a minus sign (R is going to replace these with '.' when they become columns)
+				R.eval("temp <- reorganize(temp, idCols=NULL, measurementCols=" + R.sQuote(this.nameCol) + ", valueCols=" + R.sQuote(this.valueCol) + ")");
+
+				// Reorganize the table.
+				// R.eval("temp <- reorganizeFeatureTable(temp, specialNames = c(" + R.sQuote(this.specialCols) + "), convertToNumeric = FALSE, nameCol = " + R.sQuote(this.nameCol) + ", valueCol = " + R.sQuote(this.valueCol) + ")");
 			}
 			
 			for (JEXEntry entry : outputList.keySet())
