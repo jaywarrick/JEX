@@ -14,6 +14,7 @@ import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;
 import Database.DataReader.RoiReader;
 import Database.DataWriter.FileWriter;
+import Database.DataWriter.RoiWriter;
 import function.plugin.mechanism.InputMarker;
 import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.MarkerConstants;
@@ -94,7 +95,10 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 	/////////// Define Outputs ///////////
 
 	@OutputMarker(uiOrder=1, name="Data Table", type=MarkerConstants.TYPE_FILE, flavor="", description="The resultant data table", enabled=true)
-	JEXData output;
+	JEXData fileOutput;
+	
+	@OutputMarker(uiOrder=2, name="Measured Maxima", type=MarkerConstants.TYPE_ROI, flavor="", description="The maxima that were actually measured.", enabled=true)
+	JEXData roiOutput;
 
 	@Override
 	public int getMaxThreads()
@@ -214,7 +218,7 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 		}
 
 		// Write the beginning of the csv file
-		JEXTableWriter writer = new JEXTableWriter(output.getTypeName().getName(), "arff");
+		JEXTableWriter writer = new JEXTableWriter(fileOutput.getTypeName().getName(), "arff");
 		writer.writeNumericTableHeader(dataTable);
 		String fullPath = writer.getPath();
 
@@ -232,7 +236,7 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 		{
 			JEXStatics.statusBar.setStatusText("Measuring " + totalPoints + " points in " + total + " images.");
 			Logs.log("Measuring " + totalPoints + " points in " + total + " images.", 0, this);
-
+			TreeMap<DimensionMap,ROIPlus> measuredRois = new TreeMap<>();
 			for (DimensionMap imMap : imageTable.getMapIterator())
 			{
 				if(this.isCanceled())
@@ -250,7 +254,7 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 				regionIterator = null;
 				maximaRoi = rois.get(imMap);
 				regionRoi = regions.get(imMap);
-				if((maximaRoi == null || maximaRoi.getPointList().size() == 0) && !this.colorDimName.equals(""))
+				if(maximaRoi == null && !this.colorDimName.equals(""))
 				{
 					for (String color : imageTable.getDimWithName(this.colorDimName).dimValues)
 					{
@@ -259,12 +263,12 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 						maximaRoi = rois.get(newMap);
 						if(maximaRoi != null)
 						{
-							Logs.log("Making a best guess as to which color dim value to use to choose a maxima roi. Using " + this.colorDimName + " = " + color, this);
+							Logs.log("Making a best guess as to which color dim value to use to choose a MAXIMA roi. Using " + this.colorDimName + " = " + color, this);
 							break;
 						}
 					}
 				}
-				if((regionRoi == null || regionRoi.getPointList().size() == 0) && !this.colorDimName.equals(""))
+				if(regionRoi == null && !this.colorDimName.equals(""))
 				{
 					for (String color : imageTable.getDimWithName(this.colorDimName).dimValues)
 					{
@@ -273,7 +277,7 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 						regionRoi = regions.get(newMap);
 						if(regionRoi != null)
 						{
-							Logs.log("Making a best guess as to which color dim value to use to choose a region roi. Using " + this.colorDimName + " = " + color, this);
+							Logs.log("Making a best guess as to which color dim value to use to choose a REGION roi. Using " + this.colorDimName + " = " + color, this);
 							break;
 						}
 					}
@@ -283,6 +287,7 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 					regionIterator = regionRoi.patternRoiIterator();
 				}
 
+				PointList measuredPoints = new PointList();
 				// For each region
 				if(regionIterator != null)
 				{
@@ -304,15 +309,18 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 								}
 							}
 							ROIPlus maximaSubset = new ROIPlus(subset, ROIPlus.ROI_POINT);
-							
+							measuredPoints.addAll(subset);
 							this.quantifyPoints(im, maximaSubset, templateRoi, formatD, imMap, writer, regionId);
 						}
 					}
+					measuredRois.put(imMap, new ROIPlus(measuredPoints, ROIPlus.ROI_POINT));
 				}
 				else if(regionRoiData == null)
 				{
-					// Just do all the points
+					// Just do all the points. This catches the case where no region roi is provided.
+					// It also avoids, when regionRoiData != null but there is no regionRoi object for a particular image.
 					this.quantifyPoints(im, maximaRoi, templateRoi, formatD, imMap, writer, -1);
+					measuredRois.put(imMap, maximaRoi.copy());
 				}
 
 				im.flush();
@@ -323,7 +331,8 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 			}
 			writer.close();
 
-			this.output = FileWriter.makeFileObject("dummy", null, fullPath);
+			this.fileOutput = FileWriter.makeFileObject("dummy", null, fullPath);
+			this.roiOutput = RoiWriter.makeRoiObject("dummy", measuredRois);
 
 			// Return status
 			return true;

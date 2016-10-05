@@ -1,29 +1,19 @@
 package function.plugin.old;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.TreeMap;
 
-import org.scijava.io.IOPlugin;
-
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
-import Database.DataReader.ImageReader;
-import Database.DataWriter.ImageWriter;
+import Database.DataReader.RoiReader;
+import Database.DataWriter.RoiWriter;
 import Database.Definition.Parameter;
 import Database.Definition.ParameterSet;
 import Database.Definition.TypeName;
-import Database.SingleUserDatabase.JEXWriter;
 import function.JEXCrunchable;
-import function.plugin.IJ2.IJ2PluginUtility;
-import ij.ImagePlus;
-import ij.process.FloatProcessor;
+import image.roi.ROIPlus;
 import jex.statics.JEXStatics;
-import jex.utilities.FunctionUtility;
-import net.imglib2.img.Img;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.type.numeric.real.FloatType;
+import tables.DimTable;
 import tables.DimensionMap;
 
 /**
@@ -36,9 +26,9 @@ import tables.DimensionMap;
  * @author erwinberthier
  * 
  */
-public class JEX_ImageMath extends JEXCrunchable {
+public class JEX_ImageTools_SplitROI extends JEXCrunchable {
 	
-	public JEX_ImageMath()
+	public JEX_ImageTools_SplitROI()
 	{}
 	
 	// ----------------------------------------------------
@@ -53,7 +43,7 @@ public class JEX_ImageMath extends JEXCrunchable {
 	@Override
 	public String getName()
 	{
-		String result = "Image Math";
+		String result = "Split ROI";
 		return result;
 	}
 	
@@ -65,7 +55,7 @@ public class JEX_ImageMath extends JEXCrunchable {
 	@Override
 	public String getInfo()
 	{
-		String result = "Perform matho operations on pixel data.";
+		String result = "Split and rois along a dimension to create multiple ROI objects";
 		return result;
 	}
 	
@@ -77,7 +67,7 @@ public class JEX_ImageMath extends JEXCrunchable {
 	@Override
 	public String getToolbox()
 	{
-		String toolbox = "Image processing";
+		String toolbox = "Image tools";
 		return toolbox;
 	}
 	
@@ -116,7 +106,7 @@ public class JEX_ImageMath extends JEXCrunchable {
 	public TypeName[] getInputNames()
 	{
 		TypeName[] inputNames = new TypeName[1];
-		inputNames[0] = new TypeName(IMAGE, "Image");
+		inputNames[0] = new TypeName(ROI, "Roi");
 		return inputNames;
 	}
 	
@@ -128,8 +118,8 @@ public class JEX_ImageMath extends JEXCrunchable {
 	@Override
 	public TypeName[] getOutputs()
 	{
-		this.defaultOutputNames = new TypeName[1];
-		this.defaultOutputNames[0] = new TypeName(IMAGE, "Math Image");
+		this.defaultOutputNames = new TypeName[0];
+		// this.defaultOutputNames[0] = new TypeName(IMAGE, "Split Image");
 		
 		if(this.outputNames == null)
 		{
@@ -150,18 +140,14 @@ public class JEX_ImageMath extends JEXCrunchable {
 		// Parameter p0 = new
 		// Parameter("Dummy Parameter","Lets user know that the function has been selected.",FormLine.DROPDOWN,new
 		// String[] {"true"},0);
-		
-		Parameter p1 = new Parameter("Operation", "Choose the type of differential operation to perform", Parameter.DROPDOWN, operations, 0);
-		Parameter p2 = new Parameter("Variable", "Variable of the calculation (e.g. how much to add or multiply by, some don't need this like log and exp)", "0");
-		Parameter p3 = new Parameter("Output Bit Depth", "Choose the type of differential operation to perform", Parameter.DROPDOWN, new String[] { "8", "16", "32" }, 16);
+		Parameter p1 = new Parameter("Dim to Split", "Name of the dimension to split", "Color");
+		Parameter p2 = new Parameter("Keep Dim?", "Keep the dimension name in the resultant images (i.e., the new objects with have a dimension matching the name of the dimension that was split, have a size of one, and a value matching the original value)", Parameter.CHECKBOX, false);
 		
 		// Make an array of the parameters and return it
 		ParameterSet parameterArray = new ParameterSet();
 		// parameterArray.addParameter(p0);
 		parameterArray.addParameter(p1);
 		parameterArray.addParameter(p2);
-		parameterArray.addParameter(p3);
-		
 		return parameterArray;
 	}
 	
@@ -178,13 +164,12 @@ public class JEX_ImageMath extends JEXCrunchable {
 	@Override
 	public boolean isInputValidityCheckingEnabled()
 	{
-		return true;
+		return false;
 	}
 	
 	// ----------------------------------------------------
 	// --------- THE ACTUAL MEAT OF THIS FUNCTION ---------
 	// ----------------------------------------------------
-	public static final String[] operations = new String[] { "ADD", "MULT", "LOG", "EXP", "MIN", "MAX", "ABS", "SQR", "SQRT", "AND", "OR", "XOR", "GAMMA" };
 	
 	/**
 	 * Perform the algorithm here
@@ -194,124 +179,53 @@ public class JEX_ImageMath extends JEXCrunchable {
 	public boolean run(JEXEntry entry, HashMap<String,JEXData> inputs)
 	{
 		// Collect the inputs
-		JEXData imageData = inputs.get("Image");
-		imageData.getDataMap();
-		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
+		JEXData roiData = inputs.get("Roi");
+		roiData.getDataMap();
+		if(roiData == null || !roiData.getTypeName().getType().equals(JEXData.ROI))
 		{
 			return false;
 		}
 		
 		// Gather parameters
-		double var = Double.parseDouble(this.parameters.getValueOfParameter("Variable"));
-		String op = this.parameters.getValueOfParameter("Operation");
-		int bitDepth = Integer.parseInt(this.parameters.getValueOfParameter("Output Bit Depth"));
+		String dim = this.parameters.getValueOfParameter("Dim to Split");
+		Boolean keep = Boolean.parseBoolean(this.parameters.getValueOfParameter("Keep Dim?"));
 		
 		// Run the function
-		TreeMap<DimensionMap,String> imageMap = ImageReader.readObjectToImagePathTable(imageData);
-		TreeMap<DimensionMap,String> outputImageMap = new TreeMap<DimensionMap,String>();
-		double count = 0, total = imageMap.size();
-		int percentage = 0;
-		for (DimensionMap map : imageMap.keySet())
+		TreeMap<DimensionMap,ROIPlus> roiMap = RoiReader.readObjectToRoiMap(roiData);
+		int count = 0, percentage = 0;
+		for (DimTable subTable : roiData.getDimTable().getSubTableIterator(dim))
 		{
-			if(this.isCanceled())
+			TreeMap<DimensionMap,ROIPlus> splitRoiMap = new TreeMap<>();
+			for (DimensionMap map : subTable.getMapIterator())
 			{
-				return false;
+				ROIPlus roi = roiMap.get(map);
+				if(roi == null)
+				{
+					continue;
+				}
+				if(keep)
+				{
+					splitRoiMap.put(map.copy(), roi);
+				}
+				else
+				{
+					DimensionMap newMap = map.copy();
+					newMap.remove(dim);
+					splitRoiMap.put(newMap.copy(), roi);
+				}
+				count = count + 1;
+				percentage = (int) (100 * ((double) (count) / ((double) roiMap.size())));
+				JEXStatics.statusBar.setProgressPercentage(percentage);
 			}
-			
-			FloatProcessor imp = (FloatProcessor) (new ImagePlus(imageMap.get(map))).getProcessor().convertToFloat();
-			// Calculate the differential
-			if(op.equals("ADD"))
-			{
-				imp.add(var);
-			}
-			if(op.equals("MULT"))
-			{
-				imp.multiply(var);
-			}
-			if(op.equals("LOG"))
-			{
-				imp.log();
-			}
-			if(op.equals("EXP"))
-			{
-				imp.exp();
-			}
-			if(op.equals("MIN"))
-			{
-				imp.min(var);
-			}
-			if(op.equals("MAX"))
-			{
-				imp.max(var);
-			}
-			if(op.equals("ABS"))
-			{
-				imp.abs();
-			}
-			if(op.equals("SQR"))
-			{
-				imp.sqr();
-			}
-			if(op.equals("SQRT"))
-			{
-				imp.sqrt();
-			}
-			if(op.equals("AND"))
-			{
-				imp.and((int) var);
-			}
-			if(op.equals("OR"))
-			{
-				imp.or((int) var);
-			}
-			if(op.equals("XOR"))
-			{
-				imp.xor((int) var);
-			}
-			if(op.equals("GAMMA"))
-			{
-				imp.gamma(var);
-			}
-			
-			// Adjust bitDepth and save the image
-			ImagePlus im = FunctionUtility.makeImageToSave(imp, "false", bitDepth);
-			String path = saveTheDamnThing(im);
-			im.flush();
-			if(path != null)
-			{
-				outputImageMap.put(map, path);
-			}
-			
-			count = count + 1;
-			percentage = (int) (100 * (count / total));
-			JEXStatics.statusBar.setProgressPercentage(percentage);
+			JEXData output = RoiWriter.makeRoiObject(roiData.name + " " + dim + " " + subTable.getDimWithName(dim).min(), splitRoiMap);
+			this.realOutputs.add(output);
 		}
-		if(outputImageMap.size() == 0)
+		if(this.realOutputs.size() == 0)
 		{
 			return false;
 		}
 		
-		JEXData output1 = ImageWriter.makeImageStackFromPaths(this.outputNames[0].getName(), outputImageMap);
-		
-		// Set the outputs
-		this.realOutputs.add(output1);
-		
 		// Return status
 		return true;
 	}
-	
-	private String saveTheDamnThing(ImagePlus im)
-	{
-		Img<FloatType> toSave = ImageJFunctions.wrapFloat(im);
-		String dest = JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getUniqueRelativeTempPath("tif");
-		try {
-			IJ2PluginUtility.ij().io().save(toSave, dest);
-			return dest;
-		} catch (IOException e) {
-			e.printStackTrace();
-			return null;
-		}
-		
-	}
-	
 }

@@ -1,6 +1,6 @@
 package miscellaneous;
 
-public class Pair<E,T> {
+public class Pair<E,T> implements net.imglib2.util.Pair<E,T> {
 	
 	public E p1;
 	public T p2;
@@ -96,6 +96,16 @@ public class Pair<E,T> {
 		}
 		ret = ret + "]";
 		return ret;
+	}
+
+	@Override
+	public E getA() {
+		return this.p1;
+	}
+
+	@Override
+	public T getB() {
+		return this.p2;
 	}
 	
 }

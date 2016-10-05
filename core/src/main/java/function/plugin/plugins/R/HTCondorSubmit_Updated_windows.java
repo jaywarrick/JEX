@@ -35,6 +35,7 @@ import miscellaneous.FileUtility;
 import miscellaneous.LSVList;
 import miscellaneous.StringUtility;
 import rtools.R;
+import rtools.ScriptRepository;
 import tables.DimensionMap;
 
 
@@ -249,7 +250,7 @@ public class HTCondorSubmit_Updated_windows extends JEXPlugin {
 					channel.setCommand(commandString);
 					BufferedReader in=new BufferedReader(new InputStreamReader(channel.getInputStream()));
 					channel.connect(10000);
-					
+
 
 					String msg=null;
 					while((msg=in.readLine())!=null){
@@ -276,7 +277,7 @@ public class HTCondorSubmit_Updated_windows extends JEXPlugin {
 				}
 			}
 		}
-		
+
 	}
 
 	public File genSubmit(CSVList filesToR, CSVList objectsToR)
@@ -350,7 +351,7 @@ public class HTCondorSubmit_Updated_windows extends JEXPlugin {
 			ChannelSftp channelSftp = (ChannelSftp)channel;
 			channelSftp.cd(dstFolder);
 			channelSftp.put(new FileInputStream(src), dstFileName);
-		 }
+		}
 		finally
 		{
 			if(channel != null && channel.isConnected())
@@ -457,26 +458,27 @@ public class HTCondorSubmit_Updated_windows extends JEXPlugin {
 
 
 		try {
-			String[] things = {"cmd.exe", "/c", "D: && " + cmd1 + " && " + cmd2};
-			ProcessBuilder dunkey = new ProcessBuilder(things);
-			//dunkey = dunkey.directory(new File("D:\\"));
-			Process p = dunkey.start();
-			
-			p.waitFor();
-			
-			
-			String[] reset = {"cmd.exe", "/c", "ipconfig /flushdns"};
-			ProcessBuilder resetter = new ProcessBuilder(reset);
-		
-			Process poop = resetter.start();
-			poop.waitFor();
-			
-			
+			ScriptRepository.runSysCommandApache(new String[]{cmd1, cmd2}, "D:/");
+			//			String[] things = {"cmd.exe", "/c", "D: && " + cmd1 + " && " + cmd2};
+			//			ProcessBuilder dunkey = new ProcessBuilder(things);
+			//			//dunkey = dunkey.directory(new File("D:\\"));
+			//			Process p = dunkey.start();
+			//			
+			//			p.waitFor();
+			//			
+			//			
+			//			String[] reset = {"cmd.exe", "/c", "ipconfig /flushdns"};
+			//			ProcessBuilder resetter = new ProcessBuilder(reset);
+			//		
+			//			Process poop = resetter.start();
+			//			poop.waitFor();
+			//			
+			//			
 			Thread.sleep(30000);
 			this.runSSHCommands("mkdir -p " + submitFolder); // Make sure the directory exists
 			Thread.sleep(30000);
 			transferFile(new File(localDatasetDir.getParent() + File.separator + "tarfile.tar.gz"), submitFolder, "tarfile.tar.gz");
-			p.waitFor();
+			//			p.waitFor();
 			Thread.sleep(30000);
 			////this.runCommands("cd ChtcRun", "unzip zipfile.zip", "rm zipfile.zip","./mkdag --data="+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+" --outputdir="+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+"OUT --resultdir=" +StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment()) + "Results --cmdtorun=rScript.R --pattern="+outFile+" --type=R --version=R-3.2.0", "cd "+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+"OUT", "condor_submit_dag mydag.dag" );
 
@@ -491,7 +493,7 @@ public class HTCondorSubmit_Updated_windows extends JEXPlugin {
 			// this.runCommands("cd ChtcRun", "./mkdag --data="+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+" --outputdir="+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+"OUT --resultdir=" +StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment()) + "Results --cmdtorun=rScript.R --pattern="+outFile+" --type=R --version=R-3.2.0", "cd "+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+"OUT", "condor_submit_dag mydag.dag" );
 
 			//Process p = Runtime.getRuntime().exec(new String[]{cmd2}, null, new File(localDatasetDir.getParent()));
-			
+
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

@@ -21,6 +21,7 @@ import net.imagej.ops.logic.RealLogic;
 import net.imagej.ops.special.function.Functions;
 import net.imagej.ops.special.function.UnaryFunctionOp;
 import net.imglib2.Cursor;
+import net.imglib2.Interval;
 import net.imglib2.IterableInterval;
 import net.imglib2.Point;
 import net.imglib2.RandomAccess;
@@ -30,12 +31,15 @@ import net.imglib2.RealLocalizable;
 import net.imglib2.algorithm.labeling.ConnectedComponents;
 import net.imglib2.algorithm.labeling.ConnectedComponents.StructuringElement;
 import net.imglib2.converter.Converter;
+import net.imglib2.converter.read.ConvertedCursor;
+import net.imglib2.converter.read.ConvertedIterableInterval;
 import net.imglib2.converter.read.ConvertedRandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.roi.IterableRegion;
+import net.imglib2.outofbounds.OutOfBoundsConstantValueFactory;
+import net.imglib2.outofbounds.OutOfBoundsFactory;
 import net.imglib2.roi.Regions;
 import net.imglib2.roi.geometric.Polygon;
 import net.imglib2.roi.labeling.ImgLabeling;
@@ -63,7 +67,7 @@ public class FeatureUtils {
 
 	private UnaryFunctionOp<Object, Object> contourFunc;
 	private UnaryFunctionOp<RealCursor<IntType>,Circle> cirOp;
-	
+
 	/////////////////////////////////////////
 	//////// Connected Components ///////////
 	/////////////////////////////////////////
@@ -96,7 +100,7 @@ public class FeatureUtils {
 		ImgLabeling<Integer, IntType> cellLabeling = this.getConnectedComponents(v, fourConnected);
 		return cellLabeling;
 	}
-	
+
 	/////////////////////////////////////////
 	///////////// Show Images ///////////////
 	/////////////////////////////////////////
@@ -106,14 +110,30 @@ public class FeatureUtils {
 		this.showRegion(region, "Label = " + region.getLabel() + " at pos: " + ((int) (region.getCenterOfMass().getDoublePosition(0) + 0.5)) + ", " + ((int) (region.getCenterOfMass().getDoublePosition(1) + 0.5)));
 	}
 
-	public <T extends BooleanType<T>> void showRegion(RandomAccessibleInterval<T> region)
-	{
-		this.showRegion(region, "Region");
-	}
-
 	public <T extends BooleanType<T>> void showRegion(RandomAccessibleInterval<T> region, String title)
 	{
 		ImageJFunctions.showUnsignedByte(region, new BooleanTypeToUnsignedByteTypeConverter<T>(), title);
+	}
+
+	public void showRegion(LabelRegion<?> region, Interval i)
+	{
+		this.showVoidII(region, i);
+	}
+
+	public void showRegion(LabelRegion<?> region, Interval i, boolean defaultApp)
+	{
+		this.showVoidII(region, i, defaultApp);
+	}
+
+	public <T extends BooleanType<T>> void showBooleanRAI(RandomAccessibleInterval< T > rai)
+	{
+		this.showBooleanRAI(rai, false);
+	}
+
+	public <T extends BooleanType<T>> void showBooleanRAI(RandomAccessibleInterval< T > rai, boolean defaultApp)
+	{
+		RandomAccessibleInterval<UnsignedByteType> converted = this.convertBooleanTypeToByteRAI(rai);
+		FileUtility.showImg(converted, defaultApp);
 	}
 
 	public <T extends RealType<T>> void show(RandomAccessibleInterval< T > rai)
@@ -125,22 +145,47 @@ public class FeatureUtils {
 	{
 		FileUtility.showImg(rai, defaultApp);
 	}
-	
+
+	public <T extends BooleanType<T>> void showBooleanII(IterableInterval< T > region, Interval i, boolean defaultApp)
+	{
+		this.show(this.makeImgFromBooleanII(region, i), defaultApp);
+	}
+
+	public <T extends BooleanType<T>> void showBooleanII(IterableInterval< T > region, boolean defaultApp)
+	{
+		this.showBooleanII(region, null, defaultApp);
+	}
+
+	public <T extends BooleanType<T>> void showBooleanII(IterableInterval< T > region)
+	{
+		this.showBooleanII(region, null, false);
+	}
+
+	public void showVoidII(IterableInterval< Void > region, Interval i, boolean defaultApp)
+	{
+		this.show(this.makeImgFromVoidII(region, i), defaultApp);
+	}
+
 	public void showVoidII(IterableInterval< Void > region, boolean defaultApp)
 	{
-		this.show(this.makeImgFromVoidII(region), defaultApp);
+		this.showVoidII(region, null, false);
+	}
+
+	public void showVoidII(IterableInterval< Void > region, Interval i)
+	{
+		this.showVoidII(region, i, false);
 	}
 
 	public void showVoidII(IterableInterval< Void > region)
 	{
-		this.showVoidII(region, false);
+		this.showVoidII(region, null, false);
 	}
-	
+
 	public <T extends RealType<T>>void showRealII(IterableInterval< T > region, boolean defaultApp)
 	{
 		this.show(this.makeImgFromRealII(region), defaultApp);
 	}
-	
+
 	public <T extends RealType<T>>void showRealII(IterableInterval< T > region)
 	{
 		this.showRealII(region, true);
@@ -215,12 +260,23 @@ public class FeatureUtils {
 		}
 		return img;
 	}
-	
+
 	public <T extends RealType<T>> Img<UnsignedShortType> makeImgFromRealII(IterableInterval< T > region)
 	{
-		long[] dimensions = new long[region.numDimensions()];
-		region.dimensions(dimensions);
-		final Img<UnsignedShortType> ret = ArrayImgs.unsignedShorts( dimensions );
+		return makeImgFromRealII(region, null);
+	}
+	
+	public <T extends RealType<T>> Img<UnsignedShortType> makeImgFromRealII(IterableInterval< T > region, Interval i)
+	{
+		final Img<UnsignedShortType> ret;
+		if(i == null)
+		{
+			ret = makeBlackShortImageFromInterval(region);
+		}
+		else
+		{
+			ret = makeBlackShortImageFromInterval(i);
+		}
 		Cursor<T> c = region.cursor();
 		Point min = new Point(0,0);
 		Point max = new Point(0,0);
@@ -233,19 +289,90 @@ public class FeatureUtils {
 		{
 			c.fwd();
 			//System.out.println("" + (c.getIntPosition(0)-min.getIntPosition(0)) + " , " + (c.getIntPosition(1)-min.getIntPosition(1)));
-			cur.setPosition(c.getIntPosition(0)-min.getIntPosition(0), 0); 
-			cur.setPosition(c.getIntPosition(1)-min.getIntPosition(1), 1);
+			if(i == null)
+			{
+				// Draw the image relative to itself
+				cur.setPosition(c.getIntPosition(0)-min.getIntPosition(0), 0); 
+				cur.setPosition(c.getIntPosition(1)-min.getIntPosition(1), 1);
+			}
+			else
+			{
+				// Draw the region on an image with upper left-hand corner at 0,0
+				cur.setPosition(c.getIntPosition(0), 0); 
+				cur.setPosition(c.getIntPosition(1), 1);
+			}
 			ra.setPosition(cur);
 			ra.get().setReal(c.get().getRealDouble());
 		}
 		return ret;
 	}
 
+	public <T extends BooleanType<T>> Img<UnsignedByteType> makeImgFromBooleanII(IterableInterval< T > region)
+	{
+		return makeImgFromBooleanII(region, region);
+	}
+
+	public <T extends BooleanType<T>> Img<UnsignedByteType> makeImgFromBooleanII(IterableInterval< T > region, Interval i)
+	{
+		final Img<UnsignedByteType> ret;
+		if(i == null)
+		{
+			ret = makeBlackByteImageFromInterval(region);
+		}
+		else
+		{
+			ret = makeBlackByteImageFromInterval(i);
+		}
+		Cursor<T> c = region.cursor();
+		Point min = new Point(0,0);
+		Point max = new Point(0,0);
+		Point cur = new Point(0,0);
+		region.min(min);
+		region.max(max);
+		RandomAccess<UnsignedByteType> ra = ret.randomAccess();
+		//System.out.println(min + ", " + max);
+		while(c.hasNext())
+		{
+			c.fwd();
+			//System.out.println("" + (c.getIntPosition(0)-min.getIntPosition(0)) + " , " + (c.getIntPosition(1)-min.getIntPosition(1)));
+			if(i == null)
+			{
+				// Draw the image relative to itself
+				cur.setPosition(c.getIntPosition(0)-min.getIntPosition(0), 0); 
+				cur.setPosition(c.getIntPosition(1)-min.getIntPosition(1), 1);
+			}
+			else
+			{
+				// Draw the region on an image with upper left-hand corner at 0,0
+				cur.setPosition(c.getIntPosition(0), 0); 
+				cur.setPosition(c.getIntPosition(1), 1);
+			}
+			ra.setPosition(cur);
+			if(c.get().get())
+			{
+				ra.get().set(255);
+			}
+		}
+		return ret;
+	}
+
 	public Img<UnsignedByteType> makeImgFromVoidII(IterableInterval< Void > region)
 	{
-		long[] dimensions = new long[region.numDimensions()];
-		region.dimensions(dimensions);
-		final Img<UnsignedByteType> ret = ArrayImgs.unsignedBytes( dimensions );
+		return makeImgFromVoidII(region, region);
+	}
+
+	public Img<UnsignedByteType> makeImgFromVoidII(IterableInterval< Void > region, Interval i)
+	{
+		final Img<UnsignedByteType> ret;
+		if(i == null)
+		{
+			ret = makeBlackByteImageFromInterval(region);
+		}
+		else
+		{
+			ret = makeBlackByteImageFromInterval(i);
+		}
+		 
 		Cursor<Void> c = region.cursor();
 		Point min = new Point(0,0);
 		Point max = new Point(0,0);
@@ -258,10 +385,66 @@ public class FeatureUtils {
 		{
 			c.fwd();
 			//System.out.println("" + (c.getIntPosition(0)-min.getIntPosition(0)) + " , " + (c.getIntPosition(1)-min.getIntPosition(1)));
-			cur.setPosition(c.getIntPosition(0)-min.getIntPosition(0), 0); 
-			cur.setPosition(c.getIntPosition(1)-min.getIntPosition(1), 1);
+			if(i == null)
+			{
+				// Draw the image relative to itself
+				cur.setPosition(c.getIntPosition(0)-min.getIntPosition(0), 0); 
+				cur.setPosition(c.getIntPosition(1)-min.getIntPosition(1), 1);
+			}
+			else
+			{
+				// Draw the region on an image with upper left-hand corner at 0,0
+				cur.setPosition(c.getIntPosition(0), 0); 
+				cur.setPosition(c.getIntPosition(1), 1);
+			}
 			ra.setPosition(cur);
-			ra.get().set(255);
+			UnsignedByteType toSet = ra.get();
+			if(toSet != null)
+			{
+				toSet.set(255);
+			}
+		}
+		return ret;
+	}
+
+	public Img<UnsignedByteType> makeBlackByteImageFromInterval(Interval i)
+	{
+		long[] dimensions = new long[i.numDimensions()];
+		i.dimensions(dimensions);
+		final Img<UnsignedByteType> ret = ArrayImgs.unsignedBytes( dimensions );
+		return ret;
+	}
+
+	public Img<UnsignedByteType> makeWhiteByteImageFromInterval(Interval i)
+	{
+		final Img<UnsignedByteType> ret = makeBlackByteImageFromInterval(i);
+
+		Cursor<UnsignedByteType> c = ret.cursor();
+		while(c.hasNext())
+		{
+			c.fwd();
+			c.get().set(255);
+		}
+		return ret;
+	}
+
+	public Img<UnsignedShortType> makeBlackShortImageFromInterval(Interval i)
+	{
+		long[] dimensions = new long[i.numDimensions()];
+		i.dimensions(dimensions);
+		final Img<UnsignedShortType> ret = ArrayImgs.unsignedShorts( dimensions );
+		return ret;
+	}
+
+	public Img<UnsignedShortType> makeWhiteShortImageFromInterval(Interval i)
+	{
+		final Img<UnsignedShortType> ret = makeBlackShortImageFromInterval(i);
+
+		Cursor<UnsignedShortType> c = ret.cursor();
+		while(c.hasNext())
+		{
+			c.fwd();
+			c.get().set(65535);
 		}
 		return ret;
 	}
@@ -269,9 +452,7 @@ public class FeatureUtils {
 	public Img<UnsignedByteType> makeImgMaskFromLabeling(ImgLabeling<Integer,IntType> labeling)
 	{
 		LabelRegions<Integer> regions = new LabelRegions<>(labeling);
-		long[] dims = new long[labeling.numDimensions()];
-		labeling.dimensions(dims);
-		final Img< UnsignedByteType > ret = ArrayImgs.unsignedBytes(dims);
+		final Img< UnsignedByteType > ret = makeBlackByteImageFromInterval(labeling);
 		RandomAccess<UnsignedByteType> ra = ret.randomAccess();
 		for(LabelRegion<Integer> region : regions)
 		{
@@ -289,9 +470,8 @@ public class FeatureUtils {
 	public Img<UnsignedShortType> makeImgFromLabeling(ImgLabeling<Integer,IntType> labeling)
 	{
 		LabelRegions<Integer> regions = new LabelRegions<>(labeling);
-		long[] dims = new long[labeling.numDimensions()];
-		labeling.dimensions(dims);
-		final Img< UnsignedShortType > ret = ArrayImgs.unsignedShorts(dims);
+
+		final Img< UnsignedShortType > ret = makeBlackShortImageFromInterval(labeling);
 		RandomAccess<UnsignedShortType> ra = ret.randomAccess();
 		for(LabelRegion<Integer> region : regions)
 		{
@@ -305,7 +485,7 @@ public class FeatureUtils {
 		}
 		return ret;
 	}
-	
+
 	/////////////////////////////////////////
 	///////// Geometry Functions ////////////
 	/////////////////////////////////////////
@@ -323,7 +503,7 @@ public class FeatureUtils {
 	{
 		return this.getPolygonFromBoolean(this.convertRealToBoolTypeRAI(src));
 	}
-	
+
 	/**
 	 * If center is null the circle is the smallest enclosing circle.
 	 * If not, the circle is the smallest enclosing circle with a center at 'center'.
@@ -341,17 +521,17 @@ public class FeatureUtils {
 		UnaryFunctionOp<RealCursor<IntType>,Circle> cirOp = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.SmallestEnclosingCircle.class, Circle.class, psl.cursor(), center);
 		return cirOp.compute1(psl.cursor());
 	}
-	
+
 	public <T extends BooleanType<T>> Circle getCircle(RandomAccessibleInterval<T> region, RealLocalizable center)
 	{
 		Polygon p = this.getPolygonFromBoolean(region);
 		return this.getCircle(p, center);
 	}
-	
+
 	/////////////////////////////////////////
 	//////////// Sub-routines ///////////////
 	/////////////////////////////////////////
-	
+
 	public Pair<Img<UnsignedByteType>,TreeMap<Integer,PointList>> keepRegionsWithMaxima(Img<UnsignedByteType> mask, boolean fourConnected, ROIPlus maxima, Canceler canceler)
 	{
 		// Create a blank image
@@ -410,14 +590,20 @@ public class FeatureUtils {
 		ret.p2 = labelToPointsMap;
 		return ret;
 	}
-	
+
 	/////////////////////////////////////////
 	///////// Region Manipulation ///////////
 	/////////////////////////////////////////
-	
+
 	public <T extends BooleanType<T>, R extends RealType<R>> RandomAccessibleInterval<R> cropRealRAI(RandomAccessibleInterval<T> region, RandomAccessibleInterval<R> img)
 	{
 		return new CroppedRealRAI<T,R>(region, img);
+	}
+
+	public RandomAccessibleInterval<BoolType> extendSubRegionToParentRegionBounds(LabelRegion<Integer> subRegion, LabelRegion<Integer> parentRegion)
+	{
+		final OutOfBoundsFactory< BoolType, RandomAccessibleInterval< BoolType >> oobImageFactory = new OutOfBoundsConstantValueFactory<>( new BoolType(false) );
+		return Views.interval(Views.extend(subRegion, oobImageFactory), parentRegion);
 	}
 
 	public boolean contains(LabelRegion<?> region, IdPoint p)
@@ -429,21 +615,43 @@ public class FeatureUtils {
 		return ra.get().get();
 	}
 
-	public <T extends BooleanType<T>> IterableRegion<T> intersect(IterableRegion<T> a, IterableRegion<T> b)
-	{
-		RandomAccessibleInterval<T> temp = intersect(a, b);
-		return Regions.iterable(temp);
-	}
+	//	Commented out as it appears that the regions need to be of identical size, which is typically unlikely
+	//  public <T extends BooleanType<T>> IterableRegion<T> intersectRegions(IterableRegion<T> a, IterableRegion<T> b)
+	//	{
+	//		RandomAccessibleInterval<T> temp = intersectRAIs(a, b);
+	//		return Regions.iterable(temp);
+	//	}
 
-	public <T extends BooleanType<T>> RandomAccessibleInterval<T> intersect(RandomAccessibleInterval<T> a, RandomAccessibleInterval<T> b)
+	/**
+	 * Assumes the RAI's are the same size.
+	 * @param a
+	 * @param b
+	 * @return
+	 */
+	public <T extends BooleanType<T>> RandomAccessibleInterval<T> intersectRAIs(RandomAccessibleInterval<T> a, RandomAccessibleInterval<T> b)
 	{
+		if(a.numDimensions() != b.numDimensions())
+		{
+			throw new IllegalArgumentException("The RAIs must have the same number of dimensions");
+		}
+		for(int i = 0; i < a.numDimensions(); i++)
+		{
+			if(a.realMin(i) != b.realMin(i))
+			{
+				throw new IllegalArgumentException("The RAIs must be specified over the same interval");
+			}
+			if(a.realMax(i) != b.realMax(i))
+			{
+				throw new IllegalArgumentException("The RAIs must be specified over the same interval");
+			}
+		}
 		return new IntersectedBooleanRAI<T>(a, b);
 	}
 
 	/////////////////////////////////////////
 	////////////// Conversion ///////////////
 	/////////////////////////////////////////
-	
+
 	public <T extends BooleanType<T>> RandomAccessibleInterval<UnsignedByteType> convertBooleanTypeToByteRAI(RandomAccessibleInterval<T> rai)
 	{
 		return new ConvertedRandomAccessibleInterval<T, UnsignedByteType>(rai, new BooleanTypeToUnsignedByteTypeConverter<T>(), new UnsignedByteType(0));
@@ -454,7 +662,31 @@ public class FeatureUtils {
 		return new ConvertedRandomAccessibleInterval<>(rai, new RealTypeToBoolTypeConverter<R>(), new BoolType(false));
 	}
 
-	class VoidToBitTypeConverter implements Converter<Void, BitType> {
+	public IterableInterval<BitType> convertVoidToBitTypeII(IterableInterval<Void> ii)
+	{
+		return new ConvertedIterableInterval<>(ii, new VoidToBitTypeConverter(), new BitType(false));
+	}
+
+	public IterableInterval<BitType> convertBoolTypeToBitTypeII(IterableInterval<BoolType> ii)
+	{
+		return new ConvertedIterableInterval<>(ii, new BoolTypeToBitTypeConverter(), new BitType(false));
+	}
+
+	public Cursor<BitType> convertVoidTypeToBitTypeCursor(Cursor<Void> c)
+	{
+		ConvertedCursor< Void, BitType > ret = new ConvertedCursor<>( c, new VoidToBitTypeConverter(), new BitType(false) );
+		return ret;
+	}
+
+	public class BoolTypeToBitTypeConverter implements Converter<BoolType, BitType> {
+
+		@Override
+		public void convert(BoolType input, BitType output) {
+			output.set(new BitType(input.get()));
+		}
+	}
+
+	public class VoidToBitTypeConverter implements Converter<Void, BitType> {
 
 		@Override
 		public void convert(Void input, BitType output) {
@@ -462,7 +694,7 @@ public class FeatureUtils {
 		}
 	}
 
-	class BooleanTypeToUnsignedByteTypeConverter<T extends BooleanType<T>> implements Converter<T, UnsignedByteType> {
+	public class BooleanTypeToUnsignedByteTypeConverter<T extends BooleanType<T>> implements Converter<T, UnsignedByteType> {
 
 		@Override
 		public void convert(T input, UnsignedByteType output) {
@@ -478,7 +710,7 @@ public class FeatureUtils {
 		}
 	}
 
-	class RealTypeToBoolTypeConverter<R extends RealType<R>> implements Converter<R, BoolType> {
+	public class RealTypeToBoolTypeConverter<R extends RealType<R>> implements Converter<R, BoolType> {
 
 		@Override
 		public void convert(R input, BoolType output) {
@@ -491,6 +723,21 @@ public class FeatureUtils {
 				output.set(false);
 			}
 
+		}
+	}
+
+	class RealTypeToBitTypeConverter<R extends RealType<R>> implements Converter<R, BitType> {
+
+		@Override
+		public void convert(R input, BitType output) {
+			if(input.getRealDouble() > 0)
+			{
+				output.set(true);
+			}
+			else
+			{
+				output.set(false);
+			}
 		}
 	}
 }
