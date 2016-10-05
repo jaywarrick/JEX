@@ -16,6 +16,8 @@ public class IntersectedBooleanRAI<T extends BooleanType<T>> implements RandomAc
 		public IntersectedBooleanRAI(RandomAccessibleInterval<T> a, RandomAccessibleInterval<T> b)
 		{
 			this.ii = new IntersectedInterval(a, b);
+			this.a = a;
+			this.b = b;
 			//this.ra = new IntersectedBooleanRA<T>(a.randomAccess(), b.randomAccess());
 		}
 
