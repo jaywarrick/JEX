@@ -4,6 +4,12 @@ import net.imglib2.Localizable;
 import net.imglib2.RandomAccess;
 import net.imglib2.type.BooleanType;
 
+/**
+ * Note that this class assumes that the RA's are for intervals of the same size.
+ * @author MMB
+ *
+ * @param <T>
+ */
 public class IntersectedBooleanRA<T extends BooleanType<T>> implements RandomAccess<T> {
 
 	RandomAccess<T> a, b;
