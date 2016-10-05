@@ -60,7 +60,7 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 	@InputMarker(uiOrder = 1, name = "Maxima", type = MarkerConstants.TYPE_ROI, description = "Maxima ROI", optional = false)
 	JEXData roiData;
 
-	@InputMarker(uiOrder = 2, name = "Segmentation Lines", type = MarkerConstants.TYPE_IMAGE, description = "Mask images (SHOULD have channel dimension)", optional = true)
+	@InputMarker(uiOrder = 2, name = "Segmentation Lines (optional)", type = MarkerConstants.TYPE_IMAGE, description = "Mask images (SHOULD have channel dimension)", optional = true)
 	JEXData segData;
 
 	@InputMarker(uiOrder = 3, name = "Thresholded Images", type = MarkerConstants.TYPE_IMAGE, description = "Mask that encompasses the entire cell or groups of cells (i.e., prior to segmentation).", optional = false)
