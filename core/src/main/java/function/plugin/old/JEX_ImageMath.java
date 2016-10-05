@@ -1,5 +1,12 @@
 package function.plugin.old;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.TreeMap;
+
+import org.scijava.io.IOPlugin;
+
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;
@@ -9,14 +16,14 @@ import Database.Definition.ParameterSet;
 import Database.Definition.TypeName;
 import Database.SingleUserDatabase.JEXWriter;
 import function.JEXCrunchable;
+import function.plugin.IJ2.IJ2PluginUtility;
 import ij.ImagePlus;
 import ij.process.FloatProcessor;
-
-import java.util.HashMap;
-import java.util.TreeMap;
-
 import jex.statics.JEXStatics;
 import jex.utilities.FunctionUtility;
+import net.imglib2.img.Img;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.type.numeric.real.FloatType;
 import tables.DimensionMap;
 
 /**
@@ -268,7 +275,7 @@ public class JEX_ImageMath extends JEXCrunchable {
 			
 			// Adjust bitDepth and save the image
 			ImagePlus im = FunctionUtility.makeImageToSave(imp, "false", bitDepth);
-			String path = JEXWriter.saveImage(im);
+			String path = saveTheDamnThing(im);
 			im.flush();
 			if(path != null)
 			{
@@ -291,6 +298,20 @@ public class JEX_ImageMath extends JEXCrunchable {
 		
 		// Return status
 		return true;
+	}
+	
+	private String saveTheDamnThing(ImagePlus im)
+	{
+		Img<FloatType> toSave = ImageJFunctions.wrapFloat(im);
+		String dest = JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getUniqueRelativeTempPath("tif");
+		try {
+			IJ2PluginUtility.ij().io().save(toSave, dest);
+			return dest;
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		}
+		
 	}
 	
 }
