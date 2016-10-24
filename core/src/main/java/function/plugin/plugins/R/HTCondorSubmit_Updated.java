@@ -292,15 +292,17 @@ public class HTCondorSubmit_Updated extends JEXPlugin {
 	
 	public File genScript()
 	{
-		
+
 		LSVList submitCode = new LSVList();
 		submitCode.add("#!/bin/bash");
 		submitCode.add("wget http://proxy.chtc.wisc.edu/SQUID/tedegroot/R.tar.gz");
+		submitCode.add("wget http://proxy.chtc.wisc.edu/SQUID/tedegroot/ParticleTracking_0.1.0.tar.gz.zip");
 		submitCode.add("tar -xzvf R.tar.gz");
 		submitCode.add("export PATH=$(pwd)/R/bin:$PATH");
 		submitCode.add("unzip ParticleTracking_0.1.0.zip -d R/library");
 		submitCode.add("R CMD BATCH rScript.R");
 		submitCode.add("rm R.tar.gz");
+		submitCode.add("rm ParticleTracking_0.1.0.tar.gz.zip");
 		submitCode.add("");
 		
 		String shFile = JEXWriter.saveText(submitCode.toString(), "sh");
@@ -419,7 +421,7 @@ public class HTCondorSubmit_Updated extends JEXPlugin {
 		// String cmd1 = "cd "+ JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getTempFolderName();
 		// String cmd2 = "zip -r " + "zipfile.zip" +" " + R.sQuote(StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment()));
 		String cmd2 = "tar -zcvf " + "tarfile.tar.gz" +" " + R.sQuote(localDatasetDir.getName());
-		ScriptRepository.runSysCommandApache(new String[]{"sh", "-c", cmd2}, localDatasetDir.getParent()); // Compress the files
+		ScriptRepository.runSysCommandApache(new String[]{"sh", cmd2}, localDatasetDir.getParent()); // Compress the files
 		
 		this.runSSHCommands("mkdir -p " + submitFolder); // Make sure the directory exists
 		transferFile(new File(localDatasetDir.getParent() + File.separator + "tarfile.tar.gz"), submitFolder, "tarfile.tar.gz");
