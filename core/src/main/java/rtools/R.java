@@ -17,6 +17,7 @@ import Database.DBObjects.JEXData;
 import Database.DataWriter.FileWriter;
 import Database.DataWriter.ImageWriter;
 import Database.SingleUserDatabase.JEXWriter;
+import jex.statics.JEXDialog;
 import jex.statics.OsVersion;
 import logs.Logs;
 import miscellaneous.CSVList;
@@ -745,4 +746,72 @@ public class R {
 		}
 		return null;
 	}
+	
+	public static boolean reorganize(String dataName, String idCols, String measurementCols, String valueCols, String dcastArgs)
+	{
+		
+		if(measurementCols == null || measurementCols.equals(""))
+		{
+			JEXDialog.messageDialog("This function requires at least one 'Measurement' column name. (see ?dcast of data.table in R, formula = Id ~ Measurment and value.var= Value). Aborting.");
+			return false;
+		}
+		if(valueCols == null || valueCols.equals(""))
+		{
+			JEXDialog.messageDialog("This function requires at least one 'Value' column name. (see ?dcast of data.table in R, formula = Id ~ Measurment and value.var= Value). Aborting.");
+			return false;
+		}
+		if(idCols == null || idCols.equals(""))
+		{
+			idCols = "NULL"; // this causes R to guess what the value column is.
+		}
+		else
+		{
+			idCols = R.sQuote(idCols);
+		}
+		
+		ScriptRepository.sourceGitHubFile("jaywarrick", "R-General", "master", ".Rprofile");
+		R.load("data.table");
+		
+		if(dcastArgs == null)
+		{
+			R.eval(dataName + " <- reorganize(data=" + dataName + ", idCols=" + idCols + ", measurementCols=" + R.sQuote(measurementCols) + ", valueCols=" + R.sQuote(valueCols) + ")");
+		}
+		else
+		{
+			R.eval(dataName + " <- reorganize(data=" + dataName + ", idCols=" + idCols + ", measurementCols=" + R.sQuote(measurementCols) + ", valueCols=" + R.sQuote(valueCols) + ", " + dcastArgs + ")");
+		}
+		return true;
+	}
+	
+	//	private static void defineReorganize()
+	//	{
+	//		LSVList func = new LSVList();
+	//		R.load("data.table");
+	//		func.add("reorganize <- function(data, idCols=NULL, measurementCols='Measurement', valueCols='Value', ...)");
+	//		func.add("{");
+	//		func.add("library(data.table)");
+	//		func.add("isDataTable <- FALSE");
+	//		func.add("if(is.data.table(data))");
+	//		func.add("{");
+	//		func.add("isDataTable <- TRUE");
+	//		func.add("}");
+	//		func.add("else");
+	//		func.add("{");
+	//		func.add("data <- data.table(data)");
+	//		func.add("}");
+	//		func.add("measurementCols <- strsplit(measurementCols, ',', fixed=T)");
+	//		func.add("measurementCols <- mapply(gsub, '^\\s+|\\s+$', '', measurementCols)");
+	//		func.add("if(is.null(idCols))");
+	//		func.add("{");
+	//		func.add("idCols <- names(data)[!(names(data) %in% c(measurementCols, valueCols))]");
+	//		func.add("}");
+	//		func.add("formula <- as.formula(paste(paste(idCols, collapse='+'), ' ~ ', paste(measurementCols, collapse='+')))");
+	//		func.add("data <- dcast(data, as.formula(paste(paste(idCols, collapse='+'), ' ~ ', paste(measurementCols, collapse='+'))), value.var = valueCols, ...)");
+	//		func.add("if(isDataTable)");
+	//		func.add("{");
+	//		func.add("return(data)");
+	//		func.add("}else{");
+	//		func.add("else");
+	//		func.add("return(data.frame(data))}}");
+	//	}
 }

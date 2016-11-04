@@ -11,6 +11,7 @@ import image.roi.IdPoint;
 import image.roi.PointList;
 import image.roi.PointSamplerList;
 import image.roi.ROIPlus;
+import jex.statics.JEXDialog;
 import miscellaneous.Canceler;
 import miscellaneous.FileUtility;
 import miscellaneous.Pair;
@@ -557,6 +558,11 @@ public class FeatureUtils {
 			}
 			LabelRegion<Integer> region = regions.getLabelRegion(label);
 			//Polygon poly = convert(region);
+			if(maxima == null)
+			{
+				JEXDialog.messageDialog("Check to see if the ROI object has an extra dimension compared to the Masks. Can't find a maxima for this mask. Aborting.");
+				return null; // i.e., cancel the run.
+			}
 			for(IdPoint p : maxima.getPointList())
 			{
 				if(canceler != null && canceler.isCanceled())

@@ -69,6 +69,19 @@ public class JEXCSVWriter {
 		return ret;
 	}
 	
+	public static String writeDoubleTable(TreeMap<DimensionMap,Double> tableData)
+	{
+		JEXCSVWriter writer = new JEXCSVWriter();
+		writer.writeHeader(tableData.firstKey());
+		for(Entry<DimensionMap,Double> e : tableData.entrySet())
+		{
+			writer.write(e.getKey(), e.getValue().toString());
+		}
+		String ret = writer.getPath();
+		writer.close();
+		return ret;
+	}
+	
 	/**
 	 * Will write header of with values equal to keys of the map. It will
 	 * also add a "VALUE" column based on JEXTableWriter.VALUE.

@@ -43,27 +43,30 @@ import tables.DimensionMap;
  */
 @Plugin(
 		type = JEXPlugin.class,
-		name="Convert ARFF to CSV (R)",
-		menuPath="Table Tools",
-		visible=false,
+		name="Convert Tables (R)",
+		menuPath="R",
+		visible=true,
 		description="Gather label information into the table, optionally reorganize tables and save as csv."
 		)
-public class ConvertARFFtoCSV_R extends JEXPlugin {
+public class ConvertTables_R extends JEXPlugin {
 
-	public ConvertARFFtoCSV_R()
+	public ConvertTables_R()
 	{}
 
 	/////////// Define Inputs ///////////
 
-	@InputMarker(uiOrder=1, name="ARFF Table", type=MarkerConstants.TYPE_FILE, description="ARFF Table(s) to be converted.", optional=false)
+	@InputMarker(uiOrder=1, name="Table", type=MarkerConstants.TYPE_FILE, description="ARFF or CSV Table(s) to be converted.", optional=false)
 	JEXData fileData;
 
 	/////////// Define Parameters ///////////
 
 	@ParameterMarker(uiOrder=1, name="Additional Labels", description="Names of labels in these entries by which to sort the data in the compiled results table (comma separated, no extra spaces near commas, case sensitive).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Valid")
 	String labelsCSVString;
+
+	@ParameterMarker(uiOrder=2, name="Input File Type", description="Choose format of the data in the file (not necessarily the same as the extension, such as csv format in .txt file).", ui=MarkerConstants.UI_DROPDOWN, choices={"arff","csv"}, defaultChoice=0)
+	String inputType;
 	
-	@ParameterMarker(uiOrder=2, name="Save As...", description="Choose a file extension.", ui=MarkerConstants.UI_DROPDOWN, choices={"arff","csv","txt"}, defaultChoice=0)
+	@ParameterMarker(uiOrder=2, name="Save As...", description="Choose a file type/extension to save the file.", ui=MarkerConstants.UI_DROPDOWN, choices={"arff","csv"}, defaultChoice=0)
 	String fileExtension;
 
 	@ParameterMarker(uiOrder=3, name="Add Experiment, X, and Y Info?", description="Whether to add columns with the Experiment name and Array X and Y locations in the database.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
@@ -77,10 +80,10 @@ public class ConvertARFFtoCSV_R extends JEXPlugin {
 
 	@ParameterMarker(uiOrder=6, name="Reorg: Value Col Name(s)", description="Name of the column of the ARFF table that stores the values of each 'Measurement'. (Almost always 'Value')", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Value")
 	String valueCols;
-	
+
 	@ParameterMarker(uiOrder=7, name="Reorg: Id Col Name(s)", description="Usually leave blank to grab 'the rest' of the columns. Comma separated list of column names that identify unique rows for the resultant table (i.e., the unique identifiers for each row of information like Id, Experiment, Array.X, Array.Y).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
 	String idCols;
-	
+
 	@ParameterMarker(uiOrder=8, name="Windows R Memory Limit (MB)", description="Set a new memory limit (in MB) on a windows machine if you get an R error that says cannot allocate memory for ... (try 4000 or so?)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="2000")
 	int memoryLimit;
 
@@ -154,7 +157,15 @@ public class ConvertARFFtoCSV_R extends JEXPlugin {
 			{
 				return false;
 			}
-			R.eval("temp <- data.table(read.arff(file=" + R.quotedPath(tables.get(map)) + "))");
+			String tempPath = tables.get(map);
+			if(inputType.equals("arff"))
+			{
+				R.eval("temp <- data.table(read.arff(file=" + R.quotedPath(tempPath) + "))");
+			}
+			else
+			{
+				R.eval("temp <- fread(input=" + R.quotedPath(tempPath) + "))");
+			}
 			count = count + 1;
 			percentage = 100 * count / total;
 			JEXStatics.statusBar.setProgressPercentage((int) percentage);
@@ -190,8 +201,16 @@ public class ConvertARFFtoCSV_R extends JEXPlugin {
 			{
 				return false;
 			}
-			String path = JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getUniqueRelativeTempPath("csv");
-			R.eval("write.csv(temp, file=" + R.quotedPath(path) + ", row.names=FALSE)");
+			String path = JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getUniqueRelativeTempPath(this.fileExtension);
+			if(this.fileExtension.equals("arff"))
+			{
+				R.eval("write.arff(temp, file=" + R.quotedPath(path) + ")");
+			}
+			else
+			{
+				// txt or csv
+				R.eval("write.csv(temp, file=" + R.quotedPath(path) + ", row.names=FALSE)");
+			}
 			outputTables.put(map, path);
 			count = count + 1;
 			percentage = 100 * count / total;
@@ -232,7 +251,7 @@ public class ConvertARFFtoCSV_R extends JEXPlugin {
 		}
 		return ret;
 	}
-	
+
 	public String getValuesText(String param)
 	{
 		CSVList items = StringUtility.getCSVListAndRemoveWhiteSpaceOnEnds(param);

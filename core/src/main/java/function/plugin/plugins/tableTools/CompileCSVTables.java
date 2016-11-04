@@ -39,7 +39,7 @@ import tables.DimensionMap;
 		type = JEXPlugin.class,
 		name="Compile CSV Tables",
 		menuPath="Table Tools",
-		visible=true,
+		visible=false,
 		description="Compile results of CSV files across different entries in the database. (Table must have a header row!)"
 		)
 public class CompileCSVTables extends JEXPlugin {
@@ -56,6 +56,9 @@ public class CompileCSVTables extends JEXPlugin {
 
 	@ParameterMarker(uiOrder=1, name="Sorting Labels", description="Names of labels in these entries by which to sort the data in the compiled results table (comma separated, no extra spaces near commas, case sensitive).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Valid,Substrate,Cell")
 	String sortingLabelsCSVString;
+	
+	@ParameterMarker(uiOrder=2, name="Add Expt. Info?", description="Should the experiment X, Y, and Dataset information be added to the compiled table?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	boolean addExptInfo;
 	
 	/////////// Define Outputs ///////////
 
@@ -116,10 +119,14 @@ public class CompileCSVTables extends JEXPlugin {
 			compiledData = new TreeMap<>();
 		}
 		compiledMap = new DimensionMap();
-		compiledMap.put("Experiment", optionalEntry.getEntryExperiment());
-		// compiledMap.put("Array Name", entry.getEntryTrayName());
-		compiledMap.put("Array X", "" + optionalEntry.getTrayX());
-		compiledMap.put("Array Y", "" + optionalEntry.getTrayY());
+		if(addExptInfo)
+		{
+			compiledMap.put("Experiment", optionalEntry.getEntryExperiment());
+			// compiledMap.put("Array Name", entry.getEntryTrayName());
+			compiledMap.put("Array X", "" + optionalEntry.getTrayX());
+			compiledMap.put("Array Y", "" + optionalEntry.getTrayY());
+		}
+		
 		for (String labelName : sortingLabels)
 		{
 			JEXData label = JEXStatics.jexManager.getDataOfTypeNameInEntry(new TypeName(JEXData.LABEL, labelName), optionalEntry);

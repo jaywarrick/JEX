@@ -35,9 +35,9 @@ import function.plugin.mechanism.OutputMarker;
 		visible=true,
 		description="Convert a CSV Table that has a header row to an ARFF table."
 		)
-public class ConvertCSVToArff extends JEXPlugin {
+public class ConvertCSVToARFF extends JEXPlugin {
 
-	public ConvertCSVToArff()
+	public ConvertCSVToARFF()
 	{}
 	
 	/////////// Define Inputs ///////////

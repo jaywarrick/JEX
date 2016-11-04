@@ -45,7 +45,7 @@ import weka.core.converters.JEXTableWriter;
 		type = JEXPlugin.class,
 		name="Compile ARFF Tables",
 		menuPath="Table Tools",
-		visible=true,
+		visible=false,
 		description="Compile results of ARFF files across different entries in the database."
 		)
 public class CompileArffTables extends JEXPlugin {
