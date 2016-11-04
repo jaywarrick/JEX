@@ -120,7 +120,7 @@ public class CompileCSVTables_R extends JEXPlugin {
 		int i = 1;
 		for(String path : allTables)
 		{
-			R.eval("tableList[['" + i + "']] <- fread(input=" + R.quotedPath(path) + ")");
+			R.eval("tableList[['" + i + "']] <- fread(input=" + R.quotedPath(path) + ", integer64='double')");
 			count = count + 1;
 			percentage = 100 * count / total;
 			JEXStatics.statusBar.setProgressPercentage((int) percentage);
