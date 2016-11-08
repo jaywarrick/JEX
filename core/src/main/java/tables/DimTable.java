@@ -474,6 +474,21 @@ public class DimTable extends ArrayList<Dim> implements Copiable<DimTable> {
 	}
 	
 	/**
+	 * Return whether the dimTable has all of the key values in the DimensionMap
+	 */
+	public static boolean hasKeyValues(DimTable dt, DimensionMap map)
+	{
+		for(String key : map.keySet())
+		{
+			if(!dt.getDimWithName(key).containsValue(map.get(key)))
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	/**
 	 * returned an union of two DimTables
 	 * contains no references to table1 and table2 or their values. (deep copy)
 	 * 
