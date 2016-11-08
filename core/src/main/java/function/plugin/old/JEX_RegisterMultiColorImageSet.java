@@ -322,7 +322,6 @@ public class JEX_RegisterMultiColorImageSet extends JEXCrunchable {
 				}
 				Logs.log("Aligning " + newMap.toString(), 0, this);
 				Point cropCenterDisplacement = this.getDisplacement(rTarget,  rSource);
-				System.out.print("Whoa.");
 				rSource = getSourceRoiLikeTargetRoi(rTarget, cropCenterDisplacement);
 				source.setRoi(rSource);
 				sourceCropImage = new ImagePlus("SourceCropImage", source.getProcessor().crop());

@@ -15,6 +15,7 @@ import Database.Definition.ParameterSet;
 import Database.Definition.TypeName;
 import function.JEXCrunchable;
 import function.imageUtility.TurboReg_;
+import function.plugin.plugins.featureExtraction.FeatureUtils;
 import ij.ImagePlus;
 import image.roi.ROIPlus;
 import jex.statics.JEXDialog;
@@ -322,7 +323,6 @@ public class JEX_RegisterMultiColorImageSet_Roi extends JEXCrunchable {
 				}
 				Logs.log("Aligning " + newMap.toString(), 0, this);
 				Point cropCenterDisplacement = this.getDisplacement(rTarget,  rSource);
-				System.out.print("Whoa.");
 				rSource = getSourceRoiLikeTargetRoi(rTarget, cropCenterDisplacement);
 				source.setRoi(rSource);
 				sourceCropImage = new ImagePlus("SourceCropImage", source.getProcessor().crop());
@@ -330,7 +330,7 @@ public class JEX_RegisterMultiColorImageSet_Roi extends JEXCrunchable {
 
 				// Align the selected region of the source image with the target image
 				reg.alignImages(sourceCropImage, sCrop, targetCropImage, tCrop, TurboReg_.TRANSLATION, false);
-
+				
 				// Don't save the image yet. We need to crop it after finding all the necessary translations
 				ptsMap = newMap.copy();
 				ptsMap.remove(colorDimName); // Now ptsMap has time and location dims but no color dim
