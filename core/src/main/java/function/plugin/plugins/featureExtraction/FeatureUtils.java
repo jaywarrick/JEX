@@ -266,7 +266,7 @@ public class FeatureUtils {
 	{
 		return makeImgFromRealII(region, null);
 	}
-	
+
 	public <T extends RealType<T>> Img<UnsignedShortType> makeImgFromRealII(IterableInterval< T > region, Interval i)
 	{
 		final Img<UnsignedShortType> ret;
@@ -373,7 +373,7 @@ public class FeatureUtils {
 		{
 			ret = makeBlackByteImageFromInterval(i);
 		}
-		 
+
 		Cursor<Void> c = region.cursor();
 		Point min = new Point(0,0);
 		Point max = new Point(0,0);
@@ -544,6 +544,8 @@ public class FeatureUtils {
 		// Get the regions
 		ImgLabeling<Integer, IntType> labeling = this.getConnectedComponents(mask, fourConnected);
 		//		ImageJFunctions.show(mask);
+		//		this.show(mask);
+		//		this.show(labeling);
 		LabelRegions<Integer> regions = new LabelRegions<Integer>(labeling);
 
 		TreeMap<Integer, PointList> labelToPointsMap = new TreeMap<Integer,PointList>();
