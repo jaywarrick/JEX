@@ -49,14 +49,14 @@ import function.plugin.mechanism.ParameterMarker;
 
 @Plugin(
 		type = JEXPlugin.class,
-		name="Import Adhesion Timelapse2",
+		name="Import Adhesion Timelapse",
 		menuPath="Adhesion",
 		visible=true,
 		description="Import a timelapse (i.e., no other dimensions such as color or Z). A log frequency sweep is assumed for subsampling."
 		)
-public class ImportTimelapse extends JEXPlugin {
+public class ImportAdhesionTimelapse extends JEXPlugin {
 
-	public ImportTimelapse() {}
+	public ImportAdhesionTimelapse() {}
 
 	/////////// Define Inputs ///////////
 
