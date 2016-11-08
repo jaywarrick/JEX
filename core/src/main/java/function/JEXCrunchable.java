@@ -271,6 +271,10 @@ public abstract class JEXCrunchable implements Canceler, Cancelable {
 	
 	public static boolean isInputValid(JEXData data, Type type)
 	{
+		if(data != null && type.equals(JEXData.ANY))
+		{
+			return true;
+		}
 		if(data == null || !data.getTypeName().getType().equals(type))
 		{
 			return false;
