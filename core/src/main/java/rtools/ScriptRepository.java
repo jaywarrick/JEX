@@ -205,7 +205,6 @@ public class ScriptRepository {
 		{
 			Logs.log("Couldn't find the script file to start R! This is where I tried to look: " + scriptfile.getAbsolutePath(), ScriptRepository.class);
 		}
-
 	}
 
 }
