@@ -67,16 +67,16 @@ public class HTCondorSubmit_Updated extends JEXPlugin {
 
 	@InputMarker(uiOrder=1, name="R Script", type=MarkerConstants.TYPE_FILE, description="This is your R script .R file that R will run in condor", optional=true)
 	JEXData rScript;
-	
+
 	@InputMarker(uiOrder=2, name="Input File 1", type=MarkerConstants.TYPE_ANY, description="JEXData (File, Image, or ROI) to be passed to R to run in Condor", optional=true)
 	JEXData file1;
-	
+
 	@InputMarker(uiOrder=3, name="Input File 2", type=MarkerConstants.TYPE_ANY, description="JEXData (File, Image, or ROI) to be passed to R to run in Condor", optional=true)
 	JEXData file2;
-	
+
 	@InputMarker(uiOrder=4, name="Input File 3", type=MarkerConstants.TYPE_ANY, description="JEXData (File, Image, or ROI) to be passed to R to run in Condor", optional=true)
 	JEXData file3;
-	
+
 	/////////// Define Parameters ///////////
 
 	@ParameterMarker(uiOrder=1, name="Username", description="This is your condor user name, which is the same is your Wisc user name, if you don't have one, you can't really use this.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="bbadger")
@@ -87,16 +87,16 @@ public class HTCondorSubmit_Updated extends JEXPlugin {
 
 	@ParameterMarker(uiOrder=3, name="Condor Submit Node", description="Which submit node are you using for HTCondor?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="submit-5.chtc.wisc.edu")
 	String host;
-	
+
 	@ParameterMarker(uiOrder=4, name="Submit Node Folder", description="Folder on submit node to run this job from", ui=MarkerConstants.UI_TEXTFIELD, defaultText="CHTCRun")
 	String submitFolder;
-	
+
 	@ParameterMarker(uiOrder=5, name="# of CPUs", description="# of CPUs to request", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
 	int cpus;
-	
+
 	@ParameterMarker(uiOrder=6, name="RAM [GB]", description="Amount of RAM to request", ui=MarkerConstants.UI_TEXTFIELD, defaultText="2")
 	int memory;
-	
+
 	@ParameterMarker(uiOrder=7, name="Disk Space [MB]", description="Amount of disk space to request", ui=MarkerConstants.UI_TEXTFIELD, defaultText="4000")
 	int disk;
 
@@ -112,7 +112,7 @@ public class HTCondorSubmit_Updated extends JEXPlugin {
 	private static File localDatasetDir = null;
 	private static File submitFile = null;
 	private static File shFile = null;
-	
+
 	private File getDirPath(JEXEntry optionalEntry)
 	{
 		if(localDatasetDir == null)
@@ -121,12 +121,12 @@ public class HTCondorSubmit_Updated extends JEXPlugin {
 		}
 		return localDatasetDir;
 	}
-	
+
 	private static String datasetName()
 	{
 		return localDatasetDir.getName();
 	}
-	
+
 	@Override
 	public boolean run(JEXEntry optionalEntry)
 	{
@@ -136,7 +136,7 @@ public class HTCondorSubmit_Updated extends JEXPlugin {
 			return false;
 		}
 		try {
-			
+
 			File dir = this.getDirPath(optionalEntry);
 
 			if(firstTimeCalled)
@@ -145,7 +145,7 @@ public class HTCondorSubmit_Updated extends JEXPlugin {
 				this.prepareFolderStructure(dir);
 				firstTimeCalled = false;
 			}
-			
+
 			// Generate the .sh file to be executed for each entry
 			shFile = this.genScript();
 
@@ -154,25 +154,25 @@ public class HTCondorSubmit_Updated extends JEXPlugin {
 			CSVList objectsToR = new CSVList();
 			filesToR.add(readObjectToFilePathTable(rScript).firstEntry().getValue());
 			objectsToR.add(StringUtility.removeAllWhitespace(rScript.getTypeName().getName()));
-			if(isInputValid(file1, JEXData.FILE) || isInputValid(file1, JEXData.ROI))
+			if(isInputValid(file1, JEXData.ANY))
 			{
 				filesToR.add(readObjectToFilePathTable(file1).firstEntry().getValue());
 				objectsToR.add(StringUtility.removeAllWhitespace(file1.getTypeName().getName()));
 			}
-			if(isInputValid(file2, JEXData.ANY) || isInputValid(file2, JEXData.ROI))
+			if(isInputValid(file2, JEXData.ANY))
 			{
 				filesToR.add(readObjectToFilePathTable(file2).firstEntry().getValue());
 				objectsToR.add(StringUtility.removeAllWhitespace(file2.getTypeName().getName()));
 			}
-			if(isInputValid(file3, JEXData.FILE) || isInputValid(file3, JEXData.ROI))
+			if(isInputValid(file3, JEXData.ANY))
 			{
 				filesToR.add(readObjectToFilePathTable(file3).firstEntry().getValue());
 				objectsToR.add(StringUtility.removeAllWhitespace(file3.getTypeName().getName()));
 			}
-			
+
 			// Generate the .sub submit file to be submitted to condor.
 			submitFile = this.genSubmit(filesToR, objectsToR);
-			
+
 			// Copy each file to the temp folder as ..<DB>/temp/<Dataset>/<ID>/<File>
 			for(int i = 0; i < filesToR.size(); i++)
 			{
@@ -181,7 +181,7 @@ public class HTCondorSubmit_Updated extends JEXPlugin {
 				dstFile.getParentFile().mkdirs();
 				FileUtils.copyFile(fileToProcess, dstFile);
 			}
-	
+
 			// transferFolder(new File(dir.getAbsolutePath() + File.separator + optionalEntry.getEntryID()), submitFolder + "/" + StringUtility.removeAllWhitespace(optionalEntry.getEntryExperiment()) + File.separator + optionalEntry.getEntryID());
 			//		String cmd4 = "scp -r " + R.sQuote(dir.getAbsolutePath()) + " " + username + "@" + host + ":~/ChtcRun/" + StringUtility.removeAllWhitespace(optionalEntry.getEntryExperiment());
 			//		String cmd5 = password;
@@ -255,10 +255,10 @@ public class HTCondorSubmit_Updated extends JEXPlugin {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public File genSubmit(CSVList filesToR, CSVList objectsToR)
 	{
-		
+
 		CSVList inputs = new CSVList();
 		for(int i = 0; i < objectsToR.size(); i++)
 		{
@@ -266,7 +266,7 @@ public class HTCondorSubmit_Updated extends JEXPlugin {
 			String fileToR = filesToR.get(i);
 			inputs.add(FileUtility.getFileNameWithExtension(objectToR) + "." + FileUtility.getFileNameExtension(fileToR));
 		}
-		
+
 		LSVList submitCode = new LSVList();
 		submitCode.add("universe = vanilla\nlog = jex_$(Cluster).log");
 		submitCode.add("error = jex_$(Cluster).err");
@@ -284,30 +284,30 @@ public class HTCondorSubmit_Updated extends JEXPlugin {
 		submitCode.add("initialdir=$(directory)");
 		submitCode.add("queue directory matching " + datasetName() + "/*");
 		submitCode.add("");
-		
+
 		File subFile = new File(JEXWriter.saveText(submitCode.toString(), "sub"));
-		
+
 		return subFile;
 	}
-	
+
 	public File genScript()
 	{
-		
+
 		LSVList submitCode = new LSVList();
 		submitCode.add("#!/bin/bash");
 		submitCode.add("wget http://proxy.chtc.wisc.edu/SQUID/tedegroot/R.tar.gz");
 		submitCode.add("tar -xzvf R.tar.gz");
 		submitCode.add("export PATH=$(pwd)/R/bin:$PATH");
-		submitCode.add("unzip ParticleTracking_0.1.0.zip -d R/library");
+		//		submitCode.add("unzip ParticleTracking_0.1.0.zip -d R/library");
 		submitCode.add("R CMD BATCH rScript.R");
 		submitCode.add("rm R.tar.gz");
 		submitCode.add("");
-		
+
 		String shFile = JEXWriter.saveText(submitCode.toString(), "sh");
-		
+
 		return new File(shFile);
 	}
-	
+
 	public void transferFile(File src, String dstFolder, String dstFileName)
 	{
 		try{
@@ -381,7 +381,7 @@ public class HTCondorSubmit_Updated extends JEXPlugin {
 			return false;
 		}
 	}
-	
+
 	private static TreeMap<DimensionMap,String> readObjectToFilePathTable(JEXData data)
 	{
 		TreeMap<DimensionMap,String> result = new TreeMap<DimensionMap,String>();
@@ -402,10 +402,10 @@ public class HTCondorSubmit_Updated extends JEXPlugin {
 				result.put(map, path);
 			}
 		}
-		
+
 		return result;
 	}
-	
+
 	private static String readToPath(String dataFolder, JEXDataSingle ds)
 	{
 		String fileName = FileUtility.getFileNameWithExtension(ds.get(JEXDataSingle.RELATIVEPATH));
@@ -420,7 +420,7 @@ public class HTCondorSubmit_Updated extends JEXPlugin {
 		// String cmd2 = "zip -r " + "zipfile.zip" +" " + R.sQuote(StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment()));
 		String cmd2 = "tar -zcvf " + "tarfile.tar.gz" +" " + R.sQuote(localDatasetDir.getName());
 		ScriptRepository.runSysCommandApache(new String[]{"sh", "-c", cmd2}, localDatasetDir.getParent()); // Compress the files
-		
+
 		this.runSSHCommands("mkdir -p " + submitFolder); // Make sure the directory exists
 		transferFile(new File(localDatasetDir.getParent() + File.separator + "tarfile.tar.gz"), submitFolder, "tarfile.tar.gz");
 		//this.runCommands("cd ChtcRun", "unzip zipfile.zip", "rm zipfile.zip","./mkdag --data="+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+" --outputdir="+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+"OUT --resultdir=" +StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment()) + "Results --cmdtorun=rScript.R --pattern="+outFile+" --type=R --version=R-3.2.0", "cd "+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+"OUT", "condor_submit_dag mydag.dag" );
@@ -430,7 +430,7 @@ public class HTCondorSubmit_Updated extends JEXPlugin {
 		this.runSSHCommands("cd " + this.submitFolder, "dos2unix script_" + datasetName() + ".sh", "chmod +x script_" + datasetName() + ".sh", "condor_submit submit_" + datasetName() +".sub");
 		// this.runCommands("cd " + submitFolder + "/" + StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment()) +"/shared", "chmod 664 sl6-RLIBS.tar.gz");
 		// this.runCommands("cd ChtcRun", "./mkdag --data="+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+" --outputdir="+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+"OUT --resultdir=" +StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment()) + "Results --cmdtorun=rScript.R --pattern="+outFile+" --type=R --version=R-3.2.0", "cd "+StringUtility.removeAllWhitespace(ticket.getOutputList().firstEntry().getKey().getEntryExperiment())+"OUT", "condor_submit_dag mydag.dag" );
-		
+
 		firstTimeCalled = true;
 		localDatasetDir = null;
 		submitFile = null;
