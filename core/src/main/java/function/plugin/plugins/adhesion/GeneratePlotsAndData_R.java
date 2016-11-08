@@ -1,12 +1,8 @@
 package function.plugin.plugins.adhesion;
 
 import java.io.File;
-import java.util.Map;
 import java.util.TreeMap;
 
-import org.jruby.RubyProcess.Sys;
-import org.rosuda.REngine.REXP;
-import org.rosuda.REngine.REXPMismatchException;
 import org.scijava.plugin.Plugin;
 
 import Database.DBObjects.JEXData;
@@ -72,6 +68,9 @@ public class GeneratePlotsAndData_R extends JEXPlugin {
 	
 	@ParameterMarker(uiOrder=7, name="Number of Cores (OSX/Unix only)", description="Number of processor cores to use during grid search of initial guess for the single population model fit. (WINDOWS ONLY ALLOWS 1)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
 	double cores;
+	
+	@ParameterMarker(uiOrder=8, name="Windows R Memory (MB)", description="Specify the amount of memory alotted to R on windows machines. Default is around 2000 (MB). Add more if needed (i.e., if you get a memory allocation error). 4000 should work on most machines.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="4000")
+	int memory;
 
 	/////////// Define Outputs ///////////
 
@@ -116,6 +115,7 @@ public class GeneratePlotsAndData_R extends JEXPlugin {
 		}
 		
 		R.eval("rm(list=ls())"); // Start with a clean slate and start R session if necessary
+		R.eval("memory.limit(size=" + memory + ")"); // Sometimes we need a bit of extra memory beyond the default 2Gb.
 		R.eval("library(ParticleTracking)");
 		//AdhesionUtility.loadAdhesionScripts(); // Load necessary R scripts
 
