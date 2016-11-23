@@ -63,7 +63,6 @@ import io.scif.img.ImgIOException;
 import io.scif.img.ImgOpener;
 import io.scif.img.SCIFIOImgPlus;
 import jex.statics.JEXDialog;
-import jex.utilities.ImageUtility;
 import jex.utilities.ROIUtility;
 import loci.common.DataTools;
 import logs.Logs;
@@ -119,7 +118,7 @@ public class PointTester {
 	{
 		tryLogFreqSweep();
 	}
-	
+
 	public static void tryLogFreqSweep()
 	{
 		LogFreqSweep lfs = new LogFreqSweep(0.01,1,300);
