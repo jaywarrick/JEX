@@ -55,11 +55,11 @@ public class TestConnectedComponents {
 		final Img< UnsignedShortType > labeledObjects = ArrayImgs.unsignedShorts( dimensions );
 		
 		FeatureUtils utils = new FeatureUtils();
-		ImgLabeling<Integer,IntType> cellLabeling = utils.getConnectedComponents(objects, true);
+		ImgLabeling<Integer,IntType> cellLabeling = utils.getLabeling(objects, true);
 		
 		
 		LabelRegions<Integer> cellRegions = new LabelRegions<Integer>(cellLabeling);
-		utils.show(utils.getConnectedComponents(objects, true), false);
+		utils.show(utils.getLabeling(objects, true), false);
 		utils.show(objects, false);
 		
 		// Determine which LabelRegions are the ones we want to keep by

@@ -338,9 +338,9 @@ public class TestStuff {
 		Img<UnsignedByteType> img2 = ImageJFunctions.wrapByte(im2);
 		FeatureUtils utils = new FeatureUtils();
 		//utils.show(img2);
-		ImgLabeling<Integer, IntType> labeling = utils.getConnectedComponents(img, true);
+		ImgLabeling<Integer, IntType> labeling = utils.getLabeling(img, true);
 		//utils.showLabelingImg(labeling, true);
-		ImgLabeling<Integer, IntType> labeling2 = utils.getConnectedComponents(img2, true);
+		ImgLabeling<Integer, IntType> labeling2 = utils.getLabeling(img2, true);
 		LabelRegions<Integer> cellRegions = new LabelRegions<Integer>(labeling);
 		LabelRegions<Integer> cellRegions2 = new LabelRegions<Integer>(labeling2);
 		//FileUtility.showImg(img, false);
@@ -355,7 +355,7 @@ public class TestStuff {
 				if(reg.get().get())
 				{
 					// Then show the region and intersected region
-					ImgLabeling<Integer,IntType> tempLabeling = utils.getConnectedComponentsInRegion(region, img2, true);
+					ImgLabeling<Integer,IntType> tempLabeling = utils.getLabelingInRegion(region, img2, true);
 					utils.show(tempLabeling);
 					System.out.println(region.getLabel());
 					System.out.println(region.size());

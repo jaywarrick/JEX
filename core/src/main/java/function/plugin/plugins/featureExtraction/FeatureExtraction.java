@@ -322,7 +322,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	private void setWholeCellLabelingAndRegions(DimensionMap maskMap_NoChannel)
 	{
 		// Initialize structures for storing whole-cell mask information and maxima information.
-		this.wholeCellLabeling = utils.getConnectedComponents(this.wholeCellMaskImage, connectedness.equals("4 Connected"));
+		this.wholeCellLabeling = utils.getLabeling(this.wholeCellMaskImage, connectedness.equals("4 Connected"));
 		this.wholeCellRegions = new LabelRegions<Integer>(this.wholeCellLabeling);
 		//utils.show(this.cellLabeling, false);
 		//utils.show(wholeCellMaskImage, false);
@@ -569,7 +569,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
 	public LabelRegion<Integer> getMajorSubRegion(LabelRegion<Integer> region, Img<UnsignedByteType> mask)
 	{
-		ImgLabeling<Integer, IntType> labeling = utils.getConnectedComponentsInRegion(region, mask, connectedness.equals("4 Connected"));
+		ImgLabeling<Integer, IntType> labeling = utils.getLabelingInRegion(region, mask, connectedness.equals("4 Connected"));
 		LabelRegions<Integer> subRegions = new LabelRegions<>(labeling);
 		long maxSize = 1;
 		LabelRegion<Integer> majorSubRegion = null;
