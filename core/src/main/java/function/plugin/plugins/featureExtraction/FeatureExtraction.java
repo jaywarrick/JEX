@@ -1,9 +1,13 @@
 // Define package name as "plugins" as show here
 package function.plugin.plugins.featureExtraction;
 
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
+import java.util.Vector;
 
 import org.scijava.plugin.Plugin;
 
@@ -22,7 +26,6 @@ import function.ops.featuresets.StatsFeatureSet;
 import function.ops.featuresets.Tamura2DFeatureSet;
 import function.ops.featuresets.ZernikeFeatureSet;
 import function.ops.featuresets.wrappers.WriterWrapper;
-import function.ops.featuresets.wrappers.ZernikeWrapper;
 import function.ops.geometry.DefaultSmallestEnclosingCircle;
 import function.plugin.IJ2.IJ2PluginUtility;
 import function.plugin.mechanism.InputMarker;
@@ -44,6 +47,7 @@ import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealLocalizable;
+import net.imglib2.RealPoint;
 import net.imglib2.img.Img;
 import net.imglib2.roi.Regions;
 import net.imglib2.roi.geometric.Polygon;
@@ -79,13 +83,16 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	private Img<UnsignedByteType> mask;
 	private Img<T> image;
 	private ImgLabeling<Integer,IntType> wholeCellLabeling;
+	private ImgLabeling<Integer,IntType> maskLabeling;
 	private LabelRegions<Integer> wholeCellRegions;
+	private LabelRegions<Integer> maskRegions;
 	private ROIPlus maxima;
 	private LabelRegion<Integer> wholeCellRegion;
 	private LabelRegion<Integer> subCellRegion;
+	private Vector<LabelRegion<Integer>> subCellRegions;
 	private TreeMap<Integer, Pair<Double,RealLocalizable>> nuclearInfo;
 	private boolean nucExists = false;
-	private Polygon polygon;
+	private Vector<Polygon> polygons;
 	private DimensionMap mapMask, mapImage, mapMask_NoChannel;
 	private Integer pId;
 
@@ -157,10 +164,10 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
 	@ParameterMarker(uiOrder = 8, name = "** Compute Moments Features?", description = "Whether to quantify image moment statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean moments;
-	
+
 	@ParameterMarker(uiOrder = 9, name = "** Compute LBP Features?", description = "Whether to quantify linear binary pattern (LBP) statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean lbp;
-	
+
 	@ParameterMarker(uiOrder = 10, name = "** Compute Tamura Features?", description = "Whether to quantify Tamura statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean tamura;
 
@@ -171,7 +178,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	String connectedness;
 
 	// Feature set parameters	
-	
+
 	@ParameterMarker(uiOrder = 18, name = "Haralick Gray Levels", description = "Number of gray levels for Haralick calculations", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "8")
 	int haralickGrayLevels;
 
@@ -183,7 +190,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
 	@ParameterMarker(uiOrder = 21, name = "Histogram Num. Bins", description = "Number of bins for the histogram created for each cell region", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "32")
 	int histogramBins;
-	
+
 	@ParameterMarker(uiOrder = 22, name = "Tumura Num. Bins", description = "Number of bins for the Tamura calculations for each cell region", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "16")
 	int tamuraBins;
 
@@ -239,13 +246,11 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		for(DimensionMap mapMask_NoChannelTemp : maskDimTable_NoChannel.getMapIterator())
 		{
 			if (this.isCanceled()) { this.close(); return false; }
-			
+
 			this.mapMask_NoChannel = mapMask_NoChannelTemp;
 			DimensionMap mapMask_WholeCell = this.mapMask_NoChannel.copyAndSet(channelName + "=" + maskWholeCellChannelValue);
 
 			this.setWholeCellMask(mapMask_WholeCell);
-			if (this.isCanceled()) { this.close(); return false; }
-			this.setWholeCellLabelingAndRegions(mapMask_WholeCell);
 			if (this.isCanceled()) { this.close(); return false; }
 			this.setMaximaRoi(mapMask_WholeCell);
 			this.setIdToLabelMap(mapMask_WholeCell);
@@ -283,7 +288,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 						this.updateStatus();
 					}
 				}
-				
+
 				firstTimeThrough = false;				
 			}
 
@@ -291,7 +296,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		this.close();
 		return true;
 	}
-	
+
 	public void updateStatus()
 	{
 		this.count = this.count + 1;
@@ -301,8 +306,13 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
 	public void setWholeCellMask(DimensionMap mapMask_WholeCell)
 	{
+		// Initialize structures for storing whole-cell mask information and maxima information.
 		Logs.log("Getting whole cell mask: " + mapMask_WholeCell, this);
 		this.wholeCellMaskImage = JEXReader.getSingleImage(maskMap.get(mapMask_WholeCell));
+		this.wholeCellLabeling = utils.getLabeling(this.wholeCellMaskImage, connectedness.equals("4 Connected"));
+		this.wholeCellRegions = new LabelRegions<Integer>(this.wholeCellLabeling);
+		//utils.show(this.cellLabeling, false);
+		//utils.show(wholeCellMaskImage, false);
 	}
 
 	public void setImageToMeasure(DimensionMap mapImage)
@@ -317,15 +327,8 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		Logs.log("Measuring mask: " + this.mapMask, this);
 		this.mapMask = mapMask;
 		this.mask = JEXReader.getSingleImage(maskMap.get(this.mapMask));
-	}
-
-	private void setWholeCellLabelingAndRegions(DimensionMap maskMap_NoChannel)
-	{
-		// Initialize structures for storing whole-cell mask information and maxima information.
-		this.wholeCellLabeling = utils.getLabeling(this.wholeCellMaskImage, connectedness.equals("4 Connected"));
-		this.wholeCellRegions = new LabelRegions<Integer>(this.wholeCellLabeling);
-		//utils.show(this.cellLabeling, false);
-		//utils.show(wholeCellMaskImage, false);
+		this.maskLabeling = utils.getSubLabeling(this.wholeCellLabeling, this.mask);
+		this.maskRegions = new LabelRegions<Integer>(this.maskLabeling);
 	}
 
 	private void setMaximaRoi(DimensionMap mapMask_WholeCell)
@@ -361,19 +364,18 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		{
 			this.wholeCellRegion = null;
 			this.subCellRegion = null;
-			this.polygon = null;
+			this.subCellRegions = null;
+			this.polygons = null;
 		}
 		else
 		{
 			this.wholeCellRegion = this.wholeCellRegions.getLabelRegion(labelToGet);
-			this.subCellRegion = this.getMajorSubRegion(this.wholeCellRegion, this.mask);
-			if(this.subCellRegion == null)
+			this.subCellRegion = this.maskRegions.getLabelRegion(labelToGet);
+			this.subCellRegions = this.getSubRegions(this.wholeCellRegion, this.mask);
+			this.polygons = new Vector<Polygon>();
+			for(LabelRegion<Integer> region : this.subCellRegions)
 			{
-				this.polygon = null;
-			}
-			else
-			{
-				this.polygon = utils.getPolygonFromBoolean(this.subCellRegion);
+				this.polygons.add(utils.getPolygonFromBoolean(region));
 			}
 		}
 	}
@@ -390,7 +392,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 				if(!this.putFeatures(firstTimeThrough))
 					return false;
 			}
-			
+
 		}
 		return true;
 	}
@@ -417,7 +419,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
 		if(!this.putIntensityFeatures(firstTimeThrough))
 			return false;
-		
+
 		if(!putBinaryTextureFeatures())
 			return false;
 
@@ -435,8 +437,8 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		}
 		mapM_Intensity.put("ImageChannel", imageChannelValue);
 
-		IterableInterval<T> ii = Regions.sample(this.subCellRegion, Views.offsetInterval(this.image, this.wholeCellRegion));
-		
+		IterableInterval<T> ii = Regions.sample(this.subCellRegion, this.image); //Views.offsetInterval(this.image, this.wholeCellRegion));
+
 		this.putStats(mapM_Intensity, ii);
 		if (this.isCanceled()) { this.close(); return false;}
 		this.putHaralick2D(mapM_Intensity, ii);
@@ -500,13 +502,13 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			this.putZernike(mapM_Intensity, ii, new Circle(this.nuclearInfo.get(this.pId).p2, this.nuclearInfo.get(this.pId).p1 * (this.zernikeFixedDiameter / this.zernikeNucDiameter)), "_NUCwPADDEDNUC", firstTimeThrough);
 			if (this.isCanceled()) { this.close(); return false;}
 		}
-		
+
 		// Now do the binary texture patter stats
-		
+
 
 		return true;
 	}
-	
+
 	public boolean putBinaryTextureFeatures()
 	{
 		DimensionMap mapM_Intensity = this.mapMask_NoChannel.copyAndSet("MaskChannel=" + mapMask.get(channelName));
@@ -518,22 +520,20 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		mapM_Intensity.put("ImageChannel", imageChannelValue);
 
 		RandomAccessibleInterval<T> vals = Views.offsetInterval(utils.cropRealRAI(this.subCellRegion, Views.offsetInterval(this.image, this.wholeCellRegion)), this.subCellRegion);
-		
+
 		//utils.showRealII(Views.flatIterable(vals));
 		this.putTamura(mapM_Intensity, vals);
 		if (this.isCanceled()) { this.close(); return false;}
 		this.putLBPHistogram(mapM_Intensity, vals);
 		if (this.isCanceled()) { this.close(); return false;}
-		
+
 		return true;
 	}
 
 	public boolean putGeometricFeatures()
 	{
 		if (this.isCanceled()) { this.close(); return false;}
-		DimensionMap mapM_Geometry = this.mapMask_NoChannel.copyAndSet("MaskChannel=" + this.mapMask.get(channelName));
-		mapM_Geometry.put("ImageChannel", "None");
-		this.putGeometric(mapM_Geometry);
+		this.putGeometric();
 		return true;
 	}
 
@@ -569,19 +569,54 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
 	public LabelRegion<Integer> getMajorSubRegion(LabelRegion<Integer> region, Img<UnsignedByteType> mask)
 	{
+		List<LabelRegion<Integer>> subRegions = this.getSubRegions(region, mask);
+		return subRegions.get(0);
+	}
+	
+	/**
+	 * Get a list of LabelRegions for a given mask within the pixels defined by the provided LabelRegion object
+	 * @param region LabelRegion<Integer> within which to analyze the given mask to convert the mask to LabelRegions.
+	 * @param mask Img<UnsignedByteType> mask to turn into LabelRegion objects within the provided region object.
+	 * @return Vector<LabelRegion<Integer>> List of LabelRegions in order from largest to smallest.
+	 */
+	public Vector<LabelRegion<Integer>> getSubRegions(LabelRegion<Integer> region, Img<UnsignedByteType> mask)
+	{
 		ImgLabeling<Integer, IntType> labeling = utils.getLabelingInRegion(region, mask, connectedness.equals("4 Connected"));
 		LabelRegions<Integer> subRegions = new LabelRegions<>(labeling);
-		long maxSize = 1;
-		LabelRegion<Integer> majorSubRegion = null;
+		Vector<LabelRegion<Integer>> ret = new Vector<>();
 		for (LabelRegion<Integer> subRegion : subRegions)
 		{
-			if(subRegion.size() > maxSize)
-			{
-				majorSubRegion = subRegion;
-				maxSize = subRegion.size();
-			}
+			ret.add(subRegion);
 		}
-		return majorSubRegion;
+		Collections.sort(ret, new SizeComparator(true));
+		return ret;
+	}
+	
+	/**
+	 * Returns region1.size() - region2.size() so > 0 if region1 is bigger than region2
+	 * @author jaywarrick
+	 *
+	 */
+	class SizeComparator implements Comparator<LabelRegion<?>>
+	{
+		boolean reverse = false;
+		
+		public SizeComparator(boolean reverse)
+		{
+			this.reverse = reverse;
+		}
+		
+		@Override
+		public int compare(LabelRegion<?> region1, LabelRegion<?> region2)
+		{
+			int ret = 0;
+			long diff = (region1.size() - region2.size());
+			if(diff < 0) ret = -1;
+			if(diff > 0) ret = 1;
+			if(reverse) return -1*ret;
+			return ret;
+		}
+		
 	}
 
 	// @SuppressWarnings("unchecked")
@@ -615,33 +650,79 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	// }
 
 	@SuppressWarnings("unchecked")
-	public void putGeometric(DimensionMap mapM)
+	public void putGeometric()
 	{
 		if (geometric) {
 
-			if (polygon == null) {
-				Logs.log("Encountered a null polygon for geometric2d features. id:" + this.pId + ", label:" + this.subCellRegion.getLabel(),
+			if (polygons.size() == 0) {
+				Logs.log("Encountered an empty list of polygons for geometric2d features. id:" + this.pId + ", label:" + this.subCellRegion.getLabel() + ", mask:" + this.mapMask,
 						FeatureExtraction.class);
 			}
 			if (opGeometric == null) {
-				opGeometric = IJ2PluginUtility.ij().op().op(Geometric2DFeatureSet.class, this.polygon);
+				opGeometric = IJ2PluginUtility.ij().op().op(Geometric2DFeatureSet.class, this.polygons.get(0));
 			}
-
-			Map<NamedFeature, DoubleType> results = opGeometric.compute1(this.polygon);
-			// Map<NamedFeature, DoubleType> results =
-			// opGeometric.compute1(reg);
-			for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
-				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
+			
+			int i = 1;
+			for(Polygon p : polygons)
+			{
+				DimensionMap mapM_Geometry = this.mapMask_NoChannel.copyAndSet("MaskChannel=" + this.mapMask.get(channelName) + ".p" + i);
+				mapM_Geometry.put("ImageChannel", "None");
+				Map<NamedFeature, DoubleType> results = opGeometric.compute1(p);
+				// Map<NamedFeature, DoubleType> results =
+				// opGeometric.compute1(reg);
+				for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
+					DimensionMap newMap = mapM_Geometry.copyAndSet("Measurement=" + result.getKey().getName());
+					newMap.put("Id", "" + this.pId);
+					newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
+					this.write(newMap, result.getValue().getRealDouble());
+				}
+				DimensionMap newMap = mapM_Geometry
+						.copyAndSet("Measurement=" + net.imagej.ops.Ops.Geometric.Size.class.getName() + "Iterable");
 				newMap.put("Id", "" + this.pId);
-				newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
-				this.write(newMap, result.getValue().getRealDouble());
+				newMap.put("Label", "" + idToLabelMap.get(this.pId));
+				this.write(newMap, (double) this.subCellRegions.get(i-1).size());
+				
+				RealPoint wholeCellRelativeCenterOfMass = this.getWholeCellRelativeCenterOfMass();
+				RealLocalizable subCellRegionCenterOfMass = this.subCellRegions.get(i-1).getCenterOfMass();
+				RealPoint subCellRelativeCenterOfMass = this.getOffsetPoint(subCellRegionCenterOfMass, wholeCellRelativeCenterOfMass);
+				
+				newMap = mapM_Geometry
+						.copyAndSet("Measurement=" + "net.imagej.ops.Ops$Geometric$X");
+				newMap.put("Id", "" + this.pId);
+				newMap.put("Label", "" + idToLabelMap.get(this.pId));
+				this.write(newMap, (double) subCellRelativeCenterOfMass.getDoublePosition(0));
+				
+				newMap = mapM_Geometry
+						.copyAndSet("Measurement=" + "net.imagej.ops.Ops$Geometric$Y");
+				newMap.put("Id", "" + this.pId);
+				newMap.put("Label", "" + idToLabelMap.get(this.pId));
+				this.write(newMap, (double) subCellRelativeCenterOfMass.getDoublePosition(1));
+				
+				i = i + 1;
 			}
-			DimensionMap newMap = mapM
-					.copyAndSet("Measurement=" + net.imagej.ops.Ops.Geometric.Size.class.getName() + "Iterable");
-			newMap.put("Id", "" + this.pId);
-			newMap.put("Label", "" + idToLabelMap.get(this.pId));
-			this.write(newMap, (double) this.subCellRegion.size());
 		}
+	}
+	
+	private RealPoint getWholeCellRelativeCenterOfMass()
+	{
+		RealPoint wholeCellOffset = new RealPoint(new double[]{0.0, 0.0});
+		this.wholeCellRegion.realMin(wholeCellOffset);
+		return this.getOffsetPoint(this.wholeCellRegion.getCenterOfMass(), wholeCellOffset);
+	}
+	
+	private RealPoint getOffsetPoint(RealLocalizable p1, RealPoint offset)
+	{
+		if(p1.numDimensions() != offset.numDimensions())
+		{
+			throw new IllegalArgumentException("Points must have the same number of dimensions");
+		}
+		for(int i = 0; i < offset.numDimensions(); i++)
+		{
+			offset.setPosition(-1.0*offset.getDoublePosition(i), i);
+		}
+		RealPoint ret = new RealPoint(p1);
+		ret.move(offset);
+		return ret;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -651,6 +732,9 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			if (opStats == null) {
 				opStats = IJ2PluginUtility.ij().op().op(StatsFeatureSet.class, vals);
 			}
+			//this.utils.showRealII(vals, (Interval) this.wholeCellRegion, true);
+			//			this.utils.showRegion(this.wholeCellRegion);
+			//			this.utils.showRegion(this.subCellRegion);
 			Map<NamedFeature, DoubleType> results = opStats.compute1(vals);
 			for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
@@ -722,7 +806,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			}
 		}
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public void putTamura(DimensionMap mapM, RandomAccessibleInterval<T> vals)
 	{
@@ -756,7 +840,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			}
 		}
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public void putLBPHistogram(DimensionMap mapM, RandomAccessibleInterval<T> vals)
 	{
@@ -828,7 +912,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			}
 		}
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public void putDNZernike(DimensionMap mapM, IterableInterval<T> vals, Circle innerCircle, Circle outerCircleAtEquivalentRadius, boolean firstTimeThrough)
 	{
@@ -837,7 +921,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			if (this.opDNZernike == null) {
 				opDNZernike = IJ2PluginUtility.ij().op().op(DoubleNormalizedZernikeFeatureSet.class, vals, null, zernikeMomentMin, zernikeMomentMax, innerCircle, outerCircleAtEquivalentRadius, 0.3);
 			}
-			
+
 			Circle outerCircle = new Circle(outerCircleAtEquivalentRadius.getCenter(), 1.5*outerCircleAtEquivalentRadius.getRadius());
 
 			// Set the enclosing circle for this cell

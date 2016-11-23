@@ -226,6 +226,11 @@ public class FeatureUtils {
 	{
 		this.show(this.makeImgFromRealII(region), defaultApp);
 	}
+	
+	public <T extends RealType<T>>void showRealII(IterableInterval< T > region, Interval i, boolean defaultApp)
+	{
+		this.show(this.makeImgFromRealII(region, i), defaultApp);
+	}
 
 	public <T extends RealType<T>>void showRealII(IterableInterval< T > region)
 	{
