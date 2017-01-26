@@ -251,6 +251,10 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			DimensionMap mapMask_WholeCell = this.mapMask_NoChannel.copyAndSet(channelName + "=" + maskWholeCellChannelValue);
 
 			this.setWholeCellMask(mapMask_WholeCell);
+			if(this.wholeCellMaskImage == null)
+			{
+				continue;
+			}
 			if (this.isCanceled()) { this.close(); return false; }
 			this.setMaximaRoi(mapMask_WholeCell);
 			this.setIdToLabelMap(mapMask_WholeCell);
@@ -264,6 +268,10 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			{
 				// Set the image
 				this.setImageToMeasure(mapMaskTemp);
+				if(this.image == null)
+				{
+					continue;
+				}
 
 				// Quantify nuclear region first if possible
 				if(this.nucExists)
@@ -308,9 +316,19 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	{
 		// Initialize structures for storing whole-cell mask information and maxima information.
 		Logs.log("Getting whole cell mask: " + mapMask_WholeCell, this);
-		this.wholeCellMaskImage = JEXReader.getSingleImage(maskMap.get(mapMask_WholeCell));
-		this.wholeCellLabeling = utils.getLabeling(this.wholeCellMaskImage, connectedness.equals("4 Connected"));
-		this.wholeCellRegions = new LabelRegions<Integer>(this.wholeCellLabeling);
+		String path = maskMap.get(mapMask_WholeCell);
+		if(path == null)
+		{
+			this.wholeCellMaskImage = null;
+			this.wholeCellLabeling = null;
+			this.wholeCellRegions = null;
+		}
+		else
+		{
+			this.wholeCellMaskImage = JEXReader.getSingleImage(maskMap.get(mapMask_WholeCell));
+			this.wholeCellLabeling = utils.getLabeling(this.wholeCellMaskImage, connectedness.equals("4 Connected"));
+			this.wholeCellRegions = new LabelRegions<Integer>(this.wholeCellLabeling);
+		}
 		//utils.show(this.cellLabeling, false);
 		//utils.show(wholeCellMaskImage, false);
 	}
@@ -319,7 +337,15 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	{
 		Logs.log("Measuring image: " + this.mapImage, this);
 		this.mapImage = mapImage;
-		this.image = JEXReader.getSingleImage(imageMap.get(this.mapImage));
+		String pathToGet = imageMap.get(this.mapImage);
+		if(pathToGet == null)
+		{
+			this.image = null;
+		}
+		else
+		{
+			this.image = JEXReader.getSingleImage(imageMap.get(this.mapImage));
+		}
 	}
 
 	public void setMaskToMeasure(DimensionMap mapMask)
