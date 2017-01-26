@@ -68,6 +68,9 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 
 	@ParameterMarker(uiOrder=3, name="Single Threshold per Color?", description="Calculate a single threhsold for each color or a threshold for each image in data set. The combined thresh is calcualted as the median of the individual thresholds.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
 	boolean threshPerColor;
+	
+	@ParameterMarker(uiOrder=4, name="Offset", description="Amount to add back to the image before saving. Useful for avoiding clipping of lows, essentially setting the background to a known non-zero offset.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
+	double offset;
 
 	/////////// Define Outputs here ///////////
 
@@ -188,6 +191,7 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 				}
 				else
 				{
+					ip.add(offset);
 					ip.subtract(thresh);
 					if(this.isCanceled())
 					{
@@ -286,6 +290,7 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 				}
 				else
 				{
+					ip.add(offset);
 					ip.subtract(threshold);
 					if(this.isCanceled())
 					{
