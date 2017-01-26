@@ -27,7 +27,6 @@ import ij.process.ImageProcessor;
 import image.roi.IdPoint;
 import image.roi.PointList;
 import image.roi.ROIPlus;
-import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import logs.Logs;
 import miscellaneous.JEXCSVWriter;
@@ -323,8 +322,12 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 				JEXStatics.statusBar.setProgressPercentage(percentage);
 				counter ++;
 				
-				
-				ImagePlus im = new ImagePlus(imageMap.get(map));
+				String pathToGet = imageMap.get(map);
+				if(pathToGet == null)
+				{
+					continue;
+				}
+				ImagePlus im = new ImagePlus(pathToGet);
 				FloatProcessor ip = (FloatProcessor) im.getProcessor().convertToFloat();
 				im.setProcessor(ip);
 				
