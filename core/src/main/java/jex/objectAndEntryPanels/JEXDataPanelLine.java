@@ -205,6 +205,24 @@ public class JEXDataPanelLine extends JPanel implements ActionListener, MouseLis
 						Logs.log("Error opening file... Path = " + path, 1, this);
 					}
 				}
+				else
+				{
+					TreeSet<JEXEntry> entries = JEXStatics.jexManager.getSelectedEntries();
+					if(entries.size() > 0)
+					{
+						JEXData data = JEXStatics.jexManager.getDataOfTypeNameInEntry(this.objectTN, entries.first());
+						String path = MovieReader.readMovieObject(data);
+						try
+						{
+							FileUtility.openFileDefaultApplication(path);
+						}
+						catch (Exception e1)
+						{
+							JEXStatics.statusBar.setStatusText("Error opening file... Path = " + path);
+							Logs.log("Error opening file... Path = " + path, 1, this);
+						}
+					}
+				}
 			}
 			else if(this.objectTN.getType().equals(JEXData.WORKFLOW))// Load the
 				// workflow
