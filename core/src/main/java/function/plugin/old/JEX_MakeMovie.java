@@ -8,6 +8,7 @@ import Database.Definition.ParameterSet;
 import Database.Definition.TypeName;
 import function.JEXCrunchable;
 
+import java.awt.Color;
 import java.util.HashMap;
 
 import logs.Logs;
@@ -214,7 +215,7 @@ public class JEX_MakeMovie extends JEXCrunchable {
 		String vhPath = null;
 		if(format == null)
 		{
-			vhPath = writer.makeAVIMovie(data, null, binning, encoding, fps, this);
+			vhPath = writer.makeAVIMovie(data, null, binning, encoding, fps, Color.WHITE, this);
 			if(vhPath == null)
 			{
 				return false;
@@ -222,7 +223,7 @@ public class JEX_MakeMovie extends JEXCrunchable {
 		}
 		else
 		{
-			vhPath = writer.makeQuickTimeMovie(data, null, binning, format, fps, this);
+			vhPath = writer.makeQuickTimeMovie(data, null, binning, format, fps, Color.WHITE, this);
 			if(vhPath == null)
 			{
 				return false;

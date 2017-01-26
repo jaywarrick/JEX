@@ -8,6 +8,7 @@ import Database.Definition.ParameterSet;
 import Database.Definition.TypeName;
 import function.JEXCrunchable;
 
+import java.awt.Color;
 import java.util.HashMap;
 
 import logs.Logs;
@@ -142,8 +143,9 @@ public class JEX_MakeMovieWithTimeStamp extends JEXCrunchable {
 		Parameter p6 = new Parameter("Time per Frame", "Interval between frames.", "0.5");
 		Parameter p7 = new Parameter("Number of Digits After Decimal", "Precision of the timestamp to display", "2");
 		Parameter p8 = new Parameter("Font Size", "I have no idea what a good number is yet.", "55");
-		Parameter p9 = new Parameter("Inset", "Number of pixels to inset the text from the lower left", "10");
-		Parameter p10 = new Parameter("Time Units", "String to put after time to indicate units", "[hpi]");
+		Parameter p9 = new Parameter("Font Color", "The color of the time stamp text", Parameter.DROPDOWN, new String[] { "Black","White","Gray"}, 1);
+		Parameter p10 = new Parameter("Inset", "Number of pixels to inset the text from the lower left", "10");
+		Parameter p11 = new Parameter("Time Units", "String to put after time to indicate units", "[hpi]");
 		
 		// Make an array of the parameters and return it
 		ParameterSet parameterArray = new ParameterSet();
@@ -156,6 +158,7 @@ public class JEX_MakeMovieWithTimeStamp extends JEXCrunchable {
 		parameterArray.addParameter(p8);
 		parameterArray.addParameter(p9);
 		parameterArray.addParameter(p10);
+		parameterArray.addParameter(p11);
 		return parameterArray;
 	}
 	
@@ -228,6 +231,16 @@ public class JEX_MakeMovieWithTimeStamp extends JEXCrunchable {
 		int fontSize = Integer.parseInt(this.parameters.getValueOfParameter("Font Size"));
 		int inset = Integer.parseInt(this.parameters.getValueOfParameter("Inset"));
 		String units = this.parameters.getValueOfParameter("Time Units");
+		String fontColor = this.parameters.getValueOfParameter("Font Color");
+		Color textColor = Color.BLACK;
+		if(fontColor.equals("White"))
+		{
+			textColor = Color.WHITE;
+		}
+		if(fontColor.equals("Gray"))
+		{
+			textColor = Color.GRAY;
+		}
 		
 		// Run the function
 		Logs.log("Running the function", 1, this);
@@ -235,7 +248,7 @@ public class JEX_MakeMovieWithTimeStamp extends JEXCrunchable {
 		String vhPath = null;
 		if(format == null)
 		{
-			vhPath = writer.makeAVIMovie(data, roiData, binning, encoding, fps, startTime, interval, units, digits, fontSize, inset, this);
+			vhPath = writer.makeAVIMovie(data, roiData, binning, encoding, fps, startTime, interval, units, digits, fontSize, inset, textColor, this);
 			if(vhPath == null)
 			{
 				return false;
@@ -243,7 +256,7 @@ public class JEX_MakeMovieWithTimeStamp extends JEXCrunchable {
 		}
 		else
 		{
-			vhPath = writer.makeQuickTimeMovie(data, roiData, binning, format, fps, startTime, interval, units, digits, fontSize, inset, this);
+			vhPath = writer.makeQuickTimeMovie(data, roiData, binning, format, fps, startTime, interval, units, digits, fontSize, inset, textColor, this);
 			if(vhPath == null)
 			{
 				return false;
