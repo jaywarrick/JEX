@@ -13,6 +13,7 @@ import Database.DataReader.RoiReader;
 import Database.SingleUserDatabase.JEXReader;
 import function.ops.featuresets.wrappers.WriterWrapper;
 import function.ops.stats.DefaultPearsonsCorrelationCoefficient;
+import function.ops.stats.DefaultSpearmansRankCorrelationCoefficient;
 import function.plugin.IJ2.IJ2PluginUtility;
 import function.plugin.mechanism.InputMarker;
 import function.plugin.mechanism.JEXPlugin;
@@ -70,6 +71,7 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 	private Integer pId;
 
 	public DefaultPearsonsCorrelationCoefficient<T> opR = null;
+	public DefaultSpearmansRankCorrelationCoefficient<T> opRho = null;
 
 	public int total = 0, count = 0;
 	public int percentage = 0;
@@ -153,6 +155,10 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 			DimensionMap mapMask_WholeCell = this.mapMask_NoChannel.copyAndSet(channelName + "=" + maskWholeCellChannelValue);
 
 			this.setWholeCellMask(mapMask_WholeCell);
+			if(this.wholeCellMaskImage == null)
+			{
+				continue;
+			}
 			if (this.isCanceled()) { this.close(); return false; }
 
 			this.setWholeCellLabelingAndRegions(mapMask_WholeCell);
@@ -198,7 +204,15 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 	public void setWholeCellMask(DimensionMap mapMask_WholeCell)
 	{
 		Logs.log("Getting whole cell mask: " + mapMask_WholeCell, this);
-		this.wholeCellMaskImage = JEXReader.getSingleImage(maskMap.get(mapMask_WholeCell));
+		String temp = maskMap.get(mapMask_WholeCell);
+		if(temp == null)
+		{
+			this.wholeCellMaskImage = null;
+		}
+		else
+		{
+			this.wholeCellMaskImage = JEXReader.getSingleImage(temp);
+		}
 	}
 
 	public void setImagesToMeasure(DimensionMap map1, DimensionMap map2)
@@ -344,14 +358,25 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 	{
 		if (opR == null) {
 			opR = IJ2PluginUtility.ij().op().op(DefaultPearsonsCorrelationCoefficient.class, new Pair<RandomAccessibleInterval<T>, RandomAccessibleInterval<T>>(), maskCursor);
+			
 		}
+		if (opRho == null) {
+			opRho = IJ2PluginUtility.ij().op().op(DefaultSpearmansRankCorrelationCoefficient.class, new Pair<RandomAccessibleInterval<T>, RandomAccessibleInterval<T>>(), maskCursor);
+		}
+		
 
-		DoubleType result = opR.compute2(new Pair<RandomAccessibleInterval<T>, RandomAccessibleInterval<T>>(subImage1, subImage2), maskCursor);
+		DoubleType result_R = opR.compute2(new Pair<RandomAccessibleInterval<T>, RandomAccessibleInterval<T>>(subImage1, subImage2), maskCursor);
+		DoubleType result_Rho = opRho.compute2(new Pair<RandomAccessibleInterval<T>, RandomAccessibleInterval<T>>(subImage1, subImage2), maskCursor);
 
 		DimensionMap newMap = mapM.copyAndSet("Measurement=net.imagej.ops.Ops$Stats$PearsonsCorrelationCoefficient");
 		newMap.put("Id", "" + this.pId);
 		newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
-		this.write(newMap, result.get());
+		this.write(newMap.copy(), result_R.get());
+		
+		newMap = mapM.copyAndSet("Measurement=net.imagej.ops.Ops$Stats$SpearmansRankCorrelationCoefficient");
+		newMap.put("Id", "" + this.pId);
+		newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
+		this.write(newMap, result_Rho.get());
 
 		//		for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
 		//			DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());

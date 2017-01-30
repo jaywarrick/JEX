@@ -26,5 +26,13 @@ public class Stats extends AbstractNamespace {
 				function.ops.stats.DefaultPearsonsCorrelationCoefficient.class, in1, in2);
 		return result;
 	}
+	
+	@OpMethod(
+			op = function.ops.stats.DefaultSpearmansRankCorrelationCoefficient.class)
+	public <T extends RealType<T>> DoubleType spearmansrankcorrelationcoefficient(final Pair<RandomAccessibleInterval<T>, RandomAccessibleInterval<T>> in1, IterableInterval<Void> in2) {
+		final DoubleType result = (DoubleType) ops().run(
+				function.ops.stats.DefaultSpearmansRankCorrelationCoefficient.class, in1, in2);
+		return result;
+	}
 
 }
