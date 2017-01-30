@@ -22,7 +22,6 @@ import function.ops.featuresets.StatsFeatureSet;
 import function.ops.featuresets.Tamura2DFeatureSet;
 import function.ops.featuresets.ZernikeFeatureSet;
 import function.ops.featuresets.wrappers.WriterWrapper;
-import function.ops.featuresets.wrappers.ZernikeWrapper;
 import function.ops.geometry.DefaultSmallestEnclosingCircle;
 import function.plugin.IJ2.IJ2PluginUtility;
 import function.plugin.mechanism.InputMarker;
@@ -244,6 +243,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			DimensionMap mapMask_WholeCell = this.mapMask_NoChannel.copyAndSet(channelName + "=" + maskWholeCellChannelValue);
 
 			this.setWholeCellMask(mapMask_WholeCell);
+			if(this.wholeCellMaskImage == null) { continue; }
 			if (this.isCanceled()) { this.close(); return false; }
 			this.setWholeCellLabelingAndRegions(mapMask_WholeCell);
 			if (this.isCanceled()) { this.close(); return false; }
@@ -302,7 +302,15 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	public void setWholeCellMask(DimensionMap mapMask_WholeCell)
 	{
 		Logs.log("Getting whole cell mask: " + mapMask_WholeCell, this);
-		this.wholeCellMaskImage = JEXReader.getSingleImage(maskMap.get(mapMask_WholeCell));
+		String temp = maskMap.get(mapMask_WholeCell);
+		if(temp == null)
+		{
+			this.wholeCellMaskImage = null;
+		}
+		else
+		{
+			this.wholeCellMaskImage = JEXReader.getSingleImage(temp);
+		}
 	}
 
 	public void setImageToMeasure(DimensionMap mapImage)

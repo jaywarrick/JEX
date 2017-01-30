@@ -194,6 +194,10 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 			
 			// Get the regions in the union image that correspond to maxima
 			Logs.log("Getting regions corresponding to maxima", this);
+			if(union == null)
+			{
+				continue;
+			}
 			Pair<Img<UnsignedByteType>,TreeMap<Integer,PointList>> temp = utils.keepRegionsWithMaxima(union, connectedness.equals("4 Connected"), roiMap.get(subMap), this.getCanceler());
 			union = temp.p1;
 			
@@ -265,6 +269,11 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 		for(String name : namesToUnion)
 		{
 			DimensionMap temp = subMap.copyAndSet(channelDimName + "=" + name);
+			String pathToGet = maskMap.get(temp);
+			if(pathToGet == null)
+			{
+				continue;
+			}
 			Img<UnsignedByteType> mask = JEXReader.getSingleImage(maskMap.get(temp));
 			if(union == null)
 			{

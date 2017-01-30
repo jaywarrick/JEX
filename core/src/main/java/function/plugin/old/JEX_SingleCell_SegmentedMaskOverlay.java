@@ -343,7 +343,12 @@ public class JEX_SingleCell_SegmentedMaskOverlay extends JEXCrunchable {
 			{
 				continue;
 			}
-			ByteProcessor mask = (ByteProcessor) (new ImagePlus(masks.get(map))).getProcessor();
+			String pathToGet = masks.get(map);
+			if(pathToGet == null)
+			{
+				continue;
+			}
+			ByteProcessor mask = (ByteProcessor) (new ImagePlus(pathToGet)).getProcessor();
 			
 			if(invertMask)
 			{

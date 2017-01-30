@@ -323,8 +323,17 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 				JEXStatics.statusBar.setProgressPercentage(percentage);
 				counter ++;
 				
-				
-				ImagePlus im = new ImagePlus(imageMap.get(map));
+				String pathToGet = imageMap.get(map);
+				if(pathToGet == null)
+				{
+					// // Update the display
+					count = count + 1;
+					percentage = (int) (100 * ((double) (count) / ((double) total)));
+					JEXStatics.statusBar.setProgressPercentage(percentage);
+					counter = counter + 1;
+					continue;
+				}
+				ImagePlus im = new ImagePlus(pathToGet);
 				FloatProcessor ip = (FloatProcessor) im.getProcessor().convertToFloat();
 				im.setProcessor(ip);
 				
