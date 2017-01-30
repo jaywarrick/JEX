@@ -46,6 +46,7 @@ import net.imglib2.roi.geometric.Polygon;
 import net.imglib2.roi.labeling.ImgLabeling;
 import net.imglib2.roi.labeling.LabelRegion;
 import net.imglib2.roi.labeling.LabelRegions;
+import net.imglib2.roi.labeling.LabelingType;
 import net.imglib2.type.BooleanType;
 import net.imglib2.type.logic.BitType;
 import net.imglib2.type.logic.BoolType;
@@ -73,7 +74,7 @@ public class FeatureUtils {
 	//////// Connected Components ///////////
 	/////////////////////////////////////////
 
-	public <I extends IntegerType< I >> ImgLabeling<Integer, IntType> getConnectedComponents(final RandomAccessibleInterval<I> inputImg, boolean fourConnected)
+	public <I extends IntegerType< I >> ImgLabeling<Integer, IntType> getLabeling(final RandomAccessibleInterval<I> inputImg, boolean fourConnected)
 	{
 		StructuringElement se = null;
 		if(fourConnected)
@@ -93,12 +94,46 @@ public class FeatureUtils {
 
 		return labeling;
 	}
+	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public <T, I extends IntegerType<I>> ImgLabeling <T, I> getSubLabeling(ImgLabeling<T, I> labeling, RandomAccessibleInterval<? extends RealType> mask)
+	{
+		// Create a labeling the same size as the mask
+		long[] dims = new long[mask.numDimensions()];
+		mask.dimensions(dims);
+		ImgLabeling<T, I> ret = new ImgLabeling(new ArrayImgFactory< IntType >().create( dims, new IntType() ));
+		
+		// Turn the mask into a Boolean type RAI
+		RandomAccess<BoolType> raMask = this.convertRealToBooleanTypeRAI(mask, new BoolType(false)).randomAccess();
+		
+		// Get the RandomAccess of the blank labeling
+		RandomAccess<LabelingType<T>> raRet = ret.randomAccess();
+		
+		// Loop through the provided labeling
+		Cursor<LabelingType<T>> cLabeling = labeling.cursor();
+		while(cLabeling.hasNext())
+		{
+			cLabeling.fwd();
+			raMask.setPosition(cLabeling);
+			raRet.setPosition(cLabeling);
+			// If the mask is true then transfer labels from labeling to ret
+			if(raMask.get().get())
+			{
+				if(cLabeling.get().size() > 0)
+				{
+					raRet.get().addAll(cLabeling.get());
+				}
+			}
+		}
+		
+		return ret;
+	}
 
-	public <T extends BooleanType<T>> ImgLabeling<Integer, IntType> getConnectedComponentsInRegion(RandomAccessibleInterval<T> reg, Img<UnsignedByteType> mask, boolean fourConnected)
+	public <T extends BooleanType<T>> ImgLabeling<Integer, IntType> getLabelingInRegion(RandomAccessibleInterval<T> reg, Img<UnsignedByteType> mask, boolean fourConnected)
 	{
 		CroppedRealRAI<T, UnsignedByteType> cropped = new CroppedRealRAI<>(reg, mask);
 		IntervalView<UnsignedByteType> v = Views.offsetInterval(cropped, cropped);
-		ImgLabeling<Integer, IntType> cellLabeling = this.getConnectedComponents(v, fourConnected);
+		ImgLabeling<Integer, IntType> cellLabeling = this.getLabeling(v, fourConnected);
 		return cellLabeling;
 	}
 
@@ -114,6 +149,11 @@ public class FeatureUtils {
 	public <T extends BooleanType<T>> void showRegion(RandomAccessibleInterval<T> region, String title)
 	{
 		ImageJFunctions.showUnsignedByte(region, new BooleanTypeToUnsignedByteTypeConverter<T>(), title);
+	}
+	
+	public void showRegion(LabelRegion<?> region, boolean defaultApp)
+	{
+		showVoidII(region, defaultApp);
 	}
 
 	public void showRegion(LabelRegion<?> region, Interval i)
@@ -169,7 +209,7 @@ public class FeatureUtils {
 
 	public void showVoidII(IterableInterval< Void > region, boolean defaultApp)
 	{
-		this.showVoidII(region, null, false);
+		this.showVoidII(region, null, defaultApp);
 	}
 
 	public void showVoidII(IterableInterval< Void > region, Interval i)
@@ -185,6 +225,11 @@ public class FeatureUtils {
 	public <T extends RealType<T>>void showRealII(IterableInterval< T > region, boolean defaultApp)
 	{
 		this.show(this.makeImgFromRealII(region), defaultApp);
+	}
+	
+	public <T extends RealType<T>>void showRealII(IterableInterval< T > region, Interval i, boolean defaultApp)
+	{
+		this.show(this.makeImgFromRealII(region, i), defaultApp);
 	}
 
 	public <T extends RealType<T>>void showRealII(IterableInterval< T > region)
@@ -502,7 +547,7 @@ public class FeatureUtils {
 
 	public <T extends RealType<T>> Polygon getPolygonFromReal(final RandomAccessibleInterval<T> src)
 	{
-		return this.getPolygonFromBoolean(this.convertRealToBoolTypeRAI(src));
+		return this.getPolygonFromBoolean(this.convertRealToBooleanTypeRAI(src, new BoolType(false)));
 	}
 
 	/**
@@ -542,7 +587,7 @@ public class FeatureUtils {
 		Img<UnsignedByteType> blank = factory.create(dims, new UnsignedByteType(0));
 
 		// Get the regions
-		ImgLabeling<Integer, IntType> labeling = this.getConnectedComponents(mask, fourConnected);
+		ImgLabeling<Integer, IntType> labeling = this.getLabeling(mask, fourConnected);
 		//		ImageJFunctions.show(mask);
 		//		this.show(mask);
 		//		this.show(labeling);
@@ -665,9 +710,9 @@ public class FeatureUtils {
 		return new ConvertedRandomAccessibleInterval<T, UnsignedByteType>(rai, new BooleanTypeToUnsignedByteTypeConverter<T>(), new UnsignedByteType(0));
 	}
 
-	public <R extends RealType<R>> RandomAccessibleInterval<BoolType> convertRealToBoolTypeRAI(RandomAccessibleInterval<R> rai)
+	public <R extends RealType<R>, I extends BooleanType<I>> RandomAccessibleInterval<I> convertRealToBooleanTypeRAI(RandomAccessibleInterval<R> rai, I exemplar)
 	{
-		return new ConvertedRandomAccessibleInterval<>(rai, new RealTypeToBoolTypeConverter<R>(), new BoolType(false));
+		return new ConvertedRandomAccessibleInterval<R, I>(rai, new RealTypeToBoolTypeConverter<R>(), exemplar);
 	}
 
 	public IterableInterval<BitType> convertVoidToBitTypeII(IterableInterval<Void> ii)
@@ -685,6 +730,8 @@ public class FeatureUtils {
 		ConvertedCursor< Void, BitType > ret = new ConvertedCursor<>( c, new VoidToBitTypeConverter(), new BitType(false) );
 		return ret;
 	}
+
+	////////// Converters ///////////
 
 	public class BoolTypeToBitTypeConverter implements Converter<BoolType, BitType> {
 
@@ -718,10 +765,11 @@ public class FeatureUtils {
 		}
 	}
 
-	public class RealTypeToBoolTypeConverter<R extends RealType<R>> implements Converter<R, BoolType> {
+	@SuppressWarnings("rawtypes")
+	public class RealTypeToBoolTypeConverter<R extends RealType<R>> implements Converter<R, BooleanType> {
 
 		@Override
-		public void convert(R input, BoolType output) {
+		public void convert(R input, BooleanType output) {
 			if(input.getRealDouble() > 0)
 			{
 				output.set(true);
@@ -734,7 +782,7 @@ public class FeatureUtils {
 		}
 	}
 
-	class RealTypeToBitTypeConverter<R extends RealType<R>> implements Converter<R, BitType> {
+	public class RealTypeToBitTypeConverter<R extends RealType<R>> implements Converter<R, BitType> {
 
 		@Override
 		public void convert(R input, BitType output) {

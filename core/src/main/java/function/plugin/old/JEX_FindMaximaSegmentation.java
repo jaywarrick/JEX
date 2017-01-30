@@ -27,7 +27,6 @@ import ij.process.ImageProcessor;
 import image.roi.IdPoint;
 import image.roi.PointList;
 import image.roi.ROIPlus;
-import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import logs.Logs;
 import miscellaneous.JEXCSVWriter;
@@ -326,11 +325,7 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 				String pathToGet = imageMap.get(map);
 				if(pathToGet == null)
 				{
-					// // Update the display
-					count = count + 1;
-					percentage = (int) (100 * ((double) (count) / ((double) total)));
-					JEXStatics.statusBar.setProgressPercentage(percentage);
-					counter = counter + 1;
+					// Counting will be messed up now for the progress bar but hard to remedy
 					continue;
 				}
 				ImagePlus im = new ImagePlus(pathToGet);

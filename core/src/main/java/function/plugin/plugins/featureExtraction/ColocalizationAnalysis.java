@@ -39,7 +39,6 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.IntType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.real.DoubleType;
-import net.imglib2.view.Views;
 import tables.Dim;
 import tables.DimTable;
 import tables.DimensionMap;
@@ -63,10 +62,13 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 	private Img<T> image1;
 	private Img<T> image2;
 	private ImgLabeling<Integer,IntType> wholeCellLabeling;
+	private ImgLabeling<Integer,IntType> maskLabeling;
 	private LabelRegions<Integer> wholeCellRegions;
+	private LabelRegions<Integer> maskRegions;
 	private ROIPlus maxima;
-	private LabelRegion<Integer> wholeCellRegion;
+	//	private LabelRegion<Integer> wholeCellRegion;
 	private LabelRegion<Integer> subCellRegion;
+	// private LabelRegion<Integer> majorSubCellRegion; UNUSED IN COLOC
 	private DimensionMap mapMask, mapImage1, mapImage2, mapMask_NoChannel;
 	private Integer pId;
 
@@ -161,9 +163,6 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 			}
 			if (this.isCanceled()) { this.close(); return false; }
 
-			this.setWholeCellLabelingAndRegions(mapMask_WholeCell);
-			if (this.isCanceled()) { this.close(); return false; }
-
 			this.setMaximaRoi(mapMask_WholeCell);
 
 			this.setIdToLabelMap(mapMask_WholeCell);
@@ -203,6 +202,7 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 
 	public void setWholeCellMask(DimensionMap mapMask_WholeCell)
 	{
+		// Initialize structures for storing whole-cell mask information and maxima information.
 		Logs.log("Getting whole cell mask: " + mapMask_WholeCell, this);
 		String temp = maskMap.get(mapMask_WholeCell);
 		if(temp == null)
@@ -213,6 +213,8 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 		{
 			this.wholeCellMaskImage = JEXReader.getSingleImage(temp);
 		}
+		//utils.show(this.cellLabeling, false);
+		//utils.show(wholeCellMaskImage, false);
 	}
 
 	public void setImagesToMeasure(DimensionMap map1, DimensionMap map2)
@@ -224,20 +226,19 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 		this.image2 = JEXReader.getSingleImage(imageMap.get(this.mapImage2));
 	}
 
+	//	public void setMaskToMeasure(DimensionMap mapMask)
+	//	{
+	//		Logs.log("Measuring mask: " + this.mapMask, this);
+	//		this.mapMask = mapMask;
+	//		this.mask = JEXReader.getSingleImage(maskMap.get(this.mapMask));
+	//	}
 	public void setMaskToMeasure(DimensionMap mapMask)
 	{
 		Logs.log("Measuring mask: " + this.mapMask, this);
 		this.mapMask = mapMask;
 		this.mask = JEXReader.getSingleImage(maskMap.get(this.mapMask));
-	}
-
-	private void setWholeCellLabelingAndRegions(DimensionMap maskMap_NoChannel)
-	{
-		// Initialize structures for storing whole-cell mask information and maxima information.
-		this.wholeCellLabeling = utils.getConnectedComponents(this.wholeCellMaskImage, connectedness.equals("4 Connected"));
-		this.wholeCellRegions = new LabelRegions<Integer>(this.wholeCellLabeling);
-		//utils.show(this.cellLabeling, false);
-		//utils.show(wholeCellMaskImage, false);
+		this.maskLabeling = utils.getSubLabeling(this.wholeCellLabeling, this.mask);
+		this.maskRegions = new LabelRegions<Integer>(this.maskLabeling);
 	}
 
 	private void setMaximaRoi(DimensionMap mapMask_WholeCell)
@@ -271,13 +272,15 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 		Integer labelToGet = this.idToLabelMap.get(pId);
 		if(labelToGet == null)
 		{
-			this.wholeCellRegion = null;
+			// this.wholeCellRegion = null;  // UNUSED IN COLOC
 			this.subCellRegion = null;
+			// this.majorSubCellRegion = null; // UNUSED IN COLOC
 		}
 		else
 		{
-			this.wholeCellRegion = this.wholeCellRegions.getLabelRegion(labelToGet);
-			this.subCellRegion = this.getMajorSubRegion(this.wholeCellRegion, this.mask);
+			// this.wholeCellRegion = this.wholeCellRegions.getLabelRegion(labelToGet); // UNUSED IN COLOC
+			this.subCellRegion = this.maskRegions.getLabelRegion(labelToGet);
+			// this.majorSubCellRegion = this.getMajorSubRegion(this.wholeCellRegion, this.mask); // UNUSED IN COLOC
 		}
 	}
 
@@ -319,8 +322,9 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 
 		mapM_Intensity.put("ImageChannel", image1ChannelValue + "_" + image2ChannelValue);
 
-		RandomAccessibleInterval<T> subImage1 = Views.offsetInterval(this.image1, this.wholeCellRegion);
-		RandomAccessibleInterval<T> subImage2 = Views.offsetInterval(this.image2, this.wholeCellRegion);
+		// TODO: Check whether I need to offset any more because we are now getting subregions differently.
+		//		RandomAccessibleInterval<T> subImage1 = Views.offsetInterval(this.image1, this.wholeCellRegion);
+		//		RandomAccessibleInterval<T> subImage2 = Views.offsetInterval(this.image2, this.wholeCellRegion);
 		//		RandomAccessibleInterval<T> subRegionImage = utils.cropRealRAI(this.subCellRegion, subImage2);
 		Cursor<Void> c = this.subCellRegion.cursor();
 		//IterableRegion<BoolType> ir = utils.intersectRegions(this.wholeCellRegion, this.subCellRegion);
@@ -329,7 +333,7 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 		//		utils.show(subImage2);
 		//		utils.showVoidII(this.subCellRegion, this.wholeCellRegion);
 
-		this.putPearson(mapM_Intensity, subImage1, subImage2, c);
+		this.putPearson(mapM_Intensity, this.image1, this.image2, c);
 
 		if(this.isCanceled()) return false;
 
@@ -338,7 +342,7 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 
 	public LabelRegion<Integer> getMajorSubRegion(LabelRegion<Integer> region, Img<UnsignedByteType> mask)
 	{
-		ImgLabeling<Integer, IntType> labeling = utils.getConnectedComponentsInRegion(region, mask, connectedness.equals("4 Connected"));
+		ImgLabeling<Integer, IntType> labeling = utils.getLabelingInRegion(region, mask, connectedness.equals("4 Connected"));
 		LabelRegions<Integer> subRegions = new LabelRegions<>(labeling);
 		long maxSize = 1;
 		LabelRegion<Integer> majorSubRegion = null;

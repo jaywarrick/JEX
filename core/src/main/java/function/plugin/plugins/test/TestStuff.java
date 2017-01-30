@@ -26,11 +26,13 @@ import net.imagej.ops.special.function.UnaryFunctionOp;
 import net.imglib2.Cursor;
 import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealCursor;
 import net.imglib2.RealLocalizable;
 import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.roi.geometric.PointCollection;
+import net.imglib2.roi.geometric.Polygon;
 import net.imglib2.roi.labeling.ImgLabeling;
 import net.imglib2.roi.labeling.LabelRegion;
 import net.imglib2.roi.labeling.LabelRegions;
@@ -45,7 +47,40 @@ public class TestStuff {
 
 	public static void main (String[] args) throws Exception
 	{
-		tryMomentInvariance();
+		tryLabelSubLabelRegion();
+	}
+	
+	public static void tryLabelSubLabelRegion()
+	{
+		IJ2PluginUtility.ij().op();
+		ImagePlus im = new ImagePlus("/Users/jaywarrick/Desktop/For ImageJ Forum/Objects.tif");
+		ImagePlus im2 = new ImagePlus("/Users/jaywarrick/Desktop/For ImageJ Forum/ErodedObjects.tif");
+		
+		FeatureUtils utils = new FeatureUtils();
+		// Make a two images, parent and child
+		RandomAccessibleInterval<UnsignedByteType> parentImg = ImageJFunctions.wrapByte(im);
+		RandomAccessibleInterval<UnsignedByteType> childImg = ImageJFunctions.wrapByte(im2);
+		
+		
+		// Create a LabelRegion from the parent.
+		ImgLabeling<Integer, IntType > labeling = utils.getLabeling(parentImg, true);
+		ImgLabeling<Integer, IntType > subLabeling = utils.getSubLabeling(labeling, childImg);
+		
+		utils.show(labeling);
+		utils.show(subLabeling);
+		
+		LabelRegions<Integer> regions = new LabelRegions<>(subLabeling);
+		int i = 1;
+		for(LabelRegion<Integer> r : regions)
+		{
+			utils.showRegion(r, true);
+			RandomAccessibleInterval<UnsignedByteType> crop = utils.cropRealRAI(r, childImg);
+			ImgLabeling<Integer, IntType> temp = utils.getLabeling(crop, true);
+			LabelRegions<Integer> temp2 = new LabelRegions<Integer>(temp);
+			System.out.println("Region" + i + " size = " + temp2.getExistingLabels().size());
+			Polygon p = utils.getPolygonFromBoolean(r);
+			System.out.println(p.getVertices());
+		}
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -338,9 +373,9 @@ public class TestStuff {
 		Img<UnsignedByteType> img2 = ImageJFunctions.wrapByte(im2);
 		FeatureUtils utils = new FeatureUtils();
 		//utils.show(img2);
-		ImgLabeling<Integer, IntType> labeling = utils.getConnectedComponents(img, true);
+		ImgLabeling<Integer, IntType> labeling = utils.getLabeling(img, true);
 		//utils.showLabelingImg(labeling, true);
-		ImgLabeling<Integer, IntType> labeling2 = utils.getConnectedComponents(img2, true);
+		ImgLabeling<Integer, IntType> labeling2 = utils.getLabeling(img2, true);
 		LabelRegions<Integer> cellRegions = new LabelRegions<Integer>(labeling);
 		LabelRegions<Integer> cellRegions2 = new LabelRegions<Integer>(labeling2);
 		//FileUtility.showImg(img, false);
@@ -355,7 +390,7 @@ public class TestStuff {
 				if(reg.get().get())
 				{
 					// Then show the region and intersected region
-					ImgLabeling<Integer,IntType> tempLabeling = utils.getConnectedComponentsInRegion(region, img2, true);
+					ImgLabeling<Integer,IntType> tempLabeling = utils.getLabelingInRegion(region, img2, true);
 					utils.show(tempLabeling);
 					System.out.println(region.getLabel());
 					System.out.println(region.size());

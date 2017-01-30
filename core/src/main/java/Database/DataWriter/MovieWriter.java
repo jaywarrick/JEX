@@ -68,9 +68,9 @@ public class MovieWriter implements ImageObserver {
 	 * @param images
 	 * @return
 	 */
-	public String makeQuickTimeMovie(JEXData images, JEXData cropROI, int imageBinning, Format format, int imagesPerSecond, JEXCrunchable optionalCruncherForCanceling)
+	public String makeQuickTimeMovie(JEXData images, JEXData cropROI, int imageBinning, Format format, int imagesPerSecond, Color textColor, JEXCrunchable optionalCruncherForCanceling)
 	{
-		return this.makeQuickTimeMovie(images, cropROI, imageBinning, format, imagesPerSecond, 0, 0, null, 0, 0, 0, optionalCruncherForCanceling);
+		return this.makeQuickTimeMovie(images, cropROI, imageBinning, format, imagesPerSecond, 0, 0, null, 0, 0, 0, textColor, optionalCruncherForCanceling);
 	}
 	
 	/**
@@ -79,7 +79,7 @@ public class MovieWriter implements ImageObserver {
 	 * @param images
 	 * @return
 	 */
-	public String makeQuickTimeMovie(JEXData images, JEXData cropROI, int imageBinning, Format format, int imagesPerSecond, double startTime, double interval, String units, int digits, int fontSize, int inset, JEXCrunchable optionalCruncherForCanceling)
+	public String makeQuickTimeMovie(JEXData images, JEXData cropROI, int imageBinning, Format format, int imagesPerSecond, double startTime, double interval, String units, int digits, int fontSize, int inset, Color textColor, JEXCrunchable optionalCruncherForCanceling)
 	{
 		if(images == null || !images.getTypeName().getType().equals(JEXData.IMAGE))
 		{
@@ -167,7 +167,7 @@ public class MovieWriter implements ImageObserver {
 				{
 					String timeStamp = "" + formatter.format(time) + " " + units;
 					imp.setFont(font);
-					imp.setColor(Color.white);
+					imp.setColor(textColor);
 					imp.drawString(timeStamp, inset, imp.getHeight() - inset);
 				}
 				
@@ -274,9 +274,9 @@ public class MovieWriter implements ImageObserver {
 	 * @param images
 	 * @return
 	 */
-	public String makeAVIMovie(JEXData images, JEXData cropROI, int imageBinning, String encoding, int imagesPerSecond, JEXCrunchable optionalCruncherForCanceling)
+	public String makeAVIMovie(JEXData images, JEXData cropROI, int imageBinning, String encoding, int imagesPerSecond, Color textColor, JEXCrunchable optionalCruncherForCanceling)
 	{
-		return this.makeAVIMovie(images, cropROI, imageBinning, encoding, imagesPerSecond, 0, 0, null, 0, 0, 0, optionalCruncherForCanceling);
+		return this.makeAVIMovie(images, cropROI, imageBinning, encoding, imagesPerSecond, 0, 0, null, 0, 0, 0, textColor, optionalCruncherForCanceling);
 	}
 	
 	/**
@@ -285,7 +285,7 @@ public class MovieWriter implements ImageObserver {
 	 * @param images
 	 * @return
 	 */
-	public String makeAVIMovie(JEXData images, JEXData cropROI, int imageBinning, String encoding, int imagesPerSecond, double startTime, double interval, String units, int digits, int fontSize, int inset, JEXCrunchable optionalCruncherForCanceling)
+	public String makeAVIMovie(JEXData images, JEXData cropROI, int imageBinning, String encoding, int imagesPerSecond, double startTime, double interval, String units, int digits, int fontSize, int inset, Color textColor, JEXCrunchable optionalCruncherForCanceling)
 	{
 		if(images == null || !images.getTypeName().getType().equals(JEXData.IMAGE))
 		{
@@ -372,7 +372,7 @@ public class MovieWriter implements ImageObserver {
 				{
 					String timeStamp = "" + formatter.format(time) + " " + units;
 					imp.setFont(font);
-					imp.setColor(Color.white);
+					imp.setColor(textColor);
 					imp.drawString(timeStamp, inset, imp.getHeight() - inset);
 				}
 				

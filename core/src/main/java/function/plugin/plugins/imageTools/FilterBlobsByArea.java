@@ -132,7 +132,7 @@ public class FilterBlobsByArea extends JEXPlugin {
 		}
 		
 		Img<UnsignedByteType> img = JEXReader.getSingleImage(imagePath);
-		ImgLabeling<Integer, IntType> labeling = utils.getConnectedComponents(img, fourConnected);
+		ImgLabeling<Integer, IntType> labeling = utils.getLabeling(img, fourConnected);
 		LabelRegions<Integer> regions = new LabelRegions<>(labeling);
 		Img<UnsignedByteType> img2 = img.factory().create(img, new UnsignedByteType(0));
 		for(LabelRegion<Integer> r : regions)
