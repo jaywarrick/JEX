@@ -366,15 +366,15 @@ public class ImageStackStitcher extends JEXPlugin {
 			return null;
 		}
 		ImagePlus original = new ImagePlus(ImageReader.readObjectToImagePath(imageData, imageDimMaps.get(0)));
-		double imSizeX = gridWidth;
-		double imSizeY = gridHeight;
-		if(gridWidth == null)
+		double imSizeX = original.getWidth() * scale;
+		double imSizeY = original.getHeight() * scale;
+		if(gridWidth != null)
 		{
-			imSizeX = original.getWidth() * scale;
+			imSizeX = gridWidth;
 		}
-		if(gridHeight == null)
+		if(gridHeight != null)
 		{
-			imSizeY = original.getHeight() * scale;
+			imSizeY = gridHeight;
 		}
 		Rectangle rect = imageDisplacements.getBounds();
 		int totalWidth = (rect.width + ((int) imSizeX));
