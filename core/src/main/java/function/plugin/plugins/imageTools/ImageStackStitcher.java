@@ -220,7 +220,10 @@ public class ImageStackStitcher extends JEXPlugin {
 			{
 				List<DimensionMap> mapsToGet = getMapsForStitching(locDim, partialMap);
 				File stitchedFile = stitch(entry, imageData, mapsToGet, imageCoords, scale, normalize, multiplier, bitDepth, background, null, null, null);
-				stitchedImageFilePaths.put(partialMap, stitchedFile.getAbsolutePath());
+				if(stitchedFile != null)
+				{
+					stitchedImageFilePaths.put(partialMap, stitchedFile.getAbsolutePath());
+				}
 			}
 			catch (Exception e)
 			{
