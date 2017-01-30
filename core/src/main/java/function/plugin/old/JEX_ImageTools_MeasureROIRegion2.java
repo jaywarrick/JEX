@@ -153,7 +153,7 @@ public class JEX_ImageTools_MeasureROIRegion2 extends JEXCrunchable {
 	@Override
 	public ParameterSet requiredParameters()
 	{
-		Parameter p0 = new Parameter("Measurement", "Type of measurement to perform", Parameter.DROPDOWN, new String[] { "All", "Mean", "Min,Max", "Median", "Mode", "Std Dev", "Mean Dev", "x,y", "Area", "CM,Moment" }, 0);
+		Parameter p0 = new Parameter("Measurement", "Type of measurement to perform", Parameter.DROPDOWN, new String[] { "All", "Mean", "Sum", "Min,Max", "Median", "Mode", "Std Dev", "Mean Dev", "x,y", "Area", "CM,Moment" }, 0);
 		// Parameter p1 = new Parameter("Old Min","Image Intensity Value","0.0");
 		// Parameter p2 = new Parameter("Old Max","Image Intensity Value","4095.0");
 		// Parameter p3 = new Parameter("New Min","Image Intensity Value","0.0");
@@ -295,7 +295,7 @@ public class JEX_ImageTools_MeasureROIRegion2 extends JEXCrunchable {
 
 		DimTable resultsDimTable = new DimTable();
 		resultsDimTable.addAll(unionTable);
-		resultsDimTable.add(new Dim("Measurement", new String[] { "mean", "area", "min", "max", "stddev", "meandev", "median", "mode", "x", "y", "centerOfMassX", "centerOfMassY", "momentZ", "mass" }));
+		resultsDimTable.add(new Dim("Measurement", new String[] { "area", "mean", "sum", "min", "max", "stddev", "meandev", "median", "mode", "x", "y", "centerOfMassX", "centerOfMassY", "momentZ", "mass" }));
 		if(atLeastOneHasPattern)
 		{
 			Dim d = new Dim(patternDimName, minPointId, maxPointId);
@@ -321,6 +321,8 @@ public class JEX_ImageTools_MeasureROIRegion2 extends JEXCrunchable {
 		{
 			newNewMap.put("Measurement", "mean");
 			resultsTreeMap.put(newNewMap.copy(), stats.mean);
+			newNewMap.put("Measurement", "sum");
+			resultsTreeMap.put(newNewMap.copy(), stats.mean * stats.area);
 			newNewMap.put("Measurement", "min");
 			resultsTreeMap.put(newNewMap.copy(), stats.min);
 			newNewMap.put("Measurement", "max");
@@ -353,6 +355,11 @@ public class JEX_ImageTools_MeasureROIRegion2 extends JEXCrunchable {
 		{
 			newNewMap.put("Measurement", "mean");
 			resultsTreeMap.put(newNewMap.copy(), stats.mean);
+		}
+		else if(measure.equals("Sum"))
+		{
+			newNewMap.put("Measurement", "sum");
+			resultsTreeMap.put(newNewMap.copy(), stats.mean * stats.area);
 		}
 		else if(measure.equals("Min,Max"))
 		{
