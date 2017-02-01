@@ -4,6 +4,7 @@ import java.io.File;
 
 import ij.ImagePlus;
 import ij.io.FileSaver;
+import miscellaneous.DirectoryManager;
 import net.imglib2.algorithm.labeling.ConnectedComponents;
 import net.imglib2.algorithm.labeling.ConnectedComponents.StructuringElement;
 import net.imglib2.img.Img;
@@ -46,7 +47,7 @@ public class TestConnectedComponents {
 		 * <address>Apache/2.2.22 (Ubuntu) Server at upload.imagej.net Port 80</address>
 		 * </body></html>
 		 */
-		ImagePlus temp = new ImagePlus("C:/Users/MMB/Desktop/For ImageJ Forum/Objects.tif");
+		ImagePlus temp = new ImagePlus("/Users/jaywarrick/Desktop/Blob.tif");
 		Img<UnsignedByteType> objects = ImageJFunctions.wrapByte(temp);
 		StructuringElement se = ConnectedComponents.StructuringElement.FOUR_CONNECTED;
 
@@ -57,7 +58,7 @@ public class TestConnectedComponents {
 		FeatureUtils utils = new FeatureUtils();
 		ImgLabeling<Integer,IntType> cellLabeling = utils.getLabeling(objects, true);
 		
-		
+		DirectoryManager.setHostDirectory("/Users/jaywarrick/Desktop");
 		LabelRegions<Integer> cellRegions = new LabelRegions<Integer>(cellLabeling);
 		utils.show(utils.getLabeling(objects, true), false);
 		utils.show(objects, false);
