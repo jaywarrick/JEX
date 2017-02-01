@@ -1,15 +1,8 @@
 package function.plugin.old;
 
-import ij.ImagePlus;
-import ij.process.FloatProcessor;
-import image.roi.ROIPlus;
-
 import java.util.HashMap;
 import java.util.TreeMap;
 
-import jex.statics.JEXStatics;
-import jex.utilities.FunctionUtility;
-import tables.DimensionMap;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;
@@ -20,6 +13,12 @@ import Database.Definition.ParameterSet;
 import Database.Definition.TypeName;
 import Database.SingleUserDatabase.JEXWriter;
 import function.JEXCrunchable;
+import ij.ImagePlus;
+import ij.process.FloatProcessor;
+import ij.process.ImageProcessor;
+import image.roi.ROIPlus;
+import jex.statics.JEXStatics;
+import tables.DimensionMap;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions
@@ -213,7 +212,7 @@ public class JEX_ImageTools_CropImageUsingROI extends JEXCrunchable {
 		
 		ROIPlus region;
 		ImagePlus image;
-		FloatProcessor imageP;
+		ImageProcessor imageP;
 		int count = 0;
 		String actualPath = "";
 		int total = imageList.size();
@@ -225,8 +224,7 @@ public class JEX_ImageTools_CropImageUsingROI extends JEXCrunchable {
 				return false;
 			}
 			image = new ImagePlus(imageList.get(map));
-			imageP = (FloatProcessor) image.getProcessor().convertToFloat();
-			int bitDepth = image.getBitDepth();
+			imageP = image.getProcessor();
 			region = regionROI.get(map);
 			if(region != null)
 			{
@@ -236,7 +234,7 @@ public class JEX_ImageTools_CropImageUsingROI extends JEXCrunchable {
 				imageP.setRoi(region.getRoi());
 				imageP = (FloatProcessor) imageP.crop().convertToFloat();
 			}
-			actualPath = this.saveProjectedImage(imageP, bitDepth);
+			actualPath = JEXWriter.saveImage(imageP);
 			outputMap.put(map, actualPath);
 			count = count + 1;
 			JEXStatics.statusBar.setProgressPercentage(count * 100 / total);
@@ -249,12 +247,5 @@ public class JEX_ImageTools_CropImageUsingROI extends JEXCrunchable {
 		
 		// Return status
 		return true;
-	}
-	
-	private String saveProjectedImage(FloatProcessor imp, int bitDepth)
-	{
-		ImagePlus toSave = FunctionUtility.makeImageToSave(imp, "false", bitDepth);
-		String imPath = JEXWriter.saveImage(toSave);
-		return imPath;
 	}
 }

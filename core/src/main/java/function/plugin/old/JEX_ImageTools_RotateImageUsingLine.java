@@ -1,5 +1,9 @@
 package function.plugin.old;
 
+import java.awt.Point;
+import java.util.HashMap;
+import java.util.TreeMap;
+
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;
@@ -11,16 +15,9 @@ import Database.Definition.TypeName;
 import Database.SingleUserDatabase.JEXWriter;
 import function.JEXCrunchable;
 import ij.ImagePlus;
-import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import image.roi.ROIPlus;
-
-import java.awt.Point;
-import java.util.HashMap;
-import java.util.TreeMap;
-
 import jex.statics.JEXStatics;
-import jex.utilities.FunctionUtility;
 import tables.DimensionMap;
 
 /**
@@ -219,12 +216,12 @@ public class JEX_ImageTools_RotateImageUsingLine extends JEXCrunchable {
 		
 		ROIPlus line;
 		ImagePlus image;
-		FloatProcessor imageP;
+		ImageProcessor imageP;
 		int count = 0;
 		Point point1, point2;
 		Point pointcheck;
 		double angle = 0;
-		String baseName = "", actualPath = "";
+		String actualPath = "";
 		int total = imageList.size();
 		
 		// this is to determine horizontal or vertical rotation
@@ -236,9 +233,8 @@ public class JEX_ImageTools_RotateImageUsingLine extends JEXCrunchable {
 		for (DimensionMap map : imageList.keySet())
 		{
 			image = new ImagePlus(imageList.get(map));
-			imageP = (FloatProcessor) image.getProcessor().convertToFloat();
+			imageP = image.getProcessor();
 			imageP.setInterpolationMethod(interpMode);
-			int bitDepth = image.getBitDepth();
 			line = lineROI.get(map);
 			if(line == null || line.getRoi() == null)
 				continue;
@@ -259,8 +255,7 @@ public class JEX_ImageTools_RotateImageUsingLine extends JEXCrunchable {
 			angle = Math.atan2(point2.y - point1.y, point2.x - point1.x);
 			angle = -angle * 180 / Math.PI;
 			imageP.rotate(angle - orientangle);
-			baseName = ImageReader.readObjectToImageName(imageFiles, map);
-			actualPath = this.saveProjectedImage(entry, baseName, imageP, bitDepth);
+			actualPath = JEXWriter.saveImage(imageP);
 			outputMap.put(map, actualPath);
 			count = count + 1;
 			JEXStatics.statusBar.setProgressPercentage(count * 100 / total);
@@ -273,14 +268,6 @@ public class JEX_ImageTools_RotateImageUsingLine extends JEXCrunchable {
 		
 		// Return status
 		return true;
-	}
-	
-	private String saveProjectedImage(JEXEntry entry, String baseName, FloatProcessor imp, int bitDepth)
-	{
-		// //// Save the results
-		ImagePlus toSave = FunctionUtility.makeImageToSave(imp, "false", bitDepth);
-		String finalPath = JEXWriter.saveImage(toSave);
-		return finalPath;
 	}
 }
 
