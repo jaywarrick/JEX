@@ -154,7 +154,8 @@ public class Ticket implements Callable<Integer>, Canceler{
 			// Gather inputs and submit the functioncallables to the executor
 			// service
 			this.futures = new TreeMap<JEXEntry,Future<Integer>>();
-			TreeMap<JEXEntry,FunctionCallable> fcs = new TreeMap<JEXEntry,FunctionCallable>();
+			TreeMap<JEXEntry,FunctionCallable> fcs = new TreeMap<>();
+			JEXStatics.cruncher.setNumThreads(cr.numThreads());
 			for (JEXEntry entry : this.runList.keySet())
 			{
 				Logs.log("Submitting new function to the cruncher", 1, this);
