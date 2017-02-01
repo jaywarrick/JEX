@@ -84,16 +84,16 @@ public class ImportAdhesionTimelapse extends JEXPlugin {
 	@ParameterMarker(uiOrder=5, name="Gather channel names?", description="Transfer the name of each channel (e.g. DAPI, FITC, etc) if available in the metadata of the image. Otherwise, channels are named by index in the order they were provided by the image.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
 	boolean transferNames;
 
-	@ParameterMarker(uiOrder=6, name="Initial Frequency [Hz]", description="Initial frequency of actuation.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="2.0")
+	@ParameterMarker(uiOrder=6, name="Initial Frequency [Hz]", description="Initial frequency of actuation.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1.0")
 	double fi;
 
-	@ParameterMarker(uiOrder=7, name="Final Frequency [Hz]", description="Final frequency of actuation.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.1")
+	@ParameterMarker(uiOrder=7, name="Final Frequency [Hz]", description="Final frequency of actuation.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.01")
 	double ff;
 
-	@ParameterMarker(uiOrder=9, name="Final Frame", description="Final frequency of actuation.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.1")
-	double tf;
+	@ParameterMarker(uiOrder=9, name="Final Frame", description="Final frame number.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="8750")
+	double finalFrame;
 
-	@ParameterMarker(uiOrder=10, name="Time per Frame [s]", description="Time between frames", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.05")
+	@ParameterMarker(uiOrder=10, name="Time per Frame [s]", description="Time between frames", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.035")
 	double frameTime;
 
 	@ParameterMarker(uiOrder=11, name="Desired Frames Per Period", description="Number of frames desired for each period of actuation. Frames exceeding this frame rate will be omitted.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="30")
@@ -116,10 +116,12 @@ public class ImportAdhesionTimelapse extends JEXPlugin {
 		return 10;
 	}
 
+	public double tf = 0;
+	
 	@Override
 	public boolean run(JEXEntry optionalEntry) {
 
-		tf = tf * frameTime;
+		tf = finalFrame * frameTime;
 
 		// GATHER DATA FROM PARAMETERS
 		// create file object for input directory
