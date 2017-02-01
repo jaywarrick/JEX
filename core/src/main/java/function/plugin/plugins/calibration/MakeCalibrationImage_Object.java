@@ -1,18 +1,10 @@
 package function.plugin.plugins.calibration;
 
-import ij.ImagePlus;
-import ij.plugin.filter.RankFilters;
-import ij.process.Blitter;
-import ij.process.FloatBlitter;
-import ij.process.FloatProcessor;
-
 import java.io.File;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.Vector;
-
-import jex.statics.JEXStatics;
 
 import org.scijava.plugin.Plugin;
 
@@ -28,6 +20,17 @@ import function.plugin.mechanism.MarkerConstants;
 import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
 import function.plugin.old.JEX_StackProjection;
+import ij.ImagePlus;
+import ij.plugin.filter.RankFilters;
+import ij.process.Blitter;
+import ij.process.ByteBlitter;
+import ij.process.ByteProcessor;
+import ij.process.FloatBlitter;
+import ij.process.FloatProcessor;
+import ij.process.ImageProcessor;
+import ij.process.ShortBlitter;
+import ij.process.ShortProcessor;
+import jex.statics.JEXStatics;
 
 @Plugin(
 		type = JEXPlugin.class,
@@ -165,7 +168,7 @@ public class MakeCalibrationImage_Object extends JEXPlugin {
 			
 			Vector<Integer> indicesToGrab = getIndicesToGrab(start, total, interval); 
 			
-			FloatProcessor imp = null;
+			ImageProcessor imp = null;
 			if(projectionMethod.equals("Mean"))
 			{
 				imp = getMeanProjection(filePaths, indicesToGrab);
@@ -215,11 +218,11 @@ public class MakeCalibrationImage_Object extends JEXPlugin {
 		return ret;
 	}
 	
-	public static FloatProcessor getPseudoMedianProjection(String[] fileList, Vector<Integer> indicesToGrab, int groupSize)
+	public static ImageProcessor getPseudoMedianProjection(String[] fileList, Vector<Integer> indicesToGrab, int groupSize)
 	{
 		int k = 0;
-		FloatProcessor ret = null, imp = null;
-		FloatBlitter blit = null;
+		ImageProcessor ret = null, imp = null;
+		Blitter blit = null;
 		for (int i = 0; i < indicesToGrab.size(); i++)
 		{
 			Vector<File> filesVector = new Vector<File>();
@@ -235,13 +238,25 @@ public class MakeCalibrationImage_Object extends JEXPlugin {
 				File[] files = filesVector.toArray(new File[filesVector.size()]);
 				ImagePlus stack = ImageReader.readFileListToVirtualStack(files);
 				stack.setProcessor((FloatProcessor) stack.getProcessor().convertToFloat());
-				imp = JEX_StackProjection.evaluate(stack, JEX_StackProjection.METHOD_MEDIAN, groupSize);
+				imp = JEX_StackProjection.evaluate(stack, JEX_StackProjection.METHOD_MEDIAN);
 				
 				// Add it to the total for taking the mean of the groups
 				if(k == 0)
 				{
 					ret = imp;
-					blit = new FloatBlitter(ret);
+					int bitDepth = ret.getBitDepth();
+					if(bitDepth == 8)
+					{
+						blit = new ByteBlitter((ByteProcessor) ret);
+					}
+					else if(bitDepth == 16)
+					{
+						blit = new ShortBlitter((ShortProcessor) ret);
+					}
+					else if(bitDepth == 32)
+					{
+						blit = new FloatBlitter((FloatProcessor) ret);
+					}
 				}
 				else
 				{
