@@ -1,5 +1,8 @@
 package function.plugin.old;
 
+import java.util.HashMap;
+import java.util.TreeMap;
+
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;
@@ -9,13 +12,10 @@ import Database.Definition.ParameterSet;
 import Database.Definition.TypeName;
 import Database.SingleUserDatabase.JEXWriter;
 import function.JEXCrunchable;
+import function.plugin.plugins.calibration.MakeCalibrationImage_Object;
 import ij.ImagePlus;
 import ij.plugin.filter.RankFilters;
 import ij.process.ImageProcessor;
-
-import java.util.HashMap;
-import java.util.TreeMap;
-
 import jex.statics.JEXStatics;
 import tables.DimensionMap;
 
@@ -30,16 +30,16 @@ import tables.DimensionMap;
  * 
  */
 public class JEX_Filters extends JEXCrunchable {
-	
+
 	public static String MEAN = "mean", MIN = "min", MAX = "max", MEDIAN = "median", VARIANCE = "variance";
-	
+
 	public JEX_Filters()
 	{}
-	
+
 	// ----------------------------------------------------
 	// --------- INFORMATION ABOUT THE FUNCTION -----------
 	// ----------------------------------------------------
-	
+
 	/**
 	 * Returns the name of the function
 	 * 
@@ -51,7 +51,7 @@ public class JEX_Filters extends JEXCrunchable {
 		String result = "Image Filters";
 		return result;
 	}
-	
+
 	/**
 	 * This method returns a string explaining what this method does This is purely informational and will display in JEX
 	 * 
@@ -63,7 +63,7 @@ public class JEX_Filters extends JEXCrunchable {
 		String result = "Use a predefined image filter and specify the filter radius.";
 		return result;
 	}
-	
+
 	/**
 	 * This method defines in which group of function this function will be shown in... Toolboxes (choose one, caps matter): Visualization, Image processing, Custom Cell Analysis, Cell tracking, Image tools Stack processing, Data Importing, Custom
 	 * image analysis, Matlab/Octave
@@ -75,7 +75,7 @@ public class JEX_Filters extends JEXCrunchable {
 		String toolbox = "Image processing";
 		return toolbox;
 	}
-	
+
 	/**
 	 * This method defines if the function appears in the list in JEX It should be set to true expect if you have good reason for it
 	 * 
@@ -86,7 +86,7 @@ public class JEX_Filters extends JEXCrunchable {
 	{
 		return true;
 	}
-	
+
 	/**
 	 * Returns true if the user wants to allow multithreding
 	 * 
@@ -97,11 +97,11 @@ public class JEX_Filters extends JEXCrunchable {
 	{
 		return true;
 	}
-	
+
 	// ----------------------------------------------------
 	// --------- INPUT OUTPUT DEFINITIONS -----------------
 	// ----------------------------------------------------
-	
+
 	/**
 	 * Return the array of input names
 	 * 
@@ -114,7 +114,7 @@ public class JEX_Filters extends JEXCrunchable {
 		inputNames[0] = new TypeName(IMAGE, "Image");
 		return inputNames;
 	}
-	
+
 	/**
 	 * Return the array of output names defined for this function
 	 * 
@@ -125,12 +125,12 @@ public class JEX_Filters extends JEXCrunchable {
 	{
 		defaultOutputNames = new TypeName[1];
 		defaultOutputNames[0] = new TypeName(IMAGE, "Filtered Image");
-		
+
 		if(outputNames == null)
 			return defaultOutputNames;
 		return outputNames;
 	}
-	
+
 	/**
 	 * Returns a list of parameters necessary for this function to run... Every parameter is defined as a line in a form that provides the ability to set how it will be displayed to the user and what options are available to choose from The simplest
 	 * FormLine can be written as: FormLine p = new FormLine(parameterName); This will provide a text field for the user to input the value of the parameter named parameterName More complex displaying options can be set by consulting the FormLine API
@@ -146,21 +146,21 @@ public class JEX_Filters extends JEXCrunchable {
 		Parameter p1 = new Parameter("Filter Type", "Type of filter to apply.", Parameter.DROPDOWN, new String[] { MEAN, MIN, MAX, MEDIAN, VARIANCE }, 0);
 		Parameter p2 = new Parameter("Radius", "Radius of filter in pixels.", "2.0");
 		Parameter p3 = new Parameter("Output Bit-Depth", "Bit-Depth of the output image", Parameter.DROPDOWN, new String[] { "8", "16", "32" }, 2);
-		
+		Parameter p4 = getNumThreadsParameter(10, 6);
 		// Make an array of the parameters and return it
 		ParameterSet parameterArray = new ParameterSet();
-		// parameterArray.addParameter(p0);
+		parameterArray.addParameter(p4);
 		parameterArray.addParameter(p1);
 		parameterArray.addParameter(p2);
 		parameterArray.addParameter(p3);
-		
+
 		return parameterArray;
 	}
-	
+
 	// ----------------------------------------------------
 	// --------- ERROR CHECKING METHODS -------------------
 	// ----------------------------------------------------
-	
+
 	/**
 	 * Returns the status of the input validity checking It is HIGHLY recommended to implement input checking however this can be over-ridden by returning false If over-ridden ANY batch function using this function will not be able perform error
 	 * checking...
@@ -172,11 +172,11 @@ public class JEX_Filters extends JEXCrunchable {
 	{
 		return false;
 	}
-	
+
 	// ----------------------------------------------------
 	// --------- THE ACTUAL MEAT OF THIS FUNCTION ---------
 	// ----------------------------------------------------
-	
+
 	/**
 	 * Perform the algorithm here
 	 * 
@@ -188,12 +188,12 @@ public class JEX_Filters extends JEXCrunchable {
 		JEXData imageData = inputs.get("Image");
 		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
 			return false;
-		
+
 		// Gather parameters
 		double radius = Double.parseDouble(parameters.getValueOfParameter("Radius"));
 		String method = parameters.getValueOfParameter("Filter Type");
 		int bitDepth = Integer.parseInt(parameters.getValueOfParameter("Output Bit-Depth"));
-		
+
 		// Run the function
 		TreeMap<DimensionMap,String> imageMap = ImageReader.readObjectToImagePathTable(imageData);
 		TreeMap<DimensionMap,String> outputImageMap = new TreeMap<DimensionMap,String>();
@@ -206,14 +206,13 @@ public class JEX_Filters extends JEXCrunchable {
 			}
 			ImagePlus im = new ImagePlus(imageMap.get(map));
 			ImageProcessor ip = im.getProcessor().convertToFloat();
-			
+
 			// //// Begin Actual Function
 			RankFilters rF = new RankFilters();
-			rF.setup(method, im);
-			rF.makeKernel(radius);
-			rF.run(ip);
-			// //// End Actual Function
+			rF.rank(ip, radius, MakeCalibrationImage_Object.convertRankMethodNameToInt(method));
 			
+			// //// End Actual Function
+
 			ImageProcessor toSave = ip;
 			if(bitDepth == 8)
 			{
@@ -223,14 +222,14 @@ public class JEX_Filters extends JEXCrunchable {
 			{
 				toSave = ip.convertToShort(false);
 			}
-			
+
 			String path = JEXWriter.saveImage(toSave);
-			
+
 			if(path != null)
 			{
 				outputImageMap.put(map, path);
 			}
-			
+
 			count = count + 1;
 			percentage = (int) (100 * ((double) (count) / ((double) imageMap.size())));
 			JEXStatics.statusBar.setProgressPercentage(percentage);
@@ -239,14 +238,14 @@ public class JEX_Filters extends JEXCrunchable {
 		{
 			return false;
 		}
-		
+
 		JEXData output1 = ImageWriter.makeImageStackFromPaths(outputNames[0].getName(), outputImageMap);
-		
+
 		// Set the outputs
 		realOutputs.add(output1);
-		
+
 		// Return status
 		return true;
 	}
-	
+
 }
