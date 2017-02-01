@@ -339,6 +339,12 @@ public class JEX_StackProjection extends JEXCrunchable {
 	{
 		ImagePlus virtualStack = ImageReader.readSomeOfObjectToVirtualStack(image, stack);
 		
+		return evaluate(virtualStack, method);
+	}
+	
+	public static ImageProcessor evaluate(ImagePlus virtualStack, String method)
+	{
+		
 		// :,mean,max,min,sum,std. dev.,median"///
 		int methodInt = 5;
 		if(method.equals(METHOD_MEAN))
@@ -357,7 +363,7 @@ public class JEX_StackProjection extends JEXCrunchable {
 		
 		ZProjector p = new ZProjector(virtualStack);
 		p.setStartSlice(1);
-		p.setStopSlice(stack.size());
+		p.setStopSlice(virtualStack.getImageStackSize());
 		p.setMethod(methodInt);
 		p.doProjection();
 		return p.getProjection().getProcessor();
