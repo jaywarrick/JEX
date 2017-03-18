@@ -169,7 +169,8 @@ public class CompileCSVTables_R extends JEXPlugin {
 				}
 			}
 			String path = JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getUniqueRelativeTempPath(JEXTableWriter.CSV_FILE);
-			R.eval("write.csv(x, file=" + R.quotedPath(path) + ", row.names=FALSE)");
+			R.eval("if(('data.table' %in% installed.packages()) && ('fwrite' %in% ls('package:data.table'))){library(" + R.sQuote("data.table") + ");fwrite(x, file=" +  R.quotedPath(path) + ", row.names=FALSE)}" + 
+			"else{write.csv(x, file=" + R.quotedPath(path) + ", row.names=FALSE)}");
 			JEXData data = FileWriter.makeFileObject(ticket.getOutputNames()[0].getName(),null, path);
 			Set<JEXData> set = outputList.get(first);
 			set.clear();
