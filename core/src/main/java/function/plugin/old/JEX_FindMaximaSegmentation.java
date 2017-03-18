@@ -166,6 +166,7 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 		// Parameter p0 = new
 		// Parameter("Dummy Parameter","Lets user know that the function has been selected.",FormLine.DROPDOWN,new
 		// String[] {"true"},0);
+		Parameter p00 = getNumThreadsParameter(10, 1);
 		Parameter p0a = new Parameter("Pre-Despeckle Radius", "Radius of median filter applied before max finding", "0");
 		Parameter p0b = new Parameter("Pre-Smoothing Radius", "Radius of mean filter applied before max finding", "0");
 		Parameter pa1 = new Parameter("Color Dim Name", "Name of the color dimension.", "Color");
@@ -181,6 +182,7 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 		
 		// Make an array of the parameters and return it
 		ParameterSet parameterArray = new ParameterSet();
+		parameterArray.addParameter(p00);
 		parameterArray.addParameter(p0a);
 		parameterArray.addParameter(p0b);
 		parameterArray.addParameter(pa1);
