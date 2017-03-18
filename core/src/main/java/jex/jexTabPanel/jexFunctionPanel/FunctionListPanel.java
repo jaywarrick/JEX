@@ -122,6 +122,11 @@ public class FunctionListPanel implements MouseWheelListener {
 		FunctionChooserDialog flistpane = new FunctionChooserDialog();
 	}
 	
+	public void saveAllFunctions(boolean autoSave)
+	{
+		this.parent.saveAllFunctions(autoSave);
+	}
+	
 	public void runAllFunctions(boolean autoSave)
 	{
 		this.parent.runAllFunctions(autoSave);
