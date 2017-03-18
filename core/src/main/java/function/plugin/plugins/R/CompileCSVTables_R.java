@@ -53,9 +53,12 @@ public class CompileCSVTables_R extends JEXPlugin {
 
 	/////////// Define Parameters ///////////
 
-	@ParameterMarker(uiOrder=8, name="Windows R Memory Limit (MB)", description="Set a new memory limit (in MB) on a windows machine if you get an R error that says cannot allocate memory for ... (try 4000 or so?)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="2000")
+	@ParameterMarker(uiOrder=7, name="Windows R Memory Limit (MB)", description="Set a new memory limit (in MB) on a windows machine if you get an R error that says cannot allocate memory for ... (try 4000 or so?)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="2000")
 	int memoryLimit;
-	
+
+	@ParameterMarker(uiOrder=8, name="Save in First Entry Only?", description="Should the resulting table be stored in all the selected entries or just the first (i.e., the entry with the smallest X position, then smallest Y position)?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
+	boolean firstOnly;
+
 	/////////// Define Outputs ///////////
 
 	@OutputMarker(uiOrder=1, name="Compiled Table", type=MarkerConstants.TYPE_FILE, flavor="", description="The resultant compiled table", enabled=true)
@@ -76,7 +79,7 @@ public class CompileCSVTables_R extends JEXPlugin {
 		{
 			allTables = new Vector<String>();
 		}
-		
+
 		// Validate the input data
 		if(fileData == null || !fileData.getTypeName().getType().equals(JEXData.FILE))	
 		{
@@ -101,14 +104,22 @@ public class CompileCSVTables_R extends JEXPlugin {
 	public void finalizeTicket(Ticket ticket)
 	{
 		double count = 0;
-		double total = allTables.size() + ticket.getOutputList().size();
+		double total = allTables.size();
+		if(firstOnly)
+		{
+			total = total + 1;
+		}
+		else
+		{
+			total = total + ticket.getOutputList().size();
+		}
 		double percentage = 0;
-		
+
 		if(allTables == null || allTables.size() == 0)
 		{
 			return;
 		}
-		
+
 		// For each file, read it into R
 		R.initializeWorkspace();
 		R.load("data.table");
@@ -124,30 +135,61 @@ public class CompileCSVTables_R extends JEXPlugin {
 			count = count + 1;
 			percentage = 100 * count / total;
 			JEXStatics.statusBar.setProgressPercentage((int) percentage);
-			
+
 			i = i + 1;
 		}
 		R.eval("x <- rbindlist(tableList, use.names=TRUE)");
-		
+
 		count = count + 1;
 		percentage = 100 * count / total;
 		JEXStatics.statusBar.setProgressPercentage((int) percentage);
-		
+
 		// Write the file and make a JEXData
 		// Put the final JEXData in all the entries
 		TreeMap<JEXEntry,Set<JEXData>> outputList = ticket.getOutputList();
-		for (JEXEntry entry : outputList.keySet())
+		if(firstOnly)
 		{
+			JEXEntry first = null;
+			for(JEXEntry entry : outputList.keySet())
+			{
+				if(first == null)
+				{
+					first = entry;
+				}
+				if(entry.getTrayX() == first.getTrayX())
+				{
+					if(entry.getTrayY() < first.getTrayY())
+					{
+						first = entry;
+					}
+				}
+				else if(entry.getTrayX() < first.getTrayX())
+				{
+					first = entry;
+				}
+			}
 			String path = JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getUniqueRelativeTempPath(JEXTableWriter.CSV_FILE);
 			R.eval("write.csv(x, file=" + R.quotedPath(path) + ", row.names=FALSE)");
 			JEXData data = FileWriter.makeFileObject(ticket.getOutputNames()[0].getName(),null, path);
-			Set<JEXData> set = outputList.get(entry);
+			Set<JEXData> set = outputList.get(first);
 			set.clear();
 			set.add(data);
-			
-			count = count + 1;
-			percentage = 100 * count / total;
-			JEXStatics.statusBar.setProgressPercentage((int) percentage);
+		}
+		else
+		{
+			for (JEXEntry entry : outputList.keySet())
+			{
+				String path = JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getUniqueRelativeTempPath(JEXTableWriter.CSV_FILE);
+				R.eval("write.csv(x, file=" + R.quotedPath(path) + ", row.names=FALSE)");
+				JEXData data = FileWriter.makeFileObject(ticket.getOutputNames()[0].getName(),null, path);
+				Set<JEXData> set = outputList.get(entry);
+				set.clear();
+				set.add(data);
+
+				count = count + 1;
+				percentage = 100 * count / total;
+				JEXStatics.statusBar.setProgressPercentage((int) percentage);
+			}
 		}
 		R.eval("rm(list=ls())");
 
