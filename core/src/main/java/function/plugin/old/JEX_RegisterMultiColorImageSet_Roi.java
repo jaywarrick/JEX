@@ -15,7 +15,6 @@ import Database.Definition.ParameterSet;
 import Database.Definition.TypeName;
 import function.JEXCrunchable;
 import function.imageUtility.TurboReg_;
-import function.plugin.plugins.featureExtraction.FeatureUtils;
 import ij.ImagePlus;
 import image.roi.ROIPlus;
 import jex.statics.JEXDialog;
@@ -211,7 +210,6 @@ public class JEX_RegisterMultiColorImageSet_Roi extends JEXCrunchable {
 		boolean firstTimer = Boolean.parseBoolean(this.parameters.getValueOfParameter("Align To First Timepoint?"));
 
 		// Get a DimTable for calculating ROI crops.
-		DimTable cropSplitTable = data.getDimTable().getSubTable(colorDimName);
 		if(!splitDimName.equals(""))
 		{
 			if(data.getDimTable().getDimWithName(splitDimName) == null)

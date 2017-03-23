@@ -9,6 +9,7 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.Vector;
 
+import org.scijava.io.IOPlugin;
 import org.scijava.plugin.Plugin;
 
 import Database.DBObjects.JEXData;
@@ -22,6 +23,7 @@ import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.MarkerConstants;
 import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
+import function.plugin.plugins.featureExtraction.FeatureUtils;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
@@ -32,6 +34,7 @@ import io.scif.Plane;
 import io.scif.Reader;
 import io.scif.SCIFIO;
 import io.scif.config.SCIFIOConfig;
+import io.scif.img.converters.PlaneConverter;
 import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import loci.common.DataTools;
@@ -42,8 +45,15 @@ import miscellaneous.FileUtility;
 import miscellaneous.LSVList;
 import miscellaneous.Pair;
 import miscellaneous.SimpleFileFilter;
+import net.imagej.ImgPlus;
 import net.imagej.axis.Axes;
 import net.imagej.axis.CalibratedAxis;
+import net.imglib2.FinalDimensions;
+import net.imglib2.img.Img;
+import net.imglib2.img.ImgFactory;
+import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.integer.UnsignedByteType;
 import tables.Dim;
 import tables.DimTable;
 import tables.DimensionMap;
@@ -109,7 +119,7 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 
 	@OutputMarker(uiOrder=3, name="Metadata", type=MarkerConstants.TYPE_FILE, flavor="", description="The imported image object metadata", enabled=true)
 	JEXData meta;
-	
+
 	@OutputMarker(uiOrder=4, name="Split Imported Image", type=MarkerConstants.TYPE_IMAGE, flavor="", description="The imported image objects", enabled=true)
 	Vector<JEXData> output2 = new Vector<JEXData>();
 
@@ -157,7 +167,7 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 			// We have multiple outputs to return due to splitting the 
 			this.output2 = imagesAndMetaData.p1;
 		}
-		
+
 		this.inputFileList = ValueWriter.makeValueObject("temp", this.getFileList(pendingImageFiles).toString());
 		this.meta = imagesAndMetaData.p2;
 
@@ -407,7 +417,7 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 		return ret;
 	}
 
-	public Pair<Vector<JEXData>,JEXData> importFiles(String objectName, List<File> pendingImageFiles, String dimSeparator, String valueSeparator, String fileExtension, int imRows, int imCols, double binning, String binMethod, String rowName, String colName, boolean autoNameGathering, Canceler canceler, String dimensionToSplit)
+	public <T extends RealType<T>> Pair<Vector<JEXData>,JEXData> importFiles(String objectName, List<File> pendingImageFiles, String dimSeparator, String valueSeparator, String fileExtension, int imRows, int imCols, double binning, String binMethod, String rowName, String colName, boolean autoNameGathering, Canceler canceler, String dimensionToSplit)
 	{
 		if(valueSeparator.equals("."))
 		{
@@ -417,7 +427,7 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 		{
 			dimSeparator = "\\.";
 		}		
-		
+
 		DimTable table = null;
 
 		TreeMap<DimensionMap,String> multiMap = new TreeMap<>();
@@ -490,21 +500,72 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 					}
 					ImageMetadata d = plane.getImageMetadata();
 					long[] dims = d.getAxesLengthsPlanar();
-					ImageProcessor ip = null;
+					Vector<ImageProcessor> ips = new Vector<>();
 					if(d.getBitsPerPixel() <= 8)
 					{
-						byte[] converted = (byte[]) DataTools.makeDataArray(plane.getBytes(), 1, false, d.isLittleEndian());
-						ip = new ByteProcessor((int)dims[0], (int)dims[1], converted, null);
+						long[] axesLengths = d.getAxesLengthsPlanar();
+						if(axesLengths.length > 2)
+						{
+							
+							// Treat as multichannel image
+							// Get image width and height
+							int channelAxis = 0;
+							long[] whd = new long[]{0,0,0}; 
+							for(CalibratedAxis a : d.getAxesPlanar())
+							{
+								if(a.type().getLabel().equals("X"))
+								{
+									whd[0] = d.getAxesLengthsPlanar()[channelAxis];
+								}
+								else if(a.type().getLabel().equals("Y"))
+								{
+									whd[1] = d.getAxesLengthsPlanar()[channelAxis];
+								}
+								else
+								{
+									whd[2] = d.getAxesLengthsPlanar()[channelAxis];
+								}
+								channelAxis = channelAxis + 1;
+							}
+							
+							//							Logs.log("here", this);
+							//							PlaneConverter pc = IJ2PluginUtility.ij().scifio().planeConverter().getDefaultConverter();
+							//							ImgFactory<UnsignedByteType> factory = new ArrayImgFactory<>();
+							//							Img<UnsignedByteType> out = factory.create(new FinalDimensions(new long[]{whd[0], whd[1] * whd[2]}), new UnsignedByteType(0));
+							//							ImgPlus<UnsignedByteType> out2 = IJ2PluginUtility.ij().scifio().imgUtil().makeSCIFIOImgPlus(out);
+							//							pc.populatePlane(reader, i, j, plane.getBytes(), out2, new SCIFIOConfig().checkerSetOpen(true));
+							//							
+							//							FeatureUtils utils = new FeatureUtils();
+							//							utils.show(out2);
+							//							String thePath = JEXWriter.saveImage(out2);
+							//							Logs.log(thePath, this);
+
+							int skip = 0;
+							int length = (int) (whd[0]*whd[1]);
+							for(int k = 0; k < axesLengths[2]; k++)
+							{
+								byte[] toSave = new byte[length];
+								System.arraycopy(plane.getBytes(), skip, toSave, 0, length);
+								byte[] converted = (byte[]) DataTools.makeDataArray(toSave, 1, false, d.isLittleEndian());
+								ips.add(new ByteProcessor((int)dims[0], (int)dims[1], converted, null));
+								skip = skip + length;
+							}
+						}
+						else
+						{
+							JEXDialog.messageDialog("Can't handle images with this level of dimensionality at yet. Sorry. Aborting.", this);
+						}
+
 					}
 					else if(d.getBitsPerPixel() >= 9 && d.getBitsPerPixel() <= 16)
 					{
 						short[] converted = (short[]) DataTools.makeDataArray(plane.getBytes(), 2, false, d.isLittleEndian());
-						ip = new ShortProcessor((int)dims[0], (int)dims[1], converted, null);
+						ips.add(new ShortProcessor((int)dims[0], (int)dims[1], converted, null));
 					}
 					else if(d.getBitsPerPixel() >= 17 && d.getBitsPerPixel() <= 32)
 					{
 						float[] converted = (float[]) DataTools.makeDataArray(plane.getBytes(), 4, true, d.isLittleEndian());
-						ip = new FloatProcessor((int)dims[0], (int)dims[1], converted, null);
+						ips.add(new FloatProcessor((int)dims[0], (int)dims[1], converted, null));
 					}
 					else
 					{
@@ -519,67 +580,83 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 
 					DimensionMap map = itr.next().copy();
 					int imageCounter = 1;
-					TreeMap<DimensionMap,ImageProcessor> splitImages = splitRowsAndCols(ip, binning, binMethod, imRows, imCols, rowName, colName, canceler);
-					// The above might return null because of being canceled. Catch cancel condition and move on.
-					if(canceler.isCanceled())
-					{
-						return null;
-					}
 
-					// For each image split it if necessary
-					if(imRows * imCols > 1)
+					// Channel Counter
+					int channelIndex = 0;
+					for(ImageProcessor ip : ips)
 					{
-						for(Entry<DimensionMap,ImageProcessor> e : splitImages.entrySet())
+						TreeMap<DimensionMap,ImageProcessor> splitImages = splitRowsAndCols(ip, binning, binMethod, imRows, imCols, rowName, colName, canceler);
+
+						// The above might return null because of being canceled. Catch cancel condition and move on.
+						if(canceler.isCanceled())
 						{
-							String filename = JEXWriter.saveImage(e.getValue());
+							return null;
+						}
+
+						// For each image split it if necessary
+						if(imRows * imCols > 1)
+						{
+							for(Entry<DimensionMap,ImageProcessor> e : splitImages.entrySet())
+							{
+								String filename = JEXWriter.saveImage(e.getValue());
+								map.putAll(baseMap.copy());
+								map.putAll(e.getKey());
+								if(pendingImageFiles.size() > 1)
+								{
+									// Then save a dimension for Loc
+									if(dimSeparator.equals(""))
+									{
+										// Then call FileIndex dimension "FileIndex"
+										map.put("SplitImageIndex", "" + imageCounter);
+										map.put("FileIndex", "" + (fi + 1)); // fi starts at 0
+										imageCounter = imageCounter + 1;
+									}
+									else
+									{
+										// Else the FileIndex dimension is already taken care of / named by parsing file names.
+										map.put("SplitImageIndex", "" + imageCounter);
+										imageCounter = imageCounter + 1;
+									}
+								}
+								if(ips.size() > 1)
+								{
+									map.put("ChannelIndex", "" + channelIndex);
+								}
+								multiMap.put(map.copy(),filename);
+								Logs.log(map.toString() + " :: " + filename, ImportImages_SCIFIO.class);
+							}
+							splitImages.clear();
+						}
+						else
+						{
+							// Otherwise we don't split each image or save a SplitImageIndex dimension
+							String filename = JEXWriter.saveImage(ip);
 							map.putAll(baseMap.copy());
-							map.putAll(e.getKey());
 							if(pendingImageFiles.size() > 1)
 							{
-								// Then save a dimension for Loc
+								// Then save a dimension for FileIndex
 								if(dimSeparator.equals(""))
 								{
 									// Then call FileIndex dimension "FileIndex"
-									map.put("SplitImageIndex", "" + imageCounter);
 									map.put("FileIndex", "" + (fi + 1)); // fi starts at 0
 									imageCounter = imageCounter + 1;
 								}
 								else
 								{
 									// Else the FileIndex dimension is already taken care of / named by parsing file names.
-									map.put("SplitImageIndex", "" + imageCounter);
 									imageCounter = imageCounter + 1;
 								}
 							}
+							if(ips.size() > 1)
+							{
+								map.put("ChannelIndex", "" + channelIndex);
+							}
 							multiMap.put(map.copy(),filename);
-							Logs.log(map.toString() + " :: " + filename, ImportImages_SCIFIO.class);
-						}
-						splitImages.clear();
+							Logs.log(map.toString() + " = " + filename, ImportImages_SCIFIO.class);
+						}	
+						channelIndex = channelIndex + 1;
 					}
-					else
-					{
-						// Otherwise we don't split each image or save a SplitImageIndex dimension
-						String filename = JEXWriter.saveImage(ip);
-						map.putAll(baseMap.copy());
-						if(pendingImageFiles.size() > 1)
-						{
-							// Then save a dimension for FileIndex
-							if(dimSeparator.equals(""))
-							{
-								// Then call FileIndex dimension "FileIndex"
-								map.put("FileIndex", "" + (fi + 1)); // fi starts at 0
-								imageCounter = imageCounter + 1;
-							}
-							else
-							{
-								// Else the FileIndex dimension is already taken care of / named by parsing file names.
-								imageCounter = imageCounter + 1;
-							}
-						}
-						multiMap.put(map,filename);
-						Logs.log(map.toString() + " = " + filename, ImportImages_SCIFIO.class);
-						ip = null;
-					}					
+					ips.clear();
 
 					JEXStatics.statusBar.setProgressPercentage((int) (100.0 * count / total));
 					count = count + 1;
@@ -656,7 +733,7 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 		}
 
 		JEXData metaDataOutput = FileWriter.makeFileObject("temp", null, metaDataMap);
-		
+
 		return new Pair<Vector<JEXData>, JEXData>(ret, metaDataOutput);
 	}
 }

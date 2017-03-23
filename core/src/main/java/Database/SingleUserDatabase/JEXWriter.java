@@ -14,6 +14,7 @@ import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import function.plugin.IJ2.IJ2PluginUtility;
 import ij.ImagePlus;
+import ij.io.FileInfo;
 import ij.io.FileSaver;
 import ij.process.ImageProcessor;
 import jex.statics.JEXDialog;
@@ -154,6 +155,7 @@ public class JEXWriter {
 	public static <T extends RealType<T>> String saveImage(RandomAccessibleInterval<T> img)
 	{
 		ImagePlus im = ImageJFunctions.wrap(img, "temp");
+		im.setFileInfo(new FileInfo());
 		return JEXWriter.saveImage(im);
 	}
 	

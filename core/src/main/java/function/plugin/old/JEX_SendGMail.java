@@ -1,5 +1,15 @@
 package function.plugin.old;
 
+import java.util.HashMap;
+import java.util.Properties;
+
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
+
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.Definition.Parameter;
@@ -7,18 +17,6 @@ import Database.Definition.ParameterSet;
 import Database.Definition.TypeName;
 import cruncher.Ticket;
 import function.JEXCrunchable;
-
-import java.util.HashMap;
-import java.util.Properties;
-
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.PasswordAuthentication;
-import javax.mail.Session;
-import javax.mail.Transport;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
-
 import jex.statics.JEXStatics;
 import logs.Logs;
 

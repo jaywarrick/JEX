@@ -204,13 +204,8 @@ public class JEX_MakeCalibrationImageFromFolder extends JEXCrunchable {
 			
 			if(!smooth.equals("none"))
 			{
-				ImagePlus temp = new ImagePlus("temp", imp);
 				RankFilters rF = new RankFilters();
-				rF.setup(method, temp);
-				rF.makeKernel(radius);
-				rF.run(imp);
-				temp.flush();
-				temp = null;
+				rF.rank(imp, radius, JEX_StackProjection.getMethodInt(method));
 			}
 			
 			// //// End Actual Function

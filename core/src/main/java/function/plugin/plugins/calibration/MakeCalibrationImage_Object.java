@@ -44,11 +44,6 @@ public class MakeCalibrationImage_Object extends JEXPlugin {
 	public MakeCalibrationImage_Object()
 	{}
 	
-	/**
-	 * Returns true if the user wants to allow multithreding
-	 * 
-	 * @return
-	 */
 	/////////// Define Inputs ///////////
 	
 	@InputMarker(uiOrder=1, name="Image", type=MarkerConstants.TYPE_IMAGE, description="Image to use to generate calibration image.", optional=false)
@@ -235,7 +230,7 @@ public class MakeCalibrationImage_Object extends JEXPlugin {
 				File[] files = filesVector.toArray(new File[filesVector.size()]);
 				ImagePlus stack = ImageReader.readFileListToVirtualStack(files);
 				stack.setProcessor((FloatProcessor) stack.getProcessor().convertToFloat());
-				imp = JEX_StackProjection.evaluate(stack, JEX_StackProjection.METHOD_MEDIAN, groupSize);
+				imp = (FloatProcessor) JEX_StackProjection.evaluate(stack, JEX_StackProjection.METHOD_MEDIAN);
 				
 				// Add it to the total for taking the mean of the groups
 				if(k == 0)

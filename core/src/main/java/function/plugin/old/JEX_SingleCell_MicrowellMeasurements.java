@@ -449,13 +449,9 @@ public class JEX_SingleCell_MicrowellMeasurements extends JEXCrunchable {
 						{
 							// Filter the image using the given radius
 							RankFilters rF = new RankFilters();
-							rF.setup(JEX_Filters.MEAN, new ImagePlus("mode", imp2));
-							rF.makeKernel(modeRadius);
-							rF.run(imp2);
+							rF.rank(imp2, modeRadius, JEX_StackProjection.getMethodInt(JEX_Filters.MEAN));
 							// double median = ImageStatistics.getStatistics(imp2, ImageStatistics.MEDIAN, null).median;
-							rF.setup(JEX_Filters.MEAN, new ImagePlus("cell", imp3));
-							rF.makeKernel(cellRadius);
-							rF.run(imp3);
+							rF.rank(imp3, cellRadius, JEX_StackProjection.getMethodInt(JEX_Filters.MEAN));
 							
 							// Measure all the microwells and points in each microwell for this image
 							for (IdPoint p : microwellROIPoints.getPointList())

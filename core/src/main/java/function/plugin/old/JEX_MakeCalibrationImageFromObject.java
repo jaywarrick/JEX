@@ -218,13 +218,8 @@ public class JEX_MakeCalibrationImageFromObject extends JEXCrunchable {
 			
 			if(!smooth.equals("none"))
 			{
-				ImagePlus temp = new ImagePlus("temp", imp);
 				RankFilters rF = new RankFilters();
-				rF.setup(method, temp);
-				rF.makeKernel(radius);
-				rF.run(imp);
-				temp.flush();
-				temp = null;
+				rF.rank(imp, radius, JEX_StackProjection.getMethodInt(method));
 			}
 			
 			// //// End Actual Function
@@ -254,7 +249,7 @@ public class JEX_MakeCalibrationImageFromObject extends JEXCrunchable {
 			// Get the median of the group
 			ImagePlus stack = ImageReader.readFileListToVirtualStack(files);
 			stack.setProcessor((FloatProcessor) stack.getProcessor().convertToFloat());
-			imp = JEX_StackProjection.evaluate(stack, JEX_StackProjection.METHOD_MEDIAN, groupSize);
+			imp = (FloatProcessor) JEX_StackProjection.evaluate(stack, JEX_StackProjection.METHOD_MEDIAN);
 			
 			// Add it to the total for taking the mean of the groups
 			if(k == 0)

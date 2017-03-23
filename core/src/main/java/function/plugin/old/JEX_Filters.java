@@ -209,9 +209,8 @@ public class JEX_Filters extends JEXCrunchable {
 			
 			// //// Begin Actual Function
 			RankFilters rF = new RankFilters();
-			rF.setup(method, im);
-			rF.makeKernel(radius);
-			rF.run(ip);
+			rF.rank(ip, radius, JEX_StackProjection.getMethodInt(method));
+
 			// //// End Actual Function
 			
 			ImageProcessor toSave = ip;

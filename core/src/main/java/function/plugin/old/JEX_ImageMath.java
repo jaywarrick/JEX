@@ -5,8 +5,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.TreeMap;
 
-import org.scijava.io.IOPlugin;
-
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;
