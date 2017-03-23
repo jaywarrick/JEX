@@ -13,81 +13,94 @@ import jex.statics.DisplayStatics;
 import net.miginfocom.swing.MigLayout;
 
 public class FunctionLoadSaveAndRunPanel implements ActionListener {
-	
+
 	// GUI variables
 	private JPanel panel;
 	private FunctionListPanel parent;
-	
+
 	// Buttons
 	private JButton loadButton = new JButton();
 	private JButton saveButton = new JButton();
 	// private JButton addButton = new JButton();
-	private JButton runButton = new JButton();
+	private JButton saveJXWToDB = new JButton();
+	private JButton runAll = new JButton();
 	private JCheckBox autoSave = new JCheckBox();
-	
+
 	public FunctionLoadSaveAndRunPanel(FunctionListPanel parent)
 	{
 		this.parent = parent;
 		this.initialize();
 	}
-	
+
 	public JPanel panel()
 	{
 		return this.panel;
 	}
-	
+
 	private void initialize()
 	{
 		this.panel = new JPanel();
 		this.panel.setBackground(DisplayStatics.lightBackground);
 		this.panel.setBorder(BorderFactory.createLineBorder(Color.GRAY));
-		this.panel.setLayout(new MigLayout("center, flowy, ins 3", "[fill, grow]", "[fill, grow]3[fill, grow]3[fill, grow]3[]"));
+		this.panel.setLayout(new MigLayout("center, flowy, ins 3", "[fill, grow]", "[fill, grow]3[fill, grow]3[fill, grow]3[fill, grow]3[]"));
 		// this.setMaximumSize(new Dimension(250,800));
 		// this.setPreferredSize(new Dimension(250,200));
-		
+
 		// Create the add button
 		this.loadButton.setText("LOAD");
 		this.loadButton.setToolTipText("Click to load a workflow from a existing file.");
 		// loadButton.setPreferredSize(new Dimension(60,30));
 		// loadButton.setMaximumSize(new Dimension(60,500));
 		this.loadButton.addActionListener(this);
-		
+
 		this.saveButton.setText("SAVE");
 		this.saveButton.setToolTipText("Click to save the current workflow to a file.");
 		// saveButton.setPreferredSize(new Dimension(60,30));
 		// saveButton.setMaximumSize(new Dimension(60,500));
 		this.saveButton.addActionListener(this);
-		
+
 		// addButton.setText("ADD");
 		// addButton.setToolTipText("Click to add a function to the list");
 		// //addButton.setPreferredSize(new Dimension(60,30));
 		// //addButton.setMaximumSize(new Dimension(60,500));
 		// addButton.addActionListener(this);
-		
+
 		// Create the run all button
-		this.runButton.setText("RUN");
-		this.runButton.setToolTipText("Run the current workflow.");
+		this.saveJXWToDB.setText("SAVE TO DB");
+		this.saveJXWToDB.setToolTipText("Save the workflow to the database.");
 		// runButton.setPreferredSize(new Dimension(60,30));
 		// runButton.setMaximumSize(new Dimension(60,500));
-		this.runButton.addActionListener(this);
-		
+		this.saveJXWToDB.addActionListener(this);
+
+		// Create the run all button
+		this.runAll.setText("RUN ALL");
+		this.runAll.setToolTipText("Run all the functions in the workflow.");
+		// runButton.setPreferredSize(new Dimension(60,30));
+		// runButton.setMaximumSize(new Dimension(60,500));
+		this.runAll.addActionListener(this);
+
 		// Create autoSave checkBox
-		this.autoSave.setText("Auto-Save");
+		this.autoSave.setText("Auto-Save Results");
 		this.autoSave.setSelected(true);
-		
+
 		// Create the button panel
 		this.panel.setBackground(DisplayStatics.lightBackground);
 		// this.panel.add(addButton,"growx, width 10:10:");
 		this.panel.add(this.loadButton, "growx, height 10:10:");
 		this.panel.add(this.saveButton, "growx, height 10:10:");
-		this.panel.add(this.runButton, "growx, height 10:10:");
+		this.panel.add(this.saveJXWToDB, "growx, height 10:10:");
+		this.panel.add(this.runAll, "growx, height 10:10:");
 		this.panel.add(this.autoSave);
 	}
-	
+
 	@Override
 	public void actionPerformed(ActionEvent e)
 	{
-		if(e.getSource() == this.runButton)
+		if(e.getSource() == this.saveJXWToDB)
+		{
+			this.parent.saveAllFunctions(this.isAutoSaveSelected());
+		}
+		if(e.getSource() == this.runAll)
 		{
 			this.parent.runAllFunctions(this.isAutoSaveSelected());
 		}
@@ -100,10 +113,10 @@ public class FunctionLoadSaveAndRunPanel implements ActionListener {
 			this.parent.saveFunctionList();
 		}
 	}
-	
+
 	public boolean isAutoSaveSelected()
 	{
 		return this.autoSave.isSelected();
 	}
-	
+
 }

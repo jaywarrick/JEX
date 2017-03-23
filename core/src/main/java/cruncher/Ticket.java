@@ -155,7 +155,16 @@ public class Ticket implements Callable<Integer>, Canceler{
 			// service
 			this.futures = new TreeMap<JEXEntry,Future<Integer>>();
 			TreeMap<JEXEntry,FunctionCallable> fcs = new TreeMap<>();
-			JEXStatics.cruncher.setNumThreads(cr.numThreads());
+			String numThreads = this.firstParamSet.getValueOfParameter(JEXCrunchablePlugin.THREADS);
+			if(numThreads != null)
+			{
+				Integer toSet = Integer.parseInt(numThreads);
+				if(toSet != null)
+				{
+					JEXStatics.cruncher.setNumThreads(toSet);
+				}
+			}
+			
 			for (JEXEntry entry : this.runList.keySet())
 			{
 				Logs.log("Submitting new function to the cruncher", 1, this);

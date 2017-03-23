@@ -1,15 +1,10 @@
 package function.plugin.plugins.roi;
 
-import image.roi.PointList;
-import image.roi.ROIPlus;
-
+import java.awt.Rectangle;
 import java.util.TreeMap;
-
-import jex.statics.JEXStatics;
 
 import org.scijava.plugin.Plugin;
 
-import tables.DimensionMap;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.RoiReader;
@@ -19,6 +14,10 @@ import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.MarkerConstants;
 import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
+import image.roi.PointList;
+import image.roi.ROIPlus;
+import jex.statics.JEXStatics;
+import tables.DimensionMap;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions
@@ -50,20 +49,25 @@ public class TransformROI extends JEXPlugin {
 	
 	/////////// Define Parameters ///////////
 	
+	@ParameterMarker(uiOrder=5, name="Reference point", description="Center point for scaling and rotation operations.", ui=MarkerConstants.UI_DROPDOWN, choices={"Origin", "ROI Center"}, defaultChoice=0)
+	String referencePoint;
+	
+	@ParameterMarker(uiOrder=6, name="Move to origin first?", description="Move the ROI to the origin first before any scale/translate/rotate operation? (typically false, primarily use to move )", ui=MarkerConstants.UI_DROPDOWN, choices={"No","Yes - UL Corner", "Yes - Center"}, defaultChoice=0)
+	String moveToOrigin;
+	
 	@ParameterMarker(uiOrder=1, name="Scale", description="Multiplier to scale locations/size of all ", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1.0")
 	double scale;
 	
 	@ParameterMarker(uiOrder=2, name="Rotate (deg, CCW)", description="angle of rotation around the point indicated in ", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
 	double rotation;
 	
-	@ParameterMarker(uiOrder=3, name="Reference point", description="Center point for scaling and rotation operations.", ui=MarkerConstants.UI_DROPDOWN, choices={"Origin", "ROI Center"}, defaultChoice=0)
-	String referencePoint;
-	
-	@ParameterMarker(uiOrder=4, name="Translate X", description="X displacement", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
+	@ParameterMarker(uiOrder=3, name="Translate X", description="X displacement", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
 	double deltaX;
 	
-	@ParameterMarker(uiOrder=5, name="Translate Y", description="Y displacement", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
+	@ParameterMarker(uiOrder=4, name="Translate Y", description="Y displacement", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
 	double deltaY;
+	
+	
 	
 	/////////// Define Outputs ///////////
 	
@@ -94,6 +98,17 @@ public class TransformROI extends JEXPlugin {
 			ROIPlus roi = original.get(map).copy();
 			PointList pl = roi.getPointList();
 			String[] opts = new String[]{"Origin", "ROI Center"};
+			
+			// Move to the origin if necessary
+			if(moveToOrigin.equals("Yes - Center"))
+			{
+				roi.pointList = pl.getPointListRelativeToCenter();
+			}
+			else if(moveToOrigin.equals("Yes - UL Corner"))
+			{
+				Rectangle r = pl.getBounds();
+				pl.translate(-r.x, -r.y);
+			}
 			
 			if(referencePoint.equals(opts[1]))
 			{

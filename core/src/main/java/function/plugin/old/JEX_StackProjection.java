@@ -258,6 +258,10 @@ public class JEX_StackProjection extends JEXCrunchable {
 						DimensionMap saveDim = this.getAStackMap(map, dimToProject, i);
 						dataMap.put(saveDim, actualPath);
 					}
+					// Status bar
+					count = count + 1;
+					int percentage = (int) (100 * ((double) count / (((double) maps.size()) * (double) (dimToProject.size() - slidingWindowSize + 1))));
+					JEXStatics.statusBar.setProgressPercentage(percentage);
 				}
 			}
 			else
@@ -283,11 +287,11 @@ public class JEX_StackProjection extends JEXCrunchable {
 					DimensionMap saveDim = this.getAStackMap(map, dimToProject, 0);
 					dataMap.put(saveDim, actualPath);
 				}
+				// Status bar
+				count = count + 1;
+				int percentage = (int) (100 * ((double) count / (double) maps.size()));
+				JEXStatics.statusBar.setProgressPercentage(percentage);
 			}
-			// Status bar
-			count = count + 1;
-			int percentage = (int) (100 * ((double) count / (double) maps.size()));
-			JEXStatics.statusBar.setProgressPercentage(percentage);
 		}
 
 		JEXData output1 = ImageWriter.makeImageStackFromPaths(outputNames[0].getName(), dataMap);

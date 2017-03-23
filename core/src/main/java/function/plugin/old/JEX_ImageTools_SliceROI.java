@@ -5,16 +5,13 @@ import java.util.TreeMap;
 
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
-import Database.DataReader.ImageReader;
-import Database.DataWriter.ImageWriter;
+import Database.DataReader.RoiReader;
+import Database.DataWriter.RoiWriter;
 import Database.Definition.Parameter;
 import Database.Definition.ParameterSet;
 import Database.Definition.TypeName;
-import Database.SingleUserDatabase.JEXWriter;
 import function.JEXCrunchable;
-import ij.ImagePlus;
-import ij.plugin.filter.RankFilters;
-import ij.process.ImageProcessor;
+import image.roi.ROIPlus;
 import jex.statics.JEXStatics;
 import tables.DimensionMap;
 
@@ -25,14 +22,12 @@ import tables.DimensionMap;
  * 
  * JEX enables the use of several data object types The specific API for these can be found in the main JEXperiment folder. These API provide methods to retrieve data from these objects, create new objects and handle the data they contain.
  * 
- * @author erwinberthier
+ * @author jaywarrick
  * 
  */
-public class JEX_Filters extends JEXCrunchable {
+public class JEX_ImageTools_SliceROI extends JEXCrunchable {
 
-	public static String MEAN = "mean", MIN = "min", MAX = "max", MEDIAN = "median", VARIANCE = "variance";
-
-	public JEX_Filters()
+	public JEX_ImageTools_SliceROI()
 	{}
 
 	// ----------------------------------------------------
@@ -47,7 +42,7 @@ public class JEX_Filters extends JEXCrunchable {
 	@Override
 	public String getName()
 	{
-		String result = "Image Filters";
+		String result = "Slice ROI";
 		return result;
 	}
 
@@ -59,7 +54,7 @@ public class JEX_Filters extends JEXCrunchable {
 	@Override
 	public String getInfo()
 	{
-		String result = "Use a predefined image filter and specify the filter radius.";
+		String result = "Grab once slice (i.e., all rois holding one dimension constant) to create a subset of ROI objects";
 		return result;
 	}
 
@@ -71,7 +66,7 @@ public class JEX_Filters extends JEXCrunchable {
 	@Override
 	public String getToolbox()
 	{
-		String toolbox = "Image processing";
+		String toolbox = "Image tools";
 		return toolbox;
 	}
 
@@ -110,7 +105,7 @@ public class JEX_Filters extends JEXCrunchable {
 	public TypeName[] getInputNames()
 	{
 		TypeName[] inputNames = new TypeName[1];
-		inputNames[0] = new TypeName(IMAGE, "Image");
+		inputNames[0] = new TypeName(ROI, "Roi");
 		return inputNames;
 	}
 
@@ -122,12 +117,14 @@ public class JEX_Filters extends JEXCrunchable {
 	@Override
 	public TypeName[] getOutputs()
 	{
-		defaultOutputNames = new TypeName[1];
-		defaultOutputNames[0] = new TypeName(IMAGE, "Filtered Image");
+		this.defaultOutputNames = new TypeName[0];
+		// this.defaultOutputNames[0] = new TypeName(IMAGE, "Split Image");
 
-		if(outputNames == null)
-			return defaultOutputNames;
-		return outputNames;
+		if(this.outputNames == null)
+		{
+			return this.defaultOutputNames;
+		}
+		return this.outputNames;
 	}
 
 	/**
@@ -142,17 +139,16 @@ public class JEX_Filters extends JEXCrunchable {
 		// Parameter p0 = new
 		// Parameter("Dummy Parameter","Lets user know that the function has been selected.",FormLine.DROPDOWN,new
 		// String[] {"true"},0);
-		Parameter p1 = new Parameter("Filter Type", "Type of filter to apply.", Parameter.DROPDOWN, new String[] { MEAN, MIN, MAX, MEDIAN, VARIANCE }, 0);
-		Parameter p2 = new Parameter("Radius", "Radius of filter in pixels.", "2.0");
-		Parameter p3 = new Parameter("Output Bit-Depth", "Bit-Depth of the output image", Parameter.DROPDOWN, new String[] { "8", "16", "32" }, 2);
-		Parameter p4 = getNumThreadsParameter(10, 6);
+		Parameter p1 = new Parameter("Dim to Slice", "Name of the dimension to split", "Time");
+		Parameter p2 = new Parameter("Value to Grab", "Value of the named dimension to be chosen/sliced from the rest", "1");
+		Parameter p3 = new Parameter("Keep Dim?", "Keep the singleton dimension in the resultant object?", Parameter.CHECKBOX, false);
+
 		// Make an array of the parameters and return it
 		ParameterSet parameterArray = new ParameterSet();
-		parameterArray.addParameter(p4);
+		// parameterArray.addParameter(p0);
 		parameterArray.addParameter(p1);
 		parameterArray.addParameter(p2);
 		parameterArray.addParameter(p3);
-
 		return parameterArray;
 	}
 
@@ -184,67 +180,53 @@ public class JEX_Filters extends JEXCrunchable {
 	public boolean run(JEXEntry entry, HashMap<String,JEXData> inputs)
 	{
 		// Collect the inputs
-		JEXData imageData = inputs.get("Image");
-		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
+		JEXData roiData = inputs.get("Roi");
+		roiData.getDataMap();
+		if(roiData == null || !roiData.getTypeName().getType().equals(JEXData.ROI))
+		{
 			return false;
+		}
 
 		// Gather parameters
-		double radius = Double.parseDouble(parameters.getValueOfParameter("Radius"));
-		String method = parameters.getValueOfParameter("Filter Type");
-		int bitDepth = Integer.parseInt(parameters.getValueOfParameter("Output Bit-Depth"));
+		String dim = this.parameters.getValueOfParameter("Dim to Slice");
+		String value = this.parameters.getValueOfParameter("Value to Grab");
+		DimensionMap filterMap = new DimensionMap(dim + "=" + value);
+		Boolean keep = Boolean.parseBoolean(this.parameters.getValueOfParameter("Keep Dim?"));
 
 		// Run the function
-		TreeMap<DimensionMap,String> imageMap = ImageReader.readObjectToImagePathTable(imageData);
-		TreeMap<DimensionMap,String> outputImageMap = new TreeMap<DimensionMap,String>();
+		TreeMap<DimensionMap,ROIPlus> roiMap = RoiReader.readObjectToRoiMap(roiData);
 		int count = 0, percentage = 0;
-		for (DimensionMap map : imageMap.keySet())
+		TreeMap<DimensionMap,ROIPlus> splitRoiMap = new TreeMap<>();
+		for (DimensionMap map : roiData.getDimTable().getSubTable(filterMap).getMapIterator())
 		{
-			if(this.isCanceled())
+			ROIPlus roi = roiMap.get(map);
+			if(roi == null)
 			{
-				return false;
+				continue;
 			}
-			ImagePlus im = new ImagePlus(imageMap.get(map));
-			ImageProcessor ip = im.getProcessor().convertToFloat();
-
-			// //// Begin Actual Function
-			RankFilters rF = new RankFilters();
-			rF.rank(ip, radius, JEX_StackProjection.getMethodInt(method));
-			
-			// //// End Actual Function
-
-			ImageProcessor toSave = ip;
-			if(bitDepth == 8)
+			if(keep)
 			{
-				toSave = ip.convertToByte(false);
+				splitRoiMap.put(map.copy(), roi);
 			}
-			else if(bitDepth == 16)
+			else
 			{
-				toSave = ip.convertToShort(false);
+				DimensionMap newMap = map.copy();
+				newMap.remove(dim);
+				splitRoiMap.put(newMap.copy(), roi);
 			}
-
-			String path = JEXWriter.saveImage(toSave);
-
-			if(path != null)
-			{
-				outputImageMap.put(map, path);
-			}
-
 			count = count + 1;
-			percentage = (int) (100 * ((double) (count) / ((double) imageMap.size())));
+			percentage = (int) (100 * ((double) (count) / ((double) roiMap.size())));
 			JEXStatics.statusBar.setProgressPercentage(percentage);
 		}
-		if(outputImageMap.size() == 0)
+		JEXData output = RoiWriter.makeRoiObject(roiData.name + " " + dim + " " + value, splitRoiMap);
+		this.realOutputs.add(output);
+
+		if(this.realOutputs.size() == 0)
 		{
 			return false;
 		}
-
-		JEXData output1 = ImageWriter.makeImageStackFromPaths(outputNames[0].getName(), outputImageMap);
-
-		// Set the outputs
-		realOutputs.add(output1);
 
 		// Return status
 		return true;
 	}
-
 }
