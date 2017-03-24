@@ -16,7 +16,7 @@ import javax.swing.table.TableCellRenderer;
 /**
  * @version 1.0 11/09/98
  */
-public class MultiLineHeaderRenderer extends JList implements TableCellRenderer {
+public class MultiLineHeaderRenderer extends JList<String> implements TableCellRenderer {
 	
 	private static final long serialVersionUID = 1L;
 	
@@ -26,7 +26,7 @@ public class MultiLineHeaderRenderer extends JList implements TableCellRenderer 
 		setForeground(UIManager.getColor("TableHeader.foreground"));
 		setBackground(UIManager.getColor("TableHeader.background"));
 		setBorder(UIManager.getBorder("TableHeader.cellBorder"));
-		ListCellRenderer renderer = getCellRenderer();
+		ListCellRenderer<? super String> renderer = getCellRenderer();
 		((JLabel) renderer).setHorizontalAlignment(JLabel.CENTER);
 		setCellRenderer(renderer);
 	}

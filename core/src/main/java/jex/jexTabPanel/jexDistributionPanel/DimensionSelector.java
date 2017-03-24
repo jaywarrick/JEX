@@ -24,7 +24,7 @@ public class DimensionSelector extends JPanel implements ActionListener {
 	public int sizeOfDimension = 1;
 	JLabel numLabel;
 	JLabel nameLabel;
-	JComboBox values;
+	JComboBox<String> values;
 	JTextField sizeField;
 	
 	DimensionSelector(int num, String name, String[] possibilities)
@@ -42,7 +42,7 @@ public class DimensionSelector extends JPanel implements ActionListener {
 		
 		nameLabel = new JLabel(name);
 		nameLabel.setBackground(foregroundColor);
-		values = new JComboBox(possibilities);
+		values = new JComboBox<String>(possibilities);
 		values.setEditable(true);
 		values.setBackground(foregroundColor);
 		values.addActionListener(this);

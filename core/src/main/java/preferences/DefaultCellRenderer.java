@@ -14,7 +14,7 @@ import javax.swing.table.DefaultTableCellRenderer;
  * DefaultCellRenderer.<br>
  * 
  */
-public class DefaultCellRenderer extends DefaultTableCellRenderer implements ListCellRenderer {
+public class DefaultCellRenderer extends DefaultTableCellRenderer implements ListCellRenderer<Object> {
 	
 	private static final long serialVersionUID = 1L;
 	
@@ -39,7 +39,7 @@ public class DefaultCellRenderer extends DefaultTableCellRenderer implements Lis
 		showOddAndEvenRows = b;
 	}
 	
-	public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus)
+	public Component getListCellRendererComponent(JList<? extends Object> list, Object value, int index, boolean isSelected, boolean cellHasFocus)
 	{
 		
 		setBorder(null);

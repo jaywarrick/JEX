@@ -1,31 +1,15 @@
 package function.plugin.plugins.calibration;
 
-import ij.ImagePlus;
-import ij.process.ByteProcessor;
-import ij.process.FloatProcessor;
-
-import java.util.TreeMap;
-import java.util.Vector;
-
-import jex.statics.JEXDialog;
-import miscellaneous.CSVList;
-import miscellaneous.StringUtility;
-
 import org.scijava.plugin.Plugin;
 
-import tables.Dim;
-import tables.DimTable;
-import tables.DimensionMap;
-import weka.core.converters.JEXTableWriter;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
-import Database.DataReader.ImageReader;
-import Database.DataWriter.FileWriter;
 import function.plugin.mechanism.InputMarker;
 import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.MarkerConstants;
 import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
+import ij.ImagePlus;
 
 @Plugin(
 		type = JEXPlugin.class,

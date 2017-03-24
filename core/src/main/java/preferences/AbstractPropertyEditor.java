@@ -11,9 +11,9 @@ import java.beans.PropertyEditor;
  * AbstractPropertyEditor. <br>
  * 
  */
-public class AbstractPropertyEditor implements PropertyEditor {
+public class AbstractPropertyEditor<E extends Component> implements PropertyEditor {
 	
-	protected Component editor;
+	protected E editor;
 	private PropertyChangeSupport listeners = new PropertyChangeSupport(this);
 	
 	public boolean isPaintable()

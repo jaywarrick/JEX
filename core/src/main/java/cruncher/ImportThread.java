@@ -1,16 +1,15 @@
 package cruncher;
 
-import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
 
-import jex.statics.JEXStatics;
-import tables.DimensionMap;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataWriter.FileWriter;
 import Database.DataWriter.ImageWriter;
 import Database.Definition.Type;
+import jex.statics.JEXStatics;
+import tables.DimensionMap;
 
 public class ImportThread implements Callable<Object> {
 	

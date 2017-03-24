@@ -19,7 +19,7 @@ import javax.swing.TransferHandler;
  * FilePropertyEditor. <br>
  * 
  */
-public class FilePropertyEditor extends AbstractPropertyEditor {
+public class FilePropertyEditor extends AbstractPropertyEditor<JPanel> {
 	
 	protected JTextField textfield;
 	private JButton button;
@@ -27,8 +27,8 @@ public class FilePropertyEditor extends AbstractPropertyEditor {
 	public FilePropertyEditor()
 	{
 		editor = new JPanel(new BorderLayout(0, 0));
-		((JPanel) editor).add("Center", textfield = new JTextField());
-		((JPanel) editor).add("East", button = new FixedButton());
+		editor.add("Center", textfield = new JTextField());
+		editor.add("East", button = new FixedButton());
 		textfield.setBorder(LookAndFeelTweaks.EMPTY_BORDER);
 		button.addActionListener(new ActionListener() {
 			

@@ -485,7 +485,7 @@ public class JEX_CTC_SingleCellColocalization extends JEXCrunchable {
 			{
 				Vector<Double> m1 = (Vector<Double>) o.get("m1");
 				Vector<Double> m2 = (Vector<Double>) o.get("m2");
-				PointList pts = (PointList) o.get("xy");
+				//PointList pts = (PointList) o.get("xy");
 				
 				if(m1.size() > 0)
 				{

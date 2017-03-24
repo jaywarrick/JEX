@@ -17,14 +17,14 @@ import javax.swing.event.PopupMenuListener;
  * ComboBoxPropertyEditor. <br>
  * 
  */
-public class ComboBoxPropertyEditor extends AbstractPropertyEditor {
+public class ComboBoxPropertyEditor extends AbstractPropertyEditor<JComboBox<Object>> {
 	
 	private Object oldValue;
 	private Icon[] icons;
 	
 	public ComboBoxPropertyEditor()
 	{
-		editor = new JComboBox() {
+		editor = new JComboBox<Object>() {
 			
 			private static final long serialVersionUID = 1L;
 			
@@ -35,8 +35,8 @@ public class ComboBoxPropertyEditor extends AbstractPropertyEditor {
 				super.setSelectedItem(anObject);
 			}
 		};
-		
-		final JComboBox combo = (JComboBox) editor;
+
+		final JComboBox<Object> combo = (JComboBox<Object>) editor;
 		
 		combo.setRenderer(new Renderer());
 		combo.addPopupMenuListener(new PopupMenuListener() {
@@ -68,7 +68,7 @@ public class ComboBoxPropertyEditor extends AbstractPropertyEditor {
 	@Override
 	public Object getValue()
 	{
-		Object selected = ((JComboBox) editor).getSelectedItem();
+		Object selected = editor.getSelectedItem();
 		if(selected instanceof Value)
 		{
 			return ((Value) selected).value;
@@ -82,7 +82,7 @@ public class ComboBoxPropertyEditor extends AbstractPropertyEditor {
 	@Override
 	public void setValue(Object value)
 	{
-		JComboBox combo = (JComboBox) editor;
+		JComboBox<Object> combo = editor;
 		Object current = null;
 		int index = -1;
 		for (int i = 0, c = combo.getModel().getSize(); i < c; i++)
@@ -94,12 +94,12 @@ public class ComboBoxPropertyEditor extends AbstractPropertyEditor {
 				break;
 			}
 		}
-		((JComboBox) editor).setSelectedIndex(index);
+		editor.setSelectedIndex(index);
 	}
 	
 	public void setAvailableValues(Object[] values)
 	{
-		((JComboBox) editor).setModel(new DefaultComboBoxModel(values));
+		editor.setModel(new DefaultComboBoxModel<Object>(values));
 	}
 	
 	public void setAvailableIcons(Icon[] icons)
@@ -112,7 +112,7 @@ public class ComboBoxPropertyEditor extends AbstractPropertyEditor {
 		private static final long serialVersionUID = 1L;
 		
 		@Override
-		public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus)
+		public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus)
 		{
 			Component component = super.getListCellRendererComponent(list, (value instanceof Value) ? ((Value) value).visualValue : value, index, isSelected, cellHasFocus);
 			if(icons != null && index >= 0 && component instanceof JLabel)

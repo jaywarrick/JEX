@@ -1,7 +1,5 @@
 package jex.jexTabPanel.jexFunctionPanel;
 
-import guiObject.DialogGlassPane;
-
 import java.awt.BorderLayout;
 import java.io.File;
 import java.util.ArrayList;
@@ -13,18 +11,17 @@ import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 
-import jex.ErrorMessagePane;
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DBObjects.JEXWorkflow;
+import Database.Definition.TypeName;
+import cruncher.JEXFunction;
 import jex.statics.DisplayStatics;
 import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import logs.Logs;
 import miscellaneous.FileUtility;
 import net.miginfocom.swing.MigLayout;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DBObjects.JEXWorkflow;
-import Database.Definition.TypeName;
-import cruncher.JEXFunction;
 
 public class JEXFunctionPanel extends JPanel {
 
@@ -215,13 +212,7 @@ public class JEXFunctionPanel extends JPanel {
 			Logs.log("No selected entries to run the function", 1, this);
 			JEXStatics.statusBar.setStatusText("No selected entries");
 
-			DialogGlassPane diagPanel = new DialogGlassPane("Warning");
-			diagPanel.setSize(400, 200);
-
-			ErrorMessagePane errorPane = new ErrorMessagePane("You need to select at least one entry in the database to run this function");
-			diagPanel.setCentralPanel(errorPane);
-
-			JEXStatics.main.displayGlassPane(diagPanel, true);
+			JEXDialog.messageDialog("You need to select at least one entry in the database to run this function", this);
 			return;
 		}
 		if(function == null || functionList.size() == 0)
@@ -229,13 +220,7 @@ public class JEXFunctionPanel extends JPanel {
 			Logs.log("No functions were specified", 1, this);
 			JEXStatics.statusBar.setStatusText("No functions were specified");
 
-			DialogGlassPane diagPanel = new DialogGlassPane("Warning");
-			diagPanel.setSize(400, 200);
-
-			ErrorMessagePane errorPane = new ErrorMessagePane("You need to select at least one function to run");
-			diagPanel.setCentralPanel(errorPane);
-
-			JEXStatics.main.displayGlassPane(diagPanel, true);
+			JEXDialog.messageDialog("You need to select at least one function to run", this);
 			return;
 		}
 

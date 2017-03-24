@@ -1,12 +1,5 @@
 package jex.jexTabPanel.jexLabelPanel;
 
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.Definition.TypeName;
-import guiObject.DialogGlassPane;
-import guiObject.FlatRoundedStaticButton;
-import guiObject.FormGlassPane;
-
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -24,10 +17,14 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
-import jex.ErrorMessagePane;
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.Definition.TypeName;
+import guiObject.FlatRoundedStaticButton;
+import guiObject.FormGlassPane;
 import jex.JEXManager;
-import jex.YesNoMessagePane;
 import jex.statics.DisplayStatics;
+import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import logs.Logs;
 import miscellaneous.FontUtility;
@@ -266,26 +263,17 @@ public class LabelsPanel extends JPanel implements ActionListener {
 			Logs.log("No selected entries to remove the label", 1, this);
 			JEXStatics.statusBar.setStatusText("No selected entries");
 			
-			DialogGlassPane diagPanel = new DialogGlassPane("Warning");
-			diagPanel.setSize(400, 200);
-			
-			ErrorMessagePane errorPane = new ErrorMessagePane("You must select the entries in which you want to remove the label");
-			diagPanel.setCentralPanel(errorPane);
-			
-			JEXStatics.main.displayGlassPane(diagPanel, true);
+			JEXDialog.messageDialog("You must select the entries in which you want to remove the label", this);
 			return;
 		}
 		
 		Logs.log("Asking before removing the selected label", 1, this);
 		
-		DialogGlassPane diagPanel = new DialogGlassPane("Info");
-		diagPanel.setSize(400, 200);
-		
-		YesNoMessagePane yesNoPane = new YesNoMessagePane("Are you sure you want to delete this data set");
-		yesNoPane.callMethodOfClassOnAcceptance(this, "removeData");
-		diagPanel.setCentralPanel(yesNoPane);
-		
-		JEXStatics.main.displayGlassPane(diagPanel, true);
+		int choice = JEXDialog.getChoice("Confirmation", "Are you sure you want to delete this data object from the selected entries?", new String[]{"Yes","No"}, 1);
+		if(choice == 0)
+		{
+			this.removeData();
+		}
 	}
 	
 	public void removeData()
@@ -374,11 +362,7 @@ public class LabelsPanel extends JPanel implements ActionListener {
 			formPane.callMethodOfClassOnAcceptance(this, "duplicateLabel", new Class[] { FormGlassPane.class });
 			
 			// create a glass panel
-			DialogGlassPane diagPanel = new DialogGlassPane("Duplicate label");
-			diagPanel.setSize(400, 200);
-			diagPanel.setCentralPanel(formPane);
-			
-			JEXStatics.main.displayGlassPane(diagPanel, true);
+			JEXDialog.messageDialog("Duplicate label", this);
 		}
 	}
 	

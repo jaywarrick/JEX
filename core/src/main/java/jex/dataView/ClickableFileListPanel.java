@@ -16,25 +16,29 @@ public class ClickableFileListPanel extends JPanel implements MouseListener {
 	@Override
 	public void mouseClicked(MouseEvent evt)
 	{
-		JList list = (JList) evt.getSource();
-		if(evt.getClickCount() == 2)
+		Object src = evt.getSource();
+		if(src instanceof JList)
 		{
-			int index = list.locationToIndex(evt.getPoint());
-			Object file = list.getModel().getElementAt(index);
-			if(file != null)
+			JList<?> list = (JList<?>) src;
+			if(evt.getClickCount() == 2)
 			{
-				if(file instanceof File)
+				int index = list.locationToIndex(evt.getPoint());
+				Object file = list.getModel().getElementAt(index);
+				if(file != null)
 				{
-					try
+					if(file instanceof File)
 					{
-						FileUtility.openFileDefaultApplication((File) file);
+						try
+						{
+							FileUtility.openFileDefaultApplication((File) file);
+						}
+						catch (Exception e)
+						{
+							e.printStackTrace();
+						}
 					}
-					catch (Exception e)
-					{
-						e.printStackTrace();
-					}
+					
 				}
-				
 			}
 		}
 	}

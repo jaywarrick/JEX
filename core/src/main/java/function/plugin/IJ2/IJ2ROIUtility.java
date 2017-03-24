@@ -1,13 +1,13 @@
 package function.plugin.IJ2;
 
-import image.roi.ROIPlus;
-
 import java.awt.Rectangle;
 
+import image.roi.ROIPlus;
 import net.imagej.overlay.AbstractROIOverlay;
 import net.imagej.overlay.RectangleOverlay;
 import net.imglib2.roi.RegionOfInterest;
 
+@SuppressWarnings("deprecation")
 public class IJ2ROIUtility {
 	
 	public static AbstractROIOverlay<? extends RegionOfInterest> getROIOverlay(ROIPlus roi)

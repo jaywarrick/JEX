@@ -1,7 +1,5 @@
 package weka.core.converters;
 
-import logs.Logs;
-
 public class WekaConverterUtility {
 
 	public static void addNewFileExtensionToViewer(String ext)

@@ -126,6 +126,7 @@ public class TestStuff {
 		UnaryFunctionOp<IterableInterval<DoubleType>, DoubleType> op21 = (UnaryFunctionOp<IterableInterval<DoubleType>, DoubleType>) IJ2PluginUtility.ij().op().op(Ops.ImageMoments.CentralMoment21.class, ii);
 		UnaryFunctionOp<IterableInterval<DoubleType>, DoubleType> op12 = (UnaryFunctionOp<IterableInterval<DoubleType>, DoubleType>) IJ2PluginUtility.ij().op().op(Ops.ImageMoments.CentralMoment12.class, ii);
 		
+		@SuppressWarnings("unused")
 		double val20, val02, bval20, bval02, cval20, cval02, val11, bval11, cval11, val30, val03, val21, val12, bval30, bval03, bval21, bval12, cval30, cval03, cval21, cval12, suma, sumb, sumc;
 		
 		ii = new PointSamplerII<DoubleType>(pl1a);

@@ -16,7 +16,6 @@ import Database.Definition.TypeName;
 import Database.SingleUserDatabase.JEXWriter;
 import cruncher.Ticket;
 import function.JEXCrunchable;
-import function.plugin.plugins.calibration.MakeCalibrationImage_Object;
 import ij.ImagePlus;
 import ij.plugin.filter.RankFilters;
 import ij.process.Blitter;
@@ -254,11 +253,7 @@ public class JEX_MakeCalibrationImageFromObject extends JEXCrunchable {
 			// Get the median of the group
 			ImagePlus stack = ImageReader.readFileListToVirtualStack(files);
 			stack.setProcessor((FloatProcessor) stack.getProcessor().convertToFloat());
-<<<<<<< HEAD
 			imp = (FloatProcessor) JEX_StackProjection.evaluate(stack, JEX_StackProjection.METHOD_MEDIAN);
-=======
-			imp = JEX_StackProjection.evaluate(stack, JEX_StackProjection.METHOD_MEDIAN);
->>>>>>> origin/Feature-Extraction2
 			
 			// Add it to the total for taking the mean of the groups
 			if(k == 0)

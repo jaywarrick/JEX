@@ -35,7 +35,6 @@ import javax.swing.WindowConstants;
 
 import Database.SingleUserDatabase.JEXDBIO;
 import cruncher.Cruncher;
-import guiObject.DialogGlassPane;
 import guiObject.SignalMenuButton;
 import icons.IconRepository;
 import jex.jexTabPanel.JEXTabPanelController;
@@ -936,29 +935,6 @@ public class JEXperiment extends JFrame implements ActionListener, WindowListene
 		// Boolean consolidate = Boolean.parseBoolean(consolidateStr);
 		JEXStatics.statusBar.setStatusText("Attempting to update JEX...");
 		Updater.attemptJEXUpdate();
-	}
-	
-	/**
-	 * Make a bookmark
-	 */
-	public void bookmark()
-	{
-		if(!JEXStatics.jexManager.isLoggedOn())
-		{
-			return;
-		}
-		if(JEXStatics.jexManager.getCurrentDatabase() == null)
-		{
-			return;
-		}
-		
-		DialogGlassPane diagPanel = new DialogGlassPane("Warning");
-		diagPanel.setSize(400, 200);
-		
-		ErrorMessagePane errorPane = new ErrorMessagePane("Bookmarks are not implemented yet... ");
-		diagPanel.setCentralPanel(errorPane);
-		
-		JEXStatics.main.displayGlassPane(diagPanel, true);
 	}
 	
 	/**

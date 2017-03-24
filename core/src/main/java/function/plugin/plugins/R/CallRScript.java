@@ -1,16 +1,11 @@
 package function.plugin.plugins.R;
 
-import java.io.File;
 import java.util.TreeMap;
-
-import logs.Logs;
 
 import org.rosuda.REngine.REXP;
 import org.rosuda.REngine.REXPMismatchException;
 import org.scijava.plugin.Plugin;
 
-import rtools.R;
-import tables.DimensionMap;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataWriter.FileWriter;
@@ -20,6 +15,9 @@ import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.MarkerConstants;
 import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
+import logs.Logs;
+import rtools.R;
+import tables.DimensionMap;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions

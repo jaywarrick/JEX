@@ -115,17 +115,17 @@ public class FileDropCellController {
 			}
 			else
 			{
-				JList jlist = new JList();
+				JList<File> jlist = new JList<>();
 				jlist.setBackground(DisplayStatics.background);
 				jlist.setForeground(Color.WHITE);
 				jlist.setFont(FontUtility.defaultFonts);
 				jlist.setCellRenderer(new FileListCellRenderer());
 				
-				DefaultListModel newModel = new DefaultListModel();
+				DefaultListModel<File> newModel = new DefaultListModel<>();
 				// Make a string with the dimension name for the files
 				for (Pair<DimensionMap,String> pair : theFiles)
 				{
-					newModel.addElement(pair.p1.toString() + " " + FileUtility.getFileNameWithExtension(pair.p2));
+					newModel.addElement(new File(pair.p1.toString() + " " + FileUtility.getFileNameWithExtension(pair.p2)));
 				}
 				
 				jlist.setModel(newModel);

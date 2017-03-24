@@ -106,6 +106,7 @@ import tables.DimensionMap;
 import updates.Updater;
 import weka.core.converters.JEXTableWriter;
 
+@SuppressWarnings("all")
 public class PointTester {
 
 	public static String thing = "yourPassWord";

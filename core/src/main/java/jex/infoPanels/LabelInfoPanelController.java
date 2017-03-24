@@ -203,7 +203,7 @@ public class LabelInfoPanelController extends InfoPanelController {
 		
 		// GUI
 		private JButton stopDisplaying = new JButton("X");
-		private JComboBox labelSelector = new JComboBox();
+		private JComboBox<String> labelSelector = new JComboBox<>();
 		private JPanel centerPanel;
 		
 		private LabelInfoPanel()
@@ -217,7 +217,7 @@ public class LabelInfoPanelController extends InfoPanelController {
 			String[] labelStrings = LabelInfoPanelController.this.labelNames.toArray(new String[0]);
 			
 			// Create the combo box
-			this.labelSelector = new JComboBox(labelStrings);
+			this.labelSelector = new JComboBox<String>(labelStrings);
 			this.labelSelector.setSelectedItem(LabelInfoPanelController.this.selectedName);
 			this.labelSelector.addActionListener(this);
 			

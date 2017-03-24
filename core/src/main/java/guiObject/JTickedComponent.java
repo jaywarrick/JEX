@@ -93,7 +93,7 @@ public class JTickedComponent extends JPanel implements ActionListener {
 		}
 		if(type.equals("JComboBox"))
 		{
-			result = ((JComboBox) component).getSelectedItem().toString();
+			result = ((JComboBox<?>) component).getSelectedItem().toString();
 		}
 		if(type.equals("JButton"))
 		{

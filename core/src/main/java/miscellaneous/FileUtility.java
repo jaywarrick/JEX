@@ -16,12 +16,10 @@ import javax.swing.JOptionPane;
 import org.apache.commons.io.FileUtils;
 
 import Database.SingleUserDatabase.JEXWriter;
-import function.plugin.plugins.featureExtraction.FeatureUtils.BooleanTypeToUnsignedByteTypeConverter;
 import jex.statics.JEXStatics;
 import logs.Logs;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.type.BooleanType;
 import net.imglib2.type.numeric.RealType;
 
 public class FileUtility implements Comparator<File> {
