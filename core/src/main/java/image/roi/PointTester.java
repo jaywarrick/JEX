@@ -179,7 +179,7 @@ public class PointTester {
 		Polygon p = new Polygon(pl);
 
 		UnaryFunctionOp<Polygon,DoubleType> op = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.Size.class, DoubleType.class,  p);
-		DoubleType d = op.compute1(p);
+		DoubleType d = op.calculate(p);
 
 		Logs.log(d.toString(), PointTester.class);
 	}
@@ -196,7 +196,7 @@ public class PointTester {
 		ImageJFunctions.show(dot1);
 		ImageJFunctions.show(dot2);
 
-		Op op = IJ2PluginUtility.ij().op().op(net.imagej.ops.math.RealBinaryMath.Divide.class, RealType.class, RealType.class, RealType.class, 50.0);
+		Op op = IJ2PluginUtility.ij().op().op(net.imagej.ops.math.BinaryRealTypeMath.Divide.class, RealType.class, RealType.class, RealType.class, 50.0);
 		IJ2PluginUtility.ij().op().run(IIAndRAIToRAI.class, dot2, dot1, dot2, op);
 
 		ImageJFunctions.show(dot1);

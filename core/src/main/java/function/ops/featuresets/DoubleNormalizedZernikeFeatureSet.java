@@ -102,7 +102,7 @@ public class DoubleNormalizedZernikeFeatureSet<I extends RealType<I>>
 	}
 
 	@Override
-	public Map<NamedFeature, DoubleType> compute1(IterableInterval<I> input) {
+	public Map<NamedFeature, DoubleType> calculate(IterableInterval<I> input) {
 		HashMap<NamedFeature, DoubleType> map = new HashMap<NamedFeature, DoubleType>();
 
 		for (int order = orderMin; order <= orderMax; order++) {
@@ -112,7 +112,7 @@ public class DoubleNormalizedZernikeFeatureSet<I extends RealType<I>>
 					zernikeComputer.setRepetition(repetition);
 					zernikeComputer.setEnclosingCircles(this.innerCircle, this.outerCircle);
 
-					ZernikeMoment results = zernikeComputer.compute1(input);
+					ZernikeMoment results = zernikeComputer.calculate(input);
 
 					map.put(new NamedFeature("DNZernikeMag_Order_" + order + "_Rep_" + repetition),
 							new DoubleType(results.getMagnitude()));

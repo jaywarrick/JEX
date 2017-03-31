@@ -29,8 +29,6 @@
  */
 package function.ops.zernike;
 
-import java.util.List;
-
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
@@ -74,13 +72,13 @@ public class ZernikeComputer<T extends RealType<T>> extends
 	}
 
 	@Override
-	public ZernikeMoment compute1(IterableInterval<T> ii) {
+	public ZernikeMoment calculate(IterableInterval<T> ii) {
 		
 		Circle circle = enclosingCircle;
 		if(circle == null)
 		{
 			UnaryFunctionOp<RealCursor<T>,Circle> cirOp = Functions.unary(ops(), Ops.Geometric.SmallestEnclosingCircle.class, Circle.class, in().cursor(), (RealLocalizable) null);
-			circle = cirOp.compute1(ii.cursor());
+			circle = cirOp.calculate(ii.cursor());
 		}
 		
 		final double centerX = circle.getCenter().getDoublePosition(0);
@@ -222,21 +220,6 @@ public class ZernikeComputer<T extends RealType<T>> extends
 		BigComplex complexNumber = new BigComplex();
 		p.setZm(complexNumber);
 		return p;
-	}
-
-	/**
-	 * Prints all calculate Zernike Moments (Complex Number + Phase + Magnitude)
-	 * 
-	 * @param _polynomials
-	 *            List of polynomials
-	 */
-	void printMoments(List<ZernikeMoment> _polynomials) {
-		System.out.println("Print Zernike Moments:\n");
-
-		for (ZernikeMoment p : _polynomials) {
-			p.printMoment();
-		}
-
 	}
 
 	/**

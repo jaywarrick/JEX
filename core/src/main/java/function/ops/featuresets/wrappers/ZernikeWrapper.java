@@ -42,7 +42,7 @@ public class ZernikeWrapper<T extends RealType<T>> {
 		// Set the enclosing circle for this cell
 		opZernike.setEnclosingCircle(circle);
 
-		Map<NamedFeature, DoubleType> results = opZernike.compute1(vals);
+		Map<NamedFeature, DoubleType> results = opZernike.calculate(vals);
 		for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
 			DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
 			newMap.put("Id", "" + id);
@@ -53,7 +53,7 @@ public class ZernikeWrapper<T extends RealType<T>> {
 		// Set the enclosing circle for this cell
 		opZernike.setEnclosingCircle(circle);
 
-		results = opZernike.compute1(vals);
+		results = opZernike.calculate(vals);
 		for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
 			DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
 			newMap.put("Id", "" + id);
@@ -64,7 +64,7 @@ public class ZernikeWrapper<T extends RealType<T>> {
 		// Set the enclosing circle for this cell
 		opZernike.setEnclosingCircle(circle);
 
-		results = opZernike.compute1(vals);
+		results = opZernike.calculate(vals);
 		for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
 			DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
 			newMap.put("Id", "" + id);

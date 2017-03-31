@@ -30,7 +30,7 @@ implements Ops.Geometric.SmallestEnclosingCircle {
 	int rndSeed = 1234;
 
 	@Override
-	public Circle compute1(List<? extends RealLocalizable> input) throws IllegalArgumentException {
+	public Circle calculate(List<? extends RealLocalizable> input) throws IllegalArgumentException {
 
 		List<RealLocalizable> points = new Vector<RealLocalizable>(input);
 		if(randomizePointRemoval)

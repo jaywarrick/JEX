@@ -29,8 +29,6 @@
  */
 package function.ops.zernike;
 
-import java.util.List;
-
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
@@ -101,7 +99,7 @@ AbstractUnaryFunctionOp<IterableInterval<T>, ZernikeMoment>
 	}
 
 	@Override
-	public ZernikeMoment compute1(IterableInterval<T> ii) {
+	public ZernikeMoment calculate(IterableInterval<T> ii) {
 
 		// Compute pascal's triangle for binomal coefficients: d[x][y] equals (x
 		// over y)
@@ -246,21 +244,6 @@ AbstractUnaryFunctionOp<IterableInterval<T>, ZernikeMoment>
 		BigComplex complexNumber = new BigComplex();
 		p.setZm(complexNumber);
 		return p;
-	}
-
-	/**
-	 * Prints all calculate Zernike Moments (Complex Number + Phase + Magnitude)
-	 * 
-	 * @param _polynomials
-	 *            List of polynomials
-	 */
-	void printMoments(List<ZernikeMoment> _polynomials) {
-		System.out.println("Print Zernike Moments:\n");
-
-		for (ZernikeMoment p : _polynomials) {
-			p.printMoment();
-		}
-
 	}
 
 	/**

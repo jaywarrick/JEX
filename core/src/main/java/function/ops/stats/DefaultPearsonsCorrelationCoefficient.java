@@ -24,7 +24,7 @@ public class DefaultPearsonsCorrelationCoefficient<I1 extends RealType<I1>> exte
 implements Ops.Stats.PearsonsCorrelationCoefficient {
 
 	@Override
-	public DoubleType compute2(Pair<RandomAccessibleInterval<I1>, RandomAccessibleInterval<I1>> input1,
+	public DoubleType calculate(Pair<RandomAccessibleInterval<I1>, RandomAccessibleInterval<I1>> input1,
 			Cursor<Void> input2)
 	{
 		try

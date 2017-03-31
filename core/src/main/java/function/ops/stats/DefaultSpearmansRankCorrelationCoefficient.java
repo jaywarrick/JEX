@@ -20,7 +20,7 @@ public class DefaultSpearmansRankCorrelationCoefficient<I1 extends RealType<I1>>
 implements Ops.Stats.PearsonsCorrelationCoefficient {
 
 	@Override
-	public DoubleType compute2(Pair<RandomAccessibleInterval<I1>, RandomAccessibleInterval<I1>> input1,
+	public DoubleType calculate(Pair<RandomAccessibleInterval<I1>, RandomAccessibleInterval<I1>> input1,
 			Cursor<Void> input2)
 	{
 		FeatureUtils utils = new FeatureUtils();

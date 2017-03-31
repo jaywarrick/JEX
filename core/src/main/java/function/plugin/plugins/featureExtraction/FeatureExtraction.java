@@ -690,9 +690,9 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			{
 				DimensionMap mapM_Geometry = this.mapMask_NoChannel.copyAndSet("MaskChannel=" + this.mapMask.get(channelName) + ".p" + i);
 				mapM_Geometry.put("ImageChannel", "None");
-				Map<NamedFeature, DoubleType> results = opGeometric.compute1(p);
+				Map<NamedFeature, DoubleType> results = opGeometric.calculate(p);
 				// Map<NamedFeature, DoubleType> results =
-				// opGeometric.compute1(reg);
+				// opGeometric.calculate(reg);
 				for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
 					DimensionMap newMap = mapM_Geometry.copyAndSet("Measurement=" + result.getKey().getName());
 					newMap.put("Id", "" + this.pId);
@@ -758,7 +758,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			//this.utils.showRealII(vals, (Interval) this.wholeCellRegion, true);
 			//			this.utils.showRegion(this.wholeCellRegion);
 			//			this.utils.showRegion(this.subCellRegion);
-			Map<NamedFeature, DoubleType> results = opStats.compute1(vals);
+			Map<NamedFeature, DoubleType> results = opStats.calculate(vals);
 			for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
 				newMap.put("Id", "" + this.pId);
@@ -789,7 +789,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 				}
 			}
 
-			results = (Map<NamedFeature, DoubleType>) opHaralick2DHor.compute1(vals);
+			results = (Map<NamedFeature, DoubleType>) opHaralick2DHor.calculate(vals);
 
 			///// Horizontal /////
 			for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
@@ -800,7 +800,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			}
 
 			///// Vertical /////
-			results = opHaralick2DVer.compute1(vals);
+			results = opHaralick2DVer.calculate(vals);
 			for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName() + "_Vertical");
 				newMap.put("Id", "" + this.pId);
@@ -810,7 +810,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
 			if (haralickNumDirections.equals("4")) {
 				///// Diagonal /////
-				results = opHaralick2DDiag.compute1(vals);
+				results = opHaralick2DDiag.calculate(vals);
 				for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
 					DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName() + "_Diagonal");
 					newMap.put("Id", "" + this.pId);
@@ -819,7 +819,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 				}
 
 				///// Antidiagonal /////
-				results = opHaralick2DAntiDiag.compute1(vals);
+				results = opHaralick2DAntiDiag.calculate(vals);
 				for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
 					DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName() + "_AntiDiagonal");
 					newMap.put("Id", "" + this.pId);
@@ -837,7 +837,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			if (opTamura == null) {
 				opTamura = IJ2PluginUtility.ij().op().op(Tamura2DFeatureSet.class, vals, this.tamuraBins);
 			}
-			Map<NamedFeature, DoubleType> results = opTamura.compute1(vals);
+			Map<NamedFeature, DoubleType> results = opTamura.calculate(vals);
 			for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
 				newMap.put("Id", "" + this.pId);
@@ -854,7 +854,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			if (opHistogram == null) {
 				opHistogram = IJ2PluginUtility.ij().op().op(HistogramFeatureSet.class, vals, histogramBins);
 			}
-			Map<NamedFeature, LongType> ret = opHistogram.compute1(vals);
+			Map<NamedFeature, LongType> ret = opHistogram.calculate(vals);
 			for (Entry<NamedFeature, LongType> result : ret.entrySet()) {
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
 				newMap.put("Id", "" + this.pId);
@@ -872,7 +872,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 				opLBP = IJ2PluginUtility.ij().op().op(LBPHistogramFeatureSet.class, vals);
 			}
 			//utils.show(vals, true);
-			Map<NamedFeature, LongType> ret = opLBP.compute1(vals);
+			Map<NamedFeature, LongType> ret = opLBP.calculate(vals);
 			for (Entry<NamedFeature, LongType> result : ret.entrySet()) {
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
 				newMap.put("Id", "" + this.pId);
@@ -889,7 +889,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			if (opMoments == null) {
 				opMoments = IJ2PluginUtility.ij().op().op(ImageMomentsFeatureSet.class, vals);
 			}
-			Map<NamedFeature, DoubleType> results = opMoments.compute1(vals);
+			Map<NamedFeature, DoubleType> results = opMoments.calculate(vals);
 			for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
 				newMap.put("Id", "" + this.pId);
@@ -911,7 +911,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			// Set the enclosing circle for this cell
 			opZernike.setEnclosingCircle(circle);
 
-			Map<NamedFeature, DoubleType> results = opZernike.compute1(vals);
+			Map<NamedFeature, DoubleType> results = opZernike.calculate(vals);
 			for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName() + suffix);
 				newMap.put("Id", "" + this.pId);
@@ -950,7 +950,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			// Set the enclosing circle for this cell
 			opDNZernike.setEnclosingCircles(innerCircle, outerCircle);
 
-			Map<NamedFeature, DoubleType> results = opDNZernike.compute1(vals);
+			Map<NamedFeature, DoubleType> results = opDNZernike.calculate(vals);
 			for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
 				newMap.put("Id", "" + this.pId);

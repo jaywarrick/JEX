@@ -130,35 +130,35 @@ public class TestStuff {
 		double val20, val02, bval20, bval02, cval20, cval02, val11, bval11, cval11, val30, val03, val21, val12, bval30, bval03, bval21, bval12, cval30, cval03, cval21, cval12, suma, sumb, sumc;
 		
 		ii = new PointSamplerII<DoubleType>(pl1a);
-		val11 = op11.compute1(ii).getRealDouble();
-		val02 = op02.compute1(ii).getRealDouble();
-		val20 = op20.compute1(ii).getRealDouble();
-		val03 = op03.compute1(ii).getRealDouble();
-		val30 = op30.compute1(ii).getRealDouble();
-		val21 = op21.compute1(ii).getRealDouble();
-		val12 = op12.compute1(ii).getRealDouble();
+		val11 = op11.calculate(ii).getRealDouble();
+		val02 = op02.calculate(ii).getRealDouble();
+		val20 = op20.calculate(ii).getRealDouble();
+		val03 = op03.calculate(ii).getRealDouble();
+		val30 = op30.calculate(ii).getRealDouble();
+		val21 = op21.calculate(ii).getRealDouble();
+		val12 = op12.calculate(ii).getRealDouble();
 		suma = getSum(ii);
 		printInfo2(val20, val02, val11, suma);
 		//printInfo3(val30, val03, val21, val12, suma);
 		ii = new PointSamplerII<DoubleType>(pl1b);
-		bval11 = op11.compute1(ii).getRealDouble();
-		bval02 = op02.compute1(ii).getRealDouble();
-		bval20 = op20.compute1(ii).getRealDouble();
-		bval03 = op03.compute1(ii).getRealDouble();
-		bval30 = op30.compute1(ii).getRealDouble();
-		bval21 = op21.compute1(ii).getRealDouble();
-		bval12 = op12.compute1(ii).getRealDouble();
+		bval11 = op11.calculate(ii).getRealDouble();
+		bval02 = op02.calculate(ii).getRealDouble();
+		bval20 = op20.calculate(ii).getRealDouble();
+		bval03 = op03.calculate(ii).getRealDouble();
+		bval30 = op30.calculate(ii).getRealDouble();
+		bval21 = op21.calculate(ii).getRealDouble();
+		bval12 = op12.calculate(ii).getRealDouble();
 		sumb = getSum(ii);
 		printInfo2(bval20, bval02, bval11, sumb);
 		//printInfo3(bval30, bval03, bval21, bval12, sumb);
 		ii = new PointSamplerII<DoubleType>(pl1c);
-		cval11 = op11.compute1(ii).getRealDouble();
-		cval02 = op02.compute1(ii).getRealDouble();
-		cval20 = op20.compute1(ii).getRealDouble();
-		cval03 = op03.compute1(ii).getRealDouble();
-		cval30 = op30.compute1(ii).getRealDouble();
-		cval21 = op21.compute1(ii).getRealDouble();
-		cval12 = op12.compute1(ii).getRealDouble();
+		cval11 = op11.calculate(ii).getRealDouble();
+		cval02 = op02.calculate(ii).getRealDouble();
+		cval20 = op20.calculate(ii).getRealDouble();
+		cval03 = op03.calculate(ii).getRealDouble();
+		cval30 = op30.calculate(ii).getRealDouble();
+		cval21 = op21.calculate(ii).getRealDouble();
+		cval12 = op12.calculate(ii).getRealDouble();
 		sumc = getAbsSum(ii);
 		printInfo2(cval20, cval02, cval11, sumc);
 		//printInfo3(cval30, cval03, cval21, cval12, sumc);
@@ -166,35 +166,35 @@ public class TestStuff {
 		//System.out.println("Hu3(Diff)=" + getHu3(val30/suma-bval30/sumb, val03/suma-bval03/sumb, val21/suma-bval21/sumb, val12/suma-bval12/sumb));
 		
 		ii = new PointSamplerII<DoubleType>(pl2a);
-		val11 = op11.compute1(ii).getRealDouble();
-		val02 = op02.compute1(ii).getRealDouble();
-		val20 = op20.compute1(ii).getRealDouble();
-		val03 = op03.compute1(ii).getRealDouble();
-		val30 = op30.compute1(ii).getRealDouble();
-		val21 = op21.compute1(ii).getRealDouble();
-		val12 = op12.compute1(ii).getRealDouble();
+		val11 = op11.calculate(ii).getRealDouble();
+		val02 = op02.calculate(ii).getRealDouble();
+		val20 = op20.calculate(ii).getRealDouble();
+		val03 = op03.calculate(ii).getRealDouble();
+		val30 = op30.calculate(ii).getRealDouble();
+		val21 = op21.calculate(ii).getRealDouble();
+		val12 = op12.calculate(ii).getRealDouble();
 		suma = getSum(ii);
 		printInfo2(val20, val02, val11, suma);
 		//printInfo3(val30, val03, val21, val12, suma);
 		ii = new PointSamplerII<DoubleType>(pl2b);
-		bval11 = op11.compute1(ii).getRealDouble();
-		bval02 = op02.compute1(ii).getRealDouble();
-		bval20 = op20.compute1(ii).getRealDouble();
-		bval03 = op03.compute1(ii).getRealDouble();
-		bval30 = op30.compute1(ii).getRealDouble();
-		bval21 = op21.compute1(ii).getRealDouble();
-		bval12 = op12.compute1(ii).getRealDouble();
+		bval11 = op11.calculate(ii).getRealDouble();
+		bval02 = op02.calculate(ii).getRealDouble();
+		bval20 = op20.calculate(ii).getRealDouble();
+		bval03 = op03.calculate(ii).getRealDouble();
+		bval30 = op30.calculate(ii).getRealDouble();
+		bval21 = op21.calculate(ii).getRealDouble();
+		bval12 = op12.calculate(ii).getRealDouble();
 		sumb = getSum(ii);
 		printInfo2(bval20, bval02, bval11, sumb);
 		//printInfo3(bval30, bval03, bval21, bval12, sumb);
 		ii = new PointSamplerII<DoubleType>(pl2c);
-		cval11 = op11.compute1(ii).getRealDouble();
-		cval02 = op02.compute1(ii).getRealDouble();
-		cval20 = op20.compute1(ii).getRealDouble();
-		cval03 = op03.compute1(ii).getRealDouble();
-		cval30 = op30.compute1(ii).getRealDouble();
-		cval21 = op21.compute1(ii).getRealDouble();
-		cval12 = op12.compute1(ii).getRealDouble();
+		cval11 = op11.calculate(ii).getRealDouble();
+		cval02 = op02.calculate(ii).getRealDouble();
+		cval20 = op20.calculate(ii).getRealDouble();
+		cval03 = op03.calculate(ii).getRealDouble();
+		cval30 = op30.calculate(ii).getRealDouble();
+		cval21 = op21.calculate(ii).getRealDouble();
+		cval12 = op12.calculate(ii).getRealDouble();
 		sumc = getAbsSum(ii);
 		printInfo2(cval20, cval02, cval11, sumc);
 		//System.out.println("Hu3(Diff)=" + getHu3(val30-bval30, val03-bval03, val21-bval21, val12-bval12));
@@ -444,17 +444,17 @@ public class TestStuff {
 		IterableInterval<IntType> ii = new PointSamplerII<IntType>(pl2);
 
 		UnaryFunctionOp<IterableInterval<IntType>,RealLocalizable> opCenter = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.CenterOfGravity.class, RealLocalizable.class, ii);
-		RealLocalizable center = opCenter.compute1(ii);
+		RealLocalizable center = opCenter.calculate(ii);
 
 		UnaryFunctionOp<RealCursor<IntType>,Circle> opCircle = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.SmallestEnclosingCircle.class, Circle.class, ii.cursor(), center, false, 1234);
-		Circle c = opCircle.compute1(ii.cursor());
+		Circle c = opCircle.calculate(ii.cursor());
 
 		ZernikeComputer<IntType> comp = new ZernikeComputer<>();
 		comp.setOrder(0);
 		comp.setRepetition(0);
 		comp.setEnclosingCircle(c);
 		
-		ZernikeMoment zm = comp.compute1(ii);
+		ZernikeMoment zm = comp.calculate(ii);
 		System.out.println(zm.getMagnitude());
 		
 		
@@ -463,11 +463,11 @@ public class TestStuff {
 
 		//		// Perform the calculations
 		//		//opZ.setEnclosingCircle(c);
-		//		Map<NamedFeature, DoubleType> results1 = opZ.compute1(ii);
+		//		Map<NamedFeature, DoubleType> results1 = opZ.calculate(ii);
 		//		// Perform the calculations
 		//		Circle c2 = new Circle(c.getCenter(), c.getRadius()*1.2);
 		//		opZ.setEnclosingCircle(c2);
-		//		Map<NamedFeature, DoubleType> results2 = opZ.compute1(ii);
+		//		Map<NamedFeature, DoubleType> results2 = opZ.calculate(ii);
 		//
 		//		System.out.println("\n --- SETTINGS ---");
 		//		System.out.println("offsetXY = (" + xOffset + "," + yOffset + ")");
@@ -519,10 +519,10 @@ public class TestStuff {
 		//RealCursor<IntType> theCursor = pl.cursor();
 
 		//		UnaryFunctionOp<RealCursor,Circle> opCursor = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.SmallestEnclosingCircle.class, Circle.class, theCursor, (RealLocalizable) null, false, null);
-		//		Circle retCursor = opCursor.compute1(theCursor);
+		//		Circle retCursor = opCursor.calculate(theCursor);
 
 		//		UnaryFunctionOp<List,Circle> opList = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.SmallestEnclosingCircle.class, Circle.class, theList, (RealLocalizable) null, false, null);
-		//		Circle retList = opList.compute1(theList);
+		//		Circle retList = opList.calculate(theList);
 
 		//UnaryFunctionOp<Object,Circle> opCollection = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.SmallestEnclosingCircle.class, Circle.class, theCollection, (RealLocalizable) null, false, null);
 		//Circle retCollection = (Circle) IJ2PluginUtility.ij().op().run(opCollection, theCollection, null, false, null);
@@ -530,11 +530,11 @@ public class TestStuff {
 		//Circle result1 = (Circle) IJ2PluginUtility.ij().op().run(Ops.Geometric.SmallestEnclosingCircle.class, col, (RealLocalizable) null, false, null);
 		UnaryFunctionOp<RealCursor<IntType>,Circle> op = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.SmallestEnclosingCircle.class, Circle.class, pl.cursor(), (RealLocalizable) null, false, null);
 
-		//		List<Circle> result = (List<Circle>) op.compute1(plII);
-		Circle result = (Circle) op.compute1(pl.cursor());
+		//		List<Circle> result = (List<Circle>) op.calculate(plII);
+		Circle result = (Circle) op.calculate(pl.cursor());
 
 		//		UnaryFunctionOp<IterableInterval<IntType>,ZernikeMoment> opZ = Functions.unary(IJ2PluginUtility.ij().op(), ZernikeComputer.class, ZernikeMoment.class, plII, 2, 2, null, null);
-		//		ZernikeMoment m = opZ.compute1(plII);
+		//		ZernikeMoment m = opZ.calculate(plII);
 		//		double mag = m.getMagnitude();
 		//		System.out.println(plII);
 		//		System.out.println(center);
@@ -614,10 +614,10 @@ public class TestStuff {
 		PointSamplerII<T> plII = new PointSamplerII<>(pl);
 		RealLocalizable center = getCenterOfMass(plII.pl);
 		UnaryFunctionOp<IterableInterval<T>,Circle> op = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.SmallestEnclosingCircle.class, Circle.class, plII, (RealLocalizable) null);
-		Circle result = op.compute1(plII);
+		Circle result = op.calculate(plII);
 
 		UnaryFunctionOp<IterableInterval<T>,ZernikeMoment> opZ = Functions.unary(IJ2PluginUtility.ij().op(), ZernikeComputer.class, ZernikeMoment.class, plII, 2, 2, null, null);
-		ZernikeMoment m = opZ.compute1(plII);
+		ZernikeMoment m = opZ.calculate(plII);
 		double mag = m.getMagnitude();
 		System.out.println(plII);
 		System.out.println(center);

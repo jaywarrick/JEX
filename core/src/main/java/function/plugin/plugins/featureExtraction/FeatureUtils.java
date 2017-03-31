@@ -541,7 +541,7 @@ public class FeatureUtils {
 		if (contourFunc == null) {
 			contourFunc = (UnaryFunctionOp) Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.Contour.class, Polygon.class, src, true, true);
 		}
-		final Polygon p = (Polygon) contourFunc.compute1(src);
+		final Polygon p = (Polygon) contourFunc.calculate(src);
 		return p;
 	}
 
@@ -565,7 +565,7 @@ public class FeatureUtils {
 			cirOp = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.SmallestEnclosingCircle.class, Circle.class, psl.cursor(), center);
 		}
 		UnaryFunctionOp<RealCursor<IntType>,Circle> cirOp = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.SmallestEnclosingCircle.class, Circle.class, psl.cursor(), center);
-		return cirOp.compute1(psl.cursor());
+		return cirOp.calculate(psl.cursor());
 	}
 
 	public <T extends BooleanType<T>> Circle getCircle(RandomAccessibleInterval<T> region, RealLocalizable center)

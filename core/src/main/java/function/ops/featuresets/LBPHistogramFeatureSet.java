@@ -74,8 +74,8 @@ public class LBPHistogramFeatureSet<I extends RealType<I>> extends AbstractItera
 	@SuppressWarnings("unchecked")
 	@Override
 	protected void preCompute(final RandomAccessibleInterval<I> input) {
-		ArrayList<LongType> codes = lbpFunc.compute1(input);
-		histogram = histFunc.compute1(codes);
+		ArrayList<LongType> codes = lbpFunc.calculate(input);
+		histogram = histFunc.calculate(codes);
 	}
 
 	@Override

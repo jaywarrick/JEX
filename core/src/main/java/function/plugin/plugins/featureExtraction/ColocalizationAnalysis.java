@@ -369,8 +369,8 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 		}
 		
 
-		DoubleType result_R = opR.compute2(new Pair<RandomAccessibleInterval<T>, RandomAccessibleInterval<T>>(subImage1, subImage2), maskCursor);
-		DoubleType result_Rho = opRho.compute2(new Pair<RandomAccessibleInterval<T>, RandomAccessibleInterval<T>>(subImage1, subImage2), maskCursor);
+		DoubleType result_R = opR.calculate(new Pair<RandomAccessibleInterval<T>, RandomAccessibleInterval<T>>(subImage1, subImage2), maskCursor);
+		DoubleType result_Rho = opRho.calculate(new Pair<RandomAccessibleInterval<T>, RandomAccessibleInterval<T>>(subImage1, subImage2), maskCursor);
 
 		DimensionMap newMap = mapM.copyAndSet("Measurement=net.imagej.ops.Ops$Stats$PearsonsCorrelationCoefficient");
 		newMap.put("Id", "" + this.pId);
