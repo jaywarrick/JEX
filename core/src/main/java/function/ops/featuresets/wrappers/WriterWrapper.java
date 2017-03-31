@@ -36,7 +36,11 @@ public class WriterWrapper {
 	
 	public Pair<JEXData,JEXData> close() {
 		Logs.log("Closing the function (closing file writers and converting output file to arff as well).", this);
-		this.writer.close();
+		if(this.writer == null)
+		{
+			return new Pair<JEXData,JEXData>(null, null);
+		}
+		writer.close();
 		String csvPath = writer.getPath();
 		JEXCSVReader reader = new JEXCSVReader(csvPath, true);
 
