@@ -37,12 +37,12 @@ implements Ops.Geometric.SmallestEnclosingCircle {
 	}
 
 	@Override
-	public Circle compute1(Collection<? extends RealLocalizable> input) throws IllegalArgumentException {
+	public Circle calculate(Collection<? extends RealLocalizable> input) throws IllegalArgumentException {
 
 		// Need and list of points instead of a collection
 		List<RealLocalizable> points = getInitialPointList(input);
 		
-		return op.compute1(points);
+		return op.calculate(points);
 	}
 
 	private List<RealLocalizable> getInitialPointList(Collection<? extends RealLocalizable> pts)

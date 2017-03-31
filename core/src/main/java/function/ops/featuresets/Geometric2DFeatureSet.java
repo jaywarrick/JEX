@@ -77,13 +77,21 @@ public class Geometric2DFeatureSet<I, O extends RealType<O>> extends AbstractOpR
 			@Attr(name = ATTR_TYPE, value = PKG + "MainElongation") })
 	private boolean isMainElongationActive = true;
 
-	@Parameter(required = false, label = "FeretsAngle", attrs = { @Attr(name = ATTR_FEATURE),
-			@Attr(name = ATTR_TYPE, value = PKG + "FeretsAngle") })
-	private boolean isFeretsAngleActive = true;
-
-	@Parameter(required = false, label = "FeretsDiameter", attrs = { @Attr(name = ATTR_FEATURE),
-			@Attr(name = ATTR_TYPE, value = PKG + "FeretsDiameter") })
-	private boolean isFeretsDiameterActive = true;
+	@Parameter(required = false, label = "MaximumFeretsAngle", attrs = { @Attr(name = ATTR_FEATURE),
+			@Attr(name = ATTR_TYPE, value = PKG + "MaximumFeretsAngle") })
+	private boolean isMaximumFeretsAngleActive = true;
+	
+	@Parameter(required = false, label = "MaximumFeretsDiameter", attrs = { @Attr(name = ATTR_FEATURE),
+			@Attr(name = ATTR_TYPE, value = PKG + "MaximumFeretsDiameter") })
+	private boolean isMaximumFeretsDiameterActive = true;
+	
+	@Parameter(required = false, label = "MinimumFeretsAngle", attrs = { @Attr(name = ATTR_FEATURE),
+			@Attr(name = ATTR_TYPE, value = PKG + "MinimumFeretsAngle") })
+	private boolean isMinimumFeretsAngleActive = true;
+	
+	@Parameter(required = false, label = "MinimumFeretsDiameter", attrs = { @Attr(name = ATTR_FEATURE),
+			@Attr(name = ATTR_TYPE, value = PKG + "MinimumFeretsDiameter") })
+	private boolean isMinimumFeretsDiameterActive = true;
 
 	@Parameter(required = false, label = "MajorAxis", attrs = { @Attr(name = ATTR_FEATURE),
 			@Attr(name = ATTR_TYPE, value = PKG + "MajorAxis") })
@@ -104,10 +112,6 @@ public class Geometric2DFeatureSet<I, O extends RealType<O>> extends AbstractOpR
 	@Parameter(required = false, label = "Roundness", attrs = { @Attr(name = ATTR_FEATURE),
 			@Attr(name = ATTR_TYPE, value = PKG + "Roundness") })
 	private boolean isRoundnessActive = true;
-
-	@Parameter(required = false, label = "Rugosity", attrs = { @Attr(name = ATTR_FEATURE),
-			@Attr(name = ATTR_TYPE, value = PKG + "Rugosity") })
-	private boolean isRugosityActive = true;
 
 	@Parameter(required = false, label = "Solidity", attrs = { @Attr(name = ATTR_FEATURE),
 			@Attr(name = ATTR_TYPE, value = PKG + "Solidity") })

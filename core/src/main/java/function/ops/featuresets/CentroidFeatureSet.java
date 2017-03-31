@@ -66,7 +66,7 @@ public class CentroidFeatureSet extends AbstractFeatureSet<LabelRegion, DoubleTy
 	}
 
 	@Override
-	public Map<NamedFeature, DoubleType> compute1(LabelRegion input) {
+	public Map<NamedFeature, DoubleType> calculate(LabelRegion input) {
 		Map<NamedFeature, DoubleType> res = new LinkedHashMap<NamedFeature, DoubleType>();
 		RealLocalizable centroid = ops().geom().centroid(input);
 

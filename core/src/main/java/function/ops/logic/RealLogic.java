@@ -29,7 +29,7 @@ public class RealLogic {
 	implements Ops.Logic.Equal
 	{
 		@Override
-		public void compute1(A input, B output) {
+		public void compute(A input, B output) {
 			if(input.getRealDouble() == output.getRealDouble())
 			{
 				output.setReal(output.getMaxValue());
@@ -50,7 +50,7 @@ public class RealLogic {
 	implements Ops.Logic.NotEqual
 	{
 		@Override
-		public void compute1(A input, B output) {
+		public void compute(A input, B output) {
 			if(input.getRealDouble() != output.getRealDouble())
 			{
 				output.setReal(output.getMaxValue());
@@ -73,7 +73,7 @@ public class RealLogic {
 	implements JEXOps.LogicalEqual
 	{
 		@Override
-		public void compute1(A input, B output) {
+		public void compute(A input, B output) {
 			if((input.getRealDouble() != 0.0 && output.getRealDouble() != 0.0) || (input.getRealDouble() == 0.0 && output.getRealDouble() == 0.0))
 			{
 				output.setReal(output.getMaxValue());
@@ -94,7 +94,7 @@ public class RealLogic {
 	implements JEXOps.LogicalNotEqual
 	{
 		@Override
-		public void compute1(A input, B output) {
+		public void compute(A input, B output) {
 			if((input.getRealDouble() != 0.0 && output.getRealDouble() == 0.0) || (input.getRealDouble() == 0.0 && output.getRealDouble() != 0.0))
 			{
 				output.setReal(output.getMaxValue());
@@ -115,7 +115,7 @@ public class RealLogic {
 	implements Ops.Logic.And
 	{
 		@Override
-		public void compute1(A input, B output) {
+		public void compute(A input, B output) {
 			if(input.getRealDouble() != 0 && output.getRealDouble() != 0)
 			{
 				output.setReal(output.getMaxValue());
@@ -136,7 +136,7 @@ public class RealLogic {
 	implements Ops.Logic.Or
 	{
 		@Override
-		public void compute1(A input, B output) {
+		public void compute(A input, B output) {
 			if(input.getRealDouble() != 0.0 || output.getRealDouble() != 0.0)
 			{
 				output.setReal(output.getMaxValue());;
@@ -158,7 +158,7 @@ public class RealLogic {
 	implements Ops.Logic.Xor
 	{
 		@Override
-		public void compute1(A input, B output) {
+		public void compute(A input, B output) {
 			if(input.getRealDouble() != 0.0 || output.getRealDouble() != 0.0)
 			{
 
@@ -180,7 +180,7 @@ public class RealLogic {
 	implements Ops.Logic.GreaterThan
 	{
 		@Override
-		public void compute1(A input, B output) {
+		public void compute(A input, B output) {
 			if(input.getRealDouble() > output.getRealDouble())
 			{
 				output.setReal(output.getMaxValue());
@@ -201,7 +201,7 @@ public class RealLogic {
 	implements Ops.Logic.GreaterThanOrEqual
 	{
 		@Override
-		public void compute1(A input, B output) {
+		public void compute(A input, B output) {
 			if(input.getRealDouble() >= output.getRealDouble())
 			{
 				output.setReal(output.getMaxValue());
@@ -222,7 +222,7 @@ public class RealLogic {
 	implements Ops.Logic.LessThan
 	{
 		@Override
-		public void compute1(A input, B output) {
+		public void compute(A input, B output) {
 			if(input.getRealDouble() < output.getRealDouble())
 			{
 				output.setReal(output.getMaxValue());
@@ -243,7 +243,7 @@ public class RealLogic {
 	implements Ops.Logic.LessThanOrEqual
 	{
 		@Override
-		public void compute1(A input, B output) {
+		public void compute(A input, B output) {
 			if(input.getRealDouble() <= output.getRealDouble())
 			{
 				output.setReal(output.getMaxValue());

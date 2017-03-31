@@ -40,7 +40,7 @@ implements Ops.Geometric.SmallestEnclosingCircle {
 	}
 
 	@Override
-	public Circle compute1(RealCursor<?> input) throws IllegalArgumentException {
+	public Circle calculate(RealCursor<?> input) throws IllegalArgumentException {
 
 		List<RealLocalizable> points = getInitialPointList(input);
 		if(randomizePointRemoval)
@@ -48,7 +48,7 @@ implements Ops.Geometric.SmallestEnclosingCircle {
 			Collections.shuffle(points, new Random(rndSeed));
 		}
 
-		Circle D = op.compute1(points);
+		Circle D = op.calculate(points);
 
 		return D;
 	}

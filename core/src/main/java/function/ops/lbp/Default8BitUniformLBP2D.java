@@ -92,10 +92,10 @@ public class Default8BitUniformLBP2D<I extends RealType<I>> extends AbstractLBP2
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public void compute1(RandomAccessibleInterval<I> input,
+	public void compute(RandomAccessibleInterval<I> input,
 		ArrayList<LongType> output)
 	{
-		ArrayList<LongType> numberList = lbp2dOp.compute1(input);
+		ArrayList<LongType> numberList = lbp2dOp.calculate(input);
 		for(int i = 0; i < numberList.size(); i++)
 		{
 			long num = numberList.get(i).getIntegerLong();
