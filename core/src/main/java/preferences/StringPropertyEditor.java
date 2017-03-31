@@ -7,12 +7,12 @@ import javax.swing.text.JTextComponent;
  * StringPropertyEditor.<br>
  * 
  */
-public class StringPropertyEditor extends AbstractPropertyEditor {
+public class StringPropertyEditor extends AbstractPropertyEditor<JTextField> {
 	
 	public StringPropertyEditor()
 	{
 		editor = new JTextField();
-		((JTextField) editor).setBorder(LookAndFeelTweaks.EMPTY_BORDER);
+		editor.setBorder(LookAndFeelTweaks.EMPTY_BORDER);
 	}
 	
 	@Override

@@ -55,6 +55,11 @@ public class FunctionUtility {
 	
 	public static ImagePlus makeImageToSave(FloatProcessor imp, String normalize, int bitDepth)
 	{
+		return makeImageToSave(imp, normalize, bitDepth, 1);
+	}
+	
+	public static ImagePlus makeImageToSave(FloatProcessor imp, String normalize, int bitDepth, double gamma)
+	{
 		imp.resetMinAndMax();
 		ImageStatistics ims;
 		String Norm_Scale = normalize;
@@ -96,6 +101,7 @@ public class FunctionUtility {
 			newImp = imp;
 		}
 		
+		newImp.gamma(gamma);
 		ImagePlus result = new ImagePlus("", newImp);
 		return result;
 	}

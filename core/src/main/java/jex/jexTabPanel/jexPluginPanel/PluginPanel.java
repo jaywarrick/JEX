@@ -136,7 +136,7 @@ public class PluginPanel implements ActionListener {
 		if(e.getSource() == this.exportCSV)
 		{
 			DialogGlassPane diagPanel = new DialogGlassPane("Info");
-			diagPanel.setSize(400, 200);
+			diagPanel.setSize(400, 400);
 			
 			ExporterOptionPanel exportPane = new ExporterOptionPanel(Exporter.EXPORT_AS_CSV);
 			diagPanel.setCentralPanel(exportPane);

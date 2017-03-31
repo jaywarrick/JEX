@@ -24,6 +24,7 @@ import java.util.TreeMap;
 import java.util.Vector;
 
 import jex.statics.JEXStatics;
+import logs.Logs;
 import miscellaneous.Canceler;
 import miscellaneous.StatisticsUtility;
 import tables.DimTable;
@@ -276,6 +277,19 @@ public class JEX_SingleCell_SegmentedMaskQuantification extends JEXCrunchable {
 		ROIPlus maxima = maximaMap.get(map);
 		
 		// For each maxima, get the segmented region roi
+		String segPath = segMap.get(map);
+		String maskPath = maskMap.get(map);
+		String imagePath = imageMap.get(map);
+		
+		if(segPath == null || maskPath == null || imagePath == null)
+		{
+			Logs.log("Couldn't find all three necessary images: segmented image, mask, and the image to quantify for map = " + map.toString() + "...", this);
+			Logs.log("segPath = " + segPath, this);
+			Logs.log("maskPath = " + maskPath, this);
+			Logs.log("imagePath = " + imagePath, this);
+			return;
+		}
+		
 		ByteProcessor segImp = (ByteProcessor) (new ImagePlus(segMap.get(map))).getProcessor();
 		ByteProcessor maskImp = (ByteProcessor) (new ImagePlus(maskMap.get(map))).getProcessor();
 		FloatProcessor imageImp = (FloatProcessor) (new ImagePlus(imageMap.get(map))).getProcessor().convertToFloat();

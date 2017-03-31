@@ -16,11 +16,11 @@ public class JLabeledComboBox extends JPanel implements ActionListener {
 	
 	private static final long serialVersionUID = 1L;
 	
-	JComboBox field = new JComboBox();
+	JComboBox<String> field = new JComboBox<>();
 	JLabel label = new JLabel("");
 	ActionListener parent;
 	
-	public JLabeledComboBox(String labelName, Object[] options)
+	public JLabeledComboBox(String labelName, String[] options)
 	{
 		this.setBackground(Color.WHITE);
 		this.setLayout(new BorderLayout());
@@ -39,9 +39,9 @@ public class JLabeledComboBox extends JPanel implements ActionListener {
 		this.add(field, BorderLayout.CENTER);
 	}
 	
-	public JLabeledComboBox(String labelName, List<Object> optionList)
+	public JLabeledComboBox(String labelName, List<String> optionList)
 	{
-		Object[] options = optionList.toArray();
+		String[] options = optionList.toArray(new String[0]);
 		
 		this.setBackground(Color.WHITE);
 		this.setLayout(new BorderLayout());
@@ -60,7 +60,7 @@ public class JLabeledComboBox extends JPanel implements ActionListener {
 		this.add(field, BorderLayout.CENTER);
 	}
 	
-	public JComboBox getElement()
+	public JComboBox<?> getElement()
 	{
 		return field;
 	}
@@ -89,18 +89,18 @@ public class JLabeledComboBox extends JPanel implements ActionListener {
 		refresh();
 	}
 	
-	public void setOptions(List<Object> optionList)
+	public void setOptions(List<String> optionList)
 	{
-		Object[] options = optionList.toArray();
+		String[] options = optionList.toArray(new String[0]);
 		
-		DefaultComboBoxModel model = new DefaultComboBoxModel(options);
+		DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>(options);
 		field.setModel(model);
 		refresh();
 	}
 	
-	public void setOptions(Object[] options)
+	public void setOptions(String[] options)
 	{
-		DefaultComboBoxModel model = new DefaultComboBoxModel(options);
+		DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>(options);
 		field.setModel(model);
 		refresh();
 	}

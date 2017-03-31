@@ -1,26 +1,23 @@
 package function.plugin.plugins.R;
 
-import java.io.File;
 import java.util.TreeMap;
-
-import logs.Logs;
 
 import org.rosuda.REngine.REXP;
 import org.rosuda.REngine.REXPMismatchException;
 import org.scijava.plugin.Plugin;
 
-import rtools.R;
-import tables.DimensionMap;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataWriter.FileWriter;
 import Database.DataWriter.ImageWriter;
-import Database.SingleUserDatabase.JEXWriter;
 import function.plugin.mechanism.InputMarker;
 import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.MarkerConstants;
 import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
+import logs.Logs;
+import rtools.R;
+import tables.DimensionMap;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions
@@ -170,12 +167,12 @@ public class CallRScript extends JEXPlugin {
 	@Override
 	public boolean run(JEXEntry optionalEntry)
 	{
-		initializeWorkspace();
-		initializeData(data1, "data1");
-		initializeData(data2, "data2");
-		initializeData(data3, "data3");
-		initializeData(data4, "data4");
-		initializeData(data5, "data5");
+		R.initializeWorkspace();
+		R.initializeData(data1, "data1");
+		R.initializeData(data2, "data2");
+		R.initializeData(data3, "data3");
+		R.initializeData(data4, "data4");
+		R.initializeData(data5, "data5");
 
 		if(console)
 		{
@@ -207,39 +204,6 @@ public class CallRScript extends JEXPlugin {
 
 		// Return status
 		return true;
-	}
-
-	public static void initializeWorkspace()
-	{
-		R.eval("temp <- 0"); // Dummy command to get the R connection up an running.
-		R.endPlot();
-		R.eval("rm(list=ls())");
-		R.load("foreign");
-		String tempPath = JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getTempFolderName() + File.separator + "RScriptTempFolder";
-		File tempFolder = new File(tempPath);
-		if(!tempFolder.exists())
-		{
-			tempFolder.mkdirs();
-		}
-		R.eval("jexTempRFolder <- " + R.quotedPath(tempPath));
-
-		String dbPath = JEXWriter.getDatabaseFolder();
-		R.eval("jexDBFolder <- " + R.quotedPath(dbPath));
-	}
-
-	public static void initializeData(JEXData data, String name)
-	{
-		if(data == null)
-		{
-			return;
-		}
-		String path = JEXWriter.getDatabaseFolder() + File.separator + data.getDetachedRelativePath();
-		R.eval(name + " <- list()");
-		R.eval(name + "$type <- " + R.sQuote(data.getTypeName().getType().toString()));
-		R.eval(name + "$name <- " + R.sQuote(data.getTypeName().getName()));
-		R.eval(name + "$value <- read.arff(" + R.quotedPath(path) + ")");
-		R.eval("print(" + name + ")");
-		Logs.log("Blah", CallRScript.class);
 	}
 
 	public static JEXData getOutput(String name)

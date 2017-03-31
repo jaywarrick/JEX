@@ -28,7 +28,7 @@ public class XPrefListManager implements ActionListener, ListSelectionListener {
 	public static final String SIG_RenameClicked_NULL = "SIG_RenameClicked_NULL";
 	
 	private JPanel panel;
-	private JList list;
+	private JList<String> list;
 	private JButton addButton, removeButton, renameButton;
 	private JTextField itemField;
 	private XPreferences model;
@@ -44,7 +44,7 @@ public class XPrefListManager implements ActionListener, ListSelectionListener {
 		this.panel.setBackground(DisplayStatics.lightBackground);
 		
 		// Create the list and put it in a scroll pane
-		list = new JList();
+		list = new JList<String>();
 		list.setSelectedIndex(0);
 		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		list.addListSelectionListener(this);

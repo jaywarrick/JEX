@@ -3,18 +3,9 @@ package function.plugin.plugins.CellProfiler;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Iterator;
-import java.util.List;
-import java.util.TreeMap;
 
-import jex.statics.JEXStatics;
-import logs.Logs;
-
-import org.apache.commons.io.FileUtils;
 import org.scijava.plugin.Plugin;
 
-import rtools.ScriptRepository;
-import tables.DimensionMap;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;
@@ -22,6 +13,8 @@ import function.plugin.mechanism.InputMarker;
 import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.MarkerConstants;
 import function.plugin.mechanism.ParameterMarker;
+import jex.statics.JEXStatics;
+import logs.Logs;
 
 /* HELPFUL CLASSES:
  * ImageReader

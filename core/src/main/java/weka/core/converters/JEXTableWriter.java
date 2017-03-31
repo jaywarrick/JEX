@@ -38,7 +38,6 @@ public class JEXTableWriter {
 	public DimTable dimTable;
 	public Instances instances;
 	public String valueHeaderName = VALUE;
-	public static int precisionAfterDecPoint = 6;
 	
 	private int rowCounter = 0;
 	
@@ -193,7 +192,7 @@ public class JEXTableWriter {
 			
 			// Have to have a separate header method for JXD files because we
 			// need to at the "Value" atrribute to the file.
-			this.instances = new Instances(this.tableName, atts, this.dimTable.mapCount());
+			this.instances = new Instances(this.tableName, atts, 0);
 			
 			// Initialize PrintWriter and write header
 			File tableFile = new File(this.getPath());
@@ -227,7 +226,8 @@ public class JEXTableWriter {
 			{
 				atts.add(new Attribute(this.valueHeaderName, (List<String>) null));
 			}
-			this.instances = new Instances(this.tableName, atts, this.dimTable.mapCount());
+			
+			this.instances = new Instances(this.tableName, atts, 0);
 			
 			// Initialize PrintWriter and write header
 			this.writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(this.filePath)))));
@@ -317,7 +317,8 @@ public class JEXTableWriter {
 			}
 			else
 			{
-				text.append(doubleToString(((Number) value).doubleValue(), precisionAfterDecPoint));
+				text.append(((Number) value).toString());
+				//text.append(doubleToString(((Number) value).doubleValue(), precisionAfterDecPoint));
 			}
 		}
 		return text.toString();

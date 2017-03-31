@@ -46,7 +46,7 @@ public class JEXDistributionRightPanel extends JPanel implements ActionListener 
 	private JButton filesButton = new JButton("Choose files");
 	private JButton viewResultButton = new JButton("Deal files !");
 	private JPanel quickDistribute = new JPanel();
-	private JList displayListOfFiles;
+	private JList<File> displayListOfFiles;
 	
 	// Object creation
 	private JLabeledTextField lastSelected = new JLabeledTextField("Object Name:", "New object");
@@ -101,7 +101,7 @@ public class JEXDistributionRightPanel extends JPanel implements ActionListener 
 		this.add(label2, "growx");
 		
 		// Make the file list panel
-		displayListOfFiles = new JList();
+		displayListOfFiles = new JList<File>();
 		displayListOfFiles.setBackground(DisplayStatics.lightBackground);
 		displayListOfFiles.setFont(FontUtility.defaultFonts);
 		displayListOfFiles.setCellRenderer(new FileListCellRenderer());
@@ -132,7 +132,7 @@ public class JEXDistributionRightPanel extends JPanel implements ActionListener 
 	 */
 	public void setFileList(List<File> files)
 	{
-		DefaultListModel newModel = new DefaultListModel();
+		DefaultListModel<File> newModel = new DefaultListModel<>();
 		if(files == null)
 			files = new Vector<File>();
 		for (File f : files)
@@ -180,7 +180,7 @@ public class JEXDistributionRightPanel extends JPanel implements ActionListener 
 		this.add(label2, "growx");
 		
 		// Make the file list panel
-		displayListOfFiles = new JList();
+		displayListOfFiles = new JList<File>();
 		displayListOfFiles.setBackground(DisplayStatics.lightBackground);
 		displayListOfFiles.setFont(FontUtility.defaultFonts);
 		displayListOfFiles.setCellRenderer(new FileListCellRenderer());
@@ -327,9 +327,9 @@ public class JEXDistributionRightPanel extends JPanel implements ActionListener 
 		
 		@SuppressWarnings("unused")
 		private DropTarget dropTarget;
-		private JList area;
+		private JList<File> area;
 		
-		public FileListDropArea(JList area)
+		public FileListDropArea(JList<File> area)
 		{
 			this.area = area;
 			dropTarget = new DropTarget(this.area, DnDConstants.ACTION_COPY, this, true, null);

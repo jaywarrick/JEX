@@ -206,7 +206,7 @@ public class JEX_ImageTools_ExcludePoints extends JEXCrunchable {
 		if(regionData == null || !regionData.getTypeName().getType().equals(JEXData.ROI))
 			return false;
 		
-		// Gether the parameters
+		// Gather the parameters
 		String keepString = parameters.getValueOfParameter("Keep Inside or Outside pts");
 		boolean keepInside = keepString.equals("Keep INSIDE pts");
 		
@@ -248,11 +248,15 @@ public class JEX_ImageTools_ExcludePoints extends JEXCrunchable {
 			}
 			points = pointROI.get(map);
 			region = regionROI.get(map);
-			if(region != null)
+			if(region != null && points != null)
 			{
 				boolean isLine = region.isLine();
 				if(isLine)
 					return false;
+				if(region.getPointList().size() == 0)
+				{
+					outputMap.put(mapToSave, points.copy());
+				}
 				ROIPlus remainingPoints = ROIUtility.excludePoints(points, region, keepInside);
 				if(remainingPoints != null)
 				{
@@ -263,6 +267,7 @@ public class JEX_ImageTools_ExcludePoints extends JEXCrunchable {
 					outputMap.put(mapToSave, points.copy());
 				}
 			}
+
 			count = count + 1;
 			JEXStatics.statusBar.setProgressPercentage(count * 100 / total);
 		}

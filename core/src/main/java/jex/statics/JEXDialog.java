@@ -11,17 +11,31 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
 
+import Database.SingleUserDatabase.JEXWriter;
 import logs.Logs;
 import net.miginfocom.swing.MigLayout;
-import Database.SingleUserDatabase.JEXWriter;
 
 
 public class JEXDialog {
 	
-	public static void messageDialog(String msg)
+	public synchronized static void messageDialog(String msg)
 	{
 		//default icon, custom title
 		JOptionPane.showMessageDialog(JEXStatics.main, msg);
+	}
+	
+	public synchronized static void messageDialog(String msg, Class<?> source)
+	{
+		//default icon, custom title
+		JOptionPane.showMessageDialog(JEXStatics.main, msg);
+		Logs.log(msg, source);
+	}
+	
+	public synchronized static void messageDialog(String msg, Object source)
+	{
+		//default icon, custom title
+		JOptionPane.showMessageDialog(JEXStatics.main, msg);
+		Logs.log(msg, source);
 	}
 	
 	/**
@@ -32,7 +46,7 @@ public class JEXDialog {
 	 * @param defaultChoice
 	 * @returnthe index of the choice preferred by the user otherwise cancel returns -1
 	 */
-	public static Integer getChoice(String title, String question, String[] choices, int defaultChoice)
+	public synchronized static Integer getChoice(String title, String question, String[] choices, int defaultChoice)
 	{
 		JList<String> list = new JList<String>(choices);
 		list.setSelectedIndex(defaultChoice);
@@ -56,17 +70,17 @@ public class JEXDialog {
 		}
 	}
 	
-	public static String fileSaveDialog()
+	public synchronized static String fileSaveDialog()
 	{
 		return fileDialog(true, false);
 	}
 	
-	public static String fileChooseDialog(boolean directoriesOnly)
+	public synchronized static String fileChooseDialog(boolean directoriesOnly)
 	{
 		return fileDialog(false, directoriesOnly);
 	}
 	
-	private static String fileDialog(boolean save, boolean directoriesOnly)
+	private synchronized static String fileDialog(boolean save, boolean directoriesOnly)
 	{
 		// Creating file chooser or save dialog (but both using the save dialog because those allow you to create new folders along during the dialog)
 		JFileChooser fc = new JFileChooser();

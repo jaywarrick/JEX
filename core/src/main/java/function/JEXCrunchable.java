@@ -1,5 +1,9 @@
 package function;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.TreeMap;
+
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.Definition.Parameter;
@@ -7,11 +11,7 @@ import Database.Definition.ParameterSet;
 import Database.Definition.Type;
 import Database.Definition.TypeName;
 import cruncher.Ticket;
-
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.TreeMap;
-
+import function.plugin.mechanism.JEXPluginInfo;
 import jex.statics.JEXStatics;
 import logs.Logs;
 import miscellaneous.Cancelable;
@@ -27,6 +27,7 @@ public abstract class JEXCrunchable implements Canceler, Cancelable {
 	public static int OUTPUTSOK = 2;
 	public static int PARAMETERSOK = 3;
 	public static int READYTORUN = 10;
+	public static String THREADS = JEXPluginInfo.THREADS;
 	
 	// Convenience data types
 	public static Type IMAGE     = JEXData.IMAGE;
@@ -227,11 +228,36 @@ public abstract class JEXCrunchable implements Canceler, Cancelable {
 	public abstract TypeName[] getOutputs();
 	
 	/**
-	 * Returns true if the user wants to allow multithreding
+	 * Returns true if the user wants to allow multithreading
 	 * 
 	 * @return
 	 */
 	public abstract boolean allowMultithreading();
+	
+	/**
+	 * If multithreading is allowed, return the number of threads on which that this function should allow.
+	 * 
+	 * @return
+	 */
+	public Integer numThreads()
+	{
+		if(this.allowMultithreading())
+		{
+			String numThreads = this.requiredParameters().getValueOfParameter(JEXCrunchable.THREADS);
+			if(numThreads != null)
+			{
+				return new Integer(numThreads);
+			}
+			else
+			{
+				return null;
+			}
+		}
+		else
+		{
+			return new Integer(1);
+		}
+	}
 	
 	/**
 	 * Set the progress indicator of this function
@@ -268,5 +294,33 @@ public abstract class JEXCrunchable implements Canceler, Cancelable {
 	public boolean isCanceled()
 	{
 		return this.canceler.isCanceled();
+	}
+	
+	public static boolean isInputValid(JEXData data, Type type)
+	{
+		if(data != null && type.equals(JEXData.ANY))
+		{
+			return true;
+		}
+		if(data == null || !data.getTypeName().getType().equals(type))
+		{
+			return false;
+		}
+		return true;
+	}
+	
+	private static String[] getStringArrayIntegerList(int min, int max)
+	{
+		String[] ret = new String[max - min + 1];
+		for(int i = 0; i <= max-min; i++)
+		{
+			ret[i] = "" + (i + min);
+		}
+		return ret;
+	}
+	
+	public static Parameter getNumThreadsParameter(int maxThreads, int numThreads)
+	{
+		return new Parameter(THREADS, "Number of parallel threads to run this function on.", Parameter.DROPDOWN, getStringArrayIntegerList(1, maxThreads), numThreads-1);
 	}
 }

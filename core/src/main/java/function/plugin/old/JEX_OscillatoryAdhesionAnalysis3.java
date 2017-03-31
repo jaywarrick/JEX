@@ -1,5 +1,14 @@
 package function.plugin.old;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.text.DecimalFormat;
+import java.util.HashMap;
+import java.util.List;
+import java.util.TreeMap;
+import java.util.Vector;
+
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;
@@ -15,16 +24,6 @@ import ij.gui.Roi;
 import ij.measure.Measurements;
 import ij.process.ImageStatistics;
 import image.roi.ROIPlus;
-
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.text.DecimalFormat;
-import java.util.HashMap;
-import java.util.List;
-import java.util.TreeMap;
-import java.util.Vector;
-
 import jex.statics.JEXStatics;
 import jex.statics.Octave;
 import miscellaneous.CSVList;
@@ -390,9 +389,12 @@ public class JEX_OscillatoryAdhesionAnalysis3 extends JEXCrunchable {
 				}
 				return thisLine;
 			}
-			br.close();
 		}
 		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+		finally
 		{
 			if(br != null)
 			{
@@ -400,15 +402,13 @@ public class JEX_OscillatoryAdhesionAnalysis3 extends JEXCrunchable {
 				{
 					br.close();
 				}
-				catch (IOException e1)
+				catch (IOException e)
 				{
-					e1.printStackTrace();
+					e.printStackTrace();
 				}
 			}
-			System.err.println("Error: " + e);
 		}
 		return null;
-		
 	}
 	
 	public static Vector<Double> parseVector(String variable, String path)

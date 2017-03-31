@@ -4,9 +4,10 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>net.imagej</groupId>
-		<artifactId>pom-imagej</artifactId>
-		<version>5.12.0</version>
+		<groupId>org.scijava</groupId>
+		<artifactId>pom-scijava</artifactId>
+		<version>13.1.0</version>
+		<relativePath />
 	</parent>
 
 	<groupId>io.github.jaywarrick</groupId>
@@ -84,8 +85,11 @@
 
 	<properties>
 		<enforcer.skip>true</enforcer.skip>
-		<!-- <bio-formats.version>5.1.0-SNAPSHOT</bio-formats.version>
-		<scifio-bf-compat.version>1.11.1-SNAPSHOT</scifio-bf-compat.version> -->
+<!-- 		<bio-formats.version>5.4.1.SNAPSHOT</bio-formats.version> -->
+<!-- 		<scifio-bf-compat.version>1.9.0</scifio-bf-compat.version> -->
+		<imagej-ops.version>0.36.1-SNAPSHOT</imagej-ops.version>
+		<imglib2.version>4.1.0-SNAPSHOT</imglib2.version>
+		<imglib2-roi.version>0.4.6-SNAPSHOT</imglib2-roi.version>
 	</properties>
 
 	<repositories>
@@ -94,6 +98,13 @@
 			<url>http://maven.imagej.net/content/groups/public</url>
 		</repository>
 	</repositories>
+	
+	<dependencies>
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>imagej-ui-swing</artifactId>
+		</dependency>
+	</dependencies>
 
 	<build>
 		<plugins>
@@ -101,8 +112,8 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
-					<source>1.7</source>
-					<target>1.7</target>
+					<source>1.8</source>
+					<target>1.8</target>
 				</configuration>
 			</plugin>
 			<plugin>

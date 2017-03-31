@@ -1,5 +1,27 @@
 package Database.SingleUserDatabase;
 
+import java.io.File;
+import java.io.IOException;
+import java.text.DateFormat;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.Vector;
+
+import org.jdom.Document;
+import org.jdom.JDOMException;
+import org.jdom.input.SAXBuilder;
+import org.xadisk.filesystem.exceptions.DirectoryNotEmptyException;
+import org.xadisk.filesystem.exceptions.FileNotExistsException;
+import org.xadisk.filesystem.exceptions.FileUnderUseException;
+import org.xadisk.filesystem.exceptions.InsufficientPermissionOnFileException;
+import org.xadisk.filesystem.exceptions.LockingFailedException;
+import org.xadisk.filesystem.exceptions.NoTransactionAssociatedException;
+
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXDataSingle;
 import Database.DBObjects.JEXEntry;
@@ -16,18 +38,6 @@ import Database.SingleUserDatabase.xml.XElement;
 import Database.SingleUserDatabase.xml.XEntry;
 import Database.SingleUserDatabase.xml.XEntrySet;
 import image.roi.ROIPlus;
-
-import java.io.File;
-import java.io.IOException;
-import java.text.DateFormat;
-import java.util.Date;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
-import java.util.Vector;
-
 import jex.statics.JEXDBFileManager;
 import jex.statics.JEXStatics;
 import logs.Logs;
@@ -35,17 +45,6 @@ import miscellaneous.FileUtility;
 import miscellaneous.Pair;
 import miscellaneous.StopWatch;
 import miscellaneous.XMLUtility;
-
-import org.jdom.Document;
-import org.jdom.JDOMException;
-import org.jdom.input.SAXBuilder;
-import org.xadisk.filesystem.exceptions.DirectoryNotEmptyException;
-import org.xadisk.filesystem.exceptions.FileNotExistsException;
-import org.xadisk.filesystem.exceptions.FileUnderUseException;
-import org.xadisk.filesystem.exceptions.InsufficientPermissionOnFileException;
-import org.xadisk.filesystem.exceptions.LockingFailedException;
-import org.xadisk.filesystem.exceptions.NoTransactionAssociatedException;
-
 import preferences.XMLPreferences_XElement;
 import tables.DimTable;
 import tables.DimensionMap;
@@ -68,7 +67,7 @@ public class JEXDBIO {
 	public static JEXDB load(String xmlPath)
 	{
 		
-		Logs.log("Loading the local database " + xmlPath, 0, null);
+		Logs.log("Loading the database " + xmlPath, 0, null);
 		
 		// Load the xml into this db object
 		JEXDB db = JEXDBIO.XEntrySetToDatabaseObject(xmlPath);
@@ -269,6 +268,7 @@ public class JEXDBIO {
 			}
 		}
 		
+		TreeMap<JEXEntry, Set<JEXData>> brokenDataToRemove = new TreeMap<>();
 		for (JEXEntry entry : db)
 		{
 			// String path = JEXWriter.getEntryFolder(entry, false, false);
@@ -289,14 +289,26 @@ public class JEXDBIO {
 					// false);
 					// File dataFolderFile = new File(dataFolderPath);
 					// keeperList.add(dataFolderFile);
-					cleanDataFolder(data, keeperList);
+					if(!cleanDataFolder(data, keeperList))
+					{
+						// Found a broken JEXData (see 'cleanDataFolder')
+						Set<JEXData> temp = brokenDataToRemove.get(entry);
+						if(temp == null)
+						{
+							temp = new HashSet<JEXData>();
+						}
+						temp.add(data);
+						brokenDataToRemove.put(entry, temp);
+					}
 				}
 			}
 		}
+		JEXStatics.jexDBManager.removeDataListFromEntry(brokenDataToRemove);
+		saveDB(db);
 		cleanDirectory(new File(databaseFolder), keeperList, true);
 	}
 	
-	private static void cleanDataFolder(JEXData data, TreeSet<File> keeperList)
+	private static boolean cleanDataFolder(JEXData data, TreeSet<File> keeperList)
 	{
 		File jxdFile = new File(JEXWriter.getDatabaseFolder() + File.separator + data.getDetachedRelativePath());
 		keeperList.add(jxdFile);
@@ -304,22 +316,31 @@ public class JEXDBIO {
 		
 		TreeMap<DimensionMap,String> paths = null;
 		String path = null;
-		// If there are references files, then add them to the keeperList
-		if(type.matches(JEXData.IMAGE))
+		try
 		{
-			paths = ImageReader.readObjectToImagePathTable(data);
+			// If there are references files, then add them to the keeperList
+			if(type.matches(JEXData.IMAGE))
+			{
+				paths = ImageReader.readObjectToImagePathTable(data);
+			}
+			if(type.matches(JEXData.MOVIE))
+			{
+				path = MovieReader.readMovieObject(data);
+			}
+			if(type.matches(JEXData.FILE))
+			{
+				paths = FileReader.readObjectToFilePathTable(data);
+			}
+			if(type.matches(JEXData.TRACK))
+			{
+				path = TrackReader.readTrackObject(data);
+			}
 		}
-		if(type.matches(JEXData.MOVIE))
+		catch(Exception e)
 		{
-			path = MovieReader.readMovieObject(data);
-		}
-		if(type.matches(JEXData.FILE))
-		{
-			paths = FileReader.readObjectToFilePathTable(data);
-		}
-		if(type.matches(JEXData.TRACK))
-		{
-			path = TrackReader.readTrackObject(data);
+			e.printStackTrace();
+			Logs.log("Found a 'broken' object : " + data.getTypeName().toString() + ". Removing the object.", JEXDBIO.class);
+			return false;
 		}
 		
 		if(path != null)
@@ -333,6 +354,7 @@ public class JEXDBIO {
 				keeperList.add(new File(e.getValue()));
 			}
 		}
+		return true;
 	}
 	
 	/**

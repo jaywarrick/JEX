@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
+import tables.DimTable;
 import tables.DimensionMap;
 
 /**
@@ -153,6 +154,8 @@ public class JEX_SingleCell_SegmentedMaskOverlay extends JEXCrunchable {
 		Parameter p9 = new Parameter("BLUE Min", "Value in the BLUE image to map to 0 intensity. (blank assumes image min)", "0");
 		Parameter p10 = new Parameter("BLUE Max", "Value in the BLUE image to map to 255 intensity. (blank assumes image max)", "65535");
 		Parameter p11 = new Parameter("RGB Scale", "Linear or log scaling of R, G, and B channels", Parameter.DROPDOWN, new String[] { "Linear", "Log" }, 1);
+		Parameter p12 = new Parameter("Invert Mask?", "Should the mask be inverted before overlaying?", Parameter.CHECKBOX, true);
+		Parameter p13 = new Parameter("Invert Segmentation Image?", "Should the segmentation image be inverted before overlaying?", Parameter.CHECKBOX, false);
 		
 		// Make an array of the parameters and return it
 		ParameterSet parameterArray = new ParameterSet();
@@ -170,6 +173,8 @@ public class JEX_SingleCell_SegmentedMaskOverlay extends JEXCrunchable {
 		parameterArray.addParameter(p9);
 		parameterArray.addParameter(p10);
 		parameterArray.addParameter(p11);
+		parameterArray.addParameter(p12);
+		parameterArray.addParameter(p13);
 		return parameterArray;
 	}
 	
@@ -207,7 +212,7 @@ public class JEX_SingleCell_SegmentedMaskOverlay extends JEXCrunchable {
 			return false;
 		}
 		JEXData segData = inputs.get("Segmented Image");
-		if(segData == null || !segData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(segData != null && !segData.getTypeName().getType().equals(JEXData.IMAGE)) // This is optional
 		{
 			return false;
 		}
@@ -281,10 +286,17 @@ public class JEX_SingleCell_SegmentedMaskOverlay extends JEXCrunchable {
 		String bDim = this.parameters.getValueOfParameter("BLUE Dim Value");
 		String rgbScale = this.parameters.getValueOfParameter("RGB Scale");
 		
+		boolean invertMask = Boolean.getBoolean(this.parameters.getValueOfParameter("Invert Mask?"));
+		boolean invertSeg = Boolean.getBoolean(this.parameters.getValueOfParameter("Invert Segmentation Image?"));
+		
 		// Run the function
 		
 		TreeMap<DimensionMap,String> images = ImageReader.readObjectToImagePathTable(imageData);
-		TreeMap<DimensionMap,String> segs = ImageReader.readObjectToImagePathTable(segData);
+		TreeMap<DimensionMap,String> segs = new TreeMap<>();
+		if(segData != null)
+		{
+			segs = ImageReader.readObjectToImagePathTable(segData);
+		}
 		TreeMap<DimensionMap,String> masks = ImageReader.readObjectToImagePathTable(innerData);
 		TreeMap<DimensionMap,String> overlayers = new TreeMap<DimensionMap,String>();
 		
@@ -321,17 +333,44 @@ public class JEX_SingleCell_SegmentedMaskOverlay extends JEXCrunchable {
 			overlayers.putAll(images);
 		}
 		
-		for (DimensionMap map : segData.getDimTable().getMapIterator())
+		for (DimensionMap map : innerData.getDimTable().getMapIterator())
 		{
+			
 			DimensionMap newMap = map.copy();
 			newMap.put(dimName, "MASK");
 			
-			ByteProcessor seg = (ByteProcessor) (new ImagePlus(segs.get(map))).getProcessor();
-			ByteProcessor mask = (ByteProcessor) (new ImagePlus(masks.get(map))).getProcessor();
+			if(!hasMatch(newMap, dimName, imageData.getDimTable()))
+			{
+				continue;
+			}
+			String pathToGet = masks.get(map);
+			if(pathToGet == null)
+			{
+				continue;
+			}
+			ByteProcessor mask = (ByteProcessor) (new ImagePlus(pathToGet)).getProcessor();
 			
-			seg.invert();
+			if(invertMask)
+			{
+				mask.invert();
+			}
 			mask.multiply(0.50);
-			seg.copyBits(mask, 0, 0, Blitter.ADD);
+			
+			ByteProcessor seg = null;
+			if(segs.get(map) != null)
+			{
+				seg = (ByteProcessor) (new ImagePlus(segs.get(map))).getProcessor();
+				if(invertSeg)
+				{
+					seg.invert();
+				}
+				seg.copyBits(mask, 0, 0, Blitter.ADD);
+			}
+			else
+			{
+				seg = mask;
+			}
+
 			String path = JEXWriter.saveImage(seg);
 			
 			overlayers.put(newMap, path);
@@ -347,4 +386,10 @@ public class JEX_SingleCell_SegmentedMaskOverlay extends JEXCrunchable {
 		return true;
 	}
 	
+	public boolean hasMatch(DimensionMap overlayerMap, String dimName, DimTable imageTable)
+	{
+		DimensionMap newMap = overlayerMap.copy();
+		newMap.remove(dimName);
+		return DimTable.hasKeyValues(imageTable, newMap);
+	}
 }

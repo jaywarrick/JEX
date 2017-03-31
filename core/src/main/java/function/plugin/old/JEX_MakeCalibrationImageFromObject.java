@@ -1,5 +1,11 @@
 package function.plugin.old;
 
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeMap;
+
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;
@@ -13,15 +19,13 @@ import function.JEXCrunchable;
 import ij.ImagePlus;
 import ij.plugin.filter.RankFilters;
 import ij.process.Blitter;
+import ij.process.ByteBlitter;
+import ij.process.ByteProcessor;
 import ij.process.FloatBlitter;
 import ij.process.FloatProcessor;
-
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TreeMap;
-
+import ij.process.ImageProcessor;
+import ij.process.ShortBlitter;
+import ij.process.ShortProcessor;
 import jex.statics.JEXStatics;
 
 /**
@@ -206,7 +210,7 @@ public class JEX_MakeCalibrationImageFromObject extends JEXCrunchable {
 		{
 			String[] filePaths = ImageReader.readObjectToImagePathStack(imageData);
 			
-			FloatProcessor imp = null;
+			ImageProcessor imp = null;
 			if(method.equals("Mean"))
 			{
 				imp = getMeanProjection(filePaths);
@@ -218,13 +222,8 @@ public class JEX_MakeCalibrationImageFromObject extends JEXCrunchable {
 			
 			if(!smooth.equals("none"))
 			{
-				ImagePlus temp = new ImagePlus("temp", imp);
 				RankFilters rF = new RankFilters();
-				rF.setup(method, temp);
-				rF.makeKernel(radius);
-				rF.run(imp);
-				temp.flush();
-				temp = null;
+				rF.rank(imp, radius, JEX_StackProjection.getMethodInt(method));
 			}
 			
 			// //// End Actual Function
@@ -238,11 +237,11 @@ public class JEX_MakeCalibrationImageFromObject extends JEXCrunchable {
 		return true;
 	}
 	
-	public FloatProcessor getPseudoMedianProjection(String[] fileList, int groupSize)
+	public ImageProcessor getPseudoMedianProjection(String[] fileList, int groupSize)
 	{
 		int i = 0, k = 0;
-		FloatProcessor ret = null, imp = null;
-		FloatBlitter blit = null;
+		ImageProcessor ret = null, imp = null;
+		Blitter blit = null;
 		while (i < fileList.length)
 		{
 			File[] files = new File[groupSize];
@@ -254,13 +253,25 @@ public class JEX_MakeCalibrationImageFromObject extends JEXCrunchable {
 			// Get the median of the group
 			ImagePlus stack = ImageReader.readFileListToVirtualStack(files);
 			stack.setProcessor((FloatProcessor) stack.getProcessor().convertToFloat());
-			imp = JEX_StackProjection.evaluate(stack, JEX_StackProjection.METHOD_MEDIAN, groupSize);
+			imp = (FloatProcessor) JEX_StackProjection.evaluate(stack, JEX_StackProjection.METHOD_MEDIAN);
 			
 			// Add it to the total for taking the mean of the groups
 			if(k == 0)
 			{
 				ret = imp;
-				blit = new FloatBlitter(ret);
+				int bitDepth = ret.getBitDepth();
+				if(bitDepth == 8)
+				{
+					blit = new ByteBlitter((ByteProcessor) ret);
+				}
+				else if(bitDepth == 16)
+				{
+					blit = new ShortBlitter((ShortProcessor) ret);
+				}
+				else if(bitDepth == 32)
+				{
+					blit = new FloatBlitter((FloatProcessor) ret);
+				}
 			}
 			else
 			{

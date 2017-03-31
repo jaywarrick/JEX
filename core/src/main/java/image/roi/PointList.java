@@ -15,6 +15,10 @@ import miscellaneous.CSVList;
 import miscellaneous.Copiable;
 import miscellaneous.LSVList;
 import miscellaneous.SSVList;
+import net.imglib2.AbstractCursor;
+import net.imglib2.Cursor;
+import net.imglib2.RealLocalizable;
+import net.imglib2.type.numeric.integer.IntType;
 
 @SuppressWarnings("unused")
 public class PointList extends Vector<IdPoint> implements Copiable<PointList> {
@@ -34,6 +38,16 @@ public class PointList extends Vector<IdPoint> implements Copiable<PointList> {
 		for (IdPoint p : pl)
 		{
 			this.add(p.x, p.y, p.id);
+		}
+	}
+	
+	public PointList(net.imglib2.roi.geometric.Polygon pg)
+	{
+		int id = 0;
+		for(RealLocalizable p : pg.getVertices())
+		{
+			this.add((int) (p.getDoublePosition(0) + 0.5), (int) (p.getDoublePosition(1) + 0.5), id);
+			id = id + 1;
 		}
 	}
 	
@@ -109,6 +123,12 @@ public class PointList extends Vector<IdPoint> implements Copiable<PointList> {
 		return this.toPolygon().getBounds();
 	}
 	
+	/**
+	 * The total length of all line segments unless isLine is true which
+	 * then gives the length between the start and end point only
+	 * @param isLine
+	 * @return
+	 */
 	public double getLength(boolean isLine)
 	{
 		double length = 0;
@@ -171,6 +191,10 @@ public class PointList extends Vector<IdPoint> implements Copiable<PointList> {
 		this.setCenter(p.x, p.y);
 	}
 	
+	/**
+	 * Rotate the points about the center of their bounding box.
+	 * @param thetaDeg
+	 */
 	public void rotate(double thetaDeg)
 	{
 		AffineTransform toApply = new AffineTransform();
@@ -186,6 +210,10 @@ public class PointList extends Vector<IdPoint> implements Copiable<PointList> {
 		this.setPoints(newl);
 	}
 	
+	/**
+	 * Rotate the points about the origin of their coordinate system.
+	 * @param thetaDeg
+	 */
 	public void rotateRelativeToOrigin(double thetaDeg)
 	{
 		AffineTransform toApply = new AffineTransform();
@@ -474,4 +502,76 @@ public class PointList extends Vector<IdPoint> implements Copiable<PointList> {
 		return this.getPointListRelativeToCenter().equals(l.getPointListRelativeToCenter());
 	}
 	
+	public Cursor<IntType> cursor()
+	{
+		return new PointListCursor(this);
+	}
+	
+	
+	// %%%%%%%%%%%%%%%%%%%%%
+	
+	class PointListCursor extends AbstractCursor<IntType> 
+	{
+		PointList pl;
+		Iterator<IdPoint> itr;
+		IdPoint cur;
+
+		public PointListCursor(PointList pl)
+		{
+			super(2);
+			this.pl = pl;
+			this.itr = pl.iterator();
+			this.cur = null;
+		}
+		
+		@Override
+		public IntType get() {
+			return new IntType(cur.id);
+		}
+
+		@Override
+		public void fwd() {
+			this.cur = itr.next();
+		}
+
+		@Override
+		public void reset() {
+			this.itr = this.pl.iterator();
+		}
+
+		@Override
+		public boolean hasNext() {
+			return this.itr.hasNext();
+		}
+
+		@Override
+		public void localize(long[] position) {
+			this.cur.localize(position);
+		}
+
+		@Override
+		public long getLongPosition(int d) {
+			return this.cur.getLongPosition(d);
+		}
+
+		@Override
+		public AbstractCursor<IntType> copy() {
+			return this.copyCursor();
+		}
+
+		@Override
+		public AbstractCursor<IntType> copyCursor() {
+			PointListCursor ret = new PointListCursor(this.pl);
+			ret.itr = this.pl.iterator();
+			ret.cur = null;
+			while(itr.hasNext() && ret.cur != this.cur)
+			{
+				itr.next();
+			}
+			return ret;
+		}
+		
+	}	
 }
+
+

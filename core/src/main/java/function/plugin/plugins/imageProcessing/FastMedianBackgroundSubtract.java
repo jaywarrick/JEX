@@ -10,6 +10,7 @@ import java.util.TreeMap;
 
 import jex.statics.JEXStatics;
 import jex.utilities.FunctionUtility;
+import logs.Logs;
 
 import org.scijava.plugin.Plugin;
 
@@ -87,12 +88,23 @@ public class FastMedianBackgroundSubtract extends JEXPlugin {
 		String tempPath;
 		for (DimensionMap map : imageMap.keySet())
 		{
+			if(this.isCanceled())
+			{
+				Logs.log("Function canceled.", this);
+				return false;
+			}
 			// Call helper method
+			
+			FloatProcessor fp = null;
 			ImageProcessor ip = (new ImagePlus(imageMap.get(map))).getProcessor();
 			ImageProcessor ip2 = FastMedian.process(ip, kernalWidth);
+			int bitDepth = ip.getBitDepth();
+			fp = (FloatProcessor) ip.convertToFloat();
+			ip2 = ip2.convertToFloat();
 			ip2.subtract(nominal);
-			ip.copyBits(ip2, 0, 0, Blitter.SUBTRACT);
-			tempPath = JEXWriter.saveImage(ip);
+			fp.copyBits(ip2, 0, 0, Blitter.SUBTRACT);
+			ImagePlus out = FunctionUtility.makeImageToSave(fp, "false", bitDepth);
+			tempPath = JEXWriter.saveImage(out);
 			if(tempPath != null)
 			{
 				outputImageMap.put(map, tempPath);

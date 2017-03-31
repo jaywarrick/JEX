@@ -6,11 +6,9 @@ import image.roi.ROIPlus;
 import java.awt.Point;
 import java.awt.Shape;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.TreeMap;
 
 import jex.statics.JEXStatics;
-import miscellaneous.Canceler;
 
 import org.scijava.plugin.Plugin;
 
@@ -21,7 +19,6 @@ import Database.DBObjects.JEXEntry;
 import Database.DataReader.RoiReader;
 import Database.DataWriter.FileWriter;
 import Database.DataWriter.RoiWriter;
-import Database.DataWriter.ValueWriter;
 import function.plugin.mechanism.InputMarker;
 import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.MarkerConstants;
@@ -111,11 +108,11 @@ public class CountPointsInROI extends JEXPlugin {
 		ROIPlus point, region;							
 		Shape regionShape;								
 		TreeMap<DimensionMap,ROIPlus> outputROI = new TreeMap<DimensionMap,ROIPlus>();	// Contained points
-		TreeMap<DimensionMap,String> regionCounts = new TreeMap<DimensionMap,String>();	// Counts for each region
-		TreeMap<DimensionMap,String> imageCounts = new TreeMap<DimensionMap,String>(); 	// Counts for each image		
+		TreeMap<DimensionMap,Double> regionCounts = new TreeMap<>();	// Counts for each region
+		TreeMap<DimensionMap,Double> imageCounts = new TreeMap<>(); 	// Counts for each image		
 		//TreeMap<String,Object> out = new TreeMap<String,Object>();	// Contains all counts
-		TreeMap<DimensionMap,Integer> fileTotalRegionCount = new TreeMap<DimensionMap,Integer>();	// Final total to be saved to disk
-		TreeMap<DimensionMap,Integer> fileTotalImageCount = new TreeMap<DimensionMap,Integer>();	// Final total to be saved to disk
+		TreeMap<DimensionMap,Double> fileTotalRegionCount = new TreeMap<>();	// Final total to be saved to disk
+		TreeMap<DimensionMap,Double> fileTotalImageCount = new TreeMap<>();	// Final total to be saved to disk
 		
 		// Read in the ROIs
 		TreeMap<DimensionMap,ROIPlus> pointROI = RoiReader.readObjectToRoiMap(pointData);
@@ -132,8 +129,8 @@ public class CountPointsInROI extends JEXPlugin {
 
 			DimensionMap mapToSave = map.copy();
 			point = pointROI.get(map);
-			int singleImageCount = 0;
-			int singleRegionCount = 0;
+			double singleImageCount = 0;
+			double singleRegionCount = 0;
 
 			// If no Region ROI was specified, count everything.
 			// -1 is used to indicate value doesn't exist.  I should change this later to something better.
@@ -149,8 +146,8 @@ public class CountPointsInROI extends JEXPlugin {
 				}
 				mapToSave.put("SubRegionNumber", ""+ singleRegionCount);
 				outputROI.put(mapToSave.copy(), new ROIPlus(pl, ROIPlus.ROI_POINT));
-				regionCounts.put(mapToSave.copy(), "" + (-1));
-				imageCounts.put(mapToSave.copy(), "" + singleImageCount);
+				regionCounts.put(mapToSave.copy(), -1.0);
+				imageCounts.put(mapToSave.copy(), singleImageCount);
 			}
 			// Otherwise count within each region
 			else
@@ -176,8 +173,8 @@ public class CountPointsInROI extends JEXPlugin {
 					}
 					mapToSave.put("SubRegionNumber", ""+singleRegionCount);
 					outputROI.put(mapToSave.copy(), new ROIPlus(pl, ROIPlus.ROI_POINT));
-					regionCounts.put(mapToSave.copy(), "" + pl.size());
-					imageCounts.put(mapToSave.copy(), "" + singleImageCount);
+					regionCounts.put(mapToSave.copy(), (double) pl.size());
+					imageCounts.put(mapToSave.copy(), singleImageCount);
 					singleRegionCount = singleRegionCount + 1;
 				}
 			}

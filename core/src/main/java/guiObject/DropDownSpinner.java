@@ -36,7 +36,7 @@ public class DropDownSpinner extends JPanel implements ActionListener {
 	String title;
 	String currentValue;
 	
-	JComboBox field = new JComboBox();
+	JComboBox<String> field = new JComboBox<>();
 	SignalMenuButton left;
 	SignalMenuButton right;
 	SignalMenuButton close;
@@ -104,7 +104,7 @@ public class DropDownSpinner extends JPanel implements ActionListener {
 		close.setText(null);
 		SSCenter.defaultCenter().connect(close, SignalMenuButton.SIG_ButtonClicked_NULL, this, "close", (Class[]) null);
 		
-		DefaultComboBoxModel model = new DefaultComboBoxModel(values);
+		DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>(values);
 		field.setModel(model);
 		field.setMinimumSize(new Dimension(100, 25));
 		field.addActionListener(this);
@@ -143,7 +143,7 @@ public class DropDownSpinner extends JPanel implements ActionListener {
 		field.removeActionListener(this);
 		
 		// set the array model
-		DefaultComboBoxModel model = new DefaultComboBoxModel(values);
+		DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>(values);
 		field.setModel(model);
 		
 		// set the selected value

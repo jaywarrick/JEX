@@ -1,10 +1,5 @@
 package Database.SingleUserDatabase;
 
-import function.plugin.IJ2.IJ2PluginUtility;
-import ij.ImagePlus;
-import ij.io.FileSaver;
-import ij.process.ImageProcessor;
-
 import java.awt.image.BufferedImage;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -13,18 +8,27 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 
+import org.apache.commons.io.FileUtils;
+
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import function.plugin.IJ2.IJ2PluginUtility;
+import ij.ImagePlus;
+import ij.io.FileInfo;
+import ij.io.FileSaver;
+import ij.process.ImageProcessor;
+import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import logs.Logs;
 import miscellaneous.DateUtility;
 import miscellaneous.DirectoryManager;
 import miscellaneous.FileUtility;
 import net.imagej.Dataset;
-
-import org.apache.commons.io.FileUtils;
-
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.img.Img;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.type.numeric.RealType;
 import preferences.XPreferences;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
 
 public class JEXWriter {
 	
@@ -66,59 +70,45 @@ public class JEXWriter {
 	
 	public static void editDBInfo(JEXDBInfo dbInfo, String name, String info, String password)
 	{
-		// Can't reliably change the database name yet so this is disabled for
-		// the moment.
-		Logs.log("Can't reliably change the database name yet so this is disabled for the moment.", 0, JEXWriter.class.getSimpleName());
-		return;
-		// if(name == null || name.equals(""))
-		// {
-		// return;
-		// }
-		//
-		// // Archive the current dbInfo
-		// JEXWriter.saveBDInfo(dbInfo);
-		//
-		// File currentDBDirectory = new File(dbInfo.getDirectory());
-		// String currentDBDirectoryParent = currentDBDirectory.getParent();
-		// //try
-		// //{
-		// // Check the new name and change the directory name if necessary
-		// name = FileUtility.removeWhiteSpaceOnEnds(name);
-		// File newDBDirectory = new File(currentDBDirectoryParent +
-		// File.separator + name);
-		// if(!name.equals(dbInfo.getName()))
-		// {
-		// // If the name changed then the folder of the database requires a
-		// name change
-		// // This method renames the folder.
-		// // We can do this and not affect DB behavior as long as we change the
-		// database name and
-		// // classy path (jexpath) in the dbInfo object held by JEXManager
-		// // because all file paths are relative to dbInfo.getDirectory(),
-		// which references jexPath
-		// try {
-		// FileUtils.(currentDBDirectory, newDBDirectory);
-		// // Change the information in dbInfo
-		// dbInfo.set(JEXDBInfo.DB_NAME, name);
-		// dbInfo.set(JEXDBInfo.DB_INFO, info);
-		// dbInfo.set(JEXDBInfo.DB_PWD, password);
-		//
-		// // Save the new one
-		// dbInfo.getXML().saveToPath(newDBDirectory.getAbsolutePath());
-		//
-		// // Reload dbInfo from new path
-		// dbInfo.setPath(newDBDirectory.getAbsolutePath());
-		// } catch (IOException e) {
-		// // TODO Auto-generated catch block
-		// e.printStackTrace();
-		// }
-		// }
-		// //}
-		// //catch (IOException e1)
-		// //{
-		// // // TODO Auto-generated catch block
-		// // e1.printStackTrace();
-		// //}
+//		// Can't reliably change the database name yet so this is disabled for
+//		// the moment.
+//		Logs.log("Can't reliably change the database name yet so this is disabled for the moment.", 0, JEXWriter.class.getSimpleName());
+//		return;
+		if(name == null || name.equals(""))
+		{
+			return;
+		}
+
+		// Archive the new info into the current DBInfo
+		// Not saving the DB_NAME anymore. Just using the parent folder name instead.
+		dbInfo.set(JEXDBInfo.DB_INFO, info);
+		dbInfo.set(JEXDBInfo.DB_PWD, password);
+		JEXWriter.saveBDInfo(dbInfo);
+
+		File currentDBDirectory = new File(dbInfo.getDirectory());
+		String currentDBDirectoryParent = currentDBDirectory.getParent();
+
+		// Check the new name and change the directory name if necessary
+		name = FileUtility.removeWhiteSpaceOnEnds(name);
+		File newDBDirectory = new File(currentDBDirectoryParent + File.separator + name);
+		if(!name.equals(dbInfo.getDBName()))
+		{
+			// If the name changed then the folder of the database requires a name change
+			// This method renames the folder.
+			// We can do this and not affect DB behavior as long as we change the database name and
+			// classy path (jexpath) in the dbInfo object held by JEXManager
+			// because all file paths are relative to dbInfo.getDirectory(), which references jexPath
+			boolean successful = currentDBDirectory.renameTo(newDBDirectory);
+			if(successful)
+			{
+				// Change the information in dbInfo
+				dbInfo.setPath(newDBDirectory.getAbsolutePath() + File.separator + JEXDBInfo.LOCAL_DBINFO_CURRENTVERSION);
+			}
+			else
+			{
+				JEXDialog.messageDialog("Couldn't rename database for some reason. Check to see if a database of that name already exists?");
+			}	
+		}
 	}
 	
 	public static void cleanDB(JEXDBInfo dbInfo)
@@ -162,6 +152,31 @@ public class JEXWriter {
 	/**
 	 * Save the image in the temporary database folder
 	 */
+	public static <T extends RealType<T>> String saveImage(RandomAccessibleInterval<T> img)
+	{
+		ImagePlus im = ImageJFunctions.wrap(img, "temp");
+		im.setFileInfo(new FileInfo());
+		return JEXWriter.saveImage(im);
+	}
+	
+	/**
+	 * Save the image in the temporary database folder
+	 */
+	public static <T extends RealType<T>> void showImage(Img<T> img)
+	{
+		ImagePlus im = ImageJFunctions.wrap(img, "temp");
+		String path = JEXWriter.saveImage(im);
+		try {
+			FileUtility.openFileDefaultApplication(path);
+		} catch (Exception e) {
+			Logs.log("Couldn't save, open, and show the supplied image.", FileUtility.class);
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * Save the image in the temporary database folder
+	 */
 	public static String saveImage(Dataset im)
 	{
 		// Create the file path
@@ -174,27 +189,18 @@ public class JEXWriter {
 		}
 		
 		// Save the image
-		boolean canSave = IJ2PluginUtility.ij().dataset().canSave(fullPath);
-		if(canSave)
+		Logs.log("Saving image to: " + fullPath, 1, JEXWriter.class);
+		try
 		{
-			Logs.log("Saving image to: " + fullPath, 1, JEXWriter.class);
-			try
-			{
-				IJ2PluginUtility.ij().dataset().save(im, fullPath);
-			}
-			catch (IOException e)
-			{
-				Logs.log("Error saving image to: " + fullPath, 1, JEXWriter.class);
-				e.printStackTrace();
-				return null;
-			}
-			return fullPath;
+			IJ2PluginUtility.ij().io().save(im, fullPath);
 		}
-		else
+		catch (IOException e)
 		{
 			Logs.log("Error saving image to: " + fullPath, 1, JEXWriter.class);
+			e.printStackTrace();
 			return null;
 		}
+		return fullPath;
 	}
 	
 	/**
@@ -443,7 +449,6 @@ public class JEXWriter {
 		
 		XPreferences dbInfo = new XPreferences();
 		
-		dbInfo.put(JEXDBInfo.DB_NAME, name);
 		dbInfo.put(JEXDBInfo.DB_INFO, info);
 		dbInfo.put(JEXDBInfo.DB_AUTHOR, JEXStatics.jexManager.getUserName());
 		dbInfo.put(JEXDBInfo.DB_DATE, miscellaneous.DateUtility.getDate());

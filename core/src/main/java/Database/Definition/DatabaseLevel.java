@@ -27,7 +27,7 @@ public class DatabaseLevel extends TreeMap<String,Experiment> implements Hierarc
 	@Override
 	public String getName()
 	{
-		return JEXStatics.jexManager.getDatabaseInfo().getName();
+		return JEXStatics.jexManager.getDatabaseInfo().getDBName();
 	}
 	
 	@Override

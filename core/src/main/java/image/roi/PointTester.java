@@ -1,28 +1,5 @@
 package image.roi;
 
-import ij.ImagePlus;
-import ij.gui.PolygonRoi;
-import ij.gui.Roi;
-import ij.gui.Wand;
-import ij.io.FileSaver;
-import ij.process.Blitter;
-import ij.process.ByteProcessor;
-import ij.process.FloatProcessor;
-import ij.process.FloatStatistics;
-import ij.process.ImageProcessor;
-import ij.process.ImageStatistics;
-import ij.process.ShortProcessor;
-import io.scif.Checker;
-import io.scif.Format;
-import io.scif.FormatException;
-import io.scif.ImageMetadata;
-import io.scif.MetaTable;
-import io.scif.Metadata;
-import io.scif.Plane;
-import io.scif.Reader;
-import io.scif.SCIFIO;
-import io.scif.config.SCIFIOConfig;
-
 import java.awt.Desktop;
 import java.awt.Point;
 import java.io.File;
@@ -46,6 +23,45 @@ import java.util.Vector;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import org.apache.commons.math3.stat.StatUtils;
+import org.scijava.command.CommandInfo;
+import org.scijava.plugin.DefaultPluginFinder;
+import org.scijava.plugin.Plugin;
+import org.scijava.plugin.PluginInfo;
+import org.scijava.util.ConversionUtils;
+
+import function.CrunchFactory;
+import function.plugin.IJ2.IJ2PluginUtility;
+import function.plugin.mechanism.JEXCrunchablePlugin;
+import function.plugin.mechanism.JEXPlugin;
+import function.plugin.mechanism.JEXPluginInfo;
+import function.plugin.plugins.adhesion.LogFreqSweep;
+import function.singleCellAnalysis.SingleCellUtility;
+import ij.ImagePlus;
+import ij.gui.PolygonRoi;
+import ij.gui.Roi;
+import ij.gui.Wand;
+import ij.io.FileSaver;
+import ij.process.Blitter;
+import ij.process.ByteProcessor;
+import ij.process.FloatProcessor;
+import ij.process.FloatStatistics;
+import ij.process.ImageProcessor;
+import ij.process.ImageStatistics;
+import ij.process.ShortProcessor;
+import io.scif.Checker;
+import io.scif.Format;
+import io.scif.FormatException;
+import io.scif.ImageMetadata;
+import io.scif.MetaTable;
+import io.scif.Metadata;
+import io.scif.Plane;
+import io.scif.Reader;
+import io.scif.SCIFIO;
+import io.scif.config.SCIFIOConfig;
+import io.scif.img.ImgIOException;
+import io.scif.img.ImgOpener;
+import io.scif.img.SCIFIOImgPlus;
 import jex.statics.JEXDialog;
 import jex.utilities.ROIUtility;
 import loci.common.DataTools;
@@ -60,75 +76,261 @@ import net.imagej.ImageJ;
 import net.imagej.display.DataView;
 import net.imagej.display.ImageDisplay;
 import net.imagej.display.OverlayView;
+import net.imagej.ops.Op;
+import net.imagej.ops.Ops;
+import net.imagej.ops.image.cooccurrencematrix.MatrixOrientation;
+import net.imagej.ops.image.cooccurrencematrix.MatrixOrientation2D;
+import net.imagej.ops.image.cooccurrencematrix.MatrixOrientation3D;
+import net.imagej.ops.map.MapBinaryComputers.IIAndRAIToRAI;
+import net.imagej.ops.special.function.Functions;
+import net.imagej.ops.special.function.UnaryFunctionOp;
 import net.imagej.options.OptionsChannels;
 import net.imagej.overlay.Overlay;
 import net.imagej.overlay.RectangleOverlay;
 import net.imagej.patcher.LegacyInjector;
+import net.imglib2.Cursor;
+import net.imglib2.img.Img;
+import net.imglib2.img.array.ArrayImgs;
+import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.meta.CalibratedAxis;
 import net.imglib2.meta.ImgPlus;
-
-import org.apache.commons.math3.stat.StatUtils;
-import org.scijava.command.CommandInfo;
-import org.scijava.plugin.DefaultPluginFinder;
-import org.scijava.plugin.Plugin;
-import org.scijava.plugin.PluginInfo;
-import org.scijava.util.ConversionUtils;
-
+import net.imglib2.roi.geometric.Polygon;
+import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.integer.UnsignedByteType;
+import net.imglib2.type.numeric.real.DoubleType;
 import rtools.R;
+import rtools.ScriptRepository;
 import tables.Dim;
 import tables.DimTable;
 import tables.DimensionMap;
 import updates.Updater;
 import weka.core.converters.JEXTableWriter;
-import function.CrunchFactory;
-import function.plugin.mechanism.JEXCrunchablePlugin;
-import function.plugin.mechanism.JEXPlugin;
-import function.plugin.mechanism.JEXPluginInfo;
-import function.plugin.plugins.adhesion.LogFreqSweep;
-import function.singleCellAnalysis.SingleCellUtility;
 
-public class PointTester {// extends URLClassLoader {
-	
+@SuppressWarnings("all")
+public class PointTester {
+
+	public static String thing = "yourPassWord";
 	static
 	{
 		LegacyInjector.preinit();
 	}
-	
+
 	public static void main(String[] args) throws Exception
 	{
 		tryLogFreqSweep();
 	}
-	
+
 	public static void tryLogFreqSweep()
 	{
-		LogFreqSweep l = new LogFreqSweep(0.1, 0.1, 500.0);
-		
-		TreeSet<Integer> trueFrames = l.getTrueFrames(10000.0, 0.050, 30);
-		
-		for(Integer i : trueFrames)
+		LogFreqSweep lfs = new LogFreqSweep(0.01,1,300);
+		TreeSet<Integer> tfs = lfs.getTrueFrames(8750, 0.035, 30);
+		System.out.println("(A)");
+		for(Integer i : tfs)
 		{
 			System.out.println(i);
-		}
+		}	
 	}
 	
+	public static void testApache()
+	{
+		ScriptRepository.runSysCommandApache(new String[]{"ls", "unzip 2016-04-21MMAdhesionPt616.zip"}, "D:/Teddy/Jex/Brightfield Adhesion/temp/JEXData0000001500");
+	}
+
+	public static void tryConvertingStringToMatrixOrientation()
+	{
+		ImageJ ij = new ImageJ();
+		Logs.log(""+ij.convert().supports(String.class, MatrixOrientation3D.class), PointTester.class);
+		Logs.log(""+ij.convert().supports(String.class, MatrixOrientation2D.class), PointTester.class);
+		Logs.log(""+ij.convert().supports(String.class, MatrixOrientation.class), PointTester.class);
+	}
+
+	public static void tryImageMoments()
+	{
+		Img<UnsignedByteType> img = createImg();
+
+		ImageJ ij = new ImageJ();
+		DoubleType d = ij.op().imagemoments().huMoment2(img);
+
+		Logs.log(d.toString(), PointTester.class);
+	}
+
+	public static Img<UnsignedByteType> createImg() {
+
+		Img<UnsignedByteType> tmp =
+				ArrayImgs.unsignedBytes(new long[] { 100, 100 });
+
+		Random rand = new Random(1234567890L);
+		final Cursor<UnsignedByteType> cursor = tmp.cursor();
+		while (cursor.hasNext()) {
+			cursor.next().set(rand.nextInt((int) tmp.firstElement().getMaxValue()));
+		}
+
+		return tmp;
+
+	}
+
+	public static void tryPolygonSizeOp()
+	{
+		PointList pl = new PointList();
+		pl.add(0, 0);
+		pl.add(0, 1);
+		pl.add(1, 1);
+		pl.add(1, 0);
+		Polygon p = new Polygon(pl);
+
+		UnaryFunctionOp<Polygon,DoubleType> op = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.Size.class, DoubleType.class,  p);
+		DoubleType d = op.calculate(p);
+
+		Logs.log(d.toString(), PointTester.class);
+	}
+
+	public static void tryBooleanImageCalc2() throws ImgIOException
+	{
+		String path1 = "/Users/jaywarrick/Pictures/TIFFS/Dot.tif";
+		String path2 = "/Users/jaywarrick/Pictures/TIFFS/Dot_2.tif";
+
+		ImgOpener opener = new ImgOpener(IJ2PluginUtility.ij().getContext());
+		SCIFIOImgPlus<UnsignedByteType> dot1 = opener.openImgs(path1, new UnsignedByteType()).get(0);
+		SCIFIOImgPlus<UnsignedByteType> dot2 = opener.openImgs(path2, new UnsignedByteType()).get(0);
+
+		ImageJFunctions.show(dot1);
+		ImageJFunctions.show(dot2);
+
+		Op op = IJ2PluginUtility.ij().op().op(net.imagej.ops.math.BinaryRealTypeMath.Divide.class, RealType.class, RealType.class, RealType.class, 50.0);
+		IJ2PluginUtility.ij().op().run(IIAndRAIToRAI.class, dot2, dot1, dot2, op);
+
+		ImageJFunctions.show(dot1);
+		ImageJFunctions.show(dot2);
+
+		List<PluginInfo<Op>> infos = IJ2PluginUtility.ij().op().getPlugins();
+		for(PluginInfo<Op> info : infos)
+		{
+			System.out.println(info.toString());
+		}
+	}
+
+	public static void tryBooleanImageCalc() throws ImgIOException
+	{
+		String path1 = "/Users/jaywarrick/Pictures/TIFFS/Dot.tif";
+		String path2 = "/Users/jaywarrick/Pictures/TIFFS/Dot_2.tif";
+
+		ImgOpener opener = new ImgOpener(IJ2PluginUtility.ij().getContext());
+		SCIFIOImgPlus<UnsignedByteType> dot1 = opener.openImgs(path1, new UnsignedByteType()).get(0);
+		SCIFIOImgPlus<UnsignedByteType> dot2 = opener.openImgs(path2, new UnsignedByteType()).get(0);
+
+		ImageJFunctions.show(dot1);
+		ImageJFunctions.show(dot2);
+
+		Op andOp = IJ2PluginUtility.ij().op().op(Ops.Logic.LogicalEqual.class, dot2, dot1);
+		andOp.run();
+
+		ImageJFunctions.show(dot1);
+		ImageJFunctions.show(dot2);
+
+		List<PluginInfo<Op>> infos = IJ2PluginUtility.ij().op().getPlugins();
+		for(PluginInfo<Op> info : infos)
+		{
+			System.out.println(info.toString());
+		}
+	}
+
+	public static void tryGitHubRFile()
+	{
+		// https://github.com/user/repository/raw/branch/filename
+		DirectoryManager.setHostDirectory("/Users/jaywarrick/Desktop/A Sandbox");
+		R.eval("x <- 1");
+		//		R.source("/Users/jaywarrick/Desktop/A Sandbox/temp/JEXData0000000000.R");
+		ScriptRepository.sourceGitHubFile("jaywarrick", "R-General", "master", ".Rprofile");
+		ScriptRepository.sourceGitHubFile("jaywarrick", "R-Adhesion", "master", "CellTracking/R/PackageFunctions.R");
+		ScriptRepository.sourceGitHubFile("jaywarrick", "R-Adhesion", "master", "CellTracking/R/Track.R");
+		R.eval("duh <- getSweep()");
+		R.eval("plot(duh$t, duh$x)");
+		R.eval("print(duh)");
+		Logs.log("Yo", PointTester.class);
+	}
+
+	//	public static void tryLogFreqSweep()
+	//	{
+	//		LogFreqSweep l = new LogFreqSweep(0.1, 0.1, 500.0);
+	//		
+	//		TreeSet<Integer> trueFrames = l.getTrueFrames(10000.0, 0.050, 30);
+	//		
+	//		for(Integer i : trueFrames)
+	//		{
+	//			System.out.println(i);
+	//		}
+	//		catch(Exception e)
+	//		{
+	//			e.printStackTrace();
+	//		}
+	//		if(viewer != null)
+	//		{
+	//			viewer.setFile(f.getAbsolutePath());
+	//			viewer.show();
+	//		}
+	//	}
+
+
+	//	public static void tryReactiveProgramming(String name)
+	//	{
+	//		Observable<String> o = Observable.just(name);
+	//		o.subscribe(new Action1<String>()
+	//			{
+	//
+	//	        @Override
+	//	        public void call(String s) {
+	//	            System.out.println("Hello " + s + "!");
+	//	        }
+	//
+	//	    });
+	//		
+	//		o.sample(1, TimeUnit.SECONDS);
+	//		
+	//		name = "NewName";
+	//		
+	//		try {
+	//			Thread.currentThread().sleep(3000);
+	//		} catch (InterruptedException e) {
+	//			// TODO Auto-generated catch block
+	//			e.printStackTrace();
+	//		}
+	//		
+	//		System.out.println("Let's hope");
+	//		System.out.println(name);
+	//		o.publish();
+	//	}
+	//	
+	//	
+	//	public static void tryLogFreqSweep()
+	//	{
+	//		LogFreqSweep l = new LogFreqSweep(0.1, 0.1, 500.0);
+	//		
+	//		TreeSet<Integer> trueFrames = l.getTrueFrames(10000.0, 0.050, 30);
+	//		
+	//		for(Integer i : trueFrames)
+	//		{
+	//			System.out.println(i);
+	//		}
+	//	}
+
 	public static double[] calculateModes(final int[] n)
 	{
-	    
+
 		double[] d = new double[n.length];
 		for(int i=0; i < n.length; i++)
 		{
 			d[i] = n[i];
 		}
-	    double[] modes = StatUtils.mode(d);
-	    return modes;
+		double[] modes = StatUtils.mode(d);
+		return modes;
 	}
-	
+
 	public static void playWithChoiceDialog()
 	{
 		JEXDialog.getChoice("Title", "Which Becaus this is a really long question that I can't figure out and I really need help or else I won't know what to do. choice do you want? Which Becaus this is a really long question that I can't figure out and I really need help or else I won't know what to do. choice do you want? Which Becaus this is a really long question that I can't figure out and I really need help or else I won't know what to do. choice do you want? Which Becaus this is a really long question that I can't figure out and I really need help or else I won't know what to do. choice do you want? Which Becaus this is a really long question that I can't figure out and I really need help or else I won't know what to do. choice do you want?", new String[]{"Choice 1", "Choice 2"}, 0);
 		Logs.log("Hello there", PointTester.class);
 	}
-	
+
 	public static void tryPluginFinder()
 	{
 		InputStream iStream = null;
@@ -137,10 +339,10 @@ public class PointTester {// extends URLClassLoader {
 			String pathToJar = "/Users/jaywarrick/Public/DropBox/GitHub/JEX-CTCPlugins/target/pom-ctc-0.0.1-SNAPSHOT.jar"; //JEXDialog.fileChooseDialog(true);
 			URL[] urls = { new URL("jar:file:" + pathToJar+"!/") };
 			URLClassLoader cl = URLClassLoader.newInstance(urls);
-			
+
 			//iStream = cl.getResourceAsStream("org.scijava.plugin.Plugin");
-			
-			
+
+
 			DefaultPluginFinder pf = new DefaultPluginFinder();
 			List<PluginInfo<?>> ret = new Vector<PluginInfo<?>>();
 			pf.findPlugins(ret);
@@ -150,9 +352,9 @@ public class PointTester {// extends URLClassLoader {
 				{
 					System.out.println(pi);
 				}
-				
+
 			}
-			
+
 			Logs.log("Yay!", PointTester.class);
 		}
 		catch (MalformedURLException e)
@@ -175,21 +377,21 @@ public class PointTester {// extends URLClassLoader {
 				}
 			}
 		}
-		
-		
+
+
 	}
-	
+
 	public static void checkImportPlugin() throws Exception
 	{
 		ImageJ ij = new ImageJ();
-		
+
 		String pathToJar = "/Users/jaywarrick/Public/DropBox/GitHub/JEX-CTCPlugins/target/pom-ctc-0.0.1-SNAPSHOT.jar"; //JEXDialog.fileChooseDialog(true);
 		JarFile jarFile = new JarFile(pathToJar);
 		Enumeration<JarEntry> e = jarFile.entries();
-		
+
 		URL[] urls = { new URL("jar:file:" + pathToJar+"!/") };
 		URLClassLoader cl = URLClassLoader.newInstance(urls);
-		
+
 		while (e.hasMoreElements()) {
 			JarEntry je = (JarEntry) e.nextElement();
 			if(je.isDirectory() || !je.getName().endsWith(".class")){
@@ -211,10 +413,10 @@ public class PointTester {// extends URLClassLoader {
 				Logs.log(crunchable.toString(), PointTester.class);
 				Logs.log("Yay!", PointTester.class);
 			}
-			
+
 		}
 	}
-	
+
 	public static void checkScifioStuff() throws Exception
 	{
 		ImageJ ij = new ImageJ();
@@ -233,7 +435,7 @@ public class PointTester {// extends URLClassLoader {
 		getTiffs(path, ij);
 		//System.out.println(OS.isMacOSX());
 	}
-	
+
 	public static void playWithUpdater()
 	{
 		String s = "JEX-0.0.4-SNAPSHOT-all.zip";
@@ -248,17 +450,17 @@ public class PointTester {// extends URLClassLoader {
 			Logs.log(""+x, PointTester.class);
 		}
 	}
-	
+
 	public static TreeMap<DimensionMap,String> getTiffs(String path, ImageJ ij) throws IOException, FormatException
 	{
 		final String outPath = "/Users/jaywarrick/Desktop/NewFolder";
 		final SCIFIO scifio = new SCIFIO(ij.getContext());
 		final Reader reader = scifio.initializer().initializeReader(path, new SCIFIOConfig().checkerSetOpen(true));
 		Metadata meta = reader.getMetadata();
-		
+
 		DimTable table = getDataSetDimTable(meta);
 		Logs.log(table.toString(), PointTester.class);
-		
+
 		String baseName = "Image_";
 		String ext = ".tif";
 		File outdir = new File(outPath);
@@ -287,23 +489,23 @@ public class PointTester {// extends URLClassLoader {
 		}
 		return ret;
 	}
-	
+
 	public static String WAVELENGTH="Name #", X_POSITION="Z position", Y_POSITION="Z position", Z_POSITION="Z position", TIMESTAMP="timestamp", LAMBDA1="λ", LAMBDA2="� ";
-	
+
 	public static void testAutoImport() throws Exception {
-		
+
 		final String filePath = "/Users/jaywarrick/Google Drive/example.nd2";
 		final String sampleImage = "/Users/jaywarrick/Google Drive/example.nd2";
 		final String outPath = "/Users/jaywarrick/Desktop/NewFolder";
-		
+
 		ImageJ ij = new ImageJ();
-		
+
 		TreeMap<DimensionMap,String> filenames = getTiffs(filePath, ij);
-		
+
 		Logs.log(filenames.toString(), PointTester.class);
-		
+
 	}
-	
+
 	private static DimTable getDataSetDimTable(Metadata meta)
 	{
 		String info = meta.getTable().get("Dimensions").toString();
@@ -322,7 +524,7 @@ public class PointTester {// extends URLClassLoader {
 				ret.add(toAdd);
 			}
 		}
-		
+
 		Vector<String> colors = new Vector<String>();
 		for(Entry<String,Object> e : meta.getTable().entrySet())
 		{
@@ -335,7 +537,7 @@ public class PointTester {// extends URLClassLoader {
 		ret.set(ret.indexOfDimWithName("Color"), newColorDim);
 		return ret;
 	}
-	
+
 	/**
 	 * Returns the plane number and the value of the information for that basename
 	 */
@@ -354,8 +556,8 @@ public class PointTester {// extends URLClassLoader {
 		}
 		return ret;
 	}
-	
-	
+
+
 	private static void dumpInfo(final ImgPlus<?> img) {
 		for (int d = 0; d < img.numDimensions(); d++) {
 			final CalibratedAxis axis = img.axis(d);
@@ -363,7 +565,7 @@ public class PointTester {// extends URLClassLoader {
 					axis.type());
 		}
 	}
-	
+
 	public static void testConversionUtils()
 	{
 		String s = "5.1";
@@ -371,7 +573,7 @@ public class PointTester {// extends URLClassLoader {
 		Object o = ConversionUtils.convert(s, int.class);
 		Logs.log("" + o.getClass().getSimpleName(), PointTester.class);
 	}
-	
+
 	//	public static void testSciJava()
 	//	{
 	//		ImageJ ij = new ImageJ();
@@ -393,7 +595,7 @@ public class PointTester {// extends URLClassLoader {
 	//			}
 	//		}
 	//	}
-	
+
 	public static void testTableWriter()
 	{
 		DirectoryManager.setHostDirectory("/Users/jaywarrick/Desktop/Temp2");
@@ -423,9 +625,9 @@ public class PointTester {// extends URLClassLoader {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 	}
-	
+
 	public static void testGetMask()
 	{
 		String imagePath = "/Users/jaywarrick/Documents/My Pictures/TIFFS/x0_y0_Color0_Time2.tif";
@@ -449,7 +651,7 @@ public class PointTester {// extends URLClassLoader {
 			temp.add((double) f);
 		}
 		double mean = StatisticsUtility.mean(temp);
-		
+
 		im2.show();
 		im3.show();
 		FloatProcessor fp = new FloatProcessor(50, 100, pixels);
@@ -459,7 +661,7 @@ public class PointTester {// extends URLClassLoader {
 		im4.show();
 		Logs.log("Size = " + pixels.length + ", Mean = " + mean, PointTester.class);
 	}
-	
+
 	public static void checkOpenWebpage()
 	{
 		if(Desktop.isDesktopSupported())
@@ -485,17 +687,17 @@ public class PointTester {// extends URLClassLoader {
 			}
 		}
 	}
-	
+
 	public static void checkJavaVersion()
 	{
 		Logs.log(System.getProperty("java.version"), PointTester.class);
 		Logs.log("" + Updater.javaVersionIsAtLeast("1.7.0_46"), PointTester.class);
 	}
-	
+
 	public static void checkOverlay()
 	{
 		String imagePath = "/Users/jaywarrick/Documents/My Pictures/TIFFS/x0_y0_Color0_Time2.tif";
-		
+
 		ImageJ ij = new ImageJ();
 		List<CommandInfo> commands = ij.command().getCommands();
 		CommandInfo info = null;
@@ -519,11 +721,11 @@ public class PointTester {// extends URLClassLoader {
 				r.setOrigin(0, 1);
 				r.setExtent(100, 0);
 				r.setExtent(100, 1);
-				
+
 				List<Overlay> overlays = new Vector<Overlay>();
 				overlays.add(r);
 				ij.overlay().addOverlays(display, overlays);
-				
+
 				for (DataView view : display)
 				{
 					if(view instanceof OverlayView)
@@ -532,7 +734,7 @@ public class PointTester {// extends URLClassLoader {
 						break;
 					}
 				}
-				
+
 				OptionsChannels opts = ij.options().getOptions(OptionsChannels.class);
 				ChannelCollection fg = opts.getFgValues();
 				ij.ui().show(display);
@@ -541,7 +743,7 @@ public class PointTester {// extends URLClassLoader {
 				// ij.overlay().fillOverlay(r, display, fg);
 				// ij.ui().show(display);
 				ij.ui().show(display);
-				
+
 			}
 		}
 		catch (IOException e)
@@ -550,12 +752,12 @@ public class PointTester {// extends URLClassLoader {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public static void checkStatisticsUtility()
 	{
 		Vector<Double> test = new Vector<Double>();
 	}
-	
+
 	public static void checkHungarianDistance()
 	{
 		Random r = new Random();
@@ -573,9 +775,9 @@ public class PointTester {// extends URLClassLoader {
 		Logs.log("B2:\n\t" + b2.toString(), PointTester.class);
 		Logs.log("Before: " + StatisticsUtility.getMappingDistance(a, b), PointTester.class);
 		Logs.log("After: " + StatisticsUtility.getMappingDistance(a, b2), PointTester.class);
-		
+
 	}
-	
+
 	public static void checkWandRoi()
 	{
 		ImagePlus im = new ImagePlus("/Users/jaywarrick/Documents/Yin_Lab/JEX Database/Test 1/CTC Test Set/Cell_x0_y0/Image-CELL CROPS/x0_y0_Color1_Id0.tif");
@@ -590,9 +792,9 @@ public class PointTester {// extends URLClassLoader {
 		ImageStatistics stats = ImageStatistics.getStatistics(imp, ImageStatistics.AREA, null);
 		Logs.log(stats.area + ", " + wand.npoints + ", " + roi.getLength(), PointTester.class);
 		Logs.log("Yo", PointTester.class);
-		
+
 	}
-	
+
 	public static void checkCopyBits()
 	{
 		ImagePlus im = new ImagePlus("/Users/jaywarrick/Documents/Yin_Lab/JEX Database/Test 1/CTC Test Set/Cell_x0_y0/Image-GREEN/x0_y0_ImCol1_ImRow1.tif");
@@ -611,9 +813,9 @@ public class PointTester {// extends URLClassLoader {
 		stitch.resetDisplayRange();
 		stitch.show();
 		Logs.log("Yo", PointTester.class);
-		
+
 	}
-	
+
 	public static void checkStackRead()
 	{
 		String filePath = "/Users/jaywarrick/Desktop/CTC/20130806 MSK samples/10-3060 Cell save/tile_x001_y001.tif";
@@ -621,13 +823,13 @@ public class PointTester {// extends URLClassLoader {
 		im.show();
 		Logs.log("Hello2", PointTester.class);
 	}
-	
+
 	public static void checkOS()
 	{
 		String os = System.getProperty("os.name").toLowerCase();
 		Logs.log(os, PointTester.class);
 	}
-	
+
 	public static void testBackslashStuff()
 	{
 		String test = "\\C:\\My Documents";
@@ -640,7 +842,7 @@ public class PointTester {// extends URLClassLoader {
 		}
 		Logs.log(test.substring(1, test.length()), PointTester.class);
 	}
-	
+
 	public static void testJarStuff()
 	{
 		try
@@ -668,7 +870,7 @@ public class PointTester {// extends URLClassLoader {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public static void convertImages()
 	{
 		File dir = new File("/Volumes/NO NAME/Iyer scope test images/Originals");
@@ -681,7 +883,7 @@ public class PointTester {// extends URLClassLoader {
 			}
 		}
 		StringUtility.sortStringList(fileList);
-		
+
 		DecimalFormat format = new DecimalFormat("0000000000");
 		String baseName = "Image_";
 		int counter = 0;
@@ -698,7 +900,7 @@ public class PointTester {// extends URLClassLoader {
 			}
 		}
 	}
-	
+
 	public static void testIterator()
 	{
 		DimTable t = new DimTable();
@@ -706,36 +908,36 @@ public class PointTester {// extends URLClassLoader {
 		Dim b = new Dim("B", 0, 2);
 		Dim c = new Dim("C", 0, 3);
 		Dim d = new Dim("D", 0, 4);
-		
+
 		t.add(a);
 		t.add(b);
 		t.add(c);
 		t.add(d);
-		
+
 		Logs.log("getMapIterator(filter)", PointTester.class);
 		for (DimensionMap map : t.getMapIterator(new DimensionMap("A=0,B=2")))
 		{
 			Logs.log(map.toString(), PointTester.class);
 		}
-		
+
 		Logs.log("getSubTable and getMapIterator", PointTester.class);
 		for (DimensionMap map : t.getSubTable(new DimensionMap("A=0,B=2")).getMapIterator())
 		{
 			Logs.log(map.toString(), PointTester.class);
 		}
-		
+
 		Logs.log("SubTableIterator", PointTester.class);
 		for (DimTable map : t.getSubTableIterator("A"))
 		{
 			Logs.log(map.toString(), PointTester.class);
 		}
 	}
-	
+
 	public static void testR()
 	{
 		R.eval("x <- 0");
 	}
-	
+
 	public static void testLinePlot()
 	{
 		double xAxisTransition = 5, xLinLogRatio = 10, yAxisTransition = 2, yLinLogRatio = 10;
@@ -763,10 +965,10 @@ public class PointTester {// extends URLClassLoader {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public static double showHistogram(FloatProcessor imp, double histMin, double histMax, int nBins, boolean showHist)
 	{
-		
+
 		// Make the histogram
 		if(nBins < 0)
 		{
@@ -780,7 +982,7 @@ public class PointTester {// extends URLClassLoader {
 		{
 			bins[i] = histMin + i * stats.binSize;
 		}
-		
+
 		if(showHist)
 		{
 			// Draw the histogram
@@ -790,7 +992,7 @@ public class PointTester {// extends URLClassLoader {
 			R._startPlot(new File(path), 4, 3, 300, 10, null, null);
 			R.eval("plot(binCenters,binCounts,cex=0.4)");
 			R.endPlot();
-			
+
 			// Open the histogram plot
 			try
 			{
@@ -801,7 +1003,7 @@ public class PointTester {// extends URLClassLoader {
 				e.printStackTrace();
 			}
 		}
-		
+
 		int nMax = 0;
 		int max = Integer.MIN_VALUE;
 		for (int i = 0; i < stats.histogram.length - 1; i++)
@@ -814,7 +1016,7 @@ public class PointTester {// extends URLClassLoader {
 		}
 		return bins[nMax];
 	}
-	
+
 	public static int getIndexOfMax(double[] values)
 	{
 		int ret = 0;
@@ -829,7 +1031,7 @@ public class PointTester {// extends URLClassLoader {
 		}
 		return ret;
 	}
-	
+
 	public static int getIndexOfMax(int[] values)
 	{
 		int ret = 0;
@@ -844,7 +1046,7 @@ public class PointTester {// extends URLClassLoader {
 		}
 		return ret;
 	}
-	
+
 	static byte[] readStream(InputStream input) throws IOException
 	{
 		byte[] buffer = new byte[1024];
@@ -863,7 +1065,7 @@ public class PointTester {// extends URLClassLoader {
 			offset += len;
 		}
 	}
-	
+
 	static byte[] realloc(byte[] buffer, int newLength)
 	{
 		if(newLength == buffer.length)
@@ -874,7 +1076,7 @@ public class PointTester {// extends URLClassLoader {
 		System.arraycopy(buffer, 0, newBuffer, 0, Math.min(newLength, buffer.length));
 		return newBuffer;
 	}
-	
+
 	// @Override
 	// @SuppressWarnings("unchecked")
 	// public Class<Object> loadClass(String name)
@@ -901,5 +1103,5 @@ public class PointTester {// extends URLClassLoader {
 	//
 	// return result;
 	// }
-	
+
 }

@@ -49,7 +49,7 @@ public class FileDropCellController {
 	{
 		this.row = row;
 		this.column = column;
-		title.setText("Cell " + row + "." + column);
+		title.setText("X" + row + ".Y" + column);
 		panel().rebuild();
 	}
 	
@@ -104,7 +104,7 @@ public class FileDropCellController {
 			this.setLayout(new MigLayout("ins 2 2 2 2", "[fill,grow]", "2[20]2[fill,grow]2"));
 			
 			// The title and the label color
-			this.add(title, "growx, wrap");
+			this.add(title, "growx, wrap, wmin 0");
 			
 			// The data view
 			if(theFiles == null)
@@ -115,17 +115,17 @@ public class FileDropCellController {
 			}
 			else
 			{
-				JList jlist = new JList();
+				JList<File> jlist = new JList<>();
 				jlist.setBackground(DisplayStatics.background);
 				jlist.setForeground(Color.WHITE);
 				jlist.setFont(FontUtility.defaultFonts);
 				jlist.setCellRenderer(new FileListCellRenderer());
 				
-				DefaultListModel newModel = new DefaultListModel();
+				DefaultListModel<File> newModel = new DefaultListModel<>();
 				// Make a string with the dimension name for the files
 				for (Pair<DimensionMap,String> pair : theFiles)
 				{
-					newModel.addElement(pair.p1.toString() + " " + FileUtility.getFileNameWithExtension(pair.p2));
+					newModel.addElement(new File(pair.p1.toString() + " " + FileUtility.getFileNameWithExtension(pair.p2)));
 				}
 				
 				jlist.setModel(newModel);

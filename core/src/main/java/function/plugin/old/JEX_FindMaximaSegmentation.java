@@ -1,25 +1,10 @@
 package function.plugin.old;
 
-import ij.ImagePlus;
-import ij.gui.Roi;
-import ij.plugin.filter.RankFilters;
-import ij.process.ByteProcessor;
-import ij.process.FloatProcessor;
-import image.roi.IdPoint;
-import image.roi.PointList;
-import image.roi.ROIPlus;
-
 import java.awt.Shape;
 import java.io.File;
 import java.util.HashMap;
 import java.util.TreeMap;
 
-import jex.statics.JEXStatics;
-import logs.Logs;
-import miscellaneous.JEXCSVWriter;
-import tables.DimTable;
-import tables.DimensionMap;
-import weka.core.converters.JEXTableWriter;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;
@@ -33,7 +18,22 @@ import Database.Definition.TypeName;
 import Database.SingleUserDatabase.JEXWriter;
 import function.JEXCrunchable;
 import function.imageUtility.MaximumFinder;
-import function.plugin.old.JEX_Filters;
+import ij.ImagePlus;
+import ij.gui.Roi;
+import ij.plugin.filter.RankFilters;
+import ij.process.ByteProcessor;
+import ij.process.FloatProcessor;
+import ij.process.ImageProcessor;
+import image.roi.IdPoint;
+import image.roi.PointList;
+import image.roi.ROIPlus;
+import jex.statics.JEXStatics;
+import logs.Logs;
+import miscellaneous.JEXCSVWriter;
+import tables.DimTable;
+import tables.DimensionMap;
+import weka.core.converters.JEXTableWriter;
+
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions
@@ -166,6 +166,7 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 		// Parameter p0 = new
 		// Parameter("Dummy Parameter","Lets user know that the function has been selected.",FormLine.DROPDOWN,new
 		// String[] {"true"},0);
+		Parameter p00 = getNumThreadsParameter(10, 1);
 		Parameter p0a = new Parameter("Pre-Despeckle Radius", "Radius of median filter applied before max finding", "0");
 		Parameter p0b = new Parameter("Pre-Smoothing Radius", "Radius of mean filter applied before max finding", "0");
 		Parameter pa1 = new Parameter("Color Dim Name", "Name of the color dimension.", "Color");
@@ -181,6 +182,7 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 		
 		// Make an array of the parameters and return it
 		ParameterSet parameterArray = new ParameterSet();
+		parameterArray.addParameter(p00);
 		parameterArray.addParameter(p0a);
 		parameterArray.addParameter(p0b);
 		parameterArray.addParameter(pa1);
@@ -241,7 +243,6 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 			}
 			
 			
-			
 			/* GATHER PARAMETERS */
 			double despeckleR = Double.parseDouble(this.parameters.getValueOfParameter("Pre-Despeckle Radius"));
 			double smoothR = Double.parseDouble(this.parameters.getValueOfParameter("Pre-Smoothing Radius"));
@@ -256,6 +257,11 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 			boolean lightBackground = !Boolean.parseBoolean(this.parameters.getValueOfParameter("Particles Are White?"));
 			boolean maximaOnly = Boolean.parseBoolean(this.parameters.getValueOfParameter("Output Maxima Only?"));
 			
+			if(!nuclearDimValue.equals("") && segDimValue.equals(""))
+			{
+				Logs.log("Found a blank segmentation dimension value even though a maxima dim value was specified. Using the maxima dim value as the segmentation dim value.", this);
+				segDimValue = nuclearDimValue;
+			}
 			
 			
 			/* RUN THE FUNCTION */
@@ -305,9 +311,9 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 			Roi roi;
 			ROIPlus roip;
 			int count = 0, percentage = 0, counter = 0;
-			MaximumFinder mf = new MaximumFinder();
 			for (DimensionMap map : filteredTable.getMapIterator())
 			{
+				MaximumFinder mf = new MaximumFinder();
 				if(this.isCanceled())
 				{
 					return false;
@@ -318,8 +324,13 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 				JEXStatics.statusBar.setProgressPercentage(percentage);
 				counter ++;
 				
-				
-				ImagePlus im = new ImagePlus(imageMap.get(map));
+				String pathToGet = imageMap.get(map);
+				if(pathToGet == null)
+				{
+					// Counting will be messed up now for the progress bar but hard to remedy
+					continue;
+				}
+				ImagePlus im = new ImagePlus(pathToGet);
 				FloatProcessor ip = (FloatProcessor) im.getProcessor().convertToFloat();
 				im.setProcessor(ip);
 				
@@ -410,7 +421,7 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 					// // Create the segemented image
 					DimensionMap segMap = map.copy();
 					segMap.put(colorDimName, segDimValue);
-					FloatProcessor toSeg = ip;
+					ImageProcessor toSeg = ip;
 					if(!segDimValue.equals(nuclearDimValue))
 					{
 						if(this.isCanceled())
@@ -423,7 +434,7 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 						JEXStatics.statusBar.setProgressPercentage(percentage);
 						counter = counter + 1;
 						
-						toSeg = (FloatProcessor) (new ImagePlus(imageMap.get(segMap))).getProcessor().convertToFloat();
+						toSeg = new ImagePlus(imageMap.get(segMap)).getProcessor();
 						ImagePlus imToSeg = new ImagePlus("toSeg", toSeg);
 						if(despeckleR > 0)
 						{
@@ -519,9 +530,9 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 			this.realOutputs.add(output1);
 			this.realOutputs.add(output2);
 			
+			
 			if(!maximaOnly)
 			{
-				
 				JEXData output3 = ImageWriter.makeImageStackFromPaths(this.outputNames[3].getName(), outputImageMap);
 				
 				this.realOutputs.add(output3);

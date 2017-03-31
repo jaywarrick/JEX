@@ -7,14 +7,14 @@ import javax.swing.text.JTextComponent;
  * StringConverterPropertyEditor. <br>
  * A comma separated list of values.
  */
-public abstract class StringConverterPropertyEditor extends AbstractPropertyEditor {
+public abstract class StringConverterPropertyEditor extends AbstractPropertyEditor<JTextField> {
 	
 	private Object oldValue;
 	
 	public StringConverterPropertyEditor()
 	{
 		editor = new JTextField();
-		((JTextField) editor).setBorder(LookAndFeelTweaks.EMPTY_BORDER);
+		editor.setBorder(LookAndFeelTweaks.EMPTY_BORDER);
 	}
 	
 	@Override

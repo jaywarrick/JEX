@@ -12,7 +12,7 @@ import javax.swing.table.TableCellRenderer;
  * BooleanCellRenderer. <br>
  * 
  */
-public class BooleanCellRenderer extends JCheckBox implements TableCellRenderer, ListCellRenderer {
+public class BooleanCellRenderer extends JCheckBox implements TableCellRenderer, ListCellRenderer<Boolean> {
 	
 	private static final long serialVersionUID = 1L;
 	
@@ -35,7 +35,7 @@ public class BooleanCellRenderer extends JCheckBox implements TableCellRenderer,
 		return this;
 	}
 	
-	public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus)
+	public Component getListCellRendererComponent(JList<? extends Boolean> list, Boolean value, int index, boolean isSelected, boolean cellHasFocus)
 	{
 		
 		if(isSelected)
@@ -49,7 +49,7 @@ public class BooleanCellRenderer extends JCheckBox implements TableCellRenderer,
 			setForeground(list.getForeground());
 		}
 		
-		setSelected(Boolean.TRUE.equals(value));
+		setSelected(value);
 		
 		return this;
 	}

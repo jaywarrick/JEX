@@ -4,11 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 import miscellaneous.Copiable;
 import miscellaneous.SSVList;
-import miscellaneous.StringUtility;
 import weka.core.Attribute;
 
 /**
@@ -79,35 +77,45 @@ public class DimTable extends ArrayList<Dim> implements Copiable<DimTable> {
 		if(datamap == null || datamap.size() == 0)
 			return;
 		
-		// Make a set version of the dimension map, as it is easy to fill
-		TreeMap<String,TreeSet<String>> dimset = new TreeMap<String,TreeSet<String>>(new StringUtility());
-		for (DimensionMap dim : datamap.keySet())
+		DimTableBuilder builder = new DimTableBuilder();
+		for(DimensionMap map : datamap.keySet())
 		{
-			for (String dimName : dim.keySet())
-			{
-				String dimValue = dim.get(dimName);
-				// see whether dimName exists in dimset since treeMap can not have null value
-				TreeSet<String> dimValues = dimset.get(dimName); 
-				
-				// if the dim doesn't exist, create it
-				if(dimValues == null)
-				{
-					dimValues = new TreeSet<String>(new StringUtility()); // an empty dimValues
-					dimset.put(dimName, dimValues);
-				}
-				
-				// add dimValue to dimset
-				dimValues.add(dimValue);
-			}
+			builder.add(map);
 		}
 		
-		// Convert it to the proper list of dims
-		for (String dimName : dimset.keySet())
-		{
-			TreeSet<String> dimValues = dimset.get(dimName);
-			Dim dim = new Dim(dimName, dimValues);
-			this.add(dim);
-		}
+		DimTable temp = builder.getDimTable();
+		
+		this.addAll(temp);
+		
+		//		// Make a set version of the dimension map, as it is easy to fill
+		//		TreeMap<String,TreeSet<String>> dimset = new TreeMap<String,TreeSet<String>>(new StringUtility());
+		//		for (DimensionMap dim : datamap.keySet())
+		//		{
+		//			for (String dimName : dim.keySet())
+		//			{
+		//				String dimValue = dim.get(dimName);
+		//				// see whether dimName exists in dimset since treeMap can not have null value
+		//				TreeSet<String> dimValues = dimset.get(dimName); 
+		//				
+		//				// if the dim doesn't exist, create it
+		//				if(dimValues == null)
+		//				{
+		//					dimValues = new TreeSet<String>(new StringUtility()); // an empty dimValues
+		//					dimset.put(dimName, dimValues);
+		//				}
+		//				
+		//				// add dimValue to dimset
+		//				dimValues.add(dimValue);
+		//			}
+		//		}
+		//		
+		//		// Convert it to the proper list of dims
+		//		for (String dimName : dimset.keySet())
+		//		{
+		//			TreeSet<String> dimValues = dimset.get(dimName);
+		//			Dim dim = new Dim(dimName, dimValues);
+		//			this.add(dim);
+		//		}
 	}
 	
 	// Getters and setters
@@ -348,16 +356,47 @@ public class DimTable extends ArrayList<Dim> implements Copiable<DimTable> {
 	 * 
 	 * @return total number of possible dimension combinations
 	 */
-	public int mapCount()
+	public Integer mapCount()
 	{
 		if(this.size() == 0)
 		{
-			return 0;
+			// An object always holds at least one piece of data.
+			// If the dimTable is empty, the iterator will return one
+			// dimension map that is empty, so the map count is one
+			// for this special case.
+			return 1; 
 		}
 		int total = this.get(0).size();
 		for (int i = 1; i < this.size(); i++)
 		{
 			total = total * this.get(i).size();
+		}
+		if(total < 0)
+		{
+			return null;
+		}
+		return total;
+	}
+	
+	/**
+	 * returned total number of possible dimension combinations
+	 * 
+	 * @return total number of possible dimension combinations
+	 */
+	public Long mapCountLong()
+	{
+		if(this.size() == 0)
+		{
+			return 0L;
+		}
+		long total = this.get(0).size();
+		for (int i = 1; i < this.size(); i++)
+		{
+			total = total * this.get(i).size();
+		}
+		if(total < 0)
+		{
+			return null;
 		}
 		return total;
 	}
@@ -432,6 +471,21 @@ public class DimTable extends ArrayList<Dim> implements Copiable<DimTable> {
 			result = union(result, t);
 		}
 		return result;
+	}
+	
+	/**
+	 * Return whether the dimTable has all of the key values in the DimensionMap
+	 */
+	public static boolean hasKeyValues(DimTable dt, DimensionMap map)
+	{
+		for(String key : map.keySet())
+		{
+			if(!dt.getDimWithName(key).containsValue(map.get(key)))
+			{
+				return false;
+			}
+		}
+		return true;
 	}
 	
 	/**
@@ -551,10 +605,10 @@ public class DimTable extends ArrayList<Dim> implements Copiable<DimTable> {
 	// }
 	
 	/**
-	 * returned an iterator of DimValues, given dimName in this DimTable
+	 * returned an iterator of DimTables, providing a new table for each subtable associated with each value in the specified Dim.
 	 * 
 	 * @param dimName DimName
-	 * @return an iterator of DimValues, given dimName in this DimTable
+	 * @return an iterator of DimTables, given dimName in this DimTable
 	 */
 	public DimTableIterable getSubTableIterator(String dimName)
 	{

@@ -23,6 +23,9 @@ import org.scijava.util.ClassUtils;
 
 public class JEXPluginInfo {
 	
+	public static String THREADS = "Number of Threads";
+	public static int STANDARD_NUM_THREADS = 4;
+	
 	private Class<? extends JEXPlugin> theClass;
 	private PluginInfo<JEXPlugin> info;
 	
@@ -95,7 +98,41 @@ public class JEXPluginInfo {
 		{
 			throw new InstantiableException(e);
 		}
+		
+		if(instance.getMaxThreads() > 1 && this.parameters.get(THREADS) == null)
+		{
+			String[] choices = new String[instance.getMaxThreads()];
+			for(int i = 1; i <= instance.getMaxThreads(); i++)
+			{
+				choices[i-1] = "" + i;
+			}
+			this.addParameter(THREADS, new Parameter(THREADS, "Number of parallel threads to run this function on.", Parameter.DROPDOWN, choices, STANDARD_NUM_THREADS-1), Integer.MIN_VALUE, false);
+		}
+		
 		return instance;
+	}
+	
+	private void addParameter(String name, Parameter p, int order, boolean optional)
+	{
+		TreeMap<String,Parameter> temp_parameters = new TreeMap<>(new StringUtility());
+		TreeMap<String,Field> temp_pField = new TreeMap<String,Field>(new StringUtility());
+		TreeMap<String,String> temp_pOrder = new TreeMap<String,String>(new StringUtility());
+		TreeMap<String,Boolean> temp_pOptional = new TreeMap<String,Boolean>(new StringUtility());
+		
+		temp_parameters.putAll(this.parameters);
+		temp_pField.putAll(this.pField);
+		temp_pOrder.putAll(this.pOrder);
+		temp_pOptional.putAll(this.pOptional);
+		
+		temp_parameters.put(name, p);
+		temp_pField.put(name, null);
+		temp_pOrder.put("" + order + "_" + name, name);
+		temp_pOptional.put(name, optional);
+	
+		this.parameters = Collections.unmodifiableSortedMap(temp_parameters);
+		this.pField = Collections.unmodifiableSortedMap(temp_pField);
+		this.pOrder = Collections.unmodifiableSortedMap(temp_pOrder);
+		this.pOptional = Collections.unmodifiableSortedMap(temp_pOptional);
 	}
 	
 	private void setInputs(List<Field> inputFields)
@@ -186,6 +223,7 @@ public class JEXPluginInfo {
 			this.pOrder.put("" + order + "_" + name, name);
 			this.pOptional.put(name, optional);
 		}
+		
 		this.parameters = Collections.unmodifiableSortedMap(this.parameters);
 		this.pField = Collections.unmodifiableSortedMap(this.pField);
 		this.pOrder = Collections.unmodifiableSortedMap(this.pOrder);

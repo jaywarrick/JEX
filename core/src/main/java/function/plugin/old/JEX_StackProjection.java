@@ -1,5 +1,10 @@
 package function.plugin.old;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.TreeMap;
+import java.util.Vector;
+
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;
@@ -11,15 +16,16 @@ import Database.SingleUserDatabase.JEXWriter;
 import function.JEXCrunchable;
 import ij.ImagePlus;
 import ij.plugin.ZProjector;
+import ij.process.Blitter;
+import ij.process.ByteBlitter;
+import ij.process.ByteProcessor;
+import ij.process.FloatBlitter;
 import ij.process.FloatProcessor;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.TreeMap;
-import java.util.Vector;
-
+import ij.process.ImageProcessor;
+import ij.process.ShortBlitter;
+import ij.process.ShortProcessor;
+import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
-import jex.utilities.FunctionUtility;
 import tables.Dim;
 import tables.DimTable;
 import tables.DimensionMap;
@@ -35,16 +41,16 @@ import tables.DimensionMap;
  * 
  */
 public class JEX_StackProjection extends JEXCrunchable {
-	
-	public static final String METHOD_MEAN = "mean", METHOD_MIN = "min", METHOD_MAX = "max", METHOD_MEDIAN = "median", METHOD_SUM = "sum", METHOD_STDEV = "std. dev.";
-	
+
+	public static final String METHOD_MEAN = "mean", METHOD_MIN = "min", METHOD_MAX = "max", METHOD_MEDIAN = "median", METHOD_SUM = "sum", METHOD_STDEV = "std. dev.", METHOD_DIFF = "diff (final-initial)";
+
 	public JEX_StackProjection()
 	{}
-	
+
 	// ----------------------------------------------------
 	// --------- INFORMATION ABOUT THE FUNCTION -----------
 	// ----------------------------------------------------
-	
+
 	/**
 	 * Returns the name of the function
 	 * 
@@ -56,7 +62,7 @@ public class JEX_StackProjection extends JEXCrunchable {
 		String result = "Stack Projection";
 		return result;
 	}
-	
+
 	/**
 	 * This method returns a string explaining what this method does This is purely informational and will display in JEX
 	 * 
@@ -68,7 +74,7 @@ public class JEX_StackProjection extends JEXCrunchable {
 		String result = "Function that allows you to perform math operation along a single dimension (e.g. Z, T) leaving the others unchanged.";
 		return result;
 	}
-	
+
 	/**
 	 * This method defines in which group of function this function will be shown in... Toolboxes (choose one, caps matter): Visualization, Image processing, Custom Cell Analysis, Cell tracking, Image tools Stack processing, Data Importing, Custom
 	 * image analysis, Matlab/Octave
@@ -80,7 +86,7 @@ public class JEX_StackProjection extends JEXCrunchable {
 		String toolbox = "Stack processing";
 		return toolbox;
 	}
-	
+
 	/**
 	 * This method defines if the function appears in the list in JEX It should be set to true expect if you have good reason for it
 	 * 
@@ -91,7 +97,7 @@ public class JEX_StackProjection extends JEXCrunchable {
 	{
 		return true;
 	}
-	
+
 	/**
 	 * Returns true if the user wants to allow multithreding
 	 * 
@@ -102,11 +108,11 @@ public class JEX_StackProjection extends JEXCrunchable {
 	{
 		return false;
 	}
-	
+
 	// ----------------------------------------------------
 	// --------- INPUT OUTPUT DEFINITIONS -----------------
 	// ----------------------------------------------------
-	
+
 	/**
 	 * Return the array of input names
 	 * 
@@ -119,7 +125,7 @@ public class JEX_StackProjection extends JEXCrunchable {
 		inputNames[0] = new TypeName(IMAGE, "Image");
 		return inputNames;
 	}
-	
+
 	/**
 	 * Return the array of output names defined for this function
 	 * 
@@ -130,12 +136,12 @@ public class JEX_StackProjection extends JEXCrunchable {
 	{
 		defaultOutputNames = new TypeName[1];
 		defaultOutputNames[0] = new TypeName(IMAGE, "Projected Image");
-		
+
 		if(outputNames == null)
 			return defaultOutputNames;
 		return outputNames;
 	}
-	
+
 	/**
 	 * Returns a list of parameters necessary for this function to run... Every parameter is defined as a line in a form that provides the ability to set how it will be displayed to the user and what options are available to choose from The simplest
 	 * FormLine can be written as: FormLine p = new FormLine(parameterName); This will provide a text field for the user to input the value of the parameter named parameterName More complex displaying options can be set by consulting the FormLine API
@@ -146,33 +152,34 @@ public class JEX_StackProjection extends JEXCrunchable {
 	public ParameterSet requiredParameters()
 	{
 		Parameter p0 = new Parameter("Dimension", "Name of dimension to perform the operation (case and whitespace sensitive).", "Z");
-		Parameter p1 = new Parameter("Math Operation", "Type of math operation to perform.", Parameter.DROPDOWN, new String[] { METHOD_MEAN, METHOD_MAX, METHOD_MIN, METHOD_SUM, METHOD_STDEV, METHOD_MEDIAN }, 5);
+		Parameter p1 = new Parameter("Math Operation", "Type of math operation to perform.", Parameter.DROPDOWN, new String[] { METHOD_MEAN, METHOD_MAX, METHOD_MIN, METHOD_SUM, METHOD_STDEV, METHOD_MEDIAN, METHOD_DIFF }, 5);
 		Parameter p2 = new Parameter("Sliding Window Projection", "Perform the projection for the whole stack or for N number of images at a time, shifting by 1 each time.", Parameter.DROPDOWN, new String[] { "true", "false" }, 1);
 		Parameter p3 = new Parameter("N", "Number of images in sliding window (ignored if not sliding window).", "2");
-		// Parameter p4 = new
+		Parameter p4 = getNumThreadsParameter(10, 6);
 		// Parameter("New Max","Image Intensity Value","65535.0");
 		// Parameter p5 = new
 		// Parameter("Gamma","0.1-5.0, value of 1 results in no change","1.0");
 		// Parameter p6 = new
 		// Parameter("Output Bit Depth","Depth of the outputted image",FormLine.DROPDOWN,new
 		// String[] {"8","16","32"},1);
-		
+
 		// Make an array of the parameters and return it
 		ParameterSet parameterArray = new ParameterSet();
+		parameterArray.addParameter(p4);
 		parameterArray.addParameter(p0);
 		parameterArray.addParameter(p1);
 		parameterArray.addParameter(p2);
 		parameterArray.addParameter(p3);
-		// parameterArray.addParameter(p4);
+
 		// parameterArray.addParameter(p5);
 		// parameterArray.addParameter(p6);
 		return parameterArray;
 	}
-	
+
 	// ----------------------------------------------------
 	// --------- ERROR CHECKING METHODS -------------------
 	// ----------------------------------------------------
-	
+
 	/**
 	 * Returns the status of the input validity checking It is HIGHLY recommended to implement input checking however this can be over-ridden by returning false If over-ridden ANY batch function using this function will not be able perform error
 	 * checking...
@@ -184,11 +191,11 @@ public class JEX_StackProjection extends JEXCrunchable {
 	{
 		return true;
 	}
-	
+
 	// ----------------------------------------------------
 	// --------- THE ACTUAL MEAT OF THIS FUNCTION ---------
 	// ----------------------------------------------------
-	
+
 	/**
 	 * Perform the algorithm here
 	 * 
@@ -201,66 +208,92 @@ public class JEX_StackProjection extends JEXCrunchable {
 		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
 			return false;
 		DimTable originalDimTable = imageData.getDimTable().copy();
-		
+
 		// Collect Parameters
 		String dimName = parameters.getValueOfParameter("Dimension");
 		String mathOperation = parameters.getValueOfParameter("Math Operation");
 		boolean slidingWindow = Boolean.parseBoolean(parameters.getValueOfParameter("Sliding Window Projection"));
 		int slidingWindowSize = Integer.parseInt(parameters.getValueOfParameter("N"));
-		
+
 		// Run the function
 		Dim dimToProject = originalDimTable.getDimWithName(dimName);
 		if(dimToProject == null)
+		{
+			JEXDialog.messageDialog("Couldn't find the specified projection dimension in the image object. Aborting.", this);
 			return false;
+		}
+
 		DimTable subDimTable = originalDimTable.copy();
 		int originalDimIndex = subDimTable.indexOfDimWithName(dimToProject.name());
 		subDimTable.remove(originalDimIndex);
-		
+
 		List<DimensionMap> maps = subDimTable.getDimensionMaps();
 		TreeMap<DimensionMap,String> dataMap = new TreeMap<DimensionMap,String>();
-		String baseName;
 		String actualPath;
 		int count = 0;
-		int bitDepth = 32;
 		for (DimensionMap map : maps)
 		{
 			if(slidingWindow)
 			{
 				for (int i = 0; i <= dimToProject.size() - slidingWindowSize; i++)
 				{
+					if(this.isCanceled())
+					{
+						return false;
+					}
 					List<DimensionMap> stackMaps = this.getSomeStackMaps(map, dimToProject, slidingWindowSize, i);
-					ImagePlus stackToProject = ImageReader.readSomeOfObjectToVirtualStack(imageData, stackMaps);
-					bitDepth = stackToProject.getBitDepth();
-					FloatProcessor imp = evaluate(stackToProject, mathOperation, stackMaps.size());
-					DimensionMap saveDim = this.getAStackMap(map, dimToProject, i);
-					baseName = ImageReader.readObjectToImageName(imageData, saveDim);
-					actualPath = this.saveProjectedImage(entry, baseName, imp, bitDepth);
+
+					ImageProcessor finalImp = null;
+					if(mathOperation.equals(METHOD_DIFF))
+					{
+						finalImp = evaluate(stackMaps, imageData);
+					}
+					else
+					{
+						finalImp = evaluate(stackMaps, imageData, mathOperation);
+					}
+					actualPath = JEXWriter.saveImage(finalImp);
 					if(actualPath != null)
 					{
+						DimensionMap saveDim = this.getAStackMap(map, dimToProject, i);
 						dataMap.put(saveDim, actualPath);
 					}
+					// Status bar
+					count = count + 1;
+					int percentage = (int) (100 * ((double) count / (((double) maps.size()) * (double) (dimToProject.size() - slidingWindowSize + 1))));
+					JEXStatics.statusBar.setProgressPercentage(percentage);
 				}
 			}
 			else
 			{
+				if(this.isCanceled())
+				{
+					return false;
+				}
 				List<DimensionMap> stackMaps = this.getAllStackMaps(map, dimToProject);
-				ImagePlus stackToProject = ImageReader.readSomeOfObjectToVirtualStack(imageData, stackMaps);
-				bitDepth = stackToProject.getBitDepth();
-				FloatProcessor imp = evaluate(stackToProject, mathOperation, stackMaps.size());
-				DimensionMap saveDim = this.getAStackMap(map, dimToProject, 0);
-				baseName = ImageReader.readObjectToImageName(imageData, saveDim);
-				actualPath = this.saveProjectedImage(entry, baseName, imp, bitDepth);
+
+				ImageProcessor finalImp = null;
+				if(mathOperation.equals(METHOD_DIFF))
+				{
+					finalImp = evaluate(stackMaps, imageData);
+				}
+				else
+				{
+					finalImp = evaluate(stackMaps, imageData, mathOperation);
+				}
+				actualPath = JEXWriter.saveImage(finalImp);
 				if(actualPath != null)
 				{
+					DimensionMap saveDim = this.getAStackMap(map, dimToProject, 0);
 					dataMap.put(saveDim, actualPath);
 				}
+				// Status bar
+				count = count + 1;
+				int percentage = (int) (100 * ((double) count / (double) maps.size()));
+				JEXStatics.statusBar.setProgressPercentage(percentage);
 			}
-			// Status bar
-			count = count + 1;
-			int percentage = (int) (100 * ((double) count / (double) maps.size()));
-			JEXStatics.statusBar.setProgressPercentage(percentage);
 		}
-		
+
 		JEXData output1 = ImageWriter.makeImageStackFromPaths(outputNames[0].getName(), dataMap);
 		Dim newDim = null;
 		if(slidingWindow)
@@ -273,24 +306,47 @@ public class JEX_StackProjection extends JEXCrunchable {
 		}
 		subDimTable.add(originalDimIndex, newDim);
 		output1.setDimTable(subDimTable);
-		
+
 		// Set the outputs
 		realOutputs.add(output1);
-		
+
 		// Return status
 		return true;
 	}
-	
-	private String saveProjectedImage(JEXEntry entry, String baseName, FloatProcessor imp, int bitDepth)
+
+	public static ImageProcessor evaluate(List<DimensionMap> stack, JEXData image)
 	{
-		// //// Save the results
-		ImagePlus toSave = FunctionUtility.makeImageToSave(imp, "false", bitDepth);
-		String finalPath = JEXWriter.saveImage(toSave);
-		
-		return finalPath;
+
+		String pathToGet = ImageReader.readImagePath(image.getData(stack.get(0)));
+		ImageProcessor initial = (new ImagePlus(pathToGet)).getProcessor();
+		int bitDepth = initial.getBitDepth();
+		pathToGet = ImageReader.readImagePath(image.getData(stack.get(stack.size()-1)));
+		ImageProcessor ret = (new ImagePlus(pathToGet)).getProcessor();
+		Blitter b = null;
+		if(bitDepth == 8)
+		{
+			b = new ByteBlitter((ByteProcessor) ret);
+		}
+		else if(bitDepth == 16)
+		{
+			b = new ShortBlitter((ShortProcessor) ret);
+		}
+		else if(bitDepth == 32)
+		{
+			b = new FloatBlitter((FloatProcessor) ret);
+		}
+		b.copyBits(initial, 0, 0, Blitter.SUBTRACT);
+		return ret;
 	}
-	
-	public static FloatProcessor evaluate(ImagePlus virtualStack, String method, int stackSize)
+
+	public static ImageProcessor evaluate(List<DimensionMap> stack, JEXData image, String method)
+	{
+		ImagePlus virtualStack = ImageReader.readSomeOfObjectToVirtualStack(image, stack);
+
+		return evaluate(virtualStack, method);
+	}
+
+	public static int getMethodInt(String method)
 	{
 		// :,mean,max,min,sum,std. dev.,median"///
 		int methodInt = 5;
@@ -306,15 +362,22 @@ public class JEX_StackProjection extends JEXCrunchable {
 			methodInt = 4;
 		else if(method.equals(METHOD_MEDIAN))
 			methodInt = 5;
-		
+		return methodInt;
+	}
+
+	public static ImageProcessor evaluate(ImagePlus virtualStack, String method)
+	{
+		// :,mean,max,min,sum,std. dev.,median"///
+		int methodInt = getMethodInt(method);
+
 		ZProjector p = new ZProjector(virtualStack);
 		p.setStartSlice(1);
-		p.setStopSlice(stackSize);
+		p.setStopSlice(virtualStack.getImageStackSize());
 		p.setMethod(methodInt);
 		p.doProjection();
-		return (FloatProcessor) p.getProjection().getProcessor().convertToFloat();
+		return p.getProjection().getProcessor();
 	}
-	
+
 	private List<DimensionMap> getAllStackMaps(DimensionMap map, Dim dimToProject)
 	{
 		List<DimensionMap> ret = new Vector<DimensionMap>();
@@ -324,7 +387,7 @@ public class JEX_StackProjection extends JEXCrunchable {
 		}
 		return ret;
 	}
-	
+
 	private List<DimensionMap> getSomeStackMaps(DimensionMap map, Dim dimToProject, int slidingWindowSize, int i)
 	{
 		Dim subDim = this.getSubDim(dimToProject, slidingWindowSize, i);
@@ -335,14 +398,14 @@ public class JEX_StackProjection extends JEXCrunchable {
 		}
 		return ret;
 	}
-	
+
 	private DimensionMap getAStackMap(DimensionMap map, Dim dimToProject, int indexOfValue)
 	{
 		DimensionMap ret = map.copy();
 		ret.put(dimToProject.name(), dimToProject.valueAt(indexOfValue));
 		return ret;
 	}
-	
+
 	private Dim getSubDim(Dim dimToProject, int slidingWindowSize, int i)
 	{
 		Dim right = new Dim(dimToProject.name(), dimToProject.valuesStartingAt(i));

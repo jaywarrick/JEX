@@ -156,7 +156,6 @@ public class JEX_SingleCell_MeasureMaxima extends JEXCrunchable {
 		Parameter p4 = new Parameter("ROI Width", "Width of ROI in pixels (ignored for Point ROI)", "10");
 		Parameter p5 = new Parameter("ROI Height", "Height of ROI in pixels (ignored for Point ROI)", "10");
 		Parameter p6 = new Parameter("ROI Origin", "What part of the roi should be placed at the indicated points (i.e. does the array of points indicate where the upper-left corner should be placed?", Parameter.DROPDOWN, new String[] { ROIPlus.ORIGIN_CENTER, ROIPlus.ORIGIN_UPPERLEFT, ROIPlus.ORIGIN_UPPERRIGHT, ROIPlus.ORIGIN_LOWERRIGHT, ROIPlus.ORIGIN_LOWERLEFT }, 0);
-		Parameter p7 = new Parameter("\"Time\" Dim Name", "Name of the \"Time\" Dimension in the image", "Time");
 		Parameter p9 = new Parameter("\"Color\" Dim Name", "Name of the \"Color\" Dimension in the roi", "Color");
 		Parameter p10 = new Parameter("Blue Color Value", "Value of the Color Dim for Blue", "0");
 		Parameter p11 = new Parameter("Green Color Value", "Value of the Color Dim for Green", "1");
@@ -170,7 +169,6 @@ public class JEX_SingleCell_MeasureMaxima extends JEXCrunchable {
 		parameterArray.addParameter(p4);
 		parameterArray.addParameter(p5);
 		parameterArray.addParameter(p6);
-		parameterArray.addParameter(p7);
 		parameterArray.addParameter(p9);
 		// parameterArray.addParameter(p8);
 		parameterArray.addParameter(p10);
@@ -200,7 +198,7 @@ public class JEX_SingleCell_MeasureMaxima extends JEXCrunchable {
 	// --------- THE ACTUAL MEAT OF THIS FUNCTION ---------
 	// ----------------------------------------------------
 	
-	public String timeDimName, colorDimName, trackDimName, red, green, blue;
+	public String colorDimName, trackDimName, red, green, blue;
 	
 	/**
 	 * Perform the algorithm here
@@ -242,10 +240,6 @@ public class JEX_SingleCell_MeasureMaxima extends JEXCrunchable {
 		int roiWidth = Integer.parseInt(this.parameters.getValueOfParameter("ROI Width"));
 		int roiHeight = Integer.parseInt(this.parameters.getValueOfParameter("ROI Height"));
 		String roiOrigin = this.parameters.getValueOfParameter("ROI Origin");
-		this.timeDimName = this.parameters.getValueOfParameter("\"Time\" Dim Name"); // Typically
-		// "Time"
-		// or
-		// "T"
 		this.colorDimName = this.parameters.getValueOfParameter("\"Color\" Dim Name");
 		this.blue = this.parameters.getValueOfParameter("Blue Color Value");
 		this.green = this.parameters.getValueOfParameter("Green Color Value");
@@ -274,8 +268,8 @@ public class JEX_SingleCell_MeasureMaxima extends JEXCrunchable {
 			{
 				min = Math.min(point.id, min);
 				max = Math.max(point.id, max);
-				totalPoints = totalPoints + e.getValue().getPointList().size();
 			}
+			totalPoints = totalPoints + e.getValue().getPointList().size();
 		}
 		Dim pDim = new Dim("Point", 0, max);
 		dataTable.add(pDim);

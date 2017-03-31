@@ -16,7 +16,7 @@ public class DimTableIterable implements Iterable<DimTable>{
 	@Override
 	public Iterator<DimTable> iterator()
 	{
-		// an iterator of DimValues given this DimName in this DimTable
+		// an iterator of DimTables, providing a new table for each subtable associated with each value in the specified Dim.
 		return new DimTableIterator(this.table, this.dimName);
 	}
 

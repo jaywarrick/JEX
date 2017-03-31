@@ -43,6 +43,7 @@ public class JEXLogOnPanel extends JFrame implements ActionListener {
 		Container c = this.getContentPane();
 		c.setBackground(DisplayStatics.background);
 		c.setLayout(new MigLayout("flowx,ins 0", "5[fill,grow]5[fill,grow]5[fill,grow]5", "5[fill,grow]5"));
+		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
 		createUserPanel();
 		openUserPanel();

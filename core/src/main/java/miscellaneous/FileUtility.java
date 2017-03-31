@@ -13,10 +13,14 @@ import java.util.regex.Pattern;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
+import org.apache.commons.io.FileUtils;
+
+import Database.SingleUserDatabase.JEXWriter;
 import jex.statics.JEXStatics;
 import logs.Logs;
-
-import org.apache.commons.io.FileUtils;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.type.numeric.RealType;
 
 public class FileUtility implements Comparator<File> {
 	
@@ -24,6 +28,24 @@ public class FileUtility implements Comparator<File> {
 	{
 		Desktop.getDesktop().open(new File(name));
 		System.out.println("Executed ! ");
+	}
+	
+	public static <T extends RealType<T>> void showImg(RandomAccessibleInterval<T> img, boolean defaultApp)
+	{
+		if(defaultApp)
+		{
+			String path = JEXWriter.saveImage(img);
+			try {
+				FileUtility.openFileDefaultApplication(path);
+			} catch (Exception e) {
+				Logs.log("Couldn't save, open, and show image.", FileUtility.class);
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			ImageJFunctions.show(img);
+		}
 	}
 	
 	public static void openFileDefaultApplication(File path) throws Exception
@@ -241,16 +263,7 @@ public class FileUtility implements Comparator<File> {
 	
 	public static String removeWhiteSpaceOnEnds(String s)
 	{
-		String temp = s;
-		while (temp.startsWith(" ") || temp.startsWith("\t"))
-		{
-			temp = temp.substring(1);
-		}
-		while (temp.endsWith(" ") || temp.endsWith("\t"))
-		{
-			temp = temp.substring(0, temp.length() - 1);
-		}
-		return temp;
+		return StringUtility.removeWhiteSpaceOnEnds(s);
 	}
 	
 	public static String getFileNameSuffixDigits(String pathOrFilename)
@@ -270,7 +283,11 @@ public class FileUtility implements Comparator<File> {
 		}
 		return suffix;
 	}
-	
+	/**
+	 * Function assumes function does not contain "\"
+	 * @param pathOrFilename
+	 * @return
+	 */
 	public static String getFileNameWithExtension(String pathOrFilename)
 	{
 		if(pathOrFilename == null)
@@ -281,7 +298,13 @@ public class FileUtility implements Comparator<File> {
 		File temp = new File(pathOrFilename);
 		temp = temp.getAbsoluteFile();
 		String fileName = temp.getName();
+		String[] items= fileName.split("\\\\"); 
+		if (items.length > 1){
+			return items[items.length-1];
+		}
 		return fileName;
+		
+		
 	}
 	
 	public static String getFileNameExtension(String pathOrFilename)

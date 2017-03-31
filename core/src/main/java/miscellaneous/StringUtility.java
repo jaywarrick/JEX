@@ -261,6 +261,25 @@ public class StringUtility implements Comparator<String> {
 		return compareString(thisString, thatString);
 	}
 	
+	public static String removeWhiteSpaceOnEnds(String s)
+	{
+		String temp = s;
+		while (temp.startsWith(" ") || temp.startsWith("\t"))
+		{
+			temp = temp.substring(1);
+		}
+		while (temp.endsWith(" ") || temp.endsWith("\t"))
+		{
+			temp = temp.substring(0, temp.length() - 1);
+		}
+		return temp;
+	}
+	
+	public static String removeAllWhitespace(String toFix)
+	{
+		return toFix.replaceAll("\\s+","");
+	}
+	
 	/**
 	 * Alphanumeric string sorter
 	 * 
@@ -350,5 +369,17 @@ public class StringUtility implements Comparator<String> {
 			}
 		}
 		return lengthFirstStr - lengthSecondStr;
+	}
+	
+	public static CSVList getCSVListAndRemoveWhiteSpaceOnEnds(String param)
+	{
+		CSVList temp = new CSVList(param);
+		CSVList ret = new CSVList();
+		for(String p : temp)
+		{
+			// This list may not be the same length as the channel dim but we'll test for that elsewhere.
+			ret.add(StringUtility.removeWhiteSpaceOnEnds(p));
+		}
+		return ret;
 	}
 }

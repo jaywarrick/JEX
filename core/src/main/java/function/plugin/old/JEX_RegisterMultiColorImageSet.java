@@ -1,5 +1,11 @@
 package function.plugin.old;
 
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.util.HashMap;
+import java.util.Map.Entry;
+import java.util.TreeMap;
+
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;
@@ -15,13 +21,8 @@ import function.imageUtility.TurboReg_;
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
 import image.roi.ROIPlus;
-
-import java.awt.Rectangle;
-import java.util.HashMap;
-import java.util.Map.Entry;
-import java.util.TreeMap;
-
 import jex.statics.JEXStatics;
+import jex.utilities.ROIUtility;
 import logs.Logs;
 import tables.Dim;
 import tables.DimTable;
@@ -235,21 +236,22 @@ public class JEX_RegisterMultiColorImageSet extends JEXCrunchable {
 		// //// Create a TurboReg reference and important variables
 		TurboReg_ reg = new TurboReg_();
 		ImagePlus target = null;
+		ImagePlus targetCropImage = null;
+		ImagePlus source = null;
+		ImagePlus sourceCropImage = null;
 		Rectangle rTarget = null;
-		int targetWidth = 10, targetHeight = 10;
+		Rectangle rSource = null;
+		ROIPlus roi; // Temp variable
+		int[] sCrop, tCrop;
 		TreeMap<DimensionMap,double[][]> sourcePts = new TreeMap<DimensionMap,double[][]>();
 		TreeMap<DimensionMap,double[][]> targetPts = new TreeMap<DimensionMap,double[][]>();
 		
 		// Do the alignment for the reference color first to fill sourcePts and
 		// targetPts for use with the other colors.
-		ImagePlus source = null;
-		int[] sourceCrop;
-		Rectangle r = null;
 		int count = 0;
 		int percentage = 0;
 		DimensionMap ptsMap = null;
 		Rectangle cropRoiDims = null;
-		
 		int total = imageLocationDimTable.mapCount() * (timeDimSize) * (colorDimSize + 1);
 		JEXStatics.statusBar.setProgressPercentage(0);
 		for (DimensionMap map : imageLocationDimTable.getMapIterator())
@@ -259,34 +261,22 @@ public class JEX_RegisterMultiColorImageSet extends JEXCrunchable {
 				return false;
 			}
 			
-			// Get the first target image information
-			target = new ImagePlus(images.get(map));
-			targetWidth = target.getWidth();
-			targetHeight = target.getHeight();
-			ROIPlus roi = roiMap.get(map);
-			if(roi == null)
-			{
-				rTarget = new Rectangle(0, 0, target.getWidth(), target.getHeight());
-			}
-			else
-			{
-				rTarget = roi.getPointList().getBounds();
-			}
-			int[] targetCrop = new int[] { rTarget.x, rTarget.y, rTarget.width, rTarget.height };
-			
 			// Align the appropriate sources
 			String lastTimeVal = null;
 			double dx = 0, dy = 0;
+			boolean firstTimeThrough = true;
 			for (String val : timeDim.dimValues) // Find the transformation for each time in the alignment color
 			{
-				if(!firstTimer && lastTimeVal != null)
+				if(this.isCanceled())
 				{
-					// Update the target image information
-					DimensionMap tempMap = map.copy();
-					tempMap.put(timeDimName, lastTimeVal);
-					target = new ImagePlus(images.get(tempMap));
-					targetWidth = target.getWidth();
-					targetHeight = target.getHeight();
+					return false;
+				}
+				
+				// Get the region of the target image to align
+				if(firstTimeThrough)
+				{
+					// Initialize the target image information
+					target = new ImagePlus(images.get(map));
 					roi = roiMap.get(map);
 					if(roi == null)
 					{
@@ -296,49 +286,84 @@ public class JEX_RegisterMultiColorImageSet extends JEXCrunchable {
 					{
 						rTarget = roi.getPointList().getBounds();
 					}
-					targetCrop = new int[] { rTarget.x, rTarget.y, rTarget.width, rTarget.height };
 				}
-				
-				if(this.isCanceled())
+				else if(!firstTimer)
 				{
-					return false;
+					// Update the target image information
+					DimensionMap tempMap = map.copy();
+					tempMap.put(timeDimName, lastTimeVal);
+					target = new ImagePlus(images.get(tempMap));
+					roi = roiMap.get(map);
+					if(roi == null)
+					{
+						rTarget = new Rectangle(0, 0, target.getWidth(), target.getHeight());
+					}
+					else
+					{
+						rTarget = roi.getPointList().getBounds();
+					}
 				}
+				target.setRoi(rTarget);
+				targetCropImage = new ImagePlus("TargetCropImage", target.getProcessor().crop());
+				tCrop = new int[]{0, 0, targetCropImage.getWidth(), targetCropImage.getHeight()};
+				
+				// Now get the region of the source image to align
 				DimensionMap newMap = map.copy();
 				newMap.put(timeDimName, val);
 				source = new ImagePlus(images.get(newMap));
 				roi = roiMap.get(newMap);
 				if(roi == null)
 				{
-					r = rTarget;
+					rSource = new Rectangle(rTarget);
 				}
 				else
 				{
-					r = roi.getPointList().getBounds();
+					rSource = roi.getPointList().getBounds();
 				}
-				sourceCrop = new int[] { r.x, r.y, r.width, r.height };
-				
 				Logs.log("Aligning " + newMap.toString(), 0, this);
-				reg.alignImages(source, sourceCrop, target, targetCrop, TurboReg_.TRANSLATION, false);
+				Point cropCenterDisplacement = this.getDisplacement(rTarget,  rSource);
+				rSource = getSourceRoiLikeTargetRoi(rTarget, cropCenterDisplacement);
+				source.setRoi(rSource);
+				sourceCropImage = new ImagePlus("SourceCropImage", source.getProcessor().crop());
+				sCrop = new int[]{0, 0, sourceCropImage.getWidth(), sourceCropImage.getHeight()};
 				
-				// Don't save the image yet. We need to crop it anyway
+				//				targetCropImage.show();
+				//				sourceCropImage.show();
+				
+				// Align the selected region of the source image with the target image
+				reg.alignImages(sourceCropImage, sCrop, targetCropImage, tCrop, TurboReg_.TRANSLATION, false);
+				
+				// Don't save the image yet. We need to crop it after finding all the necessary translations
 				ptsMap = newMap.copy();
 				ptsMap.remove(colorDimName);
-				if(!firstTimer)
+				if(firstTimeThrough)
 				{
-					dx = dx + reg.getSourcePoints()[0][0];
-					dy = dy + reg.getSourcePoints()[0][1];
+					// Put a zero translations in for the first image relative to itself (i.e., source = target)
+					sourcePts.put(ptsMap, reg.getTargetPoints());
+					targetPts.put(ptsMap, reg.getTargetPoints());
+				}
+				else if(!firstTimer)
+				{
+					dx = dx + reg.getSourcePoints()[0][0] + cropCenterDisplacement.x;
+					dy = dy + reg.getSourcePoints()[0][1] + cropCenterDisplacement.y;
 					double[][] newSourcePoints = new double[][] { { dx, dy }, { 0.0, 0.0 }, { 0.0, 0.0 }, { 0.0, 0.0 } };
 					sourcePts.put(ptsMap, newSourcePoints);
 					targetPts.put(ptsMap, reg.getTargetPoints());
 				}
 				else
 				{
-					sourcePts.put(ptsMap, reg.getSourcePoints());
+					dx = reg.getSourcePoints()[0][0] + cropCenterDisplacement.x;
+					dy = reg.getSourcePoints()[0][1] + cropCenterDisplacement.y;
+					double[][] newSourcePoints = new double[][] { { dx, dy }, { 0.0, 0.0 }, { 0.0, 0.0 }, { 0.0, 0.0 } };
+					sourcePts.put(ptsMap, newSourcePoints);
 					targetPts.put(ptsMap, reg.getTargetPoints());
 				}
 				
-				source.flush();
-				source = null;
+				if(source != null)
+				{
+					source.flush();
+					source = null;
+				}
 				
 				lastTimeVal = val;
 				
@@ -346,10 +371,12 @@ public class JEX_RegisterMultiColorImageSet extends JEXCrunchable {
 				count = count + 1;
 				percentage = (int) (100 * ((double) count / (double) total));
 				JEXStatics.statusBar.setProgressPercentage(percentage);
+				firstTimeThrough = false;
 			}
+			firstTimeThrough = true;
 		}
 		
-		cropRoiDims = this.getCropROI(sourcePts, targetPts, targetWidth, targetHeight);
+		cropRoiDims = this.getCropROI(sourcePts, targetPts, target.getWidth(), target.getHeight());
 		ImagePlus im;
 		ImageProcessor imp;
 		DimensionMap newMap = null;
@@ -386,20 +413,15 @@ public class JEX_RegisterMultiColorImageSet extends JEXCrunchable {
 					Logs.log("Applying alignment to " + newMap.toString(), 0, this);
 					reg.sourcePoints = sourcePts.get(newMap);
 					reg.targetPoints = targetPts.get(newMap);
-					im = reg.transformImage(source, targetWidth, targetHeight, TurboReg_.TRANSLATION, false);
+					im = reg.transformImage(source, target.getWidth(), target.getHeight(), TurboReg_.TRANSLATION, false);
 					if(cropResults)
 					{
 						imp = im.getProcessor();
 						imp.setRoi(cropRoiDims);
 						imp = imp.crop();
-						String path = JEXWriter.saveImage(imp);
-						outputMap.put(newMap.copy(), path);
 					}
-					else
-					{
-						String path = JEXWriter.saveImage(im);
-						outputMap.put(newMap, path);
-					}
+					String path = JEXWriter.saveImage(im);
+					outputMap.put(newMap.copy(), path);
 					
 					imp = null;
 					im.killRoi();
@@ -425,6 +447,21 @@ public class JEX_RegisterMultiColorImageSet extends JEXCrunchable {
 		
 		// Return status
 		return true;
+	}
+	
+	public Point getDisplacement(Rectangle roi1, Rectangle roi2)
+	{
+		Point p1 = ROIUtility.getRectangleCenter(new ROIPlus(roi1));
+		Point p2 = ROIUtility.getRectangleCenter(new ROIPlus(roi2));
+		return new Point(p2.x-p1.x, p2.y-p1.y);
+	}
+	
+	public Rectangle getSourceRoiLikeTargetRoi(Rectangle rTarget, Point cropCenterDisplacement)
+	{
+		Rectangle ret = new Rectangle(rTarget);
+		ret.x = ret.x + cropCenterDisplacement.x;
+		ret.y = ret.y + cropCenterDisplacement.y;
+		return ret;
 	}
 	
 	public Rectangle getCropROI(TreeMap<DimensionMap,double[][]> sourcePts, TreeMap<DimensionMap,double[][]> targetPts, int imageWidth, int imageHeight)

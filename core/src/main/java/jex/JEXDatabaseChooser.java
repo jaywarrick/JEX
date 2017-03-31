@@ -1,8 +1,5 @@
 package jex;
 
-import Database.SingleUserDatabase.JEXDBInfo;
-import guiObject.DialogGlassPane;
-
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -20,6 +17,7 @@ import jex.statics.DisplayStatics;
 import jex.statics.JEXStatics;
 import logs.Logs;
 import miscellaneous.FontUtility;
+import Database.SingleUserDatabase.JEXDBInfo;
 
 public class JEXDatabaseChooser extends JFrame implements ActionListener {
 	
@@ -37,6 +35,7 @@ public class JEXDatabaseChooser extends JFrame implements ActionListener {
 	{
 		this.setLayout(new BorderLayout());
 		this.setBackground(DisplayStatics.background);
+		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
 		databasePane = new JEXAvailableDatabases(this);
 		
@@ -86,26 +85,11 @@ public class JEXDatabaseChooser extends JFrame implements ActionListener {
 	public void openDatabase(JEXDBInfo dbItem)
 	{
 		Logs.log("Opening database " + dbItem.getDirectory(), 0, this);
-		JEXStatics.main.setTitle("Viewing database: " + dbItem.getName());
+		JEXStatics.main.setTitle("Viewing database: " + dbItem.getDBName());
 		JEXStatics.main.showLogOnFrame(false);
 		JEXStatics.main.showDatabaseChooserFrame(false);
 		
-		boolean isdirty = JEXStatics.jexManager.isCurrentDatabaseModified();
-		if(isdirty)
-		{
-			DialogGlassPane diagPanel = new DialogGlassPane("Warning");
-			diagPanel.setSize(400, 200);
-			
-			OpenAnywaysPane yesno = new OpenAnywaysPane(dbItem);
-			diagPanel.setCentralPanel(yesno);
-			
-			JEXStatics.main.displayGlassPane(diagPanel, true);
-		}
-		else
-		{
-			Logs.log("Database checked and is ready to open", 0, this);
-			JEXStatics.jexManager.setDatabaseInfo(dbItem);
-		}
+		JEXStatics.jexManager.setDatabaseInfo(dbItem);
 		
 		JEXStatics.main.showMainJEXWindow(true);
 		JEXStatics.main.displayCreationPane();

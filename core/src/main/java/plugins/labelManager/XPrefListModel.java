@@ -4,7 +4,7 @@ import javax.swing.AbstractListModel;
 
 import preferences.XPreferences;
 
-public class XPrefListModel extends AbstractListModel {
+public class XPrefListModel extends AbstractListModel<String> {
 	
 	/**
 	 * 

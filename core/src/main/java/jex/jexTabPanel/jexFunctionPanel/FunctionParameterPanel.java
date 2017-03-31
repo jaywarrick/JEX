@@ -36,10 +36,10 @@ public class FunctionParameterPanel {
 		this.panel.setLayout(new MigLayout("flowy,ins 2", "[fill,grow]", "[]2[fill,grow]"));
 		// Build the selector header
 		title1 = new JLabel("No function selected");
-		headerPane1 = new JPanel(new MigLayout("flowy,center,ins 1", "[center]", "[center]"));
+		headerPane1 = new JPanel(new MigLayout("flowy,center,ins 1", "[grow,center]", "[center]"));
 		headerPane1.setBackground(DisplayStatics.menuBackground);
 		title1.setFont(FontUtility.boldFont);
-		headerPane1.add(title1);
+		headerPane1.add(title1, "wmin 0");
 		this.panel.add(this.headerPane1, "growx");
 	}
 	
@@ -60,6 +60,7 @@ public class FunctionParameterPanel {
 			
 			String funName = (function == null) ? "No function selected" : function.getFunctionName();
 			this.title1.setText(funName);
+			this.title1.setToolTipText(funName);
 			
 			this.panel.add(headerPane1, "growx");
 			this.panel.add(paramPanel.panel(), "grow");

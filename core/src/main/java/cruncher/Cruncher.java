@@ -23,6 +23,8 @@ public class Cruncher {
 	public volatile boolean stopCrunch = false;
 	public volatile boolean stopGuiTask = false;
 	
+	public static int STANDARD_NUM_THREADS = 4;
+	
 	public BatchPanelList batchList = new BatchPanelList();
 	
 	List<Callable<Integer>> guiTasks;
@@ -57,6 +59,7 @@ public class Cruncher {
 			batch.add(ticket);
 		}
 		this.batchList.add(batch);
+		
 		for (Ticket ticket : batch)
 		{
 			this.runTicket(ticket);
@@ -68,6 +71,19 @@ public class Cruncher {
 		Logs.log("Added ticket to running queue ", 1, this);
 		JEXStatics.statusBar.setStatusText("Added ticket to running queue ");
 		this.ticketQueue.submit(ticket);
+	}
+	
+	public void setNumThreads(Integer numThreads)
+	{
+		this.multiFunctionQueue.shutdown();
+		if(numThreads == null)
+		{
+			this.multiFunctionQueue = Executors.newFixedThreadPool(STANDARD_NUM_THREADS);
+		}
+		else
+		{
+			this.multiFunctionQueue = Executors.newFixedThreadPool(numThreads);
+		}
 	}
 	
 	public Future<Integer> runFunction(FunctionCallable function)

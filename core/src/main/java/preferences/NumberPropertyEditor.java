@@ -11,7 +11,7 @@ import javax.swing.text.NumberFormatter;
 /**
  * Base editor for numbers. <br>
  */
-public class NumberPropertyEditor extends AbstractPropertyEditor {
+public class NumberPropertyEditor extends AbstractPropertyEditor<JFormattedTextField> {
 	
 	@SuppressWarnings("rawtypes")
 	private final Class type;
@@ -27,13 +27,13 @@ public class NumberPropertyEditor extends AbstractPropertyEditor {
 		
 		editor = new JFormattedTextField();
 		this.type = type;
-		((JFormattedTextField) editor).setValue(getDefaultValue());
-		((JFormattedTextField) editor).setBorder(LookAndFeelTweaks.EMPTY_BORDER);
+		editor.setValue(getDefaultValue());
+		editor.setBorder(LookAndFeelTweaks.EMPTY_BORDER);
 		
 		// use a custom formatter to have numbers with up to 64 decimals
 		NumberFormat format = NumberConverters.getDefaultFormat();
 		
-		((JFormattedTextField) editor).setFormatterFactory(new DefaultFormatterFactory(new NumberFormatter(format)));
+		editor.setFormatterFactory(new DefaultFormatterFactory(new NumberFormatter(format)));
 	}
 	
 	@Override
@@ -85,11 +85,11 @@ public class NumberPropertyEditor extends AbstractPropertyEditor {
 	{
 		if(value instanceof Number)
 		{
-			((JFormattedTextField) editor).setText(value.toString());
+			editor.setText(value.toString());
 		}
 		else
 		{
-			((JFormattedTextField) editor).setValue(getDefaultValue());
+			editor.setValue(getDefaultValue());
 		}
 		lastGoodValue = value;
 	}

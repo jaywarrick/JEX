@@ -104,10 +104,10 @@ public class CountPointsInROIToFileObjects extends JEXPlugin {
 
 		// Unpack the results
 		TreeMap<DimensionMap,ROIPlus> outputROI = (TreeMap<DimensionMap,ROIPlus>) results.get("outputROI");
-		TreeMap<DimensionMap,String> regionCounts = (TreeMap<DimensionMap,String>) results.get("regionCounts");
-		TreeMap<DimensionMap,String> imageCounts = (TreeMap<DimensionMap,String>)results.get("imageCounts");
-		TreeMap<DimensionMap,String> totalRegionCount = (TreeMap<DimensionMap,String>) results.get("totalRegionCount");
-		TreeMap<DimensionMap,String> totalImageCount = (TreeMap<DimensionMap,String>) results.get("totalImageCount");
+		TreeMap<DimensionMap,Double> regionCounts = (TreeMap<DimensionMap,Double>) results.get("regionCounts");
+		TreeMap<DimensionMap,Double> imageCounts = (TreeMap<DimensionMap,Double>)results.get("imageCounts");
+		TreeMap<DimensionMap,Double> totalRegionCount = (TreeMap<DimensionMap,Double>) results.get("totalRegionCount");
+		TreeMap<DimensionMap,Double> totalImageCount = (TreeMap<DimensionMap,Double>) results.get("totalImageCount");
 		
 		// Set outputs
 		String path6 = JEXTableWriter.writeTable("Points in Region", regionCounts);
@@ -138,14 +138,14 @@ public class CountPointsInROIToFileObjects extends JEXPlugin {
 
 		// Initialize some variables
 		int progressCount = 0,   progressPercent = 0;	// For monitoring progress
-		int totalImageCount = 0, totalRegionCount = 0;	// Final totals across all images and ROI regions
+		double totalImageCount = 0, totalRegionCount = 0;	// Final totals across all images and ROI regions
 		ROIPlus point, region;							
 		Shape regionShape;								
 		TreeMap<DimensionMap,ROIPlus> outputROI = new TreeMap<DimensionMap,ROIPlus>();	// Contained points
-		TreeMap<DimensionMap,String> regionCounts = new TreeMap<DimensionMap,String>();	// Counts for each region
-		TreeMap<DimensionMap,String> imageCounts = new TreeMap<DimensionMap,String>(); 	// Counts for each image	
-		TreeMap<DimensionMap,String> mapTotalRegionCount = new TreeMap<DimensionMap,String>();	// Final total converted to a map
-		TreeMap<DimensionMap,String> mapTotalImageCount = new TreeMap<DimensionMap,String>();	// Final total converted to a map
+		TreeMap<DimensionMap,Double> regionCounts = new TreeMap<>();	// Counts for each region
+		TreeMap<DimensionMap,Double> imageCounts = new TreeMap<>(); 	// Counts for each image	
+		TreeMap<DimensionMap,Double> mapTotalRegionCount = new TreeMap<>();	// Final total converted to a map
+		TreeMap<DimensionMap,Double> mapTotalImageCount = new TreeMap<>();	// Final total converted to a map
 		TreeMap<String,Object> out = new TreeMap<String,Object>();	// Contains all counts
 		
 		// Read in the ROIs
@@ -163,8 +163,8 @@ public class CountPointsInROIToFileObjects extends JEXPlugin {
 
 			DimensionMap mapToSave = map.copy();
 			point = pointROI.get(map);
-			int singleImageCount = 0;
-			int singleRegionCount = 0;
+			double singleImageCount = 0;
+			double singleRegionCount = 0;
 
 			// If no Region ROI was specified, count everything.
 			// -1 is used to indicate value doesn't exist.  I should change this later to something better.
@@ -180,8 +180,8 @@ public class CountPointsInROIToFileObjects extends JEXPlugin {
 				}
 				mapToSave.put("SubRegionNumber", ""+ singleRegionCount);
 				outputROI.put(mapToSave.copy(), new ROIPlus(pl, ROIPlus.ROI_POINT));
-				regionCounts.put(mapToSave.copy(), "" + (-1));
-				imageCounts.put(mapToSave.copy(), "" + singleImageCount);
+				regionCounts.put(mapToSave.copy(), -1.0);
+				imageCounts.put(mapToSave.copy(), singleImageCount);
 			}
 			// Otherwise count within each region
 			else
@@ -207,8 +207,8 @@ public class CountPointsInROIToFileObjects extends JEXPlugin {
 					}
 					mapToSave.put("SubRegionNumber", ""+singleRegionCount);
 					outputROI.put(mapToSave.copy(), new ROIPlus(pl, ROIPlus.ROI_POINT));
-					regionCounts.put(mapToSave.copy(), "" + pl.size());
-					imageCounts.put(mapToSave.copy(), "" + singleImageCount);
+					regionCounts.put(mapToSave.copy(), (double) pl.size());
+					imageCounts.put(mapToSave.copy(), singleImageCount);
 					singleRegionCount = singleRegionCount + 1;
 				}
 			}
@@ -220,8 +220,8 @@ public class CountPointsInROIToFileObjects extends JEXPlugin {
 		}
 			
 		DimensionMap map = new DimensionMap();	// temporary
-		mapTotalImageCount.put(map.copy(),""+totalImageCount);
-		mapTotalRegionCount.put(map.copy(), ""+totalRegionCount);
+		mapTotalImageCount.put(map.copy(), totalImageCount);
+		mapTotalRegionCount.put(map.copy(), totalRegionCount);
 			
 		// Pack everything up and return it.
 		out.put("outputROI", outputROI);

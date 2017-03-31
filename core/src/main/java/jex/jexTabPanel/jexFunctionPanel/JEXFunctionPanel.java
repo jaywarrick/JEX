@@ -1,12 +1,5 @@
 package jex.jexTabPanel.jexFunctionPanel;
 
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DBObjects.JEXWorkflow;
-import Database.Definition.TypeName;
-import cruncher.JEXFunction;
-import guiObject.DialogGlassPane;
-
 import java.awt.BorderLayout;
 import java.io.File;
 import java.util.ArrayList;
@@ -18,32 +11,37 @@ import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 
-import jex.ErrorMessagePane;
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DBObjects.JEXWorkflow;
+import Database.Definition.TypeName;
+import cruncher.JEXFunction;
 import jex.statics.DisplayStatics;
+import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import logs.Logs;
 import miscellaneous.FileUtility;
 import net.miginfocom.swing.MigLayout;
 
 public class JEXFunctionPanel extends JPanel {
-	
+
 	private static final long serialVersionUID = 1L;
-	
+
 	// GUI
 	private JSplitPane centerPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 	protected FunctionListPanel centerTopHalf;
 	public FunctionParameterPanel paramPanel;
 	public JPanel centerBottomHalf;
 	// private FunctionPreviewPanel functionPreviewPanel ;
-	
+
 	// Function list
 	public static List<FunctionBlockPanel> functionList = new ArrayList<FunctionBlockPanel>(0);
-	
+
 	JEXFunctionPanel()
 	{
 		initialize();
 	}
-	
+
 	/**
 	 * Detach the signals
 	 */
@@ -51,7 +49,7 @@ public class JEXFunctionPanel extends JPanel {
 	{
 		// SSCenter.defaultCenter().disconnect(this);
 	}
-	
+
 	private void initialize()
 	{
 		// functionPreviewPanel = new FunctionPreviewPanel();
@@ -62,25 +60,25 @@ public class JEXFunctionPanel extends JPanel {
 		this.centerBottomHalf.setBackground(DisplayStatics.lightBackground);
 		this.centerBottomHalf.add(JEXStatics.cruncher.batchList.panel(), "grow");
 		this.centerBottomHalf.add(paramPanel.panel(), "grow");
-		
+
 		centerTopHalf = new FunctionListPanel(this);
-		
-		centerPane.setBackground(DisplayStatics.background);
+
+		centerPane.setBackground(DisplayStatics.lightBackground);
 		centerPane.setBorder(BorderFactory.createEmptyBorder());
 		centerPane.setLeftComponent(centerTopHalf.panel());
 		centerPane.setRightComponent(centerBottomHalf);
 		centerPane.setDividerLocation(250);
 		centerPane.setDividerSize(6);
 		centerPane.setResizeWeight(0);
-		
+
 		this.setLayout(new BorderLayout());
 		this.setBackground(DisplayStatics.background);
 		this.add(centerPane);
 		this.repaint();
 	}
-	
+
 	// //// Getters and setters
-	
+
 	/**
 	 * Return the function list
 	 */
@@ -88,7 +86,7 @@ public class JEXFunctionPanel extends JPanel {
 	{
 		return JEXFunctionPanel.functionList;
 	}
-	
+
 	/**
 	 * Move the function functionBlock up one position
 	 * 
@@ -100,20 +98,20 @@ public class JEXFunctionPanel extends JPanel {
 		int index = getIndex(functionBlock);
 		if(index == -1)
 			return;
-		
+
 		// Make the new index of the function
 		int newIndex = index - 1;
 		if(newIndex < 0)
 			newIndex = 0;
-		
+
 		// Move the function
 		functionList.remove(index);
 		functionList.add(newIndex, functionBlock);
-		
+
 		// Refresh display
 		centerTopHalf.rebuildList();
 	}
-	
+
 	/**
 	 * Move the function functionBlock down one position
 	 * 
@@ -125,20 +123,20 @@ public class JEXFunctionPanel extends JPanel {
 		int index = getIndex(functionBlock);
 		if(index == -1)
 			return;
-		
+
 		// Make the new index of the function
 		int newIndex = index + 1;
 		if(newIndex >= functionList.size())
 			newIndex = functionList.size() - 1;
-		
+
 		// Move the function
 		functionList.remove(index);
 		functionList.add(newIndex, functionBlock);
-		
+
 		// Refresh display
 		centerTopHalf.rebuildList();
 	}
-	
+
 	/**
 	 * Delete the function
 	 * 
@@ -150,14 +148,14 @@ public class JEXFunctionPanel extends JPanel {
 		int index = getIndex(functionBlock);
 		if(index == -1)
 			return;
-		
+
 		// Remove the function
 		JEXFunctionPanel.functionList.remove(index);
-		
+
 		// Refresh display
 		centerTopHalf.rebuildList();
 	}
-	
+
 	/**
 	 * Return the index of function in functionblockpanel functionBlack
 	 * 
@@ -174,7 +172,7 @@ public class JEXFunctionPanel extends JPanel {
 		}
 		return -1;
 	}
-	
+
 	/**
 	 * Add a function to the list
 	 * 
@@ -185,20 +183,20 @@ public class JEXFunctionPanel extends JPanel {
 		// Create the new function block
 		FunctionBlockPanel newFunc = new FunctionBlockPanel(this);
 		newFunc.setFunction(function);
-		
+
 		// add it to the list
 		JEXFunctionPanel.functionList.add(newFunc);
-		
+
 		// rebuild the display
 		centerTopHalf.rebuildList();
-		
+
 		// set the selected function
 		this.selectFunction(newFunc);
-		
+
 		// return the functionblock
 		return newFunc;
 	}
-	
+
 	/**
 	 * Run the function FUNCTION
 	 * 
@@ -213,45 +211,30 @@ public class JEXFunctionPanel extends JPanel {
 		{
 			Logs.log("No selected entries to run the function", 1, this);
 			JEXStatics.statusBar.setStatusText("No selected entries");
-			
-			DialogGlassPane diagPanel = new DialogGlassPane("Warning");
-			diagPanel.setSize(400, 200);
-			
-			ErrorMessagePane errorPane = new ErrorMessagePane("You need to select at least one entry in the database to run this function");
-			diagPanel.setCentralPanel(errorPane);
-			
-			JEXStatics.main.displayGlassPane(diagPanel, true);
+
+			JEXDialog.messageDialog("You need to select at least one entry in the database to run this function", this);
 			return;
 		}
 		if(function == null || functionList.size() == 0)
 		{
 			Logs.log("No functions were specified", 1, this);
 			JEXStatics.statusBar.setStatusText("No functions were specified");
-			
-			DialogGlassPane diagPanel = new DialogGlassPane("Warning");
-			diagPanel.setSize(400, 200);
-			
-			ErrorMessagePane errorPane = new ErrorMessagePane("You need to select at least one function to run");
-			diagPanel.setCentralPanel(errorPane);
-			
-			JEXStatics.main.displayGlassPane(diagPanel, true);
+
+			JEXDialog.messageDialog("You need to select at least one function to run", this);
 			return;
 		}
-		
+
 		// / Else ///
 		// Loop through the functions
 		JEXWorkflow workflow = new JEXWorkflow("JEXWorkflow Temp Name");
 		// Get the function into a workflow object
 		workflow.add(function.duplicate());
-		
+
 		JEXStatics.cruncher.runWorkflow(workflow, entries, autoSave);
 		Logs.log(function.getFunctionName() + " submitted", 0, this);
 	}
-	
-	/**
-	 * Run all the functions in the list one by one for all entries available
-	 */
-	public void runAllFunctions(boolean autoSave)
+
+	private TreeSet<JEXEntry> getSelectedEntries()
 	{
 		// Get the entries to run the function on
 		TreeSet<JEXEntry> entries = null;
@@ -260,33 +243,24 @@ public class JEXFunctionPanel extends JPanel {
 		{
 			Logs.log("No selected entries to run the function", 1, this);
 			JEXStatics.statusBar.setStatusText("No selected entries");
-			
-			DialogGlassPane diagPanel = new DialogGlassPane("Warning");
-			diagPanel.setSize(400, 200);
-			
-			ErrorMessagePane errorPane = new ErrorMessagePane("You need to select at least one entry in the database to run this function");
-			diagPanel.setCentralPanel(errorPane);
-			
-			JEXStatics.main.displayGlassPane(diagPanel, true);
-			return;
+
+			JEXDialog.messageDialog("Warning: You need to select at least one entry in the database to run this function", this);
+
+			return null;
 		}
 		if(functionList.size() == 0)
 		{
 			Logs.log("No functions were specified", 1, this);
 			JEXStatics.statusBar.setStatusText("No functions were specified");
-			
-			DialogGlassPane diagPanel = new DialogGlassPane("Warning");
-			diagPanel.setSize(400, 200);
-			
-			ErrorMessagePane errorPane = new ErrorMessagePane("You need to select at least one function to run");
-			diagPanel.setCentralPanel(errorPane);
-			
-			JEXStatics.main.displayGlassPane(diagPanel, true);
-			return;
+			JEXDialog.messageDialog("Warning: No functions were specified.", this);
+			return null;
 		}
-		
-		// / Else ///
-		// Loop through the functions
+
+		return entries;
+	}
+
+	private JEXWorkflow getWorkflow()
+	{
 		JEXWorkflow workflow = new JEXWorkflow("JEXWorkflow Temp Name");
 		for (FunctionBlockPanel fb : functionList)
 		{
@@ -294,9 +268,44 @@ public class JEXFunctionPanel extends JPanel {
 			JEXFunction function = fb.getFunction();
 			workflow.add(function.duplicate());
 		}
-		
+		return workflow;
+	}
+
+	public void runAllFunctions(boolean autoSave)
+	{
+		// Get the entries to run the function on
+		TreeSet<JEXEntry> entries = getSelectedEntries();
+		if(entries == null)
+		{
+			// Warning messages part of getSelectedEntries function
+			return;
+		}
+
+		// / Else ///
+		// Get the workflow
+		JEXWorkflow workflow = getWorkflow();
+
+		// Rarely used capability. Now using to just save the workflow.
 		JEXStatics.cruncher.runWorkflow(workflow, entries, autoSave);
-		
+	}
+
+	/**
+	 * Run all the functions in the list one by one for all entries available
+	 */
+	public void saveAllFunctions(boolean autoSave)
+	{
+		// Get the entries to run the function on
+		TreeSet<JEXEntry> entries = getSelectedEntries();
+		if(entries == null)
+		{
+			// Warning messages part of getSelectedEntries function
+			return;
+		}
+
+		// / Else ///
+		// Get the workflow
+		JEXWorkflow workflow = getWorkflow();
+
 		// Save off workflow object
 		String firstFunc = workflow.get(0).getFunctionName();
 		String lastFunc = null;
@@ -313,7 +322,7 @@ public class JEXFunctionPanel extends JPanel {
 		{
 			workflowName = JEXStatics.jexDBManager.getUniqueObjectName(entries, JEXData.WORKFLOW, firstFunc);
 		}
-		
+
 		TreeMap<JEXEntry,JEXData> toAdd = new TreeMap<JEXEntry,JEXData>();
 		for (JEXEntry entry : entries)
 		{
@@ -322,8 +331,12 @@ public class JEXFunctionPanel extends JPanel {
 			toAdd.put(entry, work);
 		}
 		JEXStatics.jexDBManager.saveDataInEntries(toAdd);
+		if(autoSave)
+		{
+			JEXStatics.jexManager.saveCurrentDatabase();
+		}
 	}
-	
+
 	/**
 	 * Select the function form functionblockpanel fb
 	 * 
@@ -333,7 +346,7 @@ public class JEXFunctionPanel extends JPanel {
 	{
 		this.centerTopHalf.selectFunction(fb);
 	}
-	
+
 	/**
 	 * Returns the selected function
 	 * 
@@ -343,7 +356,7 @@ public class JEXFunctionPanel extends JPanel {
 	{
 		return this.centerTopHalf.getSelectedFunction();
 	}
-	
+
 	/**
 	 * Save the list of functions into an arff file
 	 * 
@@ -361,7 +374,7 @@ public class JEXFunctionPanel extends JPanel {
 		}
 		toSave.saveWorkflow(file);
 	}
-	
+
 	/**
 	 * Load function located at path FILE
 	 * 
@@ -372,7 +385,7 @@ public class JEXFunctionPanel extends JPanel {
 		JEXWorkflow workflow = JEXWorkflow.loadWorkflowFile(file);
 		loadWorkflow(workflow);
 	}
-	
+
 	/**
 	 * Load function located at path FILE
 	 * 
@@ -386,7 +399,7 @@ public class JEXFunctionPanel extends JPanel {
 			fb.testFunction();
 		}
 	}
-	
+
 	/**
 	 * Return true if the typename is set for the output of one of the existing functions
 	 * 
@@ -398,10 +411,10 @@ public class JEXFunctionPanel extends JPanel {
 		for (FunctionBlockPanel fb : JEXFunctionPanel.functionList)
 		{
 			JEXFunction function = fb.getFunction();
-			
+
 			// Get the set names
 			TreeMap<Integer,TypeName> outputs = function.getExpectedOutputs();
-			
+
 			// Get the normal names
 			for (Integer index : outputs.keySet())
 			{
@@ -409,13 +422,13 @@ public class JEXFunctionPanel extends JPanel {
 					return true;
 			}
 		}
-		
+
 		return false;
 	}
-	
+
 	public boolean isAutoSaveSelected()
 	{
 		return this.centerTopHalf.isAutoSaveSelected();
 	}
-	
+
 }

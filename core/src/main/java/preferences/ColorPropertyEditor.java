@@ -13,7 +13,7 @@ import javax.swing.JPanel;
  * ColorPropertyEditor. <br>
  * 
  */
-public class ColorPropertyEditor extends AbstractPropertyEditor {
+public class ColorPropertyEditor extends AbstractPropertyEditor<JPanel> {
 	
 	private ColorCellRenderer label;
 	private JButton button;
@@ -22,9 +22,9 @@ public class ColorPropertyEditor extends AbstractPropertyEditor {
 	public ColorPropertyEditor()
 	{
 		editor = new JPanel(new BorderLayout(0, 0));
-		((JPanel) editor).add("Center", label = new ColorCellRenderer());
+		editor.add("Center", label = new ColorCellRenderer());
 		label.setOpaque(false);
-		((JPanel) editor).add("East", button = new FixedButton());
+		editor.add("East", button = new FixedButton());
 		button.addActionListener(new ActionListener() {
 			
 			public void actionPerformed(ActionEvent e)
@@ -32,7 +32,7 @@ public class ColorPropertyEditor extends AbstractPropertyEditor {
 				selectColor();
 			}
 		});
-		((JPanel) editor).setOpaque(false);
+		editor.setOpaque(false);
 	}
 	
 	@Override

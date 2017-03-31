@@ -90,7 +90,7 @@ public class JEX_FindEdges extends JEXCrunchable {
 	@Override
 	public boolean allowMultithreading()
 	{
-		return false;
+		return true;
 	}
 	
 	// ----------------------------------------------------

@@ -129,7 +129,6 @@ public class Montage1Dim extends JEXPlugin {
 			ImagePlus montage = makeMontageFromJEXStack(mapsToGet, imageMap, cols);
 
 			// Save the montage
-
 			String path = JEXWriter.saveImage(montage);
 
 			// Return the result to the database
@@ -139,14 +138,21 @@ public class Montage1Dim extends JEXPlugin {
 		{
 			for (DimensionMap partialMap : partialTable.getDimensionMaps())
 			{
+				if(this.isCanceled())
+				{
+					return false;
+				}
 				List<DimensionMap> mapsToGet = this.getMapsForStitching(stackDim, partialMap);
 
 				// Then make montage
 				ImagePlus montage = makeMontageFromJEXStack(mapsToGet, imageMap, cols);
 
 				// Save the montage
-				String path = JEXWriter.saveImage(montage);	
-				outputMap.put(partialMap, path);
+				if(montage != null)
+				{
+					String path = JEXWriter.saveImage(montage);	
+					outputMap.put(partialMap, path);
+				}
 			}
 
 			// Set the outputs
@@ -160,6 +166,11 @@ public class Montage1Dim extends JEXPlugin {
 	public ImagePlus makeMontageFromJEXStack(List<DimensionMap> maps, TreeMap<DimensionMap,String> files, int cols)
 	{
 		ImagePlus im = ImageUtility.makeImagePlusStackFromJEXStack(maps, files);
+		
+		if(im == null)
+		{
+			return null;
+		}
 
 		int rows = (int) Math.ceil(((double) maps.size())/((double) cols));
 

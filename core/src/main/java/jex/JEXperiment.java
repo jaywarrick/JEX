@@ -1,9 +1,5 @@
 package jex;
 
-import guiObject.DialogGlassPane;
-import guiObject.SignalMenuButton;
-import icons.IconRepository;
-
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Container;
@@ -24,6 +20,7 @@ import java.awt.event.WindowListener;
 import java.io.File;
 
 import javax.swing.AbstractAction;
+import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JComponent;
@@ -36,6 +33,10 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.WindowConstants;
 
+import Database.SingleUserDatabase.JEXDBIO;
+import cruncher.Cruncher;
+import guiObject.SignalMenuButton;
+import icons.IconRepository;
 import jex.jexTabPanel.JEXTabPanelController;
 import jex.jexTabPanel.creationPanel.JEXCreationPanelController;
 import jex.jexTabPanel.jexDistributionPanel.JEXDistributionPanelController;
@@ -57,8 +58,6 @@ import preferences.XPreferences;
 import rtools.R;
 import signals.SSCenter;
 import updates.Updater;
-import Database.SingleUserDatabase.JEXDBIO;
-import cruncher.Cruncher;
 
 public class JEXperiment extends JFrame implements ActionListener, WindowListener, WindowFocusListener, KeyEventDispatcher {
 	
@@ -112,6 +111,7 @@ public class JEXperiment extends JFrame implements ActionListener, WindowListene
 		
 		// Properties of this window
 		this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+		this.addWindowListener(this);
 		this.setVisible(false);
 		this.setTitle("Je'Xperiment - Databasing made for the biologist");
 		
@@ -252,22 +252,22 @@ public class JEXperiment extends JFrame implements ActionListener, WindowListene
 		this.leftPanel.setPreferredSize(new Dimension(300, 300));
 		
 		// Prepare the right split panel
-		this.centerSplitPane.setBackground(DisplayStatics.background);
-		this.centerSplitPane.setBorder(null);
+		this.centerSplitPane.setBackground(DisplayStatics.lightBackground);
+		this.centerSplitPane.setBorder(BorderFactory.createEmptyBorder());
+		this.centerSplitPane.setLeftComponent(this.centerPane);
+		this.centerSplitPane.setRightComponent(new JPanel());
 		this.centerSplitPane.setDividerLocation(300);
 		this.centerSplitPane.setDividerSize(6);
 		this.centerSplitPane.setResizeWeight(1.0);
-		this.centerSplitPane.setLeftComponent(this.centerPane);
-		this.centerSplitPane.setRightComponent(new JPanel());
 		
 		// Add the right split panel
-		this.menuSplitPane.setBackground(DisplayStatics.background);
-		this.menuSplitPane.setBorder(null);
+		this.menuSplitPane.setBackground(DisplayStatics.lightBackground);
+		this.menuSplitPane.setBorder(BorderFactory.createEmptyBorder());
+		this.menuSplitPane.setLeftComponent(this.leftPanel);
+		this.menuSplitPane.setRightComponent(this.centerSplitPane);
 		this.menuSplitPane.setDividerLocation(200);
 		this.menuSplitPane.setDividerSize(6);
 		this.menuSplitPane.setResizeWeight(0.0);
-		this.menuSplitPane.setLeftComponent(this.leftPanel);
-		this.menuSplitPane.setRightComponent(this.centerSplitPane);
 		contentPane.add(this.menuSplitPane, "grow");
 		
 		// Add the status bar
@@ -907,10 +907,7 @@ public class JEXperiment extends JFrame implements ActionListener, WindowListene
 	 */
 	public void quit()
 	{
-		if(R.isConnected())
-		{
-			R.close();
-		}
+		R.close();
 		this.dispose();
 		System.exit(0);
 	}
@@ -938,29 +935,6 @@ public class JEXperiment extends JFrame implements ActionListener, WindowListene
 		// Boolean consolidate = Boolean.parseBoolean(consolidateStr);
 		JEXStatics.statusBar.setStatusText("Attempting to update JEX...");
 		Updater.attemptJEXUpdate();
-	}
-	
-	/**
-	 * Make a bookmark
-	 */
-	public void bookmark()
-	{
-		if(!JEXStatics.jexManager.isLoggedOn())
-		{
-			return;
-		}
-		if(JEXStatics.jexManager.getCurrentDatabase() == null)
-		{
-			return;
-		}
-		
-		DialogGlassPane diagPanel = new DialogGlassPane("Warning");
-		diagPanel.setSize(400, 200);
-		
-		ErrorMessagePane errorPane = new ErrorMessagePane("Bookmarks are not implemented yet... ");
-		diagPanel.setCentralPanel(errorPane);
-		
-		JEXStatics.main.displayGlassPane(diagPanel, true);
 	}
 	
 	/**
@@ -993,7 +967,9 @@ public class JEXperiment extends JFrame implements ActionListener, WindowListene
 	
 	@Override
 	public void actionPerformed(ActionEvent e)
-	{}
+	{
+		System.out.println("Closing JEX");
+	}
 	
 	public void savePrefs()
 	{
@@ -1051,6 +1027,10 @@ public class JEXperiment extends JFrame implements ActionListener, WindowListene
 	
 	@Override
 	public void windowClosed(WindowEvent e)
+	{}
+	
+	@Override
+	public void windowClosing(WindowEvent e)
 	{
 		if(e.getSource() == this)
 		{
@@ -1061,28 +1041,31 @@ public class JEXperiment extends JFrame implements ActionListener, WindowListene
 		{
 			PrefsUtility.reloadPrefs();
 		}
-		
 	}
 	
 	@Override
-	public void windowClosing(WindowEvent e)
-	{}
-	
-	@Override
 	public void windowDeactivated(WindowEvent e)
-	{}
+	{
+		// System.out.println("Look at this photograph");
+	}
 	
 	@Override
 	public void windowDeiconified(WindowEvent e)
-	{}
+	{
+		// System.out.println("Every time I do it makes me laugh");
+	}
 	
 	@Override
 	public void windowIconified(WindowEvent e)
-	{}
+	{
+		// System.out.println("Window Iconified");
+	}
 	
 	@Override
 	public void windowOpened(WindowEvent e)
-	{}
+	{
+		// System.out.println("Window Event");
+	}
 	
 	// -------------------------------------
 	// --------- Main functions ---------

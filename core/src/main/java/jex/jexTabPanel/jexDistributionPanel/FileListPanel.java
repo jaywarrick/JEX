@@ -34,7 +34,7 @@ public class FileListPanel extends DialogGlassCenterPanel implements ActionListe
 	
 	private static final long serialVersionUID = 1L;
 	
-	private JList displayListOfFiles;
+	private JList<File> displayListOfFiles;
 	private JButton loadButton = new JButton("OK");
 	private JButton refreshButton = new JButton("Re-filter");
 	private JTickedComponent foldersOrFilesView;
@@ -70,12 +70,12 @@ public class FileListPanel extends DialogGlassCenterPanel implements ActionListe
 		this.setBackground(DisplayStatics.lightBackground);
 		files2Distribute = new ArrayList<File>();
 		
-		displayListOfFiles = new JList();
+		displayListOfFiles = new JList<File>();
 		displayListOfFiles.setBackground(DisplayStatics.lightBackground);
 		displayListOfFiles.setFont(FontUtility.defaultFonts);
 		displayListOfFiles.setCellRenderer(new FileListCellRenderer());
 		
-		DefaultListModel newModel = new DefaultListModel();
+		DefaultListModel<File> newModel = new DefaultListModel<File>();
 		if(files2Distribute == null)
 			files2Distribute = new Vector<File>();
 		for (File f : files2Distribute)
@@ -278,7 +278,7 @@ public class FileListPanel extends DialogGlassCenterPanel implements ActionListe
 		}
 		
 		// Update the JList
-		DefaultListModel newModel = new DefaultListModel();
+		DefaultListModel<File> newModel = new DefaultListModel<File>();
 		for (File f : files2Distribute)
 		{
 			newModel.addElement(f);
@@ -394,7 +394,7 @@ public class FileListPanel extends DialogGlassCenterPanel implements ActionListe
 		files2Distribute.addAll(filteredList);
 		;
 		// Update the JList
-		DefaultListModel newModel = new DefaultListModel();
+		DefaultListModel<File> newModel = new DefaultListModel<File>();
 		for (File f : files2Distribute)
 		{
 			newModel.addElement(f);

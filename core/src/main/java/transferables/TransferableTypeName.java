@@ -63,7 +63,12 @@ public class TransferableTypeName implements Transferable {
 			for(JEXEntry e : entries)
 			{
 				// Get the object with matching type name
-				JEXData d = e.getData(tn); 
+				JEXData d = e.getData(tn);
+				
+				if(d == null)
+				{
+					continue;
+				}
 				
 				// Put together the absolute path of the object's database directory
 				String dirPath = FileUtility.getFileParent(JEXWriter.getDatabaseFolder() + File.separator + d.getDetachedRelativePath());

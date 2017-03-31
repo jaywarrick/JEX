@@ -39,9 +39,9 @@ import tables.DimensionMap;
 		visible=true,
 		description="Adjust defined intensities in the original image to be new defined intensities, scaling all other intensities accordingly."
 		)
-public class AdjustImage extends JEXPlugin {
+public class AdjustImageIntensities extends JEXPlugin {
 
-	public AdjustImage()
+	public AdjustImageIntensities()
 	{}
 	
 	/////////// Define Inputs ///////////
@@ -51,16 +51,16 @@ public class AdjustImage extends JEXPlugin {
 	
 	/////////// Define Parameters ///////////
 	
-	@ParameterMarker(uiOrder=1, name="Old Min", description="Image Intensity Value", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
+	@ParameterMarker(uiOrder=1, name="Old Min", description="Current 'min' intensity to be mapped to new min value.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
 	double oldMin;
 	
-	@ParameterMarker(uiOrder=2, name="Old Max", description="Image Intensity Value", ui=MarkerConstants.UI_TEXTFIELD, defaultText="4095.0")
+	@ParameterMarker(uiOrder=2, name="Old Max", description="Current 'max' intensity to be mapped to new max value.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="4095.0")
 	double oldMax;
 	
-	@ParameterMarker(uiOrder=3, name="New Min", description="Image Intensity Value", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
+	@ParameterMarker(uiOrder=3, name="New Min", description="New intensity value for current 'min' to be mapped to new min value.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
 	double newMin;
 	
-	@ParameterMarker(uiOrder=4, name="New Max", description="Image Intensity Value", ui=MarkerConstants.UI_TEXTFIELD, defaultText="65535.0")
+	@ParameterMarker(uiOrder=4, name="New Max", description="New intensity value for current 'max' to be mapped to new min value.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="65535.0")
 	double newMax;
 	
 	@ParameterMarker(uiOrder=5, name="Gamma", description="0.1-5.0, value of 1 results in no change", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1.0")

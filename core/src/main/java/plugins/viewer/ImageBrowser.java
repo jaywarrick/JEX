@@ -1,19 +1,10 @@
 package plugins.viewer;
 
-import guiObject.ListManager;
-import ij.util.Java2;
-import image.roi.PointList;
-import image.roi.ROIDisplayable;
-import image.roi.ROIPlus;
-import image.roi.ROIPlusSet;
-
 import java.awt.BorderLayout;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.io.File;
-import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -28,11 +19,26 @@ import javax.swing.ActionMap;
 import javax.swing.InputMap;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
-import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JSplitPane;
 import javax.swing.KeyStroke;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXDataSingle;
+import Database.DBObjects.JEXEntry;
+import Database.DBObjects.JEXLabel;
+import Database.DataReader.ImageReader;
+import Database.DataReader.RoiReader;
+import Database.DataWriter.RoiWriter;
+import Database.Definition.Type;
+import Database.Definition.TypeName;
+import cruncher.ExportThread;
+import cruncher.ImportThread;
+import guiObject.ListManager;
+import image.roi.PointList;
+import image.roi.ROIDisplayable;
+import image.roi.ROIPlus;
+import image.roi.ROIPlusSet;
 import jex.JEXManager;
 import jex.statics.DisplayStatics;
 import jex.statics.JEXDialog;
@@ -45,18 +51,6 @@ import signals.SSCenter;
 import tables.Dim;
 import tables.DimTable;
 import tables.DimensionMap;
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXDataSingle;
-import Database.DBObjects.JEXEntry;
-import Database.DBObjects.JEXLabel;
-import Database.DataReader.ImageReader;
-import Database.DataReader.RoiReader;
-import Database.DataWriter.RoiWriter;
-import Database.Definition.Type;
-import Database.Definition.TypeName;
-import Database.SingleUserDatabase.JEXWriter;
-import cruncher.ExportThread;
-import cruncher.ImportThread;
 
 public class ImageBrowser implements PlugInController {
 	
@@ -1172,7 +1166,7 @@ public class ImageBrowser implements PlugInController {
 			{
 				roiRect = "Roi:" + roi.x + "," + roi.y + "," + roi.width + "," + roi.height;
 			}
-			this.statusBar.setText(FileUtility.getFileNameWithExtension(this.imageFilePath) + "   [" + this.imageRect.width + "X" + this.imageRect.height + "]  " + roiRect + "  loc:" + (p.x + 1) + "," + (p.y + 1) + "  Int:" + this.format.format(this.display.getPixelIntensity()));
+			this.statusBar.setText(FileUtility.getFileNameWithExtension(this.imageFilePath) + "   [" + this.imageRect.width + "X" + this.imageRect.height + "]  " + roiRect + "  loc:" + (p.x) + "," + (p.y) + "  Int:" + this.format.format(this.display.getPixelIntensity()));
 			// this.statusBar.setText(this.imageFilePath + "  [" +
 			// this.imageRect.width + "X" + this.imageRect.height + "]  " +
 			// roiRect + "  loc:" + (p.x + 1) + "," + (p.y + 1) + "  Int:" +

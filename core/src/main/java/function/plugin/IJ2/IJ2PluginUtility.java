@@ -45,7 +45,7 @@ public class IJ2PluginUtility {
 	public static final String DATASET = Dataset.class.getSimpleName(), IMAGEDISPLAY = ImageDisplay.class.getSimpleName(), STRING = String.class.getSimpleName(), FILE = String.class.getSimpleName(), OVERLAY = Overlay.class.getSimpleName();
 	public static final String ROISUFFIX = "_ROI";
 	
-	private static ImageJ ij = null;
+	private static ImageJ ij = ij();
 	
 	//	public static TreeMap<String,IJ2CrunchablePlugin> ijCommands = getIJ2Commands();
 	
@@ -321,12 +321,12 @@ public class IJ2PluginUtility {
 					String path = images.get(map);
 					if(path != null)
 					{
-						if(ij().dataset().canOpen(path))
+						if(ij().scifio().datasetIO().canOpen(path))
 						{
 							Dataset d;
 							try
 							{
-								d = ij().dataset().open(path);
+								d = ij().scifio().datasetIO().open(path);
 								ret.add(item.getName());
 								ret.add(d);
 							}
@@ -361,12 +361,12 @@ public class IJ2PluginUtility {
 					}
 					if(path != null)
 					{
-						if(ij().dataset().canOpen(path))
+						if(ij().scifio().datasetIO().canOpen(path))
 						{
 							Dataset d;
 							try
 							{
-								d = ij().dataset().open(path);
+								d = ij().scifio().datasetIO().open(path);
 								ImageDisplay display = (ImageDisplay) ij().display().createDisplay(d);
 								ij().display().setActiveDisplay(display);
 								if(ij2Roi != null)

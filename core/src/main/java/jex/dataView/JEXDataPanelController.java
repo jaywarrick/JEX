@@ -235,7 +235,6 @@ public class JEXDataPanelController {
 		}
 	}
 	
-	@SuppressWarnings("unchecked")
 	public static void addFileListScrollPane(ClickableFileListPanel toAddTo, Collection<String> paths)
 	{
 		toAddTo.setLayout(new MigLayout("flowy, ins 10, gapy 0", "[fill,grow]", "[fill,grow]"));

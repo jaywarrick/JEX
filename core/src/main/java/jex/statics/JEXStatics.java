@@ -1,6 +1,6 @@
 package jex.statics;
 
-import cruncher.Cruncher;
+import function.plugin.IJ2.IJ2PluginUtility;
 import icons.IconRepository;
 
 import java.util.Vector;
@@ -24,8 +24,12 @@ import jex.jexTabPanel.jexStatisticsPanel.JEXStatisticsPanelController;
 import jex.jexTabPanel.jexViewPanel.JEXViewPanelController;
 import plugins.labelManager.DatabaseLabelManager;
 import plugins.plugin.PlugInController;
+import cruncher.Cruncher;
 
 public class JEXStatics {
+	
+	// Plugins
+	public static IJ2PluginUtility ij2;
 	
 	// Graphical icon repository
 	public static IconRepository iconRepository;

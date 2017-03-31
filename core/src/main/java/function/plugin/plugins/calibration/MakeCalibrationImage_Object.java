@@ -1,18 +1,10 @@
 package function.plugin.plugins.calibration;
 
-import ij.ImagePlus;
-import ij.plugin.filter.RankFilters;
-import ij.process.Blitter;
-import ij.process.FloatBlitter;
-import ij.process.FloatProcessor;
-
 import java.io.File;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.Vector;
-
-import jex.statics.JEXStatics;
 
 import org.scijava.plugin.Plugin;
 
@@ -28,6 +20,19 @@ import function.plugin.mechanism.MarkerConstants;
 import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
 import function.plugin.old.JEX_StackProjection;
+import ij.ImagePlus;
+import ij.plugin.filter.RankFilters;
+import ij.process.Blitter;
+import ij.process.ByteBlitter;
+import ij.process.ByteProcessor;
+import ij.process.FloatBlitter;
+import ij.process.FloatProcessor;
+import ij.process.ImageProcessor;
+import ij.process.ShortBlitter;
+import ij.process.ShortProcessor;
+import jex.statics.JEXStatics;
+import logs.Logs;
+import miscellaneous.Canceler;
 
 @Plugin(
 		type = JEXPlugin.class,
@@ -44,11 +49,6 @@ public class MakeCalibrationImage_Object extends JEXPlugin {
 	public MakeCalibrationImage_Object()
 	{}
 	
-	/**
-	 * Returns true if the user wants to allow multithreding
-	 * 
-	 * @return
-	 */
 	/////////// Define Inputs ///////////
 	
 	@InputMarker(uiOrder=1, name="Image", type=MarkerConstants.TYPE_IMAGE, description="Image to use to generate calibration image.", optional=false)
@@ -87,7 +87,7 @@ public class MakeCalibrationImage_Object extends JEXPlugin {
 	@ParameterMarker(
 			uiOrder=5,
 			name="Interval",
-			description="Interval between successive images used from the stack (typically set to 1 to grab all frames starting at 'start' and ending at 'start' + 'total' + 1).",
+			description="Interval between successive images used from the stack (typically set to 1 to grab all frames starting at 'start' and ending at 'start' + 'total' - 1).",
 			ui=MarkerConstants.UI_TEXTFIELD,
 			defaultText="1"
 			)
@@ -165,14 +165,14 @@ public class MakeCalibrationImage_Object extends JEXPlugin {
 			
 			Vector<Integer> indicesToGrab = getIndicesToGrab(start, total, interval); 
 			
-			FloatProcessor imp = null;
+			ImageProcessor imp = null;
 			if(projectionMethod.equals("Mean"))
 			{
-				imp = getMeanProjection(filePaths, indicesToGrab);
+				imp = getMeanProjection(filePaths, indicesToGrab, this);
 			}
 			else
 			{
-				imp = getPseudoMedianProjection(filePaths, indicesToGrab, groupSize);
+				imp = getPseudoMedianProjection(filePaths, indicesToGrab, groupSize, this);
 			}
 			
 			if(!smoothingMethod.equals("none"))
@@ -215,19 +215,30 @@ public class MakeCalibrationImage_Object extends JEXPlugin {
 		return ret;
 	}
 	
-	public static FloatProcessor getPseudoMedianProjection(String[] fileList, Vector<Integer> indicesToGrab, int groupSize)
+	public static ImageProcessor getPseudoMedianProjection(String[] fileList, Vector<Integer> indicesToGrab, int groupSize, Canceler canceler)
 	{
 		int k = 0;
-		FloatProcessor ret = null, imp = null;
-		FloatBlitter blit = null;
+		ImageProcessor ret = null, imp = null;
+		Blitter blit = null;
 		for (int i = 0; i < indicesToGrab.size(); i++)
 		{
+			if(canceler.isCanceled())
+			{
+				return null;
+			}
 			Vector<File> filesVector = new Vector<File>();
+			int iOld = i;
+			Logs.log("Getting new group...", MakeCalibrationImage_Object.class);
 			for (int j = 0; j < groupSize && i < indicesToGrab.size() && indicesToGrab.get(i) < fileList.length; j++)
 			{
 				filesVector.add(new File(fileList[indicesToGrab.get(i)]));
+				Logs.log("Getting file: " + fileList[indicesToGrab.get(i)], MakeCalibrationImage_Object.class);
 				i++;
 				// don't do anything to j, It just causes the loop to try and loop 'groupsize' number of times.
+			}
+			if(i > iOld)
+			{
+				i = i - 1; // Need to do this because the outer loop is indexing i as well.
 			}
 			// Get the median of the group
 			if(filesVector.size() > 0)
@@ -235,13 +246,25 @@ public class MakeCalibrationImage_Object extends JEXPlugin {
 				File[] files = filesVector.toArray(new File[filesVector.size()]);
 				ImagePlus stack = ImageReader.readFileListToVirtualStack(files);
 				stack.setProcessor((FloatProcessor) stack.getProcessor().convertToFloat());
-				imp = JEX_StackProjection.evaluate(stack, JEX_StackProjection.METHOD_MEDIAN, groupSize);
+				imp = (FloatProcessor) JEX_StackProjection.evaluate(stack, JEX_StackProjection.METHOD_MEDIAN);
 				
 				// Add it to the total for taking the mean of the groups
 				if(k == 0)
 				{
 					ret = imp;
-					blit = new FloatBlitter(ret);
+					int bitDepth = ret.getBitDepth();
+					if(bitDepth == 8)
+					{
+						blit = new ByteBlitter((ByteProcessor) ret);
+					}
+					else if(bitDepth == 16)
+					{
+						blit = new ShortBlitter((ShortProcessor) ret);
+					}
+					else if(bitDepth == 32)
+					{
+						blit = new FloatBlitter((FloatProcessor) ret);
+					}
 				}
 				else
 				{
@@ -264,13 +287,17 @@ public class MakeCalibrationImage_Object extends JEXPlugin {
 		return ret;
 	}
 	
-	public static FloatProcessor getMeanProjection(String[] fileList, Vector<Integer> indicesToGrab)
+	public static FloatProcessor getMeanProjection(String[] fileList, Vector<Integer> indicesToGrab, Canceler canceler)
 	{
 		int k = 0;
 		FloatProcessor imp1 = null, imp2 = null;
 		FloatBlitter blit = null;
 		for (Integer i : indicesToGrab)
 		{
+			if(canceler.isCanceled())
+			{
+				return null;
+			}
 			if(i < fileList.length)
 			{
 				String f = fileList[i];

@@ -1,13 +1,5 @@
 package jex.utilities;
 
-import function.singleCellAnalysis.SingleCellUtility;
-import ij.ImagePlus;
-import ij.ImageStack;
-import ij.process.ColorProcessor;
-import ij.process.FloatProcessor;
-import ij.process.FloatStatistics;
-import ij.process.ImageProcessor;
-
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Graphics;
@@ -20,9 +12,16 @@ import java.awt.image.ColorConvertOp;
 import java.util.List;
 import java.util.TreeMap;
 import java.util.Vector;
-import java.util.Map.Entry;
 
+import function.singleCellAnalysis.SingleCellUtility;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.process.ColorProcessor;
+import ij.process.FloatProcessor;
+import ij.process.FloatStatistics;
+import ij.process.ImageProcessor;
 import miscellaneous.FileUtility;
+import miscellaneous.Pair;
 import rtools.R;
 import tables.DimensionMap;
 
@@ -55,28 +54,106 @@ public class ImageUtility {
 		int i = 1;
 		boolean first = true;
 		ImageProcessor imp = null;
-		for(Entry<DimensionMap,String> e : files.entrySet())
+		for(DimensionMap map : maps)
 		{
-			String imPath = e.getValue();
+			String imPath = files.get(map);
 			if(imPath == null)
 			{
 				continue;
 			}
-			imp = (new ImagePlus(e.getValue())).getProcessor();
+			imp = (new ImagePlus(imPath)).getProcessor();
 			if(first)
 			{
 				im = new ImageStack(imp.getWidth(), imp.getHeight());
 				first = false;
 			}
 			im.addSlice(imp);
-			im.setSliceLabel(e.getKey().toString(), i);
+			im.setSliceLabel(map.toString(), i);
 			i = i + 1;
+		}
+		
+		if(i == 1)
+		{
+			return null;
 		}
 		
 		ImagePlus temp = new ImagePlus("Montage");
 		temp.setStack(im);
 		
 		return temp;
+	}
+	
+	public static Pair<Double,Double> getHistogramQuantileThresholds(FloatProcessor imp, double histMin, double histMax, int nBins, double minPercentile, double maxPercentile, boolean showHist, String title)
+	{
+		
+		// Make the histogram
+		if(nBins < 2)
+		{
+			nBins = (int) (histMax - histMin);
+		}
+		imp.setHistogramRange(histMin, histMax);
+		imp.setHistogramSize(nBins);
+		FloatStatistics stats = (FloatStatistics) imp.getStatistics();
+		double[] bins = new double[nBins];
+		for (int i = 0; i < nBins; i++)
+		{
+			bins[i] = histMin + i * stats.binSize;
+		}
+		
+		long tot = imp.getPixelCount();
+		double minCount = minPercentile * (double) tot / 100.0;
+		double maxCount = maxPercentile * (double) tot / 100.0;
+		long curCount = stats.getHistogram()[0];
+		Double minThresh = null;
+		Double maxThresh = null;
+		for (int i = 1; i < stats.histogram.length; i++)
+		{
+			curCount = curCount + stats.getHistogram()[i];
+			if(curCount > minCount && minThresh == null)
+			{
+				double leftCount = curCount - stats.getHistogram()[i];
+				double rightCount = curCount;
+				double fraction = (minCount-leftCount)/(rightCount-leftCount);
+				minThresh = bins[i-1] + fraction*stats.binSize;
+			}
+			if(curCount >= maxCount && maxThresh == null)
+			{
+				double leftCount = curCount - stats.getHistogram()[i];
+				double rightCount = curCount;
+				double fraction = (maxCount-leftCount)/(rightCount-leftCount);
+				maxThresh = bins[i-1] + fraction*stats.binSize;
+			}
+		}
+		
+		if(showHist)
+		{
+			// Draw the histogram
+			R.eval("duh <- 1");
+			R.makeVector("binCenters", bins);
+			R.makeVector("binCounts", stats.histogram);
+			String path = R.startPlot("pdf", 4, 3, 300, 10, null, null);
+			if(title == null)
+			{
+				title = "Histogram";
+			}
+			title.replace('\'', '_');
+			R.eval("plot(binCenters,binCounts,cex=0.4, main=" + R.sQuote(title) + ")");
+			R.eval("abline(v=" + minThresh + ")");
+			R.eval("abline(v=" + maxThresh + ")");
+			R.endPlot();
+			
+			// Open the histogram plot
+			try
+			{
+				FileUtility.openFileDefaultApplication(path);
+			}
+			catch (Exception e)
+			{
+				e.printStackTrace();
+			}
+		}
+		
+		return(new Pair<Double,Double>(minThresh, maxThresh));
 	}
 	
 	public static double getHistogramPeakBin(FloatProcessor imp, double histMin, double histMax, int nBins, boolean showHist)

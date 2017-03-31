@@ -8,18 +8,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;
 
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DBObjects.JEXLabel;
-import Database.DataReader.LabelReader;
-import Database.Definition.Experiment;
-import Database.Definition.Filter;
-import Database.Definition.TypeName;
 import jex.JEXManager;
 import jex.statics.DisplayStatics;
 import jex.statics.JEXStatics;
@@ -27,6 +19,13 @@ import net.miginfocom.swing.MigLayout;
 import plugins.labelManager.ColorPallet;
 import plugins.labelManager.DatabaseLabelManager;
 import signals.SSCenter;
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DBObjects.JEXLabel;
+import Database.DataReader.LabelReader;
+import Database.Definition.Experiment;
+import Database.Definition.Filter;
+import Database.Definition.TypeName;
 
 public class LabelDistributionPanel implements ActionListener {
 	
@@ -156,7 +155,7 @@ public class LabelDistributionPanel implements ActionListener {
 			return null;
 		}
 		JEXData currentLabel = JEXStatics.jexManager.getDataOfTypeNameInEntry(new TypeName(JEXData.LABEL, selectedLabelName), e);
-		if(currentLabel == null)
+		if(currentLabel == null || currentLabel.getDataMap().size() == 0)
 		{
 			return null;
 		}

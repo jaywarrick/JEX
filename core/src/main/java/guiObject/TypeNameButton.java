@@ -7,9 +7,6 @@
 //
 package guiObject;
 
-import Database.Definition.TypeName;
-
-import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.dnd.DnDConstants;
@@ -18,26 +15,24 @@ import java.awt.dnd.DragGestureListener;
 import java.awt.dnd.DragSource;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.util.Vector;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.Popup;
 import javax.swing.SwingConstants;
 
+import Database.Definition.TypeName;
 import jex.statics.JEXStatics;
 import jex.statics.OsVersion;
 import logs.Logs;
 import transferables.TransferableTypeName;
 
-public class TypeNameButton extends JButton implements ActionListener, MouseListener, DragGestureListener {
+public class TypeNameButton extends JButton implements ActionListener, DragGestureListener {
 	
 	private static final long serialVersionUID = 1L;
 	
@@ -61,7 +56,6 @@ public class TypeNameButton extends JButton implements ActionListener, MouseList
 	{
 		this.removeActionListener(this);
 		this.addActionListener(this);
-		this.addMouseListener(this);
 		// other visual options
 		this.setText(null);
 		this.setPreferredSize(new Dimension(20, 20));
@@ -76,37 +70,37 @@ public class TypeNameButton extends JButton implements ActionListener, MouseList
 		String toolTip = "This object represents a copy of all objects of this name and type contained in the displayed dataset";
 		this.setToolTipText(toolTip);
 		
-		// Set the popupmenu
-		popupmenu = new JPopupMenu();
-		ButtonObjectListener listener = new ButtonObjectListener(popupmenu);
-		
-		JMenuItem menuItem = new JMenuItem("DataBase Entry Info");
-		menuItem.addMouseListener(listener);
-		popupmenu.add(menuItem);
-		
-		menuItem = new JMenuItem("Load function in function panel");
-		if(!this.isObjectAFunction())
-		{
-			menuItem.setForeground(Color.LIGHT_GRAY);
-		}
-		else
-		{
-			menuItem.addMouseListener(listener);
-			menuItem.setForeground(Color.BLACK);
-		}
-		popupmenu.add(menuItem);
-		
-		menuItem = new JMenuItem("Open in default program");
-		menuItem.addMouseListener(listener);
-		popupmenu.add(menuItem);
-		
-		menuItem = new JMenuItem("Export array");
-		menuItem.addMouseListener(listener);
-		popupmenu.add(menuItem);
-		
-		menuItem = new JMenuItem("Remove");
-		menuItem.addMouseListener(listener);
-		popupmenu.add(menuItem);
+		//		// Set the popupmenu
+		//		popupmenu = new JPopupMenu();
+		//		ButtonObjectListener listener = new ButtonObjectListener(popupmenu);
+		//		
+		//		JMenuItem menuItem = new JMenuItem("DataBase Entry Info");
+		//		menuItem.addMouseListener(listener);
+		//		popupmenu.add(menuItem);
+		//		
+		//		menuItem = new JMenuItem("Load function in function panel");
+		//		if(!this.isObjectAFunction())
+		//		{
+		//			menuItem.setForeground(Color.LIGHT_GRAY);
+		//		}
+		//		else
+		//		{
+		//			menuItem.addMouseListener(listener);
+		//			menuItem.setForeground(Color.BLACK);
+		//		}
+		//		popupmenu.add(menuItem);
+		//		
+		//		menuItem = new JMenuItem("Open in default program");
+		//		menuItem.addMouseListener(listener);
+		//		popupmenu.add(menuItem);
+		//		
+		//		menuItem = new JMenuItem("Export array");
+		//		menuItem.addMouseListener(listener);
+		//		popupmenu.add(menuItem);
+		//		
+		//		menuItem = new JMenuItem("Remove");
+		//		menuItem.addMouseListener(listener);
+		//		popupmenu.add(menuItem);
 		
 		// MouseListener popupListener = new PopupListener(popupmenu);
 		// TODO
@@ -135,30 +129,30 @@ public class TypeNameButton extends JButton implements ActionListener, MouseList
 		// TODO
 	}
 	
-	/**
-	 * Open objects in default program
-	 */
-	public void openInDefaultProgram()
-	{
-		Logs.log("Opening object " + objectTN.toString() + " in default program", 1, this);
-		if(objectTN == null)
-			return;
-		
-		// TreeSet<JEXEntry> entries =
-		// JEXStatics.jexManager.getSelectedEntries();
-		// List<JEXData> datas = new ArrayList<JEXData>(0);
-		// for (JEXEntry entry: entries){
-		// JEXData data = entry.getData(objectTN);
-		// if (data == null) continue;
-		//
-		// datas.add(data);
-		// if (!data.openMulti()) break;
-		// }
-		//
-		// for (JEXData data: datas){
-		// data.openInDefaultProgram();
-		// }
-	}
+	//	/**
+	//	 * Open objects in default program
+	//	 */
+	//	public void openInDefaultProgram()
+	//	{
+	//		Logs.log("Opening object " + objectTN.toString() + " in default program", 1, this);
+	//		if(objectTN == null)
+	//			return;
+	//		
+	//		TreeSet<JEXEntry> entries =
+	//				JEXStatics.jexManager.getSelectedEntries();
+	//		List<JEXData> datas = new ArrayList<JEXData>(0);
+	//		for (JEXEntry entry: entries){
+	//			JEXData data = entry.getData(objectTN);
+	//			if (data == null) continue;
+	//
+	//			datas.add(data);
+	//			if (!data.openMulti()) break;
+	//		}
+	//
+	//		for (JEXData data: datas){
+	//			data.openInDefaultProgram();
+	//		}
+	//	}
 	
 	/**
 	 * Load object in function panel
@@ -230,50 +224,50 @@ public class TypeNameButton extends JButton implements ActionListener, MouseList
 		ds.createDefaultDragGestureRecognizer(this, DnDConstants.ACTION_COPY, this);
 	}
 	
-	class ButtonObjectListener extends MouseAdapter {
-		
-		ButtonObjectListener(JPopupMenu popupMenu)
-		{}
-		
-		@Override
-		public void mousePressed(MouseEvent e)
-		{
-			Logs.log("Mouse pressed", 2, this);
-		}
-		
-		@Override
-		public void mouseReleased(MouseEvent e)
-		{
-			Logs.log("Mouse released", 2, this);
-			if(e.getSource() instanceof JMenuItem)
-				doit(e);
-		}
-		
-		private void doit(MouseEvent e)
-		{
-			String action = ((JMenuItem) e.getSource()).getText();
-			if(action.equals("DataBase Entry Info"))
-			{
-				openInfoPanel();
-			}
-			if(action.equals("Open in default program"))
-			{
-				openInDefaultProgram();
-			}
-			if(action.equals("Load function in function panel"))
-			{
-				loadInFunctionPanel();
-			}
-			if(action.equals("Export array"))
-			{
-				exportArray();
-			}
-			if(action.equals("Remove"))
-			{
-				removeObjects();
-			}
-		}
-	}
+	//	class ButtonObjectListener extends MouseAdapter {
+	//		
+	//		ButtonObjectListener(JPopupMenu popupMenu)
+	//		{}
+	//		
+	//		@Override
+	//		public void mousePressed(MouseEvent e)
+	//		{
+	//			Logs.log("Mouse pressed", 2, this);
+	//		}
+	//		
+	//		@Override
+	//		public void mouseReleased(MouseEvent e)
+	//		{
+	//			Logs.log("Mouse released", 2, this);
+	//			if(e.getSource() instanceof JMenuItem)
+	//				doit(e);
+	//		}
+	//		
+	//		private void doit(MouseEvent e)
+	//		{
+	//			String action = ((JMenuItem) e.getSource()).getText();
+	//			if(action.equals("DataBase Entry Info"))
+	//			{
+	//				openInfoPanel();
+	//			}
+	//			if(action.equals("Open in default program"))
+	//			{
+	//				openInDefaultProgram();
+	//			}
+	//			if(action.equals("Load function in function panel"))
+	//			{
+	//				loadInFunctionPanel();
+	//			}
+	//			if(action.equals("Export array"))
+	//			{
+	//				exportArray();
+	//			}
+	//			if(action.equals("Remove"))
+	//			{
+	//				removeObjects();
+	//			}
+	//		}
+	//	}
 	
 	// ----------------------------------------------------
 	// --------- UTILITY FUNCTIONS ------------------------
@@ -360,24 +354,4 @@ public class TypeNameButton extends JButton implements ActionListener, MouseList
 	public void mouseMoved(MouseEvent e)
 	{}
 	
-	public void mouseClicked(MouseEvent e)
-	{
-		int nb = e.getClickCount();
-		if(nb == 2)
-		{
-			this.openInDefaultProgram();
-		}
-	}
-	
-	public void mouseEntered(MouseEvent e)
-	{}
-	
-	public void mouseExited(MouseEvent e)
-	{}
-	
-	public void mousePressed(MouseEvent e)
-	{}
-	
-	public void mouseReleased(MouseEvent e)
-	{}
 }

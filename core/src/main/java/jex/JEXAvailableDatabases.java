@@ -560,7 +560,7 @@ public class JEXAvailableDatabases extends JPanel implements ActionListener, Mou
 		{
 			this.database = database;
 			this.rep = rep;
-			this.name = (database == null || database.getName() == null) ? "Database is erronerous" : database.getName();
+			this.name = (database == null || database.getDBName() == null) ? "Database is erronerous" : database.getDBName();
 			this.info = (database == null || database.get(JEXDBInfo.DB_INFO) == null) ? "Database is erronerous" : database.get(JEXDBInfo.DB_INFO);
 			
 			initialize();

@@ -3,14 +3,9 @@ package rtools;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.TreeMap;
 import java.util.Vector;
 import java.util.regex.Pattern;
-
-import logs.Logs;
-import miscellaneous.CSVList;
-import miscellaneous.DirectoryManager;
-import miscellaneous.FileUtility;
-import miscellaneous.LSVList;
 
 import org.rosuda.REngine.REXP;
 import org.rosuda.REngine.REXPMismatchException;
@@ -18,6 +13,17 @@ import org.rosuda.REngine.REngineException;
 import org.rosuda.REngine.Rserve.RConnection;
 import org.rosuda.REngine.Rserve.RserveException;
 
+import Database.DBObjects.JEXData;
+import Database.DataWriter.FileWriter;
+import Database.DataWriter.ImageWriter;
+import Database.SingleUserDatabase.JEXWriter;
+import jex.statics.JEXDialog;
+import jex.statics.OsVersion;
+import logs.Logs;
+import miscellaneous.CSVList;
+import miscellaneous.DirectoryManager;
+import miscellaneous.FileUtility;
+import miscellaneous.LSVList;
 import tables.DimensionMap;
 import tables.Table;
 
@@ -108,7 +114,20 @@ public class R {
 	
 	public static void close()
 	{
-		R.rConnection.close();
+		if(R.isConnected())
+		{
+			R.rConnection.close();
+		}
+		// Try to kill Rserve if possible.
+		else if(OsVersion.IS_WINDOWS)
+		{
+			try {
+				Runtime.getRuntime().exec("taskkill /F /IM Rserve.exe");
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		}
 	}
 	
 	public static REXP eval(String command)
@@ -447,7 +466,7 @@ public class R {
 	}
 	
 	/**
-	 * Put single quotes around a string
+	 * 
 	 * 
 	 * @param s
 	 * @return
@@ -606,4 +625,193 @@ public class R {
 		}
 	}
 	
+	/**
+	 * Start Rsession, clear workspace variables, call library(foreign) for reading .arff files, create "jexTempRFolder" and "jexDBFolder"
+	 */
+	public static void initializeWorkspace()
+	{
+		R.eval("temp <- 0"); // Dummy command to get the R connection up an running.
+		R.endPlot();
+		R.eval("rm(list=ls())");
+		R.load("foreign");
+		String tempPath = JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getTempFolderName() + File.separator + "RScriptTempFolder";
+		File tempFolder = new File(tempPath);
+		if(!tempFolder.exists())
+		{
+			tempFolder.mkdirs();
+		}
+		R.eval("jexTempRFolder <- " + R.quotedPath(tempPath));
+
+		String dbPath = JEXWriter.getDatabaseFolder();
+		R.eval("jexDBFolder <- " + R.quotedPath(dbPath));
+	}
+
+	/**
+	 * Save the information in a JEXData to a variable in the R workspace called 'name'.
+	 * 
+	 * The object is a list with $type, $name, $value (which is populated with read.arff(detachedpath), i.e., the .jxd file, not the files it may refer to)
+	 * @param data
+	 * @param name
+	 */
+	public static void initializeData(JEXData data, String name)
+	{
+		if(data == null)
+		{
+			return;
+		}
+		String path = JEXWriter.getDatabaseFolder() + File.separator + data.getDetachedRelativePath();
+		R.eval(name + " <- list()");
+		R.eval(name + "$type <- " + R.sQuote(data.getTypeName().getType().toString()));
+		R.eval(name + "$name <- " + R.sQuote(data.getTypeName().getName()));
+		R.eval(name + "$value <- read.arff(" + R.quotedPath(path) + ")");
+	}
+	
+	public static JEXData getCharacterVectorAsJEXDataFileObject(String expression, boolean createImageObject)
+	{
+		TreeMap<DimensionMap,String> files = new TreeMap<DimensionMap,String>();
+		REXP fileObject = R.eval(expression);
+		String[] fileStrings = null;
+		try
+		{
+			fileStrings = fileObject.asStrings();
+			int i = 0;
+			for(String s : fileStrings)
+			{
+				String fixedString = s; //s.replaceAll("/", File.separator); // Might have to figure out Pattern.quote(File.separator) stuff for windows.
+				files.put(new DimensionMap("i=" + i), fixedString);
+				i++;
+			}
+			JEXData ret = null;
+			if(createImageObject)
+			{
+				ret = ImageWriter.makeImageStackFromPaths("dummy", files);
+			}
+			else
+			{
+				ret = FileWriter.makeFileObject("dummy", null, files);
+			}
+
+			return ret;
+		}
+		catch (REXPMismatchException e)
+		{
+			Logs.log("Couldn't convert " + expression + " to String[]", R.class);
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	public static JEXData getCharacterVariableAsJEXDataFileObject(String expression, boolean createImageObject)
+	{
+		REXP fileObject = R.eval(expression);
+		String fileString = null;
+		try
+		{
+			fileString = fileObject.asString();
+			String fixedString = fileString; //fileString.replaceAll("/", File.separator); // Might have to figure out Pattern.quote(File.separator) stuff for windows.
+			JEXData ret = null;
+			if(createImageObject)
+			{
+				ret = ImageWriter.makeImageObject("dummy", fixedString);
+			}
+			else
+			{
+				ret = FileWriter.makeFileObject("dummy", null, fixedString);
+			}
+
+			return ret;
+		}
+		catch (REXPMismatchException e)
+		{
+			Logs.log("Couldn't convert " + expression + " to String", R.class);
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	public static String getCharacterVariableValueAsString(String expression)
+	{
+		REXP fileObject = R.eval(expression);
+		String fileString = null;
+		try
+		{
+			fileString = fileObject.asString();
+			String fixedString = fileString; //fileString.replaceAll("/", File.separator); // Might have to figure out Pattern.quote(File.separator) stuff for windows.
+			return fixedString;
+		}
+		catch (REXPMismatchException e)
+		{
+			Logs.log("Couldn't convert " + expression + " to String", R.class);
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	public static boolean reorganize(String dataName, String idCols, String measurementCols, String valueCols, String dcastArgs)
+	{
+		
+		if(measurementCols == null || measurementCols.equals(""))
+		{
+			JEXDialog.messageDialog("This function requires at least one 'Measurement' column name. (see ?dcast of data.table in R, formula = Id ~ Measurment and value.var= Value). Aborting.");
+			return false;
+		}
+		if(valueCols == null || valueCols.equals(""))
+		{
+			JEXDialog.messageDialog("This function requires at least one 'Value' column name. (see ?dcast of data.table in R, formula = Id ~ Measurment and value.var= Value). Aborting.");
+			return false;
+		}
+		if(idCols == null || idCols.equals(""))
+		{
+			idCols = "NULL"; // this causes R to guess what the value column is.
+		}
+		else
+		{
+			idCols = R.sQuote(idCols);
+		}
+		
+		ScriptRepository.sourceGitHubFile("jaywarrick", "R-General", "master", ".Rprofile");
+		R.load("data.table");
+		
+		if(dcastArgs == null)
+		{
+			R.eval(dataName + " <- reorganize(data=" + dataName + ", idCols=" + idCols + ", measurementCols=" + R.sQuote(measurementCols) + ", valueCols=" + R.sQuote(valueCols) + ")");
+		}
+		else
+		{
+			R.eval(dataName + " <- reorganize(data=" + dataName + ", idCols=" + idCols + ", measurementCols=" + R.sQuote(measurementCols) + ", valueCols=" + R.sQuote(valueCols) + ", " + dcastArgs + ")");
+		}
+		return true;
+	}
+	
+	//	private static void defineReorganize()
+	//	{
+	//		LSVList func = new LSVList();
+	//		R.load("data.table");
+	//		func.add("reorganize <- function(data, idCols=NULL, measurementCols='Measurement', valueCols='Value', ...)");
+	//		func.add("{");
+	//		func.add("library(data.table)");
+	//		func.add("isDataTable <- FALSE");
+	//		func.add("if(is.data.table(data))");
+	//		func.add("{");
+	//		func.add("isDataTable <- TRUE");
+	//		func.add("}");
+	//		func.add("else");
+	//		func.add("{");
+	//		func.add("data <- data.table(data)");
+	//		func.add("}");
+	//		func.add("measurementCols <- strsplit(measurementCols, ',', fixed=T)");
+	//		func.add("measurementCols <- mapply(gsub, '^\\s+|\\s+$', '', measurementCols)");
+	//		func.add("if(is.null(idCols))");
+	//		func.add("{");
+	//		func.add("idCols <- names(data)[!(names(data) %in% c(measurementCols, valueCols))]");
+	//		func.add("}");
+	//		func.add("formula <- as.formula(paste(paste(idCols, collapse='+'), ' ~ ', paste(measurementCols, collapse='+')))");
+	//		func.add("data <- dcast(data, as.formula(paste(paste(idCols, collapse='+'), ' ~ ', paste(measurementCols, collapse='+'))), value.var = valueCols, ...)");
+	//		func.add("if(isDataTable)");
+	//		func.add("{");
+	//		func.add("return(data)");
+	//		func.add("}else{");
+	//		func.add("else");
+	//		func.add("return(data.frame(data))}}");
+	//	}
 }

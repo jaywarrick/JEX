@@ -1,9 +1,5 @@
 package function.plugin.plugins.calibration;
 
-import ij.ImagePlus;
-import ij.plugin.filter.RankFilters;
-import ij.process.FloatProcessor;
-
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
@@ -23,6 +19,10 @@ import function.plugin.mechanism.MarkerConstants;
 import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
 import function.plugin.old.JEX_StackProjection;
+import ij.ImagePlus;
+import ij.plugin.filter.RankFilters;
+import ij.process.FloatProcessor;
+import ij.process.ImageProcessor;
 
 @Plugin(
 		type = JEXPlugin.class,
@@ -91,7 +91,7 @@ public class MakeCalibrationImage_Folder extends JEXPlugin {
 	@ParameterMarker(
 			uiOrder=5,
 			name="Interval",
-			description="Interval between successive images used from the stack (typically set to 1 to grab all frames starting at 'start' and ending at 'start' + 'total' + 1).",
+			description="Interval between successive images used from the stack (typically set to 1 to grab all frames starting at 'start' and ending at 'start' + 'total' - 1).",
 			ui=MarkerConstants.UI_TEXTFIELD,
 			defaultText="1"
 			)
@@ -151,14 +151,22 @@ public class MakeCalibrationImage_Folder extends JEXPlugin {
 			
 			Vector<Integer> indicesToGrab = getIndicesToGrab(); 
 			
-			FloatProcessor imp = null;
+			ImageProcessor imp = null;
 			if(projectionMethod.equals("Mean"))
 			{
 				imp = getMeanProjection(filePaths, indicesToGrab);
+				if(imp == null) // then canceled or error
+				{
+					return false;
+				}
 			}
 			else
 			{
-				imp = getPseudoMedianProjection(filePaths, indicesToGrab);
+				imp = getPseudoMedianProjection(filePaths, indicesToGrab, groupSize);
+				if(imp == null) // then canceled or error
+				{
+					return false;
+				}
 			}
 			
 			if(!smoothingMethod.equals("none"))
@@ -180,14 +188,14 @@ public class MakeCalibrationImage_Folder extends JEXPlugin {
 		return MakeCalibrationImage_Object.getIndicesToGrab(start, total, interval);
 	}
 	
-	public FloatProcessor getPseudoMedianProjection(String[] fileList, Vector<Integer> indicesToGrab)
+	public ImageProcessor getPseudoMedianProjection(String[] fileList, Vector<Integer> indicesToGrab, int groupSize)
 	{
-		return MakeCalibrationImage_Object.getMeanProjection(fileList, indicesToGrab);
+		return MakeCalibrationImage_Object.getPseudoMedianProjection(fileList, indicesToGrab, groupSize, this);
 	}
 	
 	public FloatProcessor getMeanProjection(String[] fileList, Vector<Integer> indicesToGrab)
 	{
-		return MakeCalibrationImage_Object.getMeanProjection(fileList, indicesToGrab);
+		return MakeCalibrationImage_Object.getMeanProjection(fileList, indicesToGrab, this);
 	}
 	
 	@Override
