@@ -166,7 +166,7 @@ public class ImageUtility {
 		}
 		imp.setHistogramRange(histMin, histMax);
 		imp.setHistogramSize(nBins);
-		FloatStatistics stats = (FloatStatistics) imp.getStatistics();
+		FloatStatistics stats = new FloatStatistics(imp);
 		double[] bins = new double[nBins];
 		for (int i = 0; i < nBins; i++)
 		{
