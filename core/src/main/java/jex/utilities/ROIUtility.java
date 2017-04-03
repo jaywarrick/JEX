@@ -26,7 +26,7 @@ public class ROIUtility {
 		{
 			for (int x = r.x; x < r.x + r.width; x++)
 			{
-				if(roi2.contains(x, y))
+				if(x >= 0 && y > 0 && x <= ip.getWidth() && y <= ip.getHeight() && roi2.contains(x, y))
 				{
 					within.add(x, y);
 				}
