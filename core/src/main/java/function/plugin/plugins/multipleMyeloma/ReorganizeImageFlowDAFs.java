@@ -1,26 +1,23 @@
 package function.plugin.plugins.multipleMyeloma;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.TreeMap;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.DirectoryFileFilter;
+import org.apache.commons.io.filefilter.RegexFileFilter;
 import org.scijava.plugin.Plugin;
 
-import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
-import Database.DataWriter.ImageWriter;
-import Database.DataWriter.ValueWriter;
-import Database.SingleUserDatabase.JEXWriter;
 import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.MarkerConstants;
-import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
-import ij.ImagePlus;
 import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
+import logs.Logs;
 import miscellaneous.FileUtility;
-import tables.DimensionMap;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions
@@ -33,10 +30,10 @@ import tables.DimensionMap;
 
 @Plugin(
 		type = JEXPlugin.class,
-		name="Import Flow Images",
+		name="Reorganize Image Flow DAFs",
 		menuPath="Multiple Myeloma",
 		visible=true,
-		description="Import flow images in format <prefix><Cell#>_Ch<ChannelNumber>.ome.tif"
+		description="Organize IDEAS image flow data analysis files (DAFs) into individual folders to aid exporting of tifs."
 		)
 public class ReorganizeImageFlowDAFs extends JEXPlugin {
 
@@ -50,16 +47,16 @@ public class ReorganizeImageFlowDAFs extends JEXPlugin {
 
 	/////////// Define Parameters ///////////
 
-	@ParameterMarker(uiOrder=1, name="Folder of Images", description="Select the folder that contains the .ome.tif images you would like to import.", ui=MarkerConstants.UI_FILECHOOSER, defaultText="")
+	@ParameterMarker(uiOrder=1, name="Folder of DAFs", description="Select the folder that contains the DAFs you want to organize into individual folders.", ui=MarkerConstants.UI_FILECHOOSER, defaultText="")
 	String folderString;
+
+	@ParameterMarker(uiOrder=1, name="Do nested folder search?", description="Search subfolders as well?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
+	boolean nestedSearch;
 
 	/////////// Define Outputs ///////////
 
-	@OutputMarker(uiOrder=1, name="Images", type=MarkerConstants.TYPE_IMAGE, flavor="", description="Image flow images.", enabled=true)
-	JEXData imageData;
-	
-	@OutputMarker(uiOrder=2, name="Folder", type=MarkerConstants.TYPE_VALUE, flavor="", description="Folder where images were imported from.", enabled=true)
-	JEXData folderValueData;
+	//	@OutputMarker(uiOrder=1, name="Single-Cell Table", type=MarkerConstants.TYPE_FILE, flavor="", description="The live dead information for each cell in the compiled data.", enabled=true)
+	//	JEXData singleCellOutput;
 
 	@Override
 	public int getMaxThreads()
@@ -78,7 +75,15 @@ public class ReorganizeImageFlowDAFs extends JEXPlugin {
 			return false;
 		}
 
-		Collection<File> files = Arrays.asList(folder.listFiles());
+		Collection<File> files = null;
+		if(nestedSearch)
+		{
+			files = FileUtils.listFiles(folder, new RegexFileFilter("^(.*?)"), DirectoryFileFilter.DIRECTORY);
+		}
+		else
+		{
+			files = Arrays.asList(folder.listFiles());
+		}
 
 		int count = 0, total = files.size(), percentage = 0;
 		percentage = (int) (100 * ((double) (count) / (total)));
@@ -88,30 +93,45 @@ public class ReorganizeImageFlowDAFs extends JEXPlugin {
 			return false;
 		}
 
-		TreeMap<DimensionMap,String> imageMap = new TreeMap<>();
 		for(File f : files)
 		{
 			if(this.isCanceled())
 			{
 				return false;
 			}
-			if(f.getAbsolutePath().endsWith(".ome.tif"))
+			if(FileUtility.getFileNameExtension(f.getAbsolutePath()).equals("daf"))
 			{
-				String fileName = FileUtility.getFileNameWithoutExtension(f.getAbsolutePath());
-				fileName = FileUtility.getFileNameWithExtension(fileName); // Remove the .ome subextension
-				String[] pieces = fileName.split("_");
-				int n = pieces.length;
-				String cellNum = pieces[n-2];
-				String chString = pieces[n-1];
-				chString = chString.substring(2, chString.length());
-				ImagePlus im = new ImagePlus(f.getAbsolutePath());
-				String path = JEXWriter.saveImage(im);
-				imageMap.put(new DimensionMap("Cell=" + cellNum + ",Channel=" + chString), path);
+				File parent = f.getParentFile();
+				if(parent.isDirectory())
+				{
+					File newLoc_DAF = new File(FileUtility.getFileParent(f.getAbsolutePath()) + File.separator + FileUtility.getFileNameWithoutExtension(f.getAbsolutePath()) + File.separator + FileUtility.getFileNameWithExtension(f.getAbsolutePath()));
+					File newLoc_RIF = new File(FileUtility.getFileParent(f.getAbsolutePath()) + File.separator + FileUtility.getFileNameWithoutExtension(f.getAbsolutePath()) + File.separator + FileUtility.getFileNameWithoutExtension(f.getAbsolutePath()) + ".rif");
+					File newLoc_CIF = new File(FileUtility.getFileParent(f.getAbsolutePath()) + File.separator + FileUtility.getFileNameWithoutExtension(f.getAbsolutePath()) + File.separator + FileUtility.getFileNameWithoutExtension(f.getAbsolutePath()) + ".cif");
+					File oldLoc_RIF = new File(FileUtility.getFileParent(f.getAbsolutePath()) + File.separator + FileUtility.getFileNameWithoutExtension(f.getAbsolutePath()) + FileUtility.getFileNameWithoutExtension(f.getAbsolutePath()) + ".rif");
+					File oldLoc_CIF = new File(FileUtility.getFileParent(f.getAbsolutePath()) + File.separator + FileUtility.getFileNameWithoutExtension(f.getAbsolutePath()) + FileUtility.getFileNameWithoutExtension(f.getAbsolutePath()) + ".cif");
+
+					try
+					{
+						// Makes new directories if necessary
+						Logs.log("Moving " + f.getAbsolutePath() + " into its own directory in the same place with the same name.", this);
+						FileUtility.moveFileOrFolder(f, newLoc_DAF, true);
+						if(oldLoc_RIF.exists())
+						{
+							FileUtility.moveFileOrFolder(oldLoc_RIF, newLoc_RIF, true);
+						}
+						if(oldLoc_CIF.exists())
+						{
+							FileUtility.moveFileOrFolder(oldLoc_CIF, newLoc_CIF, true);
+						}
+					}
+					catch (IOException e)
+					{
+						e.printStackTrace();
+					}
+					count = count + 1;
+				}
 			}
 		}
-		
-		this.imageData = ImageWriter.makeImageStackFromPaths("Duh", imageMap);
-		this.folderValueData = ValueWriter.makeValueObject("Duh", this.folderString);
 
 		// Return status
 		return true;
