@@ -107,8 +107,8 @@ public class ReorganizeImageFlowDAFs extends JEXPlugin {
 					File newLoc_DAF = new File(FileUtility.getFileParent(f.getAbsolutePath()) + File.separator + FileUtility.getFileNameWithoutExtension(f.getAbsolutePath()) + File.separator + FileUtility.getFileNameWithExtension(f.getAbsolutePath()));
 					File newLoc_RIF = new File(FileUtility.getFileParent(f.getAbsolutePath()) + File.separator + FileUtility.getFileNameWithoutExtension(f.getAbsolutePath()) + File.separator + FileUtility.getFileNameWithoutExtension(f.getAbsolutePath()) + ".rif");
 					File newLoc_CIF = new File(FileUtility.getFileParent(f.getAbsolutePath()) + File.separator + FileUtility.getFileNameWithoutExtension(f.getAbsolutePath()) + File.separator + FileUtility.getFileNameWithoutExtension(f.getAbsolutePath()) + ".cif");
-					File oldLoc_RIF = new File(FileUtility.getFileParent(f.getAbsolutePath()) + File.separator + FileUtility.getFileNameWithoutExtension(f.getAbsolutePath()) + FileUtility.getFileNameWithoutExtension(f.getAbsolutePath()) + ".rif");
-					File oldLoc_CIF = new File(FileUtility.getFileParent(f.getAbsolutePath()) + File.separator + FileUtility.getFileNameWithoutExtension(f.getAbsolutePath()) + FileUtility.getFileNameWithoutExtension(f.getAbsolutePath()) + ".cif");
+					File oldLoc_RIF = new File(FileUtility.getFileParent(f.getAbsolutePath()) + File.separator + FileUtility.getFileNameWithoutExtension(f.getAbsolutePath()) + ".rif");
+					File oldLoc_CIF = new File(FileUtility.getFileParent(f.getAbsolutePath()) + File.separator + FileUtility.getFileNameWithoutExtension(f.getAbsolutePath()) + ".cif");
 
 					try
 					{
