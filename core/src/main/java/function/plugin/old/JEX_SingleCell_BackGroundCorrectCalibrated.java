@@ -365,7 +365,7 @@ public class JEX_SingleCell_BackGroundCorrectCalibrated extends JEXCrunchable {
 				imp = (FloatProcessor) imp.crop();
 				
 				// For efficiency, we don't need to do this if we are going to skip the rest of the steps anyway
-				if(dim.compareTo(thingToExclude) != 0)
+				if(thingToExclude == null || dim.compareTo(thingToExclude) != 0)
 				{
 					if(croppedIllumImp != null)
 					{
@@ -380,7 +380,7 @@ public class JEX_SingleCell_BackGroundCorrectCalibrated extends JEXCrunchable {
 				}
 			}
 			
-			if(dim.compareTo(thingToExclude) == 0)
+			if(thingToExclude != null && dim.compareTo(thingToExclude) == 0)
 			{
 				// Then it is a match for the thing to exclude
 				// Just save a copy of the original (cropped) image.
