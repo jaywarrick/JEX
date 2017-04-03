@@ -52,6 +52,9 @@ public class ImportFlowImages extends JEXPlugin {
 
 	@ParameterMarker(uiOrder=1, name="Folder of Images", description="Select the folder that contains the .ome.tif images you would like to import.", ui=MarkerConstants.UI_FILECHOOSER, defaultText="")
 	String folderString;
+	
+	@ParameterMarker(uiOrder=1, name="File Prefix", description="Select the folder that contains the .ome.tif images you would like to import.", ui=MarkerConstants.UI_FILECHOOSER, defaultText="Image_")
+	String prefix;
 
 	/////////// Define Outputs ///////////
 
@@ -95,10 +98,10 @@ public class ImportFlowImages extends JEXPlugin {
 			{
 				return false;
 			}
-			if(f.getAbsolutePath().endsWith(".ome.tif"))
+			if(f.getAbsolutePath().endsWith(".ome.tif") && FileUtility.getFileNameWithExtension(f.getAbsolutePath()).startsWith(prefix))
 			{
 				String fileName = FileUtility.getFileNameWithoutExtension(f.getAbsolutePath());
-				fileName = FileUtility.getFileNameWithExtension(fileName); // Remove the .ome subextension
+				fileName = FileUtility.getFileNameWithoutExtension(fileName); // Remove the .ome subextension
 				String[] pieces = fileName.split("_");
 				int n = pieces.length;
 				String cellNum = pieces[n-2];
