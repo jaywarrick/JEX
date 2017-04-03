@@ -108,8 +108,11 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 	@ParameterMarker(uiOrder = 1, name = "'Whole Cell' mask channel value", description = "Which channel value of the mask image represents the whole cell that has a 1-to-1 mapping with the maxima points.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "WholeCell")
 	String maskWholeCellChannelValue;
 
-	@ParameterMarker(uiOrder = 12, name = "** Connectedness Features", description = "The structuring element or number of neighbors to require to be part of the neighborhood.", ui = MarkerConstants.UI_DROPDOWN, choices = {"4 Connected", "8 Connected" }, defaultChoice = 0)
+	@ParameterMarker(uiOrder = 2, name = "** Connectedness Features", description = "The structuring element or number of neighbors to require to be part of the neighborhood.", ui = MarkerConstants.UI_DROPDOWN, choices = {"4 Connected", "8 Connected" }, defaultChoice = 0)
 	String connectedness;
+	
+	@ParameterMarker(uiOrder = 3, name = "Transform Data to 'Similarity'", description = "This takes the correlation metrics and transoforms them using Similarity=ln((1+R)/(1-R)). Recommended.", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
+	boolean transform;
 
 	/////////// Define Outputs here ///////////
 
@@ -266,6 +269,10 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 		// Determine which LabelRegions are the ones we want to keep by
 		// testing if our maxima of interest are contained.
 		ROIPlus maxima = roiMap.get(mapMask_WholeCell);
+		if(this.wholeCellRegions == null)
+		{
+			System.out.println("lah");
+		}
 		for (LabelRegion<Integer> cellRegion : this.wholeCellRegions) {
 			RandomAccess<BoolType> ra = cellRegion.randomAccess();
 			for (IdPoint p : maxima.pointList) {
@@ -385,15 +392,39 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 		DoubleType result_R = opR.calculate(new Pair<RandomAccessibleInterval<T>, RandomAccessibleInterval<T>>(subImage1, subImage2), maskCursor);
 		DoubleType result_Rho = opRho.calculate(new Pair<RandomAccessibleInterval<T>, RandomAccessibleInterval<T>>(subImage1, subImage2), maskCursor);
 
-		DimensionMap newMap = mapM.copyAndSet("Measurement=net.imagej.ops.Ops$Stats$PearsonsCorrelationCoefficient");
+		String measurement = "Measurement=net.imagej.ops.Ops$Stats$PearsonsCorrelationCoefficient";
+		if(transform)
+		{
+			measurement = "Measurement=net.imagej.ops.Ops$Stats$PearsonsCorrelationCoefficient.Similarity";
+		}
+		DimensionMap newMap = mapM.copyAndSet(measurement);
 		newMap.put("Id", "" + this.pId);
 		newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
-		this.write(newMap.copy(), result_R.get());
+		if(transform)
+		{
+			this.write(newMap, Math.log((1.0+result_R.get())/(1.0-result_R.get())));
+		}
+		else
+		{
+			this.write(newMap, result_R.get());
+		}
 		
-		newMap = mapM.copyAndSet("Measurement=net.imagej.ops.Ops$Stats$SpearmansRankCorrelationCoefficient");
+		measurement = "Measurement=net.imagej.ops.Ops$Stats$SpearmansRankCorrelationCoefficient";
+		if(transform)
+		{
+			measurement = "Measurement=net.imagej.ops.Ops$Stats$SpearmansRankCorrelationCoefficient.Similarity";
+		}
+		newMap = mapM.copyAndSet(measurement);
 		newMap.put("Id", "" + this.pId);
 		newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
-		this.write(newMap, result_Rho.get());
+		if(transform)
+		{
+			this.write(newMap, Math.log((1.0+result_Rho.get())/(1.0-result_Rho.get())));
+		}
+		else
+		{
+			this.write(newMap, result_Rho.get());
+		}
 
 		//		for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
 		//			DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
