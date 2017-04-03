@@ -64,7 +64,7 @@ public class TestStuff {
 		
 		// Create a LabelRegion from the parent.
 		ImgLabeling<Integer, IntType > labeling = utils.getLabeling(parentImg, true);
-		ImgLabeling<Integer, IntType > subLabeling = utils.getSubLabeling(labeling, childImg);
+		ImgLabeling<Integer, IntType > subLabeling = utils.applyLabeling(labeling, childImg);
 		
 		utils.show(labeling);
 		utils.show(subLabeling);

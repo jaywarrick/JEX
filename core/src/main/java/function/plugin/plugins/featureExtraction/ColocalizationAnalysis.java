@@ -62,12 +62,12 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 	private Img<T> image1;
 	private Img<T> image2;
 	private ImgLabeling<Integer,IntType> wholeCellLabeling;
-	private ImgLabeling<Integer,IntType> maskLabeling;
+	private ImgLabeling<Integer,IntType> maskParentLabeling;
 	private LabelRegions<Integer> wholeCellRegions;
-	private LabelRegions<Integer> maskRegions;
+	private LabelRegions<Integer> maskParentRegions;
 	private ROIPlus maxima;
-	//	private LabelRegion<Integer> wholeCellRegion;
-	private LabelRegion<Integer> subCellRegion;
+//	private LabelRegion<Integer> wholeCellRegion;
+	private LabelRegion<Integer> combinedSubCellRegion;
 	// private LabelRegion<Integer> majorSubCellRegion; UNUSED IN COLOC
 	private DimensionMap mapMask, mapImage1, mapImage2, mapMask_NoChannel;
 	private Integer pId;
@@ -140,6 +140,11 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 
 		DimTable imageDimTable = imageData.getDimTable();
 		DimTable maskDimTable = maskData.getDimTable();
+		if(imageDimTable.getDimWithName(channelName) == null || maskDimTable.getDimWithName(channelName) == null)
+		{
+			JEXDialog.messageDialog("The channel dimension name provided is not found in both the image and mask image objects. Aborting.", this);
+			return false;
+		}
 		DimTable maskDimTable_NoChannel = maskDimTable.getSubTable(channelName);
 		Dim maskChannelDim = maskDimTable.getDimWithName(channelName);
 		int subcount = imageDimTable.getSubTable(maskDimTable_NoChannel.getMapIterator().iterator().next()).mapCount();
@@ -147,6 +152,10 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 
 		Dim imageChannelDim = imageDimTable.getDimWithName(channelName);
 		Vector<Pair<String,String>> channelCombos = this.getChannelPermutations(imageChannelDim);
+		if(channelCombos == null)
+		{
+			return false;
+		}
 
 		// For each whole cell mask
 		for(DimensionMap mapMask_NoChannelTemp : maskDimTable_NoChannel.getMapIterator())
@@ -204,14 +213,18 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 	{
 		// Initialize structures for storing whole-cell mask information and maxima information.
 		Logs.log("Getting whole cell mask: " + mapMask_WholeCell, this);
-		String temp = maskMap.get(mapMask_WholeCell);
-		if(temp == null)
+		String path = maskMap.get(mapMask_WholeCell);
+		if(path == null)
 		{
 			this.wholeCellMaskImage = null;
+			this.wholeCellLabeling = null;
+			this.wholeCellRegions = null;
 		}
 		else
 		{
-			this.wholeCellMaskImage = JEXReader.getSingleImage(temp);
+			this.wholeCellMaskImage = JEXReader.getSingleImage(path);
+			this.wholeCellLabeling = utils.getLabeling(this.wholeCellMaskImage, connectedness.equals("4 Connected"));
+			this.wholeCellRegions = new LabelRegions<Integer>(this.wholeCellLabeling);
 		}
 		//utils.show(this.cellLabeling, false);
 		//utils.show(wholeCellMaskImage, false);
@@ -237,8 +250,8 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 		Logs.log("Measuring mask: " + this.mapMask, this);
 		this.mapMask = mapMask;
 		this.mask = JEXReader.getSingleImage(maskMap.get(this.mapMask));
-		this.maskLabeling = utils.getSubLabeling(this.wholeCellLabeling, this.mask);
-		this.maskRegions = new LabelRegions<Integer>(this.maskLabeling);
+		this.maskParentLabeling = utils.applyLabeling(this.wholeCellLabeling, this.mask);
+		this.maskParentRegions = new LabelRegions<Integer>(this.maskParentLabeling);
 	}
 
 	private void setMaximaRoi(DimensionMap mapMask_WholeCell)
@@ -273,13 +286,13 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 		if(labelToGet == null)
 		{
 			// this.wholeCellRegion = null;  // UNUSED IN COLOC
-			this.subCellRegion = null;
+			this.combinedSubCellRegion = null;
 			// this.majorSubCellRegion = null; // UNUSED IN COLOC
 		}
 		else
 		{
 			// this.wholeCellRegion = this.wholeCellRegions.getLabelRegion(labelToGet); // UNUSED IN COLOC
-			this.subCellRegion = this.maskRegions.getLabelRegion(labelToGet);
+			this.combinedSubCellRegion = this.maskParentRegions.getLabelRegion(labelToGet);
 			// this.majorSubCellRegion = this.getMajorSubRegion(this.wholeCellRegion, this.mask); // UNUSED IN COLOC
 		}
 	}
@@ -291,7 +304,7 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 		{
 			// Set geometries and quantify
 			this.setRegions(p.id);
-			if(this.subCellRegion != null)
+			if(this.combinedSubCellRegion != null)
 			{
 				if(!this.putResults())
 					return false;
@@ -302,7 +315,7 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 
 	private boolean putResults()
 	{
-		if(this.subCellRegion == null || this.subCellRegion.size() <= 1)
+		if(this.combinedSubCellRegion == null || this.combinedSubCellRegion.size() <= 1)
 		{
 			return true;
 		}
@@ -326,7 +339,7 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 		//		RandomAccessibleInterval<T> subImage1 = Views.offsetInterval(this.image1, this.wholeCellRegion);
 		//		RandomAccessibleInterval<T> subImage2 = Views.offsetInterval(this.image2, this.wholeCellRegion);
 		//		RandomAccessibleInterval<T> subRegionImage = utils.cropRealRAI(this.subCellRegion, subImage2);
-		Cursor<Void> c = this.subCellRegion.cursor();
+		Cursor<Void> c = this.combinedSubCellRegion.cursor();
 		//IterableRegion<BoolType> ir = utils.intersectRegions(this.wholeCellRegion, this.subCellRegion);
 
 		//		utils.show(subImage1);
@@ -450,8 +463,12 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 
 	private Vector<Pair<String,String>> getChannelPermutations(Dim channelDim)
 	{
-		if(channelDim.size() < 2) return null;
 		Vector<Pair<String,String>> ret = new Vector<>();
+		if(channelDim.size() < 2)
+		{
+			JEXDialog.messageDialog("There must be at least to image channels to perform colocalization. Aborting.");
+			return null;
+		}
 		for(int i = 0; i < channelDim.size()-1; i++)
 		{
 			for(int j = i + 1; j < channelDim.size(); j++)

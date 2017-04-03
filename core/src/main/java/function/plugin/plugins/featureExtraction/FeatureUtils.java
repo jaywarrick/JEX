@@ -56,6 +56,7 @@ import net.imglib2.type.numeric.integer.IntType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.view.IntervalView;
+import net.imglib2.view.IterableRandomAccessibleInterval;
 import net.imglib2.view.Views;
 
 /**
@@ -96,7 +97,7 @@ public class FeatureUtils {
 	}
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public <T, I extends IntegerType<I>> ImgLabeling <T, I> getSubLabeling(ImgLabeling<T, I> labeling, RandomAccessibleInterval<? extends RealType> mask)
+	public <T, I extends IntegerType<I>> ImgLabeling <T, I> applyLabeling(ImgLabeling<T, I> labeling, RandomAccessibleInterval<? extends RealType> mask)
 	{
 		// Create a labeling the same size as the mask
 		long[] dims = new long[mask.numDimensions()];
@@ -704,7 +705,7 @@ public class FeatureUtils {
 	/////////////////////////////////////////
 	////////////// Conversion ///////////////
 	/////////////////////////////////////////
-
+	
 	public <T extends BooleanType<T>> RandomAccessibleInterval<UnsignedByteType> convertBooleanTypeToByteRAI(RandomAccessibleInterval<T> rai)
 	{
 		return new ConvertedRandomAccessibleInterval<T, UnsignedByteType>(rai, new BooleanTypeToUnsignedByteTypeConverter<T>(), new UnsignedByteType(0));
@@ -729,6 +730,11 @@ public class FeatureUtils {
 	{
 		ConvertedCursor< Void, BitType > ret = new ConvertedCursor<>( c, new VoidToBitTypeConverter(), new BitType(false) );
 		return ret;
+	}
+	
+	public <T> IterableRandomAccessibleInterval<T> convertRAItoIterableRAI(RandomAccessibleInterval<T> rai)
+	{
+		return IterableRandomAccessibleInterval.create(rai);
 	}
 
 	////////// Converters ///////////
@@ -765,6 +771,12 @@ public class FeatureUtils {
 		}
 	}
 
+	/**
+	 * Note that this converter works to convert UnsignedByteType (which is a RealType) to a BoolType (which is a BooleanType)
+	 * @author jaywarrick
+	 *
+	 * @param <R>
+	 */
 	@SuppressWarnings("rawtypes")
 	public class RealTypeToBoolTypeConverter<R extends RealType<R>> implements Converter<R, BooleanType> {
 
