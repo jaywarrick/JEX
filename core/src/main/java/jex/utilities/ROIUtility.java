@@ -19,6 +19,8 @@ public class ROIUtility {
 		{
 			return null;
 		}
+		
+		// Use roi bounds because typically this will be faster as the ROI will generally be a small region within the image.
 		Rectangle r = roi.pointList.getBounds();
 		Roi roi2 = roi.getRoi();
 		PointList within = new PointList();
@@ -26,7 +28,8 @@ public class ROIUtility {
 		{
 			for (int x = r.x; x < r.x + r.width; x++)
 			{
-				if(x >= 0 && y > 0 && x <= ip.getWidth() && y <= ip.getHeight() && roi2.contains(x, y))
+				// ROI might be outside image so check if within ROI AND if within bounds of image.
+				if(x >= 0 && y >= 0 && x < ip.getWidth() && y < ip.getHeight() && roi2.contains(x, y))
 				{
 					within.add(x, y);
 				}
@@ -37,6 +40,34 @@ public class ROIUtility {
 		for (int i = 0; i < within.size(); i++)
 		{
 			ret[i] = ip.getPixelValue(within.get(i).x, within.get(i).y);
+		}
+		return ret;
+	}
+	
+	public static float[] getPixelsOutsideRoi(FloatProcessor ip, ROIPlus roi)
+	{
+		if(roi == null)
+		{
+			return null;
+		}
+		Rectangle r = new Rectangle(ip.getWidth(), ip.getHeight());
+		Roi roi2 = roi.getRoi();
+		PointList outside = new PointList();
+		for (int y = r.y; y < r.y + r.height; y++)
+		{
+			for (int x = r.x; x < r.x + r.width; x++)
+			{
+				if(!roi2.contains(x, y))
+				{
+					outside.add(x, y);
+				}
+				
+			}
+		}
+		float[] ret = new float[outside.size()];
+		for (int i = 0; i < outside.size(); i++)
+		{
+			ret[i] = ip.getPixelValue(outside.get(i).x, outside.get(i).y);
 		}
 		return ret;
 	}
