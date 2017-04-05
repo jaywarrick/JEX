@@ -275,7 +275,7 @@ public class JEX_SingleCell_MicrowellConvolve extends JEXCrunchable {
 			Vector<FloatProcessor> results = MicrowellFinder.filterAndConvolve(imp, radius, edgeFilter, kernel, isTest);
 			
 			// Save the image
-			ImagePlus im = FunctionUtility.makeImageToSave(imp, norm, 1, depth);
+			ImagePlus im = FunctionUtility.makeImageToSave(imp, norm, 1, depth, false);
 			String finalPath = JEXWriter.saveImage(im);
 			DimensionMap outMap = map.copy();
 			outMap.remove(colorDimName);

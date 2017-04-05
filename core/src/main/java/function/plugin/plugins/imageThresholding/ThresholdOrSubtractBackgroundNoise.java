@@ -1,7 +1,9 @@
 // Define package name as "plugins" as show here
 package function.plugin.plugins.imageThresholding;
 
+import java.util.List;
 import java.util.TreeMap;
+import java.util.Vector;
 
 import org.scijava.plugin.Plugin;
 
@@ -21,11 +23,13 @@ import function.plugin.mechanism.ParameterMarker;
 import ij.ImagePlus;
 import ij.process.FloatProcessor;
 import image.roi.ROIPlus;
+import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import jex.utilities.FunctionUtility;
 import jex.utilities.ROIUtility;
 import miscellaneous.CSVList;
 import miscellaneous.StatisticsUtility;
+import miscellaneous.StringUtility;
 import tables.Dim;
 import tables.DimTable;
 import tables.DimensionMap;
@@ -61,17 +65,21 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 	@ParameterMarker(uiOrder=2, name="Threshold? (vs. Subtract)", description="Whether to threshold or subtract based on the pixel values in the roi region (or whole image if no roi provided)", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true) // Should keep this defaulted to false for backwards compatibility
 	boolean threshold;
 
-	@ParameterMarker(uiOrder=3, name="Number of Sigma", description="Number of sigma to determine subtraction value or value at which to threshold image.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="5.0")
-	double nSigma;
+	@ParameterMarker(uiOrder=3, name="Number of Sigma", description="Number of sigma to determine subtraction value or value at which to threshold image. (Comma separated list results in outputs for each value and negative values (-x) result in keeping values below -x sigma)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="5.0")
+	String nSigma;
 
 	@ParameterMarker(uiOrder=4, name="Single Threshold per Color?", description="Calculate a single threhsold for each color or a threshold for each image in data set. The combined thresh is calcualted as the median of the individual thresholds.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
 	boolean threshPerColor;
-	
+
 	@ParameterMarker(uiOrder=5, name="Offset", description="Amount to add back to the image before saving. Useful for avoiding clipping of lows, essentially setting the background to a known non-zero offset.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
 	double offset;
-	
+
 	@ParameterMarker(uiOrder=6, name="'<Name>=<Value>,...' pairs to Exclude (optional)", description="Optionally specify a particular name value pair to exclude from background correction. Useful for excluding bright-field (e.g., Channel=BF). Technically doesn't have to be the 'Channel' dimension.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
 	String toExclude;
+
+	@ParameterMarker(uiOrder=7, name="Evaluate Outside ROI?", description="If an ROI is specified, then indicate whether to use pixels inside or outside the ROI to determine background intensities. (checked uses pixels outside ROI)", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	boolean outside;
+
 
 	/////////// Define Outputs here ///////////
 
@@ -84,9 +92,10 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 
 	@OutputMarker(uiOrder=4, name="Thresholds", type=MarkerConstants.TYPE_IMAGE, flavor="", description="The resultant adjusted image", enabled=true)
 	JEXData outputThresholdData;
-	
+
 	int bitDepth = 8;
-	
+	List<Double> nSigmas = null;
+
 	DimensionMap thingToExclude = null;
 
 	// Define threading capability here (set to 1 if using non-final static variables shared between function instances).
@@ -101,12 +110,19 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 	@Override
 	public boolean run(JEXEntry optionalEntry)
 	{
+		getDoubles(); // translates the string nSigma into a list of sigmas as doubles
+		if(nSigmas.size() > 1 && threshPerColor)
+		{
+			JEXDialog.messageDialog("The ability to use multiple sigma values and the one threshold per color option are incompatabile. Choose to do one or the other. Aborting.", this);
+			return false;
+		}
+		
 		// Collect the inputs
 		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
 		{
 			return false;
 		}
-		
+
 		if(toExclude != null && !toExclude.equals(""))
 		{
 			thingToExclude = new DimensionMap(toExclude);
@@ -141,7 +157,7 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 	public TreeMap<String,Object> calcPerColor()
 	{
 		TreeMap<String,Object> temp = this.calcIndividual();
-		
+
 		Dim colorDim = imageData.getDimTable().getDimWithName(colorDimName);
 		if(colorDim == null)
 		{
@@ -159,7 +175,7 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 		TreeMap<DimensionMap,Double> thresholds = (TreeMap<DimensionMap,Double>) temp.get("outputThreshMap");
 		for (DimTable subTable : table.getSubTableIterator(colorDimName))
 		{
-			
+
 			Dim colorSubDim = subTable.getDimWithName(colorDimName);
 
 			// Get the median threshold
@@ -245,101 +261,142 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 		boolean success = true;
 		for (DimensionMap map : dimsToProcess.getMapIterator())
 		{
-			if(this.isCanceled())
+			for(Double sigma : nSigmas)
 			{
-				return this.makeTreeMap("Success", false);
-			}
-			
-			Double med = Double.NaN, mad = Double.NaN, threshold = Double.NaN;
-
-			// Get the image
-			String imPath = imageMap.get(map);
-			if(imPath == null)
-			{
-				continue;
-			}
-			ImagePlus im = new ImagePlus(imageMap.get(map));
-			bitDepth = im.getBitDepth();
-			
-			if(thingToExclude != null && map.compareTo(thingToExclude) == 0)
-			{
-				// Then don't do anything to the image and leave numbers and NaN
-				String path = JEXWriter.saveImage(im);
-				outputMap.put(map, path);
-			}
-			else
-			{
-				FloatProcessor ip = (FloatProcessor) im.getProcessor().convertToFloat();
-
-				// Do threshold
-				ROIPlus roi = rois.get(map);
-				float[] tempPixels = null;
-				if(roi != null)
-				{
-					tempPixels = ROIUtility.getPixelsInRoi(ip, roi);
-				}
-				if(tempPixels == null)
-				{
-					tempPixels = (float[]) ip.getPixels();
-				}
-				double[] pixels = new double[tempPixels.length];
-				int i = 0;
-				for (float f : tempPixels)
-				{
-					pixels[i] = f;
-					i++;
-				}
-				tempPixels = null;
-				med = StatisticsUtility.median(pixels);
 				if(this.isCanceled())
 				{
 					return this.makeTreeMap("Success", false);
 				}
-				mad = StatisticsUtility.mad(med, pixels); // Multiplier converts the mad to an approximation of the standard deviation without the effects of outliers
-				threshold = med + nSigma * mad;
-				String path = null;
-				
-				if(!threshPerColor)
+
+				Double med = Double.NaN, mad = Double.NaN, threshold = Double.NaN;
+
+				// Get the image
+				String imPath = imageMap.get(map);
+				if(imPath == null)
 				{
-					if(this.threshold)
+					continue;
+				}
+				ImagePlus im = new ImagePlus(imageMap.get(map));
+				bitDepth = im.getBitDepth();
+
+				if(thingToExclude != null && map.compareTo(thingToExclude) == 0)
+				{
+					// Then don't do anything to the image and leave numbers and NaN
+					String path = JEXWriter.saveImage(im);
+					outputMap.put(map.copy(), path);
+				}
+				else
+				{
+					FloatProcessor ip = (FloatProcessor) im.getProcessor().convertToFloat();
+
+					// Do threshold
+					ROIPlus roi = rois.get(map);
+					float[] tempPixels = null;
+					if(roi != null)
 					{
-						FunctionUtility.imThresh(ip, threshold, false);
-						if(this.isCanceled())
+						if(outside)
 						{
-							success = false;
-							return this.makeTreeMap("Success", false);
+							tempPixels = ROIUtility.getPixelsOutsideRoi(ip, roi);
 						}
-						path = JEXWriter.saveImage(FunctionUtility.makeImageToSave(ip, "false", 8)); // Creating black and white image
-					}
-					else
-					{
-						ip.add(offset);
-						ip.subtract(threshold);
-						if(this.isCanceled())
+						else
 						{
-							success = false;
-							return this.makeTreeMap("Success", false);
+							tempPixels = ROIUtility.getPixelsInRoi(ip, roi);
 						}
-						path = JEXWriter.saveImage(FunctionUtility.makeImageToSave(ip, ""+false, this.bitDepth)); // Creating black and white image
 					}
-					if(path != null)
+					if(tempPixels == null)
 					{
-						outputMap.put(map, path);
+						tempPixels = (float[]) ip.getPixels();
+					}
+					double[] pixels = new double[tempPixels.length];
+					int i = 0;
+					for (float f : tempPixels)
+					{
+						pixels[i] = f;
+						i++;
+					}
+					tempPixels = null;
+					med = StatisticsUtility.median(pixels);
+					if(this.isCanceled())
+					{
+						return this.makeTreeMap("Success", false);
+					}
+					mad = StatisticsUtility.mad(med, pixels); // Multiplier converts the mad to an approximation of the standard deviation without the effects of outliers
+					threshold = med + sigma * mad;
+					String path = null;
+
+					if(!threshPerColor)
+					{
+						if(this.threshold)
+						{
+							FunctionUtility.imThresh(ip, threshold, false);
+							if(this.isCanceled())
+							{
+								success = false;
+								return this.makeTreeMap("Success", false);
+							}
+							if(sigma < 0)
+							{
+								path = JEXWriter.saveImage(FunctionUtility.makeImageToSave(ip, false, 1, 8, true)); // Creating black and white image
+							}
+							else
+							{
+								path = JEXWriter.saveImage(FunctionUtility.makeImageToSave(ip, false, 1, 8, false)); // Creating black and white image
+							}
+						}
+						else
+						{
+							ip.add(offset);
+							ip.subtract(threshold);
+							if(this.isCanceled())
+							{
+								success = false;
+								return this.makeTreeMap("Success", false);
+							}
+							path = JEXWriter.saveImage(FunctionUtility.makeImageToSave(ip, ""+false, this.bitDepth)); // Creating black and white image
+						}
+						if(path != null)
+						{
+							if(nSigmas.size() == 1)
+							{
+								outputMap.put(map.copy(), path);
+							}
+							else
+							{
+								DimensionMap toSave = map.copy();
+								toSave.put(colorDimName, map.get(colorDimName) + "_" + sigma);
+								outputMap.put(toSave, path);
+							}
+						}
 					}
 				}
-			}
-			
-			DimensionMap map2 = map.copy();
-			map2.put("Measurement", "Median");
-			statsMap.put(map2.copy(), med);
-			map2.put("Measurement", "MAD");
-			statsMap.put(map2.copy(), mad);
-			outputThreshMap.put(map, threshold);
 
-			// Update progress
-			count = count + 1;
-			percentage = (int) (100 * (count / total));
-			JEXStatics.statusBar.setProgressPercentage(percentage);
+				if(nSigmas.size() == 1)
+				{
+					DimensionMap map2 = map.copy();
+					map2.put("Measurement", "Median");
+					statsMap.put(map2.copy(), med);
+					map2.put("Measurement", "MAD");
+					statsMap.put(map2.copy(), mad);
+					outputThreshMap.put(map, threshold);
+				}
+				else
+				{
+					DimensionMap map2 = map.copy();
+					map2.put("Measurement", "Median_" + sigma);
+					statsMap.put(map2.copy(), med);
+					map2.put("Measurement", "MAD_" + sigma);
+					statsMap.put(map2.copy(), mad);
+					
+					DimensionMap toSave = map.copy();
+					toSave.put(colorDimName, map.get(colorDimName) + "_" + sigma);
+					outputThreshMap.put(toSave, threshold);
+				}
+
+				// Update progress
+				count = count + 1;
+				percentage = (int) (100 * (count / total));
+				JEXStatics.statusBar.setProgressPercentage(percentage);
+			}
 		}
 
 		TreeMap<String,Object> ret = this.makeTreeMap("Success,outputMap,statsMap,outputThreshMap", success, outputMap, statsMap, outputThreshMap);
@@ -359,5 +416,17 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 			ret.put(names.get(i), items[i]);
 		}
 		return ret;
+	}
+
+	private void getDoubles()
+	{
+		CSVList temp = new CSVList(nSigma);
+		Vector<Double> ret = new Vector<>();
+
+		for(String num : temp)
+		{
+			ret.add(new Double(StringUtility.removeWhiteSpaceOnEnds(num)));
+		}
+		nSigmas = ret;
 	}
 }

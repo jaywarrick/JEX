@@ -236,7 +236,7 @@ public class JEX_ConvolveIJ extends JEXCrunchable {
 			convolver.convolve(imp, (float[]) kernel.getPixelsCopy(), kernel.getWidth(), kernel.getHeight());
 			
 			// Save the image
-			ImagePlus im = FunctionUtility.makeImageToSave(imp, norm, 1, depth);
+			ImagePlus im = FunctionUtility.makeImageToSave(imp, norm, 1, depth, false);
 			String finalPath = JEXWriter.saveImage(im);
 			outputMap.put(dim.copy(), finalPath);
 			

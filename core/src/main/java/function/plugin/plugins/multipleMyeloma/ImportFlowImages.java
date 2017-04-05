@@ -53,7 +53,7 @@ public class ImportFlowImages extends JEXPlugin {
 	@ParameterMarker(uiOrder=1, name="Folder of Images", description="Select the folder that contains the .ome.tif images you would like to import.", ui=MarkerConstants.UI_FILECHOOSER, defaultText="")
 	String folderString;
 	
-	@ParameterMarker(uiOrder=1, name="File Prefix", description="Select the folder that contains the .ome.tif images you would like to import.", ui=MarkerConstants.UI_FILECHOOSER, defaultText="Image_")
+	@ParameterMarker(uiOrder=2, name="File Prefix", description="Prefix of the *.ome.tif files to grab.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Image_")
 	String prefix;
 
 	/////////// Define Outputs ///////////
@@ -113,8 +113,11 @@ public class ImportFlowImages extends JEXPlugin {
 			}
 		}
 		
-		this.imageData = ImageWriter.makeImageStackFromPaths("Duh", imageMap);
-		this.folderValueData = ValueWriter.makeValueObject("Duh", this.folderString);
+		if(imageMap != null && imageMap.size() > 0)
+		{
+			this.imageData = ImageWriter.makeImageStackFromPaths("Duh", imageMap);
+			this.folderValueData = ValueWriter.makeValueObject("Duh", this.folderString);
+		}
 
 		// Return status
 		return true;

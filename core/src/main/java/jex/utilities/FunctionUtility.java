@@ -19,7 +19,7 @@ import miscellaneous.LSVList;
 
 public class FunctionUtility {
 	
-	public static ImagePlus makeImageToSave(FloatProcessor imp, boolean normalize, double multiplier, int bitDepth)
+	public static ImagePlus makeImageToSave(FloatProcessor imp, boolean normalize, double multiplier, int bitDepth, boolean invert)
 	{
 		imp.resetMinAndMax();
 		ImageStatistics ims;
@@ -48,7 +48,10 @@ public class FunctionUtility {
 		{
 			newImp = imp;
 		}
-		
+		if(invert)
+		{
+			newImp.invert();
+		}
 		ImagePlus result = new ImagePlus("", newImp);
 		return result;
 	}

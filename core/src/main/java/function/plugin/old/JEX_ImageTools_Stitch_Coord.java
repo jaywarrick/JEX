@@ -309,7 +309,7 @@ public class JEX_ImageTools_Stitch_Coord extends JEXCrunchable {
 		JEXStatics.statusBar.setProgressPercentage(percentage);
 		
 		// Save the resulting image file
-		ImagePlus toSave = FunctionUtility.makeImageToSave(stitchIP, normalize, 1.0, bits);
+		ImagePlus toSave = FunctionUtility.makeImageToSave(stitchIP, normalize, 1.0, bits, false);
 		String imPath = JEXWriter.saveImage(toSave);
 		File result = new File(imPath);
 		
