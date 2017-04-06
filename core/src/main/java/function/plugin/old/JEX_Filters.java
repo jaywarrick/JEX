@@ -208,7 +208,7 @@ public class JEX_Filters extends JEXCrunchable {
 
 			// //// Begin Actual Function
 			RankFilters rF = new RankFilters();
-			rF.rank(ip, radius, JEX_StackProjection.getMethodInt(method));
+			rF.rank(ip, radius, getMethodInt(method));
 			
 			// //// End Actual Function
 
@@ -245,6 +245,28 @@ public class JEX_Filters extends JEXCrunchable {
 
 		// Return status
 		return true;
+	}
+	
+	public static int getMethodInt(String method)
+	{
+		int methodInt = RankFilters.MEAN;
+		if(method.equals(MIN))
+		{
+			methodInt = RankFilters.MIN;
+		}
+		else if(method.equals(MAX))
+		{
+			methodInt = RankFilters.MAX;
+		}
+		else if(method.equals(MEDIAN))
+		{
+			methodInt = RankFilters.MEDIAN;
+		}
+		else if(method.equals(VARIANCE))
+		{
+			methodInt = RankFilters.VARIANCE;
+		}
+		return methodInt;
 	}
 
 }
