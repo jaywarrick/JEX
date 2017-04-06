@@ -200,6 +200,10 @@ public class JEX_ImageTools_SplitImage extends JEXCrunchable {
 			TreeMap<DimensionMap,String> splitImageMap = new TreeMap<DimensionMap,String>();
 			for (DimensionMap map : subTable.getMapIterator())
 			{
+				if(this.isCanceled())
+				{
+					return false;
+				}
 				String imPath = imageMap.get(map);
 				if(imPath == null)
 				{
