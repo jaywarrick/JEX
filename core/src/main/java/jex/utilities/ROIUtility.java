@@ -1,5 +1,9 @@
 package jex.utilities;
 
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.util.Vector;
+
 import ij.gui.Roi;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
@@ -7,9 +11,7 @@ import ij.process.ImageProcessor;
 import image.roi.IdPoint;
 import image.roi.PointList;
 import image.roi.ROIPlus;
-
-import java.awt.Point;
-import java.awt.Rectangle;
+import image.roi.ROIPlus.PatternRoiIterator;
 
 public class ROIUtility {
 	
@@ -79,16 +81,26 @@ public class ROIUtility {
 			return null;
 		}
 		PointList ret = new PointList();
+		PatternRoiIterator itr = regionRoi.patternRoiIterator();
+		Vector<Roi> patternRois = new Vector<>();
+		while(itr.hasNext())
+		{
+			ROIPlus r = itr.next();
+			patternRois.add(r.getRoi());
+		}
 		for(IdPoint p : pointRoi.getPointList())
 		{
-			boolean pointInRegion = regionRoi.getRoi().contains(p.x, p.y); 
-			if(pointInRegion && keepPointsInsideRegion)
+			for(Roi roi : patternRois)
 			{
-				ret.add(p);
-			}
-			else if(!pointInRegion && !keepPointsInsideRegion)
-			{
-				ret.add(p);
+				boolean pointInRegion = roi.contains(p.x, p.y);
+				if(pointInRegion && keepPointsInsideRegion)
+				{
+					ret.add(p);
+				}
+				else if(!pointInRegion && !keepPointsInsideRegion)
+				{
+					ret.add(p);
+				}
 			}
 		}
 		ROIPlus toRet = new ROIPlus(ret, ROIPlus.ROI_POINT);
