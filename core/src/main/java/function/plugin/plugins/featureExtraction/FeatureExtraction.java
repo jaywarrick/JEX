@@ -204,15 +204,18 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
 	@ParameterMarker(uiOrder = 26, name = "Zernike Avg Nuc Diameter [pixels]", description = "Typical DIAMETER of nucleus. This determines the nuclear padding ratio (fixed dia / nuc dia). Keep this consistent from dataset to dataset.", ui = MarkerConstants.UI_TEXTFIELD, defaultText="15")
 	double zernikeNucDiameter;
+	
+	@ParameterMarker(uiOrder = 27, name = "Save ARFF version as well?", description = "Initially, the file is written as a CSV and can be also saved as a .arff file as well. Should the .arff file be saved (it takes longer)?", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	boolean saveArff;
 
 	// Add a primary mask and secondary mask
 
 	/////////// Define Outputs here ///////////
 
-	@OutputMarker(uiOrder = 1, name = "Output CSV Table", type = MarkerConstants.TYPE_FILE, flavor = "", description = "Output in csv format (i.e., for Excel etc).", enabled = true)
+	@OutputMarker(uiOrder = 1, name = "Feature CSV Table", type = MarkerConstants.TYPE_FILE, flavor = "", description = "Output in csv format (i.e., for Excel etc).", enabled = true)
 	JEXData outputCSV;
 
-	@OutputMarker(uiOrder = 1, name = "Output ARFF Table", type = MarkerConstants.TYPE_FILE, flavor = "", description = "Test table output (i.e., for Weka etc).", enabled = true)
+	@OutputMarker(uiOrder = 2, name = "Feature ARFF Table", type = MarkerConstants.TYPE_FILE, flavor = "", description = "Test table output (i.e., for Weka etc).", enabled = true)
 	JEXData outputARFF;
 
 	// Define threading capability here (set to 1 if using non-final static
@@ -225,6 +228,8 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	@Override
 	public boolean run(JEXEntry optionalEntry) {
 
+		this.wrapWriter = new WriterWrapper();
+		
 		if(!checkInputs())
 		{
 			// Something is wrong and need to return false;
@@ -352,6 +357,14 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		
 		// Apply the labels of the whole cells to the mask (e.g., multiple subregions now get the same parent label)
 		this.maskParentLabeling = utils.applyLabeling(this.wholeCellLabeling, this.mask);
+		//		Img<UnsignedShortType> img = utils.makeImgFromLabeling(this.maskParentLabeling);
+		//		String path = JEXWriter.saveImage(img);
+		//		try {
+		//			FileUtility.openFileDefaultApplication(path);
+		//		} catch (Exception e) {
+		//			// TODO Auto-generated catch block
+		//			e.printStackTrace();
+		//		}
 		this.maskParentRegions = new LabelRegions<Integer>(this.maskParentLabeling);
 	}
 
@@ -384,7 +397,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	{
 		this.pId = pId;
 		Integer labelToGet = this.idToLabelMap.get(pId);
-		if(labelToGet == null)
+		if(labelToGet == null || !this.maskParentRegions.getExistingLabels().contains(labelToGet))
 		{
 			this.wholeCellRegion = null;
 			this.combinedSubCellRegion = null;
@@ -401,6 +414,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			{
 				this.polygons.add(utils.getPolygonFromBoolean(region));
 			}
+			
 		}
 	}
 
@@ -689,6 +703,12 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			int i = 1;
 			for(Polygon p : polygons)
 			{
+				// TODO: Revisit whether to keep this in or not.
+				if(p.getVertices().size() < 5)
+				{
+					i = i + 1;
+					continue;
+				}
 				DimensionMap mapM_Geometry = this.mapMask_NoChannel.copyAndSet("MaskChannel=" + this.mapMask.get(channelName) + ".p" + i);
 				mapM_Geometry.put("ImageChannel", "None");
 				Map<NamedFeature, DoubleType> results = opGeometric.calculate(p);
@@ -917,22 +937,22 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName() + suffix);
 				newMap.put("Id", "" + this.pId);
 				newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
-				this.wrapWriter.write(newMap, result.getValue().get());
+				WriterWrapper.write(this.wrapWriter, newMap, result.getValue().get());
 			}
 			if(firstTimeThrough)
 			{
 				DimensionMap newMap = mapM.copyAndSet("Measurement=ZernikeCircleX" + suffix);
 				newMap.put("Id", "" + this.pId);
 				newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
-				this.wrapWriter.write(newMap, circle.getCenter().getDoublePosition(0));
+				WriterWrapper.write(this.wrapWriter, newMap, circle.getCenter().getDoublePosition(0));
 				newMap = mapM.copyAndSet("Measurement=ZernikeCircleY" + suffix);
 				newMap.put("Id", "" + this.pId);
 				newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
-				this.wrapWriter.write(newMap, circle.getCenter().getDoublePosition(1));
+				WriterWrapper.write(this.wrapWriter, newMap, circle.getCenter().getDoublePosition(1));
 				newMap = mapM.copyAndSet("Measurement=ZernikeCircleR" + suffix);
 				newMap.put("Id", "" + this.pId);
 				newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
-				this.wrapWriter.write(newMap, circle.getRadius());
+				WriterWrapper.write(this.wrapWriter, newMap, circle.getRadius());
 			}
 		}
 	}
@@ -956,48 +976,48 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
 				newMap.put("Id", "" + this.pId);
 				newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
-				this.wrapWriter.write(newMap, result.getValue().get());
+				WriterWrapper.write(this.wrapWriter, newMap, result.getValue().get());
 			}
 			if(firstTimeThrough)
 			{
 				DimensionMap newMap = mapM.copyAndSet("Measurement=DNZernikeInnerCircleX");
 				newMap.put("Id", "" + this.pId);
 				newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
-				this.wrapWriter.write(newMap, innerCircle.getCenter().getDoublePosition(0));
+				WriterWrapper.write(this.wrapWriter, newMap, innerCircle.getCenter().getDoublePosition(0));
 				newMap = mapM.copyAndSet("Measurement=DNZernikeInnerCircleY");
 				newMap.put("Id", "" + this.pId);
 				newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
-				this.wrapWriter.write(newMap, innerCircle.getCenter().getDoublePosition(1));
+				WriterWrapper.write(this.wrapWriter, newMap, innerCircle.getCenter().getDoublePosition(1));
 				newMap = mapM.copyAndSet("Measurement=DNZernikeInnerCircleR");
 				newMap.put("Id", "" + this.pId);
 				newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
-				this.wrapWriter.write(newMap, innerCircle.getRadius());
+				WriterWrapper.write(this.wrapWriter, newMap, innerCircle.getRadius());
 				newMap = mapM.copyAndSet("Measurement=DNZernikeOuterCircleX");
 				newMap.put("Id", "" + this.pId);
 				newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
-				this.wrapWriter.write(newMap, outerCircle.getCenter().getDoublePosition(0));
+				WriterWrapper.write(this.wrapWriter, newMap, outerCircle.getCenter().getDoublePosition(0));
 				newMap = mapM.copyAndSet("Measurement=DNZernikeOuterCircleY");
 				newMap.put("Id", "" + this.pId);
 				newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
-				this.wrapWriter.write(newMap, outerCircle.getCenter().getDoublePosition(1));
+				WriterWrapper.write(this.wrapWriter, newMap, outerCircle.getCenter().getDoublePosition(1));
 				newMap = mapM.copyAndSet("Measurement=DNZernikeOuterCircleR");
 				newMap.put("Id", "" + this.pId);
 				newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
-				this.wrapWriter.write(newMap, outerCircle.getRadius());
+				WriterWrapper.write(this.wrapWriter, newMap, outerCircle.getRadius());
 			}
 		}
 	}
 
 	public void close()
 	{
-		Pair<JEXData, JEXData> results = this.wrapWriter.close();
+		Pair<JEXData, JEXData> results = WriterWrapper.close(this.wrapWriter, saveArff);
 		outputCSV = results.p1;
 		outputARFF = results.p2;
 	}
 
 	public void write(DimensionMap map, Double value)
 	{
-		this.wrapWriter.write(map, value);
+		WriterWrapper.write(this.wrapWriter, map, value);
 	}
 
 	public boolean checkInputs()
