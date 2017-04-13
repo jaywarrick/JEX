@@ -113,13 +113,16 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 	
 	@ParameterMarker(uiOrder = 3, name = "Transform Data to 'Similarity'", description = "This takes the correlation metrics and transoforms them using Similarity=ln((1+R)/(1-R)). Recommended.", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
 	boolean transform;
+	
+	@ParameterMarker(uiOrder = 4, name = "Save ARFF version as well?", description = "Initially, the file is written as a CSV and can be also saved as a .arff file as well. Should the .arff file be saved (it takes longer)?", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	boolean saveArff;
 
 	/////////// Define Outputs here ///////////
 
-	@OutputMarker(uiOrder = 1, name = "Output CSV Table", type = MarkerConstants.TYPE_FILE, flavor = "", description = "Output in csv format (i.e., for Excel etc).", enabled = true)
+	@OutputMarker(uiOrder = 1, name = "Coloc CSV Table", type = MarkerConstants.TYPE_FILE, flavor = "", description = "Output in csv format (i.e., for Excel etc).", enabled = true)
 	JEXData outputCSV;
 
-	@OutputMarker(uiOrder = 1, name = "Output ARFF Table", type = MarkerConstants.TYPE_FILE, flavor = "", description = "Test table output (i.e., for Weka etc).", enabled = true)
+	@OutputMarker(uiOrder = 1, name = "Coloc ARFF Table", type = MarkerConstants.TYPE_FILE, flavor = "", description = "Test table output (i.e., for Weka etc).", enabled = true)
 	JEXData outputARFF;
 
 	// Define threading capability here (set to 1 if using non-final static
@@ -290,7 +293,7 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 	{
 		this.pId = pId;
 		Integer labelToGet = this.idToLabelMap.get(pId);
-		if(labelToGet == null)
+		if(labelToGet == null || !this.maskParentRegions.getExistingLabels().contains(labelToGet))
 		{
 			// this.wholeCellRegion = null;  // UNUSED IN COLOC
 			this.combinedSubCellRegion = null;
@@ -436,14 +439,14 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 
 	public void close()
 	{
-		Pair<JEXData, JEXData> results = this.wrapWriter.close();
+		Pair<JEXData, JEXData> results = WriterWrapper.close(this.wrapWriter, saveArff);
 		outputCSV = results.p1;
 		outputARFF = results.p2;
 	}
 
 	public void write(DimensionMap map, Double value)
 	{
-		this.wrapWriter.write(map, value);
+		WriterWrapper.write(this.wrapWriter, map, value);
 	}
 
 	public boolean checkInputs()
