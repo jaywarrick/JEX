@@ -143,7 +143,7 @@ public class ImportFlowImages extends JEXPlugin {
 	@Override
 	public int getMaxThreads()
 	{
-		return 1;
+		return 10;
 	}
 
 	@Override
@@ -166,14 +166,6 @@ public class ImportFlowImages extends JEXPlugin {
 
 		Collection<File> files = Arrays.asList(folder.listFiles());
 
-		int count = 0, total = files.size(), percentage = 0;
-		percentage = (int) (100 * ((double) (count) / (total)));
-		JEXStatics.statusBar.setProgressPercentage(percentage);
-		if(this.isCanceled())
-		{
-			return false;
-		}
-
 		// Presort the files
 		TreeMap<DimensionMap,String> sortedFiles = getSortedFiles(files);
 
@@ -190,6 +182,8 @@ public class ImportFlowImages extends JEXPlugin {
 		int pageCounter = 1;
 		Vector<Double> bfMedians = new Vector<>();
 		Iterator<DimTable> itr = fileDimTable.getSubTableIterator("Cell").iterator();
+		int count = 0, percentage = 0;
+		int total = fileDimTable.getDimWithName("Cell").size();
 		while(itr.hasNext())
 		{
 			DimTable cellTable = itr.next();
@@ -286,6 +280,11 @@ public class ImportFlowImages extends JEXPlugin {
 					}
 				}
 			}
+			
+			count = count + 1;
+			percentage = (int) (100 * ((double) (count) / ((double) total)));
+			JEXStatics.statusBar.setProgressPercentage(percentage);
+			
 			if(cellCounter < cellsPerPage - 1 && itr.hasNext())
 			{
 				cellCounter = cellCounter + 1;
