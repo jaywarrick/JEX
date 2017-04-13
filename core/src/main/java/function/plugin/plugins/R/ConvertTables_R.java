@@ -164,7 +164,7 @@ public class ConvertTables_R extends JEXPlugin {
 			}
 			else
 			{
-				R.eval("temp <- fread(input=" + R.quotedPath(tempPath) + "))");
+				R.eval("temp <- fread(input=" + R.quotedPath(tempPath) + ")");
 			}
 			count = count + 1;
 			percentage = 100 * count / total;
