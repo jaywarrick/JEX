@@ -147,7 +147,7 @@ public class JEX_SingleCell_BackGroundCorrectCalibrated extends JEXCrunchable {
 		Parameter pa0 = getNumThreadsParameter(10, 6);
 		Parameter pa1 = new Parameter("IF-DF Radius", "Radius of mean for smoothing illumination correction image", "5");
 		Parameter pa2 = new Parameter("Image-DF Radius", "Radius of median filter for smoothing dark field corrected experimental image (if no DF provided, it WILL smooth the image but not subtract any DF image from the image)", "3");
-		Parameter pa3 = new Parameter("Est. BG sigma", "Estimated noise in the background signal (i.e., mu +/- sigma)", "100");
+		Parameter pa3 = new Parameter("Est. BG sigma", "Estimated noise in the background signal (i.e., mu +/- sigma). Set to 0 or less to avoid this step.", "100");
 		// Parameter pa3 = new
 		// Parameter("Color Dim Name","Name of the color dimension in this image set","Color");
 		// Parameter pa4 = new
