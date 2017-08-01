@@ -1,20 +1,10 @@
 package function.plugin.plugins.imageProcessing;
 
-import ij.ImagePlus;
-import ij.process.Blitter;
-import ij.process.FloatProcessor;
-import ij.process.ImageProcessor;
-
 import java.io.File;
 import java.util.TreeMap;
 
-import jex.statics.JEXStatics;
-import jex.utilities.FunctionUtility;
-import logs.Logs;
-
 import org.scijava.plugin.Plugin;
 
-import tables.DimensionMap;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;
@@ -26,6 +16,17 @@ import function.plugin.mechanism.MarkerConstants;
 import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
 import function.plugin.plugins.medianFilterHelpers.FastMedian;
+import ij.ImagePlus;
+import ij.process.Blitter;
+import ij.process.FloatProcessor;
+import ij.process.ImageProcessor;
+import jex.statics.JEXDialog;
+import jex.statics.JEXStatics;
+import jex.utilities.FunctionUtility;
+import logs.Logs;
+import miscellaneous.CSVList;
+import tables.Dim;
+import tables.DimensionMap;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions
@@ -58,8 +59,8 @@ public class FastMedianBackgroundSubtract extends JEXPlugin {
 	@ParameterMarker(uiOrder=1, name="Kernal Width", description="Pixel width of the kernal", ui=MarkerConstants.UI_TEXTFIELD, defaultText="5")
 	int kernalWidth;
 	
-	@ParameterMarker(uiOrder=1, name="Nominal Value to Add Back", description="Nominal value to add to all pixels after background subtraction because some image formats don't allow negative numbers.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="100")
-	double nominal;
+	@ParameterMarker(uiOrder=1, name="Nominal Value to Add Back", description="Nominal value to add to all pixels after background subtraction because some image formats don't allow negative numbers. (Use following notation to specify different parameters for differen dimension values, '<Dim Name>'=<val1>,<val2>,<val3>' e.g., 'Channel=0,100,100'. The values will be applied in that order for the ordered dim values.) ", ui=MarkerConstants.UI_TEXTFIELD, defaultText="100")
+	String nominal;
 	
 	/////////// Define Outputs ///////////
 	
@@ -77,6 +78,13 @@ public class FastMedianBackgroundSubtract extends JEXPlugin {
 	{
 		// Validate the input data
 		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
+		{
+			return false;
+		}
+		
+		// Get the nominal add back values (typically different for fluorescence and brightfield
+		TreeMap<DimensionMap,Double> nominals = getNominals();
+		if(nominals == null)
 		{
 			return false;
 		}
@@ -101,7 +109,8 @@ public class FastMedianBackgroundSubtract extends JEXPlugin {
 			int bitDepth = ip.getBitDepth();
 			fp = (FloatProcessor) ip.convertToFloat();
 			ip2 = ip2.convertToFloat();
-			ip2.subtract(nominal);
+			double nominalD = nominals.get(map);
+			ip2.subtract(nominalD);
 			fp.copyBits(ip2, 0, 0, Blitter.SUBTRACT);
 			ImagePlus out = FunctionUtility.makeImageToSave(fp, "false", bitDepth);
 			tempPath = JEXWriter.saveImage(out);
@@ -122,6 +131,50 @@ public class FastMedianBackgroundSubtract extends JEXPlugin {
 		
 		// Return status
 		return true;
+	}
+	
+	public TreeMap<DimensionMap,Double> getNominals()
+	{
+		TreeMap<DimensionMap, Double> ret = new TreeMap<>();
+		Dim nominalDim = null;
+		Double nominalD = 0.0;
+		try
+		{
+			nominalD = Double.parseDouble(nominal);
+			ret.put(new DimensionMap(), nominalD);
+			return ret;
+		}
+		catch(Exception e)
+		{
+			String[] temp = nominal.split("=");
+			if(temp.length != 2)
+			{
+				JEXDialog.messageDialog("Couldn't parse the parameter '" + nominal + "' into a number or into format '<Dim Name>=<val1>,<val2>...'. Aborting.", this);
+				return null;
+			}
+			nominalDim = imageData.getDimTable().getDimWithName(temp[0]);
+			CSVList temp2 = new CSVList(temp[1]);
+			if(nominalDim.size() != 1 && nominalDim.size() != temp2.size())
+			{
+				JEXDialog.messageDialog("The number of nominal addback values did not match the number of values in the dimension '" + nominalDim.dimName + "'. Aborting.", this);
+				return null;
+			}
+			for(int i=0; i < temp2.size(); i++)
+			{
+				try
+				{
+					Double toGet = Double.parseDouble(temp2.get(i));
+					ret.put(new DimensionMap(nominalDim.dimName + "=" + nominalDim.dimValues.get(i)), toGet);
+				}
+				catch(Exception e2)
+				{
+					JEXDialog.messageDialog("Couldn't parse the value '" + temp2.get(i) + "' to type double. Aborting.", this);
+					return null;
+				}
+				
+			}
+			return ret;
+		}
 	}
 	
 	public static String saveAdjustedImage(String imagePath, double oldMin, double oldMax, double newMin, double newMax, double gamma, int bitDepth)
