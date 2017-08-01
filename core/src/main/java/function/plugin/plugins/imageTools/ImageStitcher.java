@@ -1,12 +1,5 @@
 package function.plugin.plugins.imageTools;
 
-import ij.ImagePlus;
-import ij.process.Blitter;
-import ij.process.FloatProcessor;
-import ij.process.ImageProcessor;
-import image.roi.IdPoint;
-import image.roi.PointList;
-
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.io.File;
@@ -14,18 +7,11 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.Vector;
-
-import jex.statics.JEXStatics;
-import jex.utilities.FunctionUtility;
-import logs.Logs;
-import miscellaneous.CSVList;
 
 import org.scijava.plugin.Plugin;
 
-import tables.Dim;
-import tables.DimTable;
-import tables.DimensionMap;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;
@@ -38,6 +24,19 @@ import function.plugin.mechanism.MarkerConstants;
 import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
 import function.plugin.old.JEX_ImageTools_Stitch_Coord;
+import ij.ImagePlus;
+import ij.process.Blitter;
+import ij.process.FloatProcessor;
+import ij.process.ImageProcessor;
+import image.roi.IdPoint;
+import image.roi.PointList;
+import jex.statics.JEXStatics;
+import jex.utilities.FunctionUtility;
+import logs.Logs;
+import miscellaneous.CSVList;
+import tables.Dim;
+import tables.DimTable;
+import tables.DimensionMap;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions
@@ -185,7 +184,7 @@ public class ImageStitcher extends JEXPlugin {
 			try
 			{
 				List<DimensionMap> mapsToGet = getMapsForStitching(rowDim, colDim, partialMap);
-				File stitchedFile = stitch(entry, imageData, mapsToGet, imageCoords, scale, normalize, multiplier, bitDepth);
+				File stitchedFile = stitch(""+entry.getTrayX(), ""+entry.getTrayY(), ImageReader.readObjectToImagePathTable(imageData), mapsToGet, imageCoords, scale, normalize, multiplier, bitDepth);
 				stitchedImageFilePaths.put(partialMap, stitchedFile.getAbsolutePath());
 			}
 			catch (Exception e)
@@ -202,7 +201,7 @@ public class ImageStitcher extends JEXPlugin {
 		return true;
 	}
 	
-	private List<DimensionMap> getMapsForStitching(Dim rowDim, Dim colDim, DimensionMap partialMap)
+	public List<DimensionMap> getMapsForStitching(Dim rowDim, Dim colDim, DimensionMap partialMap)
 	{
 		List<DimensionMap> ret = new Vector<DimensionMap>();
 		for (int r = 0; r < rowDim.size(); r++)
@@ -218,7 +217,7 @@ public class ImageStitcher extends JEXPlugin {
 		return ret;
 	}
 	
-	private PointList getMovements(int horDxImage, int horDyImage, int verDxImage, int verDyImage, int rows, int cols, boolean horizontal, boolean snaking, String startPt, double scale)
+	public PointList getMovements(int horDxImage, int horDyImage, int verDxImage, int verDyImage, int rows, int cols, boolean horizontal, boolean snaking, String startPt, double scale)
 	{
 		
 		PointList ret = new PointList();
@@ -324,10 +323,10 @@ public class ImageStitcher extends JEXPlugin {
 		return dim;
 	}
 	
-	public static File stitch(JEXEntry entry, JEXData imageData, List<DimensionMap> imageDimMaps, PointList imageDisplacements, double scale, boolean normalize, double multiplier, int bits)
+	public static File stitch(String trayX, String trayY, TreeMap<DimensionMap,String> imageMap, List<DimensionMap> imageDimMaps, PointList imageDisplacements, double scale, boolean normalize, double multiplier, int bits)
 	{
 		// /// prepare a blank image on which to copy the others
-		ImagePlus original = new ImagePlus(ImageReader.readObjectToImagePath(imageData, imageDimMaps.get(0)));
+		ImagePlus original = new ImagePlus(imageMap.get(imageDimMaps.get(0)));
 		double imSizeX = original.getWidth() * scale;
 		double imSizeY = original.getHeight() * scale;
 		Rectangle rect = imageDisplacements.getBounds();
@@ -348,8 +347,13 @@ public class ImageStitcher extends JEXPlugin {
 		{
 			DimensionMap map = itr.next();
 			// //// Prepare float processor
-			Logs.log("Getting file " + ImageReader.readObjectToImagePath(imageData, map) + " in entry " + entry.getTrayX() + "," + entry.getTrayY() + " for dim " + map.toString(), 0, JEX_ImageTools_Stitch_Coord.class);
-			im = new ImagePlus(ImageReader.readObjectToImagePath(imageData, map));
+			Logs.log("Getting file " + imageMap.get(map) + " in entry " + trayX + "," + trayY + " for dim " + map.toString(), 0, JEX_ImageTools_Stitch_Coord.class);
+			String imPath = imageMap.get(map);
+			if(imPath == null)
+			{
+				continue;
+			}
+			im = new ImagePlus(imPath);
 			imp = (FloatProcessor) im.getProcessor().convertToFloat(); // should
 			// be a
 			// float

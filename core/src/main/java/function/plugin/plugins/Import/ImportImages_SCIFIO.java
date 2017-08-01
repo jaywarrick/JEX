@@ -497,7 +497,7 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 						long[] axesLengths = d.getAxesLengthsPlanar();
 						if(axesLengths.length > 2)
 						{
-							
+
 							// Treat as multichannel image
 							// Get image width and height
 							int channelAxis = 0;
@@ -518,7 +518,7 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 								}
 								channelAxis = channelAxis + 1;
 							}
-							
+
 							//							Logs.log("here", this);
 							//							PlaneConverter pc = IJ2PluginUtility.ij().scifio().planeConverter().getDefaultConverter();
 							//							ImgFactory<UnsignedByteType> factory = new ArrayImgFactory<>();
@@ -620,30 +620,33 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 						}
 						else
 						{
-							// Otherwise we don't split each image or save a SplitImageIndex dimension
-							String filename = JEXWriter.saveImage(ip);
-							map.putAll(baseMap.copy());
-							if(pendingImageFiles.size() > 1)
+							for(Entry<DimensionMap,ImageProcessor> e : splitImages.entrySet())
 							{
-								// Then save a dimension for FileIndex
-								if(dimSeparator.equals(""))
+								// Otherwise we don't split each image or save a SplitImageIndex dimension
+								String filename = JEXWriter.saveImage(e.getValue());
+								map.putAll(baseMap.copy());
+								if(pendingImageFiles.size() > 1)
 								{
-									// Then call FileIndex dimension "FileIndex"
-									map.put("FileIndex", "" + (fi + 1)); // fi starts at 0
-									imageCounter = imageCounter + 1;
+									// Then save a dimension for FileIndex
+									if(dimSeparator.equals(""))
+									{
+										// Then call FileIndex dimension "FileIndex"
+										map.put("FileIndex", "" + (fi + 1)); // fi starts at 0
+										imageCounter = imageCounter + 1;
+									}
+									else
+									{
+										// Else the FileIndex dimension is already taken care of / named by parsing file names.
+										imageCounter = imageCounter + 1;
+									}
 								}
-								else
+								if(ips.size() > 1)
 								{
-									// Else the FileIndex dimension is already taken care of / named by parsing file names.
-									imageCounter = imageCounter + 1;
+									map.put("ChannelIndex", "" + channelIndex);
 								}
+								multiMap.put(map.copy(),filename);
+								Logs.log(map.toString() + " = " + filename, ImportImages_SCIFIO.class);
 							}
-							if(ips.size() > 1)
-							{
-								map.put("ChannelIndex", "" + channelIndex);
-							}
-							multiMap.put(map.copy(),filename);
-							Logs.log(map.toString() + " = " + filename, ImportImages_SCIFIO.class);
 						}	
 						channelIndex = channelIndex + 1;
 					}
