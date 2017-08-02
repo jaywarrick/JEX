@@ -146,12 +146,16 @@ public class JEX_Filters extends JEXCrunchable {
 		Parameter p2 = new Parameter("Radius", "Radius of filter in pixels.", "2.0");
 		Parameter p3 = new Parameter("Output Bit-Depth", "Bit-Depth of the output image", Parameter.DROPDOWN, new String[] { "8", "16", "32" }, 2);
 		Parameter p4 = getNumThreadsParameter(10, 6);
+		Parameter p5 = new Parameter("Post-log Operation", "Should a log of the values be taken after processing and before saving.", Parameter.CHECKBOX, false);
+		Parameter p6 = new Parameter("Post-multiplier", "Value to multiply by after processing and any log operation and before saving.", "1.0");
 		// Make an array of the parameters and return it
 		ParameterSet parameterArray = new ParameterSet();
 		parameterArray.addParameter(p4);
 		parameterArray.addParameter(p1);
 		parameterArray.addParameter(p2);
 		parameterArray.addParameter(p3);
+		parameterArray.addParameter(p5);
+		parameterArray.addParameter(p6);
 
 		return parameterArray;
 	}
@@ -192,6 +196,8 @@ public class JEX_Filters extends JEXCrunchable {
 		double radius = Double.parseDouble(parameters.getValueOfParameter("Radius"));
 		String method = parameters.getValueOfParameter("Filter Type");
 		int bitDepth = Integer.parseInt(parameters.getValueOfParameter("Output Bit-Depth"));
+		boolean log = Boolean.parseBoolean(parameters.getValueOfParameter("Post-log Operation"));
+		double mult = Double.parseDouble(parameters.getValueOfParameter("Post-multiplier"));
 
 		// Run the function
 		TreeMap<DimensionMap,String> imageMap = ImageReader.readObjectToImagePathTable(imageData);
@@ -209,6 +215,15 @@ public class JEX_Filters extends JEXCrunchable {
 			// //// Begin Actual Function
 			RankFilters rF = new RankFilters();
 			rF.rank(ip, radius, getMethodInt(method));
+			
+			if(log)
+			{
+				ip.log();
+			}
+			if(mult != 1.0)
+			{
+				ip.multiply(mult);
+			}
 			
 			// //// End Actual Function
 
