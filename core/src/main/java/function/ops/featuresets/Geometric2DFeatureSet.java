@@ -49,7 +49,8 @@ import net.imglib2.type.numeric.RealType;
  * @param <O>
  */
 @Plugin(type = FeatureSet.class, label = "Geometric Features 2D", description = "Calculates Geometric Features on 2D LabelRegions")
-public class Geometric2DFeatureSet<I, O extends RealType<O>> extends AbstractOpRefFeatureSet<I, O>
+public class Geometric2DFeatureSet
+<I, O extends RealType<O>> extends AbstractOpRefFeatureSet<I, O>
 		implements DimensionBoundFeatureSet<I, O> {
 	
 	private static final String PKG = "net.imagej.ops.Ops$Geometric$";
@@ -59,7 +60,7 @@ public class Geometric2DFeatureSet<I, O extends RealType<O>> extends AbstractOpR
 
 	@Parameter(required = false, label = "Size", attrs = { @Attr(name = ATTR_FEATURE),
 			@Attr(name = ATTR_TYPE, value = PKG + "Size") })
-	private boolean isSizeActive = true;
+	private boolean isSizeActive = false; // Inactive as pixel size is more robust, giving a slight area to "line-like" features.
 
 	@Parameter(required = false, label = "Circularity", attrs = { @Attr(name = ATTR_FEATURE),
 			@Attr(name = ATTR_TYPE, value = PKG + "Circularity") })
@@ -79,7 +80,7 @@ public class Geometric2DFeatureSet<I, O extends RealType<O>> extends AbstractOpR
 
 	@Parameter(required = false, label = "MaximumFeretsAngle", attrs = { @Attr(name = ATTR_FEATURE),
 			@Attr(name = ATTR_TYPE, value = PKG + "MaximumFeretsAngle") })
-	private boolean isMaximumFeretsAngleActive = true;
+	private boolean isMaximumFeretsAngleActive = false; // Typically we care about being rotationally invariant
 	
 	@Parameter(required = false, label = "MaximumFeretsDiameter", attrs = { @Attr(name = ATTR_FEATURE),
 			@Attr(name = ATTR_TYPE, value = PKG + "MaximumFeretsDiameter") })
@@ -87,7 +88,7 @@ public class Geometric2DFeatureSet<I, O extends RealType<O>> extends AbstractOpR
 	
 	@Parameter(required = false, label = "MinimumFeretsAngle", attrs = { @Attr(name = ATTR_FEATURE),
 			@Attr(name = ATTR_TYPE, value = PKG + "MinimumFeretsAngle") })
-	private boolean isMinimumFeretsAngleActive = true;
+	private boolean isMinimumFeretsAngleActive = false; // Typically we care about being rotationally invariant
 	
 	@Parameter(required = false, label = "MinimumFeretsDiameter", attrs = { @Attr(name = ATTR_FEATURE),
 			@Attr(name = ATTR_TYPE, value = PKG + "MinimumFeretsDiameter") })
