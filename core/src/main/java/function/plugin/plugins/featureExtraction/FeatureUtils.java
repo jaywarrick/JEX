@@ -2,6 +2,7 @@ package function.plugin.plugins.featureExtraction;
 
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.Vector;
 
 import function.ops.intervals.CroppedRealRAI;
 import function.ops.intervals.IntersectedBooleanRAI;
@@ -579,7 +580,7 @@ public class FeatureUtils {
 	//////////// Sub-routines ///////////////
 	/////////////////////////////////////////
 
-	public Pair<Img<UnsignedByteType>,TreeMap<Integer,PointList>> keepRegionsWithMaxima(Img<UnsignedByteType> mask, boolean fourConnected, ROIPlus maxima, Canceler canceler)
+	public Pair<Img<UnsignedByteType>,TreeMap<Integer,PointList>> keepRegionsWithMaxima(Img<UnsignedByteType> mask, boolean fourConnected, ROIPlus maxima, boolean keepClumps, Canceler canceler)
 	{
 		// Create a blank image
 		ArrayImgFactory<UnsignedByteType> factory = new ArrayImgFactory<UnsignedByteType>();
@@ -631,12 +632,25 @@ public class FeatureUtils {
 			}
 		}
 
+		// Create a mask with only the regions of containing maxima and, depending on 'keepClumps', exclude regions with multiple maxima as well.
+		Vector<Integer> labelsToRemove = new Vector<>();
 		for(Integer label : labelsToCopy)
 		{
-			LabelRegion<Integer> region = regions.getLabelRegion(label);
-			//			ImageJFunctions.show(new SamplingIterableRegion(region, mask));
-			Op op = IJ2PluginUtility.ij().op().op(RealLogic.Or.class, RealType.class, RealType.class);
-			IJ2PluginUtility.ij().op().run(MapIIToSamplingRAI.class, blank, Regions.sample(region, mask), op);
+			if(keepClumps || labelToPointsMap.get(label).size() == 1)
+			{
+				LabelRegion<Integer> region = regions.getLabelRegion(label);
+				//			ImageJFunctions.show(new SamplingIterableRegion(region, mask));
+				Op op = IJ2PluginUtility.ij().op().op(RealLogic.Or.class, RealType.class, RealType.class);
+				IJ2PluginUtility.ij().op().run(MapIIToSamplingRAI.class, blank, Regions.sample(region, mask), op);
+			}
+			else
+			{
+				labelsToRemove.add(label);
+			}
+		}
+		for(Integer label : labelsToRemove)
+		{
+			labelToPointsMap.remove(label);
 		}
 
 		Pair<Img<UnsignedByteType>,TreeMap<Integer,PointList>> ret = new Pair<Img<UnsignedByteType>,TreeMap<Integer,PointList>>();
