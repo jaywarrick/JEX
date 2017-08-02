@@ -90,8 +90,8 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 	@ParameterMarker(uiOrder = 7, name = "Pixel Connectedness", description = "Connectedness of neighboring pixels for identifying objects in the mask/thresholded images.", ui = MarkerConstants.UI_DROPDOWN, choices = {"4 Connected", "8 Connected"}, defaultChoice = 0)
 	String connectedness;
 	
-	@ParameterMarker(uiOrder = 8, name = "Remove Clumps?", description = "Sould regions with multiple maxima be excluded when creating the final mask?", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
-	boolean keepClumps;
+	@ParameterMarker(uiOrder = 8, name = "Remove Clumps?", description = "Sould regions with multiple maxima be removed when creating the final mask?", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	boolean removeClumps;
 
 	/////////// Define Outputs here ///////////
 
@@ -201,7 +201,7 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 			{
 				continue;
 			}
-			Pair<Img<UnsignedByteType>,TreeMap<Integer,PointList>> temp = utils.keepRegionsWithMaxima(union, connectedness.equals("4 Connected"), roiMap.get(subMap), keepClumps, this.getCanceler());
+			Pair<Img<UnsignedByteType>,TreeMap<Integer,PointList>> temp = utils.keepRegionsWithMaxima(union, connectedness.equals("4 Connected"), roiMap.get(subMap), removeClumps, this.getCanceler());
 			union = temp.p1;
 			
 			// Get clump stats

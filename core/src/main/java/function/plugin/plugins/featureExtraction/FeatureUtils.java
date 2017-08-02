@@ -580,7 +580,7 @@ public class FeatureUtils {
 	//////////// Sub-routines ///////////////
 	/////////////////////////////////////////
 
-	public Pair<Img<UnsignedByteType>,TreeMap<Integer,PointList>> keepRegionsWithMaxima(Img<UnsignedByteType> mask, boolean fourConnected, ROIPlus maxima, boolean keepClumps, Canceler canceler)
+	public Pair<Img<UnsignedByteType>,TreeMap<Integer,PointList>> keepRegionsWithMaxima(Img<UnsignedByteType> mask, boolean fourConnected, ROIPlus maxima, boolean removeClumps, Canceler canceler)
 	{
 		// Create a blank image
 		ArrayImgFactory<UnsignedByteType> factory = new ArrayImgFactory<UnsignedByteType>();
@@ -636,7 +636,7 @@ public class FeatureUtils {
 		Vector<Integer> labelsToRemove = new Vector<>();
 		for(Integer label : labelsToCopy)
 		{
-			if(keepClumps || labelToPointsMap.get(label).size() == 1)
+			if(!removeClumps || labelToPointsMap.get(label).size() == 1)
 			{
 				LabelRegion<Integer> region = regions.getLabelRegion(label);
 				//			ImageJFunctions.show(new SamplingIterableRegion(region, mask));
