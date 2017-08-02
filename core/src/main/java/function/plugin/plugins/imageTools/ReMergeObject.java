@@ -62,7 +62,7 @@ public class ReMergeObject extends JEXPlugin {
 	
 	// Can't define the output because we don't know the type it will be. Specifying a type of "ANY" won't work when we try and drag and drop it.
 
-	@OutputMarker(uiOrder=1, name="Split Image", type=MarkerConstants.TYPE_ANY, flavor="", description="The resultant split image stack", enabled=true)
+	@OutputMarker(uiOrder=1, name="Split Image", type=MarkerConstants.TYPE_ANY, flavor="", description="The resultant remerged object.", enabled=true)
 	Vector<JEXData> output = new Vector<JEXData>();
 	
 	@Override
