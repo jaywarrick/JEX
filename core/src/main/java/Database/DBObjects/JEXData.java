@@ -489,7 +489,7 @@ public class JEXData {
 	}
 	
 	/**
-	 * Return the datamap
+	 * Return the reference to the datamap
 	 * 
 	 * @return
 	 */
