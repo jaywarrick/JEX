@@ -83,6 +83,10 @@ public class UnsharpMask_IJ extends JEXPlugin {
 		UnsharpMask um = new UnsharpMask();
 		for (DimensionMap map : imageMap.keySet())
 		{
+			if(this.isCanceled())
+			{
+				return false;
+			}
 			// Call helper method
 			ImagePlus im = new ImagePlus(imageMap.get(map));
 			int bitDepth = im.getBitDepth();
