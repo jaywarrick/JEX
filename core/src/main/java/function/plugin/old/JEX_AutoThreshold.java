@@ -19,8 +19,13 @@ import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import image.roi.ROIPlus;
+import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import jex.utilities.FunctionUtility;
+import jex.utilities.ROIUtility;
+import logs.Logs;
+import miscellaneous.CSVList;
+import miscellaneous.StatisticsUtility;
 import tables.DimensionMap;
 
 /**
@@ -149,13 +154,21 @@ public class JEX_AutoThreshold extends JEXCrunchable {
 		// Parameter("Dummy Parameter","Lets user know that the function has been selected.",FormLine.DROPDOWN,new
 		// String[] {"true"},0);
 		Parameter p1 = new Parameter("Method", "Method of automatically choosing the threshold.", Parameter.DROPDOWN, new String[] { "HUANG", "INTERMODES", "ISODATA", "LI", "MAXENTROPY", "MEAN", "MINERROR", "MINIMUM", "MOMENTS", "OTSU", "PERCENTILE", "RENYIENTROPY", "SHANBHAG", "TRIANGLE", "YEN" });
+		Parameter p4 = new Parameter("Pre-scaling Percentiles (comma separated)", "To make the methods more accurate, the data is scaled to the range of the data before thresholding. One can choose the lower and upper percentiles for the scaling (> 0 and <= 100, listed low then high). List the two numbers with a comma between them.", Parameter.TEXTFIELD, "0.1,100");
+		Parameter p5 = new Parameter("Ignore Low Values?", "Should values below the lowest percentile be ignored?", Parameter.CHECKBOX, true);
+		Parameter p6 = new Parameter("Ignore High Values?", "Should values above the highest percentile be ignored?", Parameter.CHECKBOX, false);
 		Parameter p2 = new Parameter("Threshold Multiplier", "Scale the threshold returned by the autothresholder before applying the threshold.", "1");
+		Parameter p3 = new Parameter("'<Name>=<Value>' to Exclude (optional)", "Optionally specify a particular name value pair to exclude from thresholding. Useful for excluding bright-field (e.g., Channel=BF). Technically doesn't have to be the 'Channel' dimension.", "");
 
 		// Make an array of the parameters and return it
 		ParameterSet parameterArray = new ParameterSet();
 		// parameterArray.addParameter(p0);
 		parameterArray.addParameter(p1);
+		parameterArray.addParameter(p4);
+		parameterArray.addParameter(p5);
+		parameterArray.addParameter(p6);
 		parameterArray.addParameter(p2);
+		parameterArray.addParameter(p3);
 		return parameterArray;
 	}
 
@@ -202,7 +215,23 @@ public class JEX_AutoThreshold extends JEXCrunchable {
 		}
 
 		// Gather parameters
+		String toExclude = this.parameters.getValueOfParameter("'<Name>=<Value>' to Exclude (optional)");
+		DimensionMap thingToExclude = null;
+		if(toExclude != null && !toExclude.equals(""))
+		{
+			thingToExclude = new DimensionMap(toExclude);
+		}
 		double multiplier = Double.parseDouble(this.parameters.getValueOfParameter("Threshold Multiplier"));
+		CSVList percentileStrings = new CSVList(this.parameters.getValueOfParameter("Pre-scaling Percentiles (comma separated)"));
+		if(percentileStrings.size() != 2)
+		{
+			JEXDialog.messageDialog("Two percentile numbers must be given. Aborting.", this);
+			return false;
+		}
+		Double lop = Double.parseDouble(percentileStrings.get(0));
+		Double hip = Double.parseDouble(percentileStrings.get(1));
+		boolean ignoreLow = Boolean.parseBoolean(this.parameters.getValueOfParameter("Ignore Low Values?"));
+		boolean ignoreHigh = Boolean.parseBoolean(this.parameters.getValueOfParameter("Ignore High Values?"));
 		String method = this.parameters.getValueOfParameter("Method");
 		int methodInt = AutoThresholder.OTSU;
 		if(method.equals("HUANG"))
@@ -274,21 +303,43 @@ public class JEX_AutoThreshold extends JEXCrunchable {
 		AutoThresholder at = new AutoThresholder();
 		for (DimensionMap map : imageMap.keySet())
 		{
+
+			if(thingToExclude != null && map.compareTo(thingToExclude) == 0)
+			{
+				// Skip the dimension that is being skipped.
+				continue;
+			}
+
 			// Get the image
 			ImagePlus im = new ImagePlus(imageMap.get(map));
 			ImageProcessor ip = im.getProcessor();
 
 			// Do threshold
-			FloatProcessor temp = (FloatProcessor) ip.convertToFloat();
-			FunctionUtility.imAdjust(temp, ip.getMin(), ip.getMax(), 0d, 255d, 1d);
-			ByteProcessor bp = (ByteProcessor) temp.convertToByte(false);
 			ROIPlus roi = rois.get(map);
+			FloatProcessor temp = (FloatProcessor) ip.convertToFloat();
+			double[] pixels = getPixelsAsDoubleArray(temp, roi);
+			double[] limits = StatisticsUtility.percentile(pixels, new double[]{ lop, hip });
+			FunctionUtility.imAdjust(temp, limits[0], limits[1], 0d, 255d, 1d);
+			//			ImagePlus imTemp = new ImagePlus("duh", temp);
+			//			imTemp.show();
+			ByteProcessor bp = (ByteProcessor) temp.convertToByte(false);
 			if(roi != null)
 			{
 				bp.setRoi(roi.getRoi());
 			}
 			int[] hist = bp.getHistogram();
+			if(ignoreLow)
+			{
+				hist[0] = hist[1]; // Fix the histogram to exclude the truncated data at the low end of the histogram
+			}
+			if(ignoreHigh)
+			{
+				hist[hist.length-1] = hist[hist.length-2]; // Same fix.
+			}
 			double threshold = at.getThreshold(methodInt, hist);
+			double realThresh = limits[0] + (threshold / 255.0) * (limits[1] - limits[0]);
+			double realAdjThresh = limits[0] + (multiplier * threshold / 255.0) * (limits[1] - limits[0]);
+			Logs.log("Map = " + map.toString() + ": p.Lo = " + limits[0] + ", p.Hi = " + limits[1] + ", ip.Min = " + ip.getMin() + ", ip.Max = " + ip.getMax() + ", rawThresh = " + threshold + ", Autothreshold = " + realThresh + ", Final Thresh = " + realAdjThresh, this);
 			threshold = threshold * multiplier;
 			if(threshold > 255)
 			{
@@ -298,6 +349,8 @@ public class JEX_AutoThreshold extends JEXCrunchable {
 			{
 				threshold = 0;
 			}
+			//			ImagePlus imTemp2 = new ImagePlus("duh", bp);
+			//			imTemp2.show();
 			bp.threshold((int) threshold);
 			String path = JEXWriter.saveImage(bp);
 			outputMap.put(map, path);
@@ -319,5 +372,27 @@ public class JEX_AutoThreshold extends JEXCrunchable {
 
 		// Return status
 		return true;
+	}
+
+	public double[] getPixelsAsDoubleArray(FloatProcessor ip, ROIPlus optionalRoi)
+	{
+		float[] tempPixels = null;
+		if(optionalRoi != null)
+		{
+			tempPixels = ROIUtility.getPixelsInRoi(ip, optionalRoi);
+		}
+		else
+		{
+			tempPixels = (float[]) ip.getPixels();
+		}
+		double[] pixels = new double[tempPixels.length];
+		int i = 0;
+		for (float f : tempPixels)
+		{
+			pixels[i] = f;
+			i++;
+		}
+		tempPixels = null;
+		return pixels;
 	}
 }
