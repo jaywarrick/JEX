@@ -26,6 +26,7 @@ import image.roi.ROIPlus;
 import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import logs.Logs;
+import miscellaneous.CSVList;
 import miscellaneous.Pair;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccess;
@@ -111,11 +112,14 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 	@ParameterMarker(uiOrder = 2, name = "** Connectedness Features", description = "The structuring element or number of neighbors to require to be part of the neighborhood.", ui = MarkerConstants.UI_DROPDOWN, choices = {"4 Connected", "8 Connected" }, defaultChoice = 0)
 	String connectedness;
 	
-	@ParameterMarker(uiOrder = 3, name = "Transform Data to 'Similarity'", description = "This takes the correlation metrics and transoforms them using Similarity=ln((1+R)/(1-R)). Recommended.", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
+	@ParameterMarker(uiOrder = 3, name = "Transform Data to 'Similarity'", description = "This takes the correlation metrics and transoforms them using Similarity=ln((1+R)/(1-R)). Recommended.", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
 	boolean transform;
 	
-	@ParameterMarker(uiOrder = 4, name = "Save ARFF version as well?", description = "Initially, the file is written as a CSV and can be also saved as a .arff file as well. Should the .arff file be saved (it takes longer)?", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	@ParameterMarker(uiOrder = 4, name = "Save ARFF version as well?", description = "Initially, the file is written as a CSV and can be also saved as a .arff file as well. Should the .arff file be saved (it takes longer)?", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean saveArff;
+
+	@ParameterMarker(uiOrder = 5, name = "Image Channels to Exclude (optional)", description = "Which channels of the images to be measured should be excluded (this can dramatically reduce the number of combinations to be quantified).", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
+	String excludeString;
 
 	/////////// Define Outputs here ///////////
 
@@ -140,7 +144,7 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 			// Something is wrong and need to return false;
 			return false;
 		}
-
+		
 		// Initialize: imageMap, maskMap, roiMap, total, count, percentage, nucExists
 		this.initializeVariables();
 
@@ -238,11 +242,12 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 
 	public void setImagesToMeasure(DimensionMap map1, DimensionMap map2)
 	{
-		Logs.log("Measuring image: " + this.mapImage1 + " & " + this.mapImage2, this);
+		Logs.log("Measuring image: " + map1 + " & " + map2, this);
 		this.mapImage1 = map1;
 		this.mapImage2 = map2;
 		this.image1 = JEXReader.getSingleImage(imageMap.get(this.mapImage1));
 		this.image2 = JEXReader.getSingleImage(imageMap.get(this.mapImage2));
+		
 	}
 
 	//	public void setMaskToMeasure(DimensionMap mapMask)
@@ -253,7 +258,7 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 	//	}
 	public void setMaskToMeasure(DimensionMap mapMask)
 	{
-		Logs.log("Measuring mask: " + this.mapMask, this);
+		Logs.log("Measuring mask: " + mapMask, this);
 		this.mapMask = mapMask;
 		this.mask = JEXReader.getSingleImage(maskMap.get(this.mapMask));
 		this.maskParentLabeling = utils.applyLabeling(this.wholeCellLabeling, this.mask);
@@ -350,6 +355,7 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 		//		RandomAccessibleInterval<T> subImage2 = Views.offsetInterval(this.image2, this.wholeCellRegion);
 		//		RandomAccessibleInterval<T> subRegionImage = utils.cropRealRAI(this.subCellRegion, subImage2);
 		Cursor<Void> c = this.combinedSubCellRegion.cursor();
+		Logs.log("Processing Label Region " + this.combinedSubCellRegion.getLabel(), this);
 		//IterableRegion<BoolType> ir = utils.intersectRegions(this.wholeCellRegion, this.subCellRegion);
 
 		//		utils.show(subImage1);
@@ -497,17 +503,38 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 
 	private Vector<Pair<String,String>> getChannelPermutations(Dim channelDim)
 	{
+		
+		Dim thingsToExclude = null;
+		if(!excludeString.equals(""))
+		{
+			thingsToExclude = new Dim(channelName,new CSVList(excludeString));
+			Dim imageChannelDim = imageData.getDimTable().getDimWithName(channelName);
+			thingsToExclude = Dim.intersect(thingsToExclude, imageChannelDim);
+			if(thingsToExclude == null || thingsToExclude.size() == 0)
+			{
+				JEXDialog.messageDialog("None of the channel dimensions provided exist in the image. Aborting.", this);
+				return null;
+			}
+		}
+		
 		Vector<Pair<String,String>> ret = new Vector<>();
 		if(channelDim.size() < 2)
 		{
-			JEXDialog.messageDialog("There must be at least to image channels to perform colocalization. Aborting.");
+			JEXDialog.messageDialog("There must be at least to image channels to perform colocalization. Aborting.", this);
 			return null;
 		}
 		for(int i = 0; i < channelDim.size()-1; i++)
 		{
 			for(int j = i + 1; j < channelDim.size(); j++)
 			{
-				ret.add(new Pair<String,String>(channelDim.values().get(i), channelDim.values().get(j)));
+				if(thingsToExclude != null && (thingsToExclude.containsValue(channelDim.values().get(i)) || thingsToExclude.containsValue(channelDim.values().get(j))))
+				{
+					continue;
+				}
+				else
+				{
+					ret.add(new Pair<String,String>(channelDim.values().get(i), channelDim.values().get(j)));
+				}
 			}
 		}
 		return ret;
