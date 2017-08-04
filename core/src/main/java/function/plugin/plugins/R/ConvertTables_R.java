@@ -209,7 +209,8 @@ public class ConvertTables_R extends JEXPlugin {
 			else
 			{
 				// txt or csv
-				R.eval("write.csv(temp, file=" + R.quotedPath(path) + ", row.names=FALSE)");
+				R.eval("if(('data.table' %in% installed.packages()) && ('fwrite' %in% ls('package:data.table'))){library(" + R.sQuote("data.table") + ");fwrite(temp, file=" +  R.quotedPath(path) + ", row.names=FALSE)}" + 
+				"else{write.csv(temp, file=" + R.quotedPath(path) + ", row.names=FALSE)}");
 			}
 			outputTables.put(map, path);
 			count = count + 1;
