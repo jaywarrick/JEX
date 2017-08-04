@@ -1,14 +1,9 @@
 package miscellaneous;
 
-import image.roi.IdPoint;
-import image.roi.PointList;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-
-import logs.Logs;
 
 import org.apache.commons.math3.distribution.NormalDistribution;
 import org.apache.commons.math3.distribution.TDistribution;
@@ -17,6 +12,11 @@ import org.apache.commons.math3.stat.descriptive.moment.Mean;
 import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
 import org.apache.commons.math3.stat.descriptive.moment.Variance;
 import org.apache.commons.math3.stat.descriptive.rank.Median;
+import org.apache.commons.math3.stat.descriptive.rank.Percentile;
+
+import image.roi.IdPoint;
+import image.roi.PointList;
+import logs.Logs;
 
 /*************************************************************************
  *  Compilation:  javac StdRandom.java
@@ -1102,6 +1102,68 @@ public class StatisticsUtility {
 			count++;
 		}
 		return median(v);
+	}
+	
+	/**
+	 * @param values
+	 * @param percentile value be > 0 and <= 100
+	 * @return
+	 */
+	public static Double percentile(double[] values, Double percentile)
+	{
+		return StatUtils.percentile(values, percentile);
+	}
+	
+	/**
+	 * @param values
+	 * @param percentile value be > 0 and <= 100
+	 * @return
+	 */
+	public static Double percentile(Collection<Double> values, Double percentile)
+	{
+		double[] v = new double[values.size()];
+		int count = 0;
+		for (Double d : values)
+		{
+			v[count] = d;
+			count++;
+		}
+		return StatUtils.percentile(v, percentile);
+	}
+	
+	/**
+	 * @param values
+	 * @param percentiles value be > 0 and <= 100
+	 * @return
+	 */
+	public static double[] percentile(double[] values, double[] percentiles)
+	{
+		
+		Percentile p = new Percentile();
+		p.setData(values);
+		double[] ret = new double[percentiles.length];
+		for(int i = 0; i < ret.length; i++)
+		{
+			ret[i] = p.evaluate(percentiles[i]);
+		}
+		return ret;
+	}
+	
+	/**
+	 * @param values
+	 * @param percentiles value be > 0 and <= 100
+	 * @return
+	 */
+	public static double[] percentile(Collection<Double> values, double[] percentiles)
+	{
+		double[] v = new double[values.size()];
+		int count = 0;
+		for (Double d : values)
+		{
+			v[count] = d;
+			count++;
+		}
+		return StatisticsUtility.percentile(v, percentiles);
 	}
 	
 	public static int[] modes(int[] values)
