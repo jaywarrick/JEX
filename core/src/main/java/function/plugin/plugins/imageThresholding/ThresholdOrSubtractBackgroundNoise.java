@@ -59,7 +59,7 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 
 	/////////// Define Parameters here ///////////
 
-	@ParameterMarker(uiOrder=1, name="Color Dim Name", description="This textbox is automatically parsed for conversion to whatever primitive type this annotation is associated with (e.g., String, double, int, etc).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Channel")
+	@ParameterMarker(uiOrder=1, name="Channel Dim Name", description="Name of the dimension representing the different channels of the image set.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Channel")
 	String colorDimName;
 
 	@ParameterMarker(uiOrder=2, name="Threshold? (vs. Subtract)", description="Whether to threshold or subtract based on the pixel values in the roi region (or whole image if no roi provided)", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true) // Should keep this defaulted to false for backwards compatibility
@@ -224,8 +224,11 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 					}
 					path = JEXWriter.saveImage(FunctionUtility.makeImageToSave(ip, ""+false, this.bitDepth)); // Creating black and white image
 				}
-				else
+				else if(!this.threshold)
 				{
+					// It doesn't make sense to save original images with thresholded images, so just
+					// exclude those images when thresholding, but keep when doing background
+					// subtraction.
 					path = JEXWriter.saveImage(im);
 				}
 				if(path != null)
@@ -281,9 +284,14 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 
 				if(thingToExclude != null && map.compareTo(thingToExclude) == 0)
 				{
-					// Then don't do anything to the image and leave numbers and NaN
-					String path = JEXWriter.saveImage(im);
-					outputMap.put(map.copy(), path);
+					// It doesn't make sense to save original images with thresholded images, so just
+					// exclude those images when thresholding, but keep when doing background
+					// subtraction.
+					if(!this.threshold)
+					{
+						String path = JEXWriter.saveImage(im);
+						outputMap.put(map.copy(), path);
+					}
 				}
 				else
 				{
