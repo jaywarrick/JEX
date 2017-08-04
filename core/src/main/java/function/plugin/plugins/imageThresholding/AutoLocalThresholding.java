@@ -7,12 +7,15 @@ import ij.plugin.MontageMaker;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
+import image.roi.ROIPlus;
 
 import java.io.File;
 import java.util.TreeMap;
 
 import jex.statics.JEXStatics;
 import jex.utilities.FunctionUtility;
+import jex.utilities.ROIUtility;
+import miscellaneous.StatisticsUtility;
 
 import org.scijava.plugin.Plugin;
 
@@ -21,6 +24,7 @@ import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;
 import Database.DataWriter.ImageWriter;
+import Database.Definition.Parameter;
 import Database.SingleUserDatabase.JEXWriter;
 import fiji.threshold.Auto_Local_Threshold;
 import function.plugin.mechanism.InputMarker;
@@ -85,16 +89,17 @@ public class AutoLocalThresholding extends JEXPlugin{
 
 	@ParameterMarker(uiOrder=5, name="Pre-adjust?", description="Whether to adjust intensities before converting to 8-bit scale using options below (check the box) or just autoscale (don't check the box)", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
 	boolean preAdjust;
+
+	@ParameterMarker(uiOrder=6, name="Low Percentile (> 0 <= 100)", description="The low percentile intensity limit used for preadjusting the image.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
+	double loP;
+
+	@ParameterMarker(uiOrder=7, name="Hi Percentile (> Low Percentile <= 100)", description="The high percentile intensity limit used for preadjusting the image.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="99")
+	double hiP;
 	
-	@ParameterMarker(uiOrder=6, name="Min", description="Intensity to make 0 in 8-bit image", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
-	double oldMin;
+	Parameter p3 = new Parameter("'<Name>=<Value>' to Exclude (optional)", "Optionally specify a particular name value pair to exclude from thresholding. Useful for excluding bright-field (e.g., Channel=BF). Technically doesn't have to be the 'Channel' dimension.", "");
 
-	@ParameterMarker(uiOrder=7, name="Max", description="Intensity to make 255 in 8-bit image", ui=MarkerConstants.UI_TEXTFIELD, defaultText="4095.0")
-	double oldMax;
-
-	double newMin = 0;
-
-	double newMax = 255;
+	@ParameterMarker(uiOrder=8, name="'<Name>=<Value>' to Exclude (optional)", description="Optionally specify a particular name value pair to exclude from thresholding. Useful for excluding bright-field (e.g., Channel=BF). Technically doesn't have to be the 'Channel' dimension.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
+	String toExclude;
 
 	//	@ParameterMarker(uiOrder=5, name="Output Bit Depth", description="Depth of the outputted image", ui=MarkerConstants.UI_DROPDOWN, choices={ "8", "16", "32" }, defaultChoice=1)
 	//	static
@@ -121,6 +126,13 @@ public class AutoLocalThresholding extends JEXPlugin{
 			return false;
 		}
 
+		// Gather parameters
+		DimensionMap thingToExclude = null;
+		if(toExclude != null && !toExclude.equals(""))
+		{
+			thingToExclude = new DimensionMap(toExclude);
+		}
+		
 		// Run the function
 		TreeMap<DimensionMap,String> imageMap = ImageReader.readObjectToImagePathTable(imageData);
 		TreeMap<DimensionMap,String> outputImageMap = new TreeMap<DimensionMap,String>();
@@ -135,6 +147,11 @@ public class AutoLocalThresholding extends JEXPlugin{
 			{
 				return false;
 			}
+			
+			if(map.compareTo(thingToExclude) == 0)
+			{
+				continue;
+			}
 
 			// call the real local threshold function and save the result
 			tempPath = this.saveAdjustedImage(imageMap.get(map));
@@ -146,7 +163,7 @@ public class AutoLocalThresholding extends JEXPlugin{
 			count = count + 1;
 			percentage = (int) (100 * ((double) (count) / ((double) imageMap.size())));
 			JEXStatics.statusBar.setProgressPercentage(percentage);
-			
+
 			if (method.equals("Try all")) //single image try all
 				break;
 		}
@@ -172,29 +189,34 @@ public class AutoLocalThresholding extends JEXPlugin{
 
 
 		ImagePlus im = new ImagePlus(imagePath);
-		
+
 		FloatProcessor imp = im.getProcessor().convertToFloatProcessor();
 		ByteProcessor impByte = null;
 		if(preAdjust)
 		{
 			// Adjust the image
-			FunctionUtility.imAdjust(imp, oldMin, oldMax, newMin, newMax, 1);
+			double[] pixels = getPixelsAsDoubleArray(imp, null);
+			double[] limits = StatisticsUtility.percentile(pixels, new double[]{ loP, hiP });
+			FunctionUtility.imAdjust(imp, limits[0], limits[1], 0d, 255d, 1d);
+			//			ImagePlus imTemp = new ImagePlus("duh", temp);
+			//			imTemp.show();
 			impByte = (ByteProcessor) imp.convertToByte(false);
 		}
 		else
 		{
+			FunctionUtility.imAdjust(imp, imp.getMin(), imp.getMax(), 0d, 255d, 1d);
 			impByte = (ByteProcessor) imp.convertToByte(true);
 		}
-		
+
 		im.flush();
 		imp = null;
 		im = new ImagePlus("temp", impByte);
 
 		// Execute auto local threshold algorithm to the image
 		Auto_Local_Threshold alt = new Auto_Local_Threshold();
-		
+
 		String imPath = "";
-		
+
 		//***************** "Try all" codes are cited from ImageJ function ********************//
 		// AutoLocalThreshold segmentation 
 		// Following the guidelines at http://pacific.mpi-cbg.de/wiki/index.php/PlugIn_Design_Guidelines
@@ -214,14 +236,14 @@ public class AutoLocalThresholding extends JEXPlugin{
 			int ml = methods.length;
 			ImagePlus imp2, imp3;
 			ImageStack tstack=null, stackNew;
-		
-			
+
+
 			tstack= new ImageStack(xe,ye);
 			for (int k=1; k<ml;k++)
 				tstack.addSlice(methods[k], ip.duplicate());
 			imp2 = new ImagePlus("Auto Threshold", tstack);
 			imp2.updateAndDraw();
-	
+
 			for (int k=1; k<ml;k++){
 				imp2.setSlice(k);
 				//IJ.log("analyzing slice with "+methods[k]);
@@ -248,4 +270,25 @@ public class AutoLocalThresholding extends JEXPlugin{
 		return imPath;
 	}
 
+	public double[] getPixelsAsDoubleArray(FloatProcessor ip, ROIPlus optionalRoi)
+	{
+		float[] tempPixels = null;
+		if(optionalRoi != null)
+		{
+			tempPixels = ROIUtility.getPixelsInRoi(ip, optionalRoi);
+		}
+		else
+		{
+			tempPixels = (float[]) ip.getPixels();
+		}
+		double[] pixels = new double[tempPixels.length];
+		int i = 0;
+		for (float f : tempPixels)
+		{
+			pixels[i] = f;
+			i++;
+		}
+		tempPixels = null;
+		return pixels;
+	}
 }
