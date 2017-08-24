@@ -1,6 +1,7 @@
 // Define package name as "plugins" as show here
 package function.plugin.plugins.featureExtraction;
 
+import java.util.Map.Entry;
 import java.util.TreeMap;
 
 import org.scijava.plugin.Plugin;
@@ -11,6 +12,7 @@ import Database.DataReader.ImageReader;
 import Database.DataReader.RoiReader;
 import Database.DataWriter.FileWriter;
 import Database.DataWriter.ImageWriter;
+import Database.DataWriter.RoiWriter;
 import Database.SingleUserDatabase.JEXReader;
 import Database.SingleUserDatabase.JEXWriter;
 import function.ops.intervals.MapIIToSamplingRAI;
@@ -98,8 +100,11 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 	@OutputMarker(uiOrder = 1, name = "Prepared Masks", type = MarkerConstants.TYPE_IMAGE, flavor = "", description = "Thresholded images segmented by the segmentation lines and cleaned up to only show regions associated with cells.", enabled = true)
 	JEXData outputImage;
 
-	@OutputMarker(uiOrder = 2, name = "Clump Data", type = MarkerConstants.TYPE_FILE, flavor = "", description = "Test table output (i.e., for Weka etc).", enabled = true)
+	@OutputMarker(uiOrder = 2, name = "Clump Data", type = MarkerConstants.TYPE_FILE, flavor = "", description = "Table output specifying how many maxima total are in the 'WholeCell' region that the particular maxima is part of.", enabled = true)
 	JEXData outputFile;
+	
+	@OutputMarker(uiOrder = 3, name = "Filtered ROI", type = MarkerConstants.TYPE_ROI, flavor = "", description = "ROI of only maxima that are inside of the 'WholeCell' regions.", enabled = true)
+	JEXData outputROI;
 
 	// Define threading capability here (set to 1 if using non-final static variables shared between function instances).
 	@Override
@@ -175,7 +180,8 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 
 		TreeMap<DimensionMap, String> finalMap = new TreeMap<DimensionMap,String>();
 		TreeMap<DimensionMap, Integer> clumpMap = new TreeMap<DimensionMap,Integer>();
-
+		TreeMap<DimensionMap, ROIPlus> filteredRoiMap = new TreeMap<DimensionMap,ROIPlus>();
+		
 		// Get the subDimTable to iterate over
 		DimTable subTable = maskData.getDimTable().getSubTable(channelDimName);
 
@@ -204,6 +210,14 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 			Pair<Img<UnsignedByteType>,TreeMap<Integer,PointList>> temp = utils.keepRegionsWithMaxima(union, connectedness.equals("4 Connected"), roiMap.get(subMap), removeClumps, this.getCanceler());
 			union = temp.p1;
 			
+			// Get the filtered ROI
+			PointList toSave = new PointList();
+			for(Entry<Integer,PointList> e : temp.p2.entrySet())
+			{
+				toSave.addAll(e.getValue());
+			}
+			filteredRoiMap.put(subMap, new ROIPlus(toSave, ROIPlus.ROI_POINT));
+			
 			// Get clump stats
 			clumpMap.putAll(getClumpSize(temp.p2, subMap));
 			
@@ -213,7 +227,7 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 			// Segment and save the union image into finalMap (if there is a segmentation image to use)
 			if(segMap != null)
 			{
-				Img<UnsignedByteType> segImage = JEXReader.getSingleImage(segMap.get(subMap));
+				Img<UnsignedByteType> segImage = JEXReader.getSingleImage(segMap.get(subMap), null);
 				IJ2PluginUtility.ij().op().run(MapIIToSamplingRAI.class, union, segImage, andOp);
 			}
 			
@@ -245,7 +259,7 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 				{
 					Logs.log("Intersecting remaining images with (Segmented) Union Image: " + name, this);
 					DimensionMap mapTemp = subMap.copyAndSet(channelDimName + "=" + name);
-					Img<UnsignedByteType> tempMaskImg = JEXReader.getSingleImage(maskMap.get(mapTemp));
+					Img<UnsignedByteType> tempMaskImg = JEXReader.getSingleImage(maskMap.get(mapTemp), null);
 					IJ2PluginUtility.ij().op().run(MapIIToSamplingRAI.class, tempMaskImg, union, andOp);
 					path = JEXWriter.saveImage(tempMaskImg);
 					finalMap.put(mapTemp, path);
@@ -261,6 +275,7 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 		outputImage = ImageWriter.makeImageStackFromPaths("temp", finalMap);
 		String path = JEXTableWriter.writeTable("ClumpSize", clumpMap);
 		outputFile = FileWriter.makeFileObject("temp", null, path);
+		outputROI = RoiWriter.makeRoiObject("temp", filteredRoiMap);
 
 		return true;
 	}
@@ -277,7 +292,7 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 			{
 				continue;
 			}
-			Img<UnsignedByteType> mask = JEXReader.getSingleImage(maskMap.get(temp));
+			Img<UnsignedByteType> mask = JEXReader.getSingleImage(maskMap.get(temp), null);
 			if(union == null)
 			{
 				union = mask;
@@ -294,7 +309,7 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 	{
 		Img<UnsignedByteType> ret = union.copy();
 		DimensionMap temp = subMap.copyAndSet(channelDimName + "=" + nameToSubtract);
-		Img<UnsignedByteType> toSubtract = JEXReader.getSingleImage(maskMap.get(temp));
+		Img<UnsignedByteType> toSubtract = JEXReader.getSingleImage(maskMap.get(temp), null);
 		Op lessThanOp = IJ2PluginUtility.ij().op().op(RealLogic.LessThan.class, RealType.class, RealType.class);
 		IJ2PluginUtility.ij().op().run(MapIIToSamplingRAI.class, ret, toSubtract, lessThanOp);
 		return ret;
