@@ -14,6 +14,7 @@ import miscellaneous.CSVReader;
 import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.real.FloatType;
 
 public class JEXReader {
 	
@@ -43,11 +44,45 @@ public class JEXReader {
 		return ret;
 	}
 	
-	public synchronized static <T extends RealType<T>> Img<T> getSingleImage(String path)
+	public synchronized static Img<FloatType> getSingleFloatImage(String path, Double offset)
 	{
 		Logs.log("Opening image - " + path, JEXReader.class);
 		ImagePlus im = new ImagePlus(path);
-		return ImageJFunctions.wrapReal(im);	
+		Img<FloatType> ret = ImageJFunctions.convertFloat(im);
+		
+		// Adjust the image if necessary.
+		if(offset != null && offset != 0.0)
+		{
+			for ( FloatType type : ret )
+			{
+				type.setReal(type.getRealDouble() - offset);
+			} 
+		}
+		return ret;
+	}
+	
+	public synchronized static <T extends RealType<T>> Img<T> getSingleImage(String path, Double offset)
+	{
+		Logs.log("Opening image - " + path, JEXReader.class);
+		ImagePlus im = new ImagePlus(path);
+		Img<T> ret = ImageJFunctions.wrapReal(im);
+		
+		// Adjust the image if necessary.
+		if(offset != null && offset != 0.0)
+		{
+			for ( T type : ret )
+			{
+				if(type.getRealDouble() > offset)
+				{
+					type.setReal(type.getRealDouble() - offset);
+				}
+				else
+				{
+					type.setZero();
+				}
+			} 
+		}
+		return ret;
 	}
 	
 	public static JEXData readFileToJEXData(String file, TypeName tn)
