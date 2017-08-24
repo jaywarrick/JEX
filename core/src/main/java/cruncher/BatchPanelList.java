@@ -40,6 +40,7 @@ public class BatchPanelList {
 		this.scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 		this.scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		this.scroll.setBorder(BorderFactory.createEmptyBorder());
+		this.scroll.getVerticalScrollBar().setUnitIncrement(16);
 		this.outerPanel = new JPanel();
 		this.outerPanel.setLayout(new MigLayout("flowy, ins 2", "[fill,grow]", "[]1[fill,grow]"));
 		this.outerPanel.setBackground(DisplayStatics.lightBackground);
