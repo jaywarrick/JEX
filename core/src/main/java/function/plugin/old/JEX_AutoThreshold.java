@@ -26,6 +26,7 @@ import jex.utilities.ROIUtility;
 import logs.Logs;
 import miscellaneous.CSVList;
 import miscellaneous.StatisticsUtility;
+import tables.Dim;
 import tables.DimensionMap;
 
 /**
@@ -158,7 +159,8 @@ public class JEX_AutoThreshold extends JEXCrunchable {
 		Parameter p5 = new Parameter("Ignore Low Values?", "Should values below the lowest percentile be ignored?", Parameter.CHECKBOX, true);
 		Parameter p6 = new Parameter("Ignore High Values?", "Should values above the highest percentile be ignored?", Parameter.CHECKBOX, false);
 		Parameter p2 = new Parameter("Threshold Multiplier", "Scale the threshold returned by the autothresholder before applying the threshold.", "1");
-		Parameter p3 = new Parameter("'<Name>=<Value>' to Exclude (optional)", "Optionally specify a particular name value pair to exclude from thresholding. Useful for excluding bright-field (e.g., Channel=BF). Technically doesn't have to be the 'Channel' dimension.", "");
+		Parameter p3 = new Parameter("Exclusion Filter", "<DimName>=<Val1>,<Val2>,...<Valn>, Specify the dimension and dimension values to exclude. Leave blank to process all.", "");
+		Parameter p7 = new Parameter("Keep Unprocessed Images?", "If images are excluded, should the be kept (checked) or discarded (unchecked)?", Parameter.CHECKBOX, false);
 
 		// Make an array of the parameters and return it
 		ParameterSet parameterArray = new ParameterSet();
@@ -169,6 +171,7 @@ public class JEX_AutoThreshold extends JEXCrunchable {
 		parameterArray.addParameter(p6);
 		parameterArray.addParameter(p2);
 		parameterArray.addParameter(p3);
+		parameterArray.addParameter(p7);
 		return parameterArray;
 	}
 
@@ -215,12 +218,14 @@ public class JEX_AutoThreshold extends JEXCrunchable {
 		}
 
 		// Gather parameters
-		String toExclude = this.parameters.getValueOfParameter("'<Name>=<Value>' to Exclude (optional)");
-		DimensionMap thingToExclude = null;
+		String toExclude = this.parameters.getValueOfParameter("Exclusion Filter");
+		Dim filterDim = null;
 		if(toExclude != null && !toExclude.equals(""))
 		{
-			thingToExclude = new DimensionMap(toExclude);
+			String[] filterArray = toExclude.split("=");
+			filterDim = new Dim(filterArray[0], new CSVList(filterArray[1]));
 		}
+		boolean keepUnprocessed = Boolean.parseBoolean(this.parameters.getValueOfParameter("Keep Unprocessed Images?"));
 		double multiplier = Double.parseDouble(this.parameters.getValueOfParameter("Threshold Multiplier"));
 		CSVList percentileStrings = new CSVList(this.parameters.getValueOfParameter("Pre-scaling Percentiles (comma separated)"));
 		if(percentileStrings.size() != 2)
@@ -304,14 +309,25 @@ public class JEX_AutoThreshold extends JEXCrunchable {
 		for (DimensionMap map : imageMap.keySet())
 		{
 
-			if(thingToExclude != null && map.compareTo(thingToExclude) == 0)
+			// Get the image
+			ImagePlus im = null;
+			
+			if(filterDim != null && filterDim.containsValue(map.get(filterDim.dimName)))
 			{
 				// Skip the dimension that is being skipped.
+				if(keepUnprocessed)
+				{
+					im = new ImagePlus(imageMap.get(map));
+					String path = JEXWriter.saveImage(im);
+					outputMap.put(map, path);
+				}
 				continue;
 			}
-
-			// Get the image
-			ImagePlus im = new ImagePlus(imageMap.get(map));
+			else
+			{
+				im = new ImagePlus(imageMap.get(map));
+			}
+			
 			ImageProcessor ip = im.getProcessor();
 
 			// Do threshold
