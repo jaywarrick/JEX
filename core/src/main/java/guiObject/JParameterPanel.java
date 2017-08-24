@@ -64,7 +64,7 @@ public class JParameterPanel implements DocumentListener, ChangeListener, Action
 		// This
 		this.panel = new JPanel();
 		this.panel.setBackground(DisplayStatics.lightBackground);
-		this.panel.setLayout(new MigLayout("flowx, ins 0, hidemode 2", "[0:0,fill,140][0:0,fill,grow]", "[24,center]"));
+		this.panel.setLayout(new MigLayout("flowx, ins 0, hidemode 2", "[0:0,fill,grow][0:0,fill,140]", "[24,center]"));
 		
 		// GUI objects
 		this.fileButton = new JButton("...");
