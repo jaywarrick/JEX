@@ -31,6 +31,7 @@ import miscellaneous.Pair;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.algorithm.math.ImageStatistics;
 import net.imglib2.img.Img;
 import net.imglib2.roi.labeling.ImgLabeling;
 import net.imglib2.roi.labeling.LabelRegion;
@@ -40,6 +41,7 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.IntType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.real.DoubleType;
+import net.imglib2.type.numeric.real.FloatType;
 import tables.Dim;
 import tables.DimTable;
 import tables.DimensionMap;
@@ -60,8 +62,8 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 
 	private Img<UnsignedByteType> wholeCellMaskImage;
 	private Img<UnsignedByteType> mask;
-	private Img<T> image1;
-	private Img<T> image2;
+	private Img<FloatType> image1;
+	private Img<FloatType> image2;
 	private ImgLabeling<Integer,IntType> wholeCellLabeling;
 	private ImgLabeling<Integer,IntType> maskParentLabeling;
 	private LabelRegions<Integer> wholeCellRegions;
@@ -71,10 +73,13 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 	private LabelRegion<Integer> combinedSubCellRegion;
 	// private LabelRegion<Integer> majorSubCellRegion; UNUSED IN COLOC
 	private DimensionMap mapMask, mapImage1, mapImage2, mapMask_NoChannel;
+	private TreeMap<DimensionMap,Double> channelOffsetValues;
+	private Double imMean1 = null, imMean2 = null;
 	private Integer pId;
 
-	public DefaultPearsonsCorrelationCoefficient<T> opR = null;
-	public DefaultSpearmansRankCorrelationCoefficient<T> opRho = null;
+	public DefaultPearsonsCorrelationCoefficient<FloatType> opR = null;
+	public DefaultSpearmansRankCorrelationCoefficient<FloatType> opRho = null;
+	boolean doPearsons = false, doSpearmans = false;
 
 	public int total = 0, count = 0;
 	public int percentage = 0;
@@ -106,27 +111,33 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 	@ParameterMarker(uiOrder = 0, name = "Mask and Image channel dim name", description = "Channel dimension name in mask data.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "Channel")
 	String channelName;
 
-	@ParameterMarker(uiOrder = 1, name = "'Whole Cell' mask channel value", description = "Which channel value of the mask image represents the whole cell that has a 1-to-1 mapping with the maxima points.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "WholeCell")
+	@ParameterMarker(uiOrder = 1, name = "Channel Offsets <Val1>,<Val2>,...<Valn>", description = "Set a single offset for all channels (e.g., positive 5.0 to subtract off 5.0 before doing calculations) or a different offset for each channel. Must have 1 value for each channel comma separated (e.g., '<Val1>,<Val2>,...<Valn>').", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "0.0")
+	String channelOffsets;
+	
+	@ParameterMarker(uiOrder = 2, name = "'Whole Cell' mask channel value", description = "Which channel value of the mask image represents the whole cell that has a 1-to-1 mapping with the maxima points.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "WholeCell")
 	String maskWholeCellChannelValue;
 
-	@ParameterMarker(uiOrder = 2, name = "** Connectedness Features", description = "The structuring element or number of neighbors to require to be part of the neighborhood.", ui = MarkerConstants.UI_DROPDOWN, choices = {"4 Connected", "8 Connected" }, defaultChoice = 0)
+	@ParameterMarker(uiOrder = 3, name = "** Connectedness Features", description = "The structuring element or number of neighbors to require to be part of the neighborhood.", ui = MarkerConstants.UI_DROPDOWN, choices = {"4 Connected", "8 Connected" }, defaultChoice = 0)
 	String connectedness;
 	
-	@ParameterMarker(uiOrder = 3, name = "Transform Data to 'Similarity'", description = "This takes the correlation metrics and transoforms them using Similarity=ln((1+R)/(1-R)). Recommended.", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
+	@ParameterMarker(uiOrder = 4, name = "Transform Data to 'Similarity'", description = "This takes the correlation metrics and transoforms them using Similarity=ln((1+R)/(1-R)). Recommended.", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
 	boolean transform;
 	
-	@ParameterMarker(uiOrder = 4, name = "Save ARFF version as well?", description = "Initially, the file is written as a CSV and can be also saved as a .arff file as well. Should the .arff file be saved (it takes longer)?", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	@ParameterMarker(uiOrder = 5, name = "Save ARFF version as well?", description = "Initially, the file is written as a CSV and can be also saved as a .arff file as well. Should the .arff file be saved (it takes longer)?", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean saveArff;
 
-	@ParameterMarker(uiOrder = 5, name = "Image Channels to Exclude (optional)", description = "Which channels of the images to be measured should be excluded (this can dramatically reduce the number of combinations to be quantified).", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
+	@ParameterMarker(uiOrder = 6, name = "Image Channels to Exclude (optional)", description = "Which channels of the images to be measured should be excluded (this can dramatically reduce the number of combinations to be quantified).", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
 	String excludeString;
+	
+	@ParameterMarker(uiOrder = 7, name = "Person's or Spearman's (or both)", description = "Which colocalization metric should be used?", ui = MarkerConstants.UI_DROPDOWN, choices = {"Pearson's", "Spearman's", "Both" }, defaultChoice = 0)
+	String calculation;
 
 	/////////// Define Outputs here ///////////
 
 	@OutputMarker(uiOrder = 1, name = "Coloc CSV Table", type = MarkerConstants.TYPE_FILE, flavor = "", description = "Output in csv format (i.e., for Excel etc).", enabled = true)
 	JEXData outputCSV;
 
-	@OutputMarker(uiOrder = 1, name = "Coloc ARFF Table", type = MarkerConstants.TYPE_FILE, flavor = "", description = "Test table output (i.e., for Weka etc).", enabled = true)
+	@OutputMarker(uiOrder = 2, name = "Coloc ARFF Table", type = MarkerConstants.TYPE_FILE, flavor = "", description = "Test table output (i.e., for Weka etc).", enabled = true)
 	JEXData outputARFF;
 
 	// Define threading capability here (set to 1 if using non-final static
@@ -146,7 +157,10 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 		}
 		
 		// Initialize: imageMap, maskMap, roiMap, total, count, percentage, nucExists
-		this.initializeVariables();
+		if(!this.initializeVariables())
+		{
+			return false;
+		}
 
 		DimTable imageDimTable = imageData.getDimTable();
 		DimTable maskDimTable = maskData.getDimTable();
@@ -232,7 +246,7 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 		}
 		else
 		{
-			this.wholeCellMaskImage = JEXReader.getSingleImage(path);
+			this.wholeCellMaskImage = JEXReader.getSingleImage(path, null);
 			this.wholeCellLabeling = utils.getLabeling(this.wholeCellMaskImage, connectedness.equals("4 Connected"));
 			this.wholeCellRegions = new LabelRegions<Integer>(this.wholeCellLabeling);
 		}
@@ -245,8 +259,10 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 		Logs.log("Measuring image: " + map1 + " & " + map2, this);
 		this.mapImage1 = map1;
 		this.mapImage2 = map2;
-		this.image1 = JEXReader.getSingleImage(imageMap.get(this.mapImage1));
-		this.image2 = JEXReader.getSingleImage(imageMap.get(this.mapImage2));
+		this.image1 = JEXReader.getSingleFloatImage(imageMap.get(this.mapImage1), this.channelOffsetValues.get(this.mapImage1));
+		this.image2 = JEXReader.getSingleFloatImage(imageMap.get(this.mapImage2), this.channelOffsetValues.get(this.mapImage2));
+		this.imMean1 = ImageStatistics.getImageMean(this.image1);
+		this.imMean2 = ImageStatistics.getImageMean(this.image2);
 		
 	}
 
@@ -260,7 +276,7 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 	{
 		Logs.log("Measuring mask: " + mapMask, this);
 		this.mapMask = mapMask;
-		this.mask = JEXReader.getSingleImage(maskMap.get(this.mapMask));
+		this.mask = JEXReader.getSingleImage(maskMap.get(this.mapMask), null);
 		this.maskParentLabeling = utils.applyLabeling(this.wholeCellLabeling, this.mask);
 		this.maskParentRegions = new LabelRegions<Integer>(this.maskParentLabeling);
 	}
@@ -355,7 +371,7 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 		//		RandomAccessibleInterval<T> subImage2 = Views.offsetInterval(this.image2, this.wholeCellRegion);
 		//		RandomAccessibleInterval<T> subRegionImage = utils.cropRealRAI(this.subCellRegion, subImage2);
 		Cursor<Void> c = this.combinedSubCellRegion.cursor();
-		Logs.log("Processing Label Region " + this.combinedSubCellRegion.getLabel(), this);
+		// Logs.log("Processing Label Region " + this.combinedSubCellRegion.getLabel(), this);
 		//IterableRegion<BoolType> ir = utils.intersectRegions(this.wholeCellRegion, this.subCellRegion);
 
 		//		utils.show(subImage1);
@@ -387,52 +403,61 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 	}
 
 	@SuppressWarnings("unchecked")
-	public void putPearson(DimensionMap mapM, RandomAccessibleInterval<T> subImage1, RandomAccessibleInterval<T> subImage2, Cursor<Void> maskCursor)
+	public void putPearson(DimensionMap mapM, RandomAccessibleInterval<FloatType> subImage1, RandomAccessibleInterval<FloatType> subImage2, Cursor<Void> maskCursor)
 	{
-		if (opR == null) {
-			opR = IJ2PluginUtility.ij().op().op(DefaultPearsonsCorrelationCoefficient.class, new Pair<RandomAccessibleInterval<T>, RandomAccessibleInterval<T>>(), maskCursor);
+		if (doPearsons && opR == null) {
+			opR = IJ2PluginUtility.ij().op().op(DefaultPearsonsCorrelationCoefficient.class, new Pair<RandomAccessibleInterval<FloatType>, RandomAccessibleInterval<FloatType>>(), maskCursor);
 			
 		}
-		if (opRho == null) {
-			opRho = IJ2PluginUtility.ij().op().op(DefaultSpearmansRankCorrelationCoefficient.class, new Pair<RandomAccessibleInterval<T>, RandomAccessibleInterval<T>>(), maskCursor);
+		if (doSpearmans && opRho == null) {
+			opRho = IJ2PluginUtility.ij().op().op(DefaultSpearmansRankCorrelationCoefficient.class, new Pair<RandomAccessibleInterval<FloatType>, RandomAccessibleInterval<FloatType>>(), maskCursor);
 		}
-		
 
-		DoubleType result_R = opR.calculate(new Pair<RandomAccessibleInterval<T>, RandomAccessibleInterval<T>>(subImage1, subImage2), maskCursor);
-		DoubleType result_Rho = opRho.calculate(new Pair<RandomAccessibleInterval<T>, RandomAccessibleInterval<T>>(subImage1, subImage2), maskCursor);
-
-		String measurement = "Measurement=net.imagej.ops.Ops$Stats$PearsonsCorrelationCoefficient";
-		if(transform)
+		DimensionMap newMap;
+		String measurement;
+		if(doPearsons)
 		{
-			measurement = "Measurement=net.imagej.ops.Ops$Stats$PearsonsCorrelationCoefficient.Similarity";
+			opR.setMeans(this.imMean1, this.imMean2);
+			DoubleType result_R = opR.calculate(new Pair<RandomAccessibleInterval<FloatType>, RandomAccessibleInterval<FloatType>>(subImage1, subImage2), maskCursor);
+			measurement = "Measurement=net.imagej.ops.Ops$Stats$PearsonsCorrelationCoefficient";
+			if(transform)
+			{
+				measurement = "Measurement=net.imagej.ops.Ops$Stats$PearsonsCorrelationCoefficient.Similarity";
+			}
+			newMap = mapM.copyAndSet(measurement);
+			newMap.put("Id", "" + this.pId);
+			newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
+			if(transform)
+			{
+				this.write(newMap, Math.log((1.0+result_R.get())/(1.0-result_R.get())));
+			}
+			else
+			{
+				this.write(newMap, result_R.get());
+			}
 		}
-		DimensionMap newMap = mapM.copyAndSet(measurement);
-		newMap.put("Id", "" + this.pId);
-		newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
-		if(transform)
+		if(doSpearmans)
 		{
-			this.write(newMap, Math.log((1.0+result_R.get())/(1.0-result_R.get())));
-		}
-		else
-		{
-			this.write(newMap, result_R.get());
-		}
-		
-		measurement = "Measurement=net.imagej.ops.Ops$Stats$SpearmansRankCorrelationCoefficient";
-		if(transform)
-		{
-			measurement = "Measurement=net.imagej.ops.Ops$Stats$SpearmansRankCorrelationCoefficient.Similarity";
-		}
-		newMap = mapM.copyAndSet(measurement);
-		newMap.put("Id", "" + this.pId);
-		newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
-		if(transform)
-		{
-			this.write(newMap, Math.log((1.0+result_Rho.get())/(1.0-result_Rho.get())));
-		}
-		else
-		{
-			this.write(newMap, result_Rho.get());
+			// We already used the cursor once so we have to reset it.
+			maskCursor.reset();
+			
+			DoubleType result_Rho = opRho.calculate(new Pair<RandomAccessibleInterval<FloatType>, RandomAccessibleInterval<FloatType>>(subImage1, subImage2), maskCursor);
+			measurement = "Measurement=net.imagej.ops.Ops$Stats$SpearmansRankCorrelationCoefficient";
+			if(transform)
+			{
+				measurement = "Measurement=net.imagej.ops.Ops$Stats$SpearmansRankCorrelationCoefficient.Similarity";
+			}
+			newMap = mapM.copyAndSet(measurement);
+			newMap.put("Id", "" + this.pId);
+			newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
+			if(transform)
+			{
+				this.write(newMap, Math.log((1.0+result_Rho.get())/(1.0-result_Rho.get())));
+			}
+			else
+			{
+				this.write(newMap, result_Rho.get());
+			}
 		}
 
 		//		for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
@@ -484,14 +509,48 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 		return true;
 	}
 
-	public void initializeVariables()
+	public boolean initializeVariables()
 	{
+		this.doPearsons = !this.calculation.equals("Spearman's");
+		this.doSpearmans = !this.calculation.equals("Pearson's");
+		
 		imageMap = new TreeMap<>();
 		if (imageData != null) {
 			imageMap = ImageReader.readObjectToImagePathTable(imageData);
+			CSVList channelOffsetStrings = new CSVList(channelOffsets);
+			this.channelOffsetValues = new TreeMap<>();
+			Dim imageChannelDim = imageData.getDimTable().getDimWithName(this.channelName);
+			if(channelOffsetStrings.size() > 1 && channelOffsetStrings.size() != imageChannelDim.size())
+			{
+				JEXDialog.messageDialog("The number of channel offsets must either be of length 1, or the same length as the number of Channels in the specified Channel Dimension. Aborting.", this);
+				return false;
+			}
+			boolean repeat = channelOffsetStrings.size() == 1;
+			try
+			{
+				for(int i = 0; i < imageChannelDim.size(); i++)
+				{
+					if(repeat)
+					{
+						double offsetValue = Double.parseDouble(channelOffsetStrings.get(0));
+						this.channelOffsetValues.put(new DimensionMap(this.channelName + "=" + imageChannelDim.valueAt(i)), offsetValue);
+					}
+					else
+					{
+						double offsetValue = Double.parseDouble(channelOffsetStrings.get(i));
+						this.channelOffsetValues.put(new DimensionMap(this.channelName + "=" + imageChannelDim.valueAt(i)), offsetValue);
+					}
+				}
+			}
+			catch(NumberFormatException nf)
+			{
+				JEXDialog.messageDialog("At least one of the channel offsets couldn't be parsed as a number. Aborting.", this);
+				return false;
+			}
 		}
 		maskMap = ImageReader.readObjectToImagePathTable(maskData);
 		roiMap = RoiReader.readObjectToRoiMap(roiData);
+		
 
 		this.count = 0;
 		this.percentage = 0;
@@ -499,6 +558,8 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 		// Calculate expected number of iterations
 		// Assume at least calculating mask features
 		this.total = maskData.getDimTable().mapCount();
+		
+		return true;
 	}
 
 	private Vector<Pair<String,String>> getChannelPermutations(Dim channelDim)

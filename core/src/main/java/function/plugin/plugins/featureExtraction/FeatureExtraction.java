@@ -39,6 +39,7 @@ import image.roi.ROIPlus;
 import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import logs.Logs;
+import miscellaneous.CSVList;
 import miscellaneous.Pair;
 import net.imagej.ops.featuresets.NamedFeature;
 import net.imagej.ops.geom.geom2d.Circle;
@@ -60,6 +61,7 @@ import net.imglib2.type.numeric.integer.IntType;
 import net.imglib2.type.numeric.integer.LongType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.real.DoubleType;
+import net.imglib2.type.numeric.real.FloatType;
 import tables.Dim;
 import tables.DimTable;
 import tables.DimensionMap;
@@ -80,7 +82,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
 	private Img<UnsignedByteType> wholeCellMaskImage;
 	private Img<UnsignedByteType> mask;
-	private Img<T> image;
+	private Img<FloatType> image;
 	private ImgLabeling<Integer,IntType> wholeCellLabeling;
 	private ImgLabeling<Integer,IntType> maskParentLabeling;
 	private LabelRegions<Integer> wholeCellRegions;
@@ -93,22 +95,23 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	private boolean nucExists = false;
 	private Vector<Polygon> polygons;
 	private DimensionMap mapMask, mapImage, mapMask_NoChannel;
+	private TreeMap<DimensionMap,Double> channelOffsetValues;
 	private Integer pId;
 
 	public Geometric2DFeatureSet<Polygon, DoubleType> opGeometric = null;
-	public Haralick2DFeatureSet<T, DoubleType> opHaralick2DHor = null;
-	public Haralick2DFeatureSet<T, DoubleType> opHaralick2DVer = null;
-	public Haralick2DFeatureSet<T, DoubleType> opHaralick2DDiag = null;
-	public Haralick2DFeatureSet<T, DoubleType> opHaralick2DAntiDiag = null;
-	public HistogramFeatureSet<T> opHistogram = null;
-	public ImageMomentsFeatureSet<T, DoubleType> opMoments = null;
-	public ZernikeFeatureSet<T> opZernike = null;
-	public DoubleNormalizedZernikeFeatureSet<T> opDNZernike = null;
+	public Haralick2DFeatureSet<FloatType, DoubleType> opHaralick2DHor = null;
+	public Haralick2DFeatureSet<FloatType, DoubleType> opHaralick2DVer = null;
+	public Haralick2DFeatureSet<FloatType, DoubleType> opHaralick2DDiag = null;
+	public Haralick2DFeatureSet<FloatType, DoubleType> opHaralick2DAntiDiag = null;
+	public HistogramFeatureSet<FloatType> opHistogram = null;
+	public ImageMomentsFeatureSet<FloatType, DoubleType> opMoments = null;
+	public ZernikeFeatureSet<FloatType> opZernike = null;
+	public DoubleNormalizedZernikeFeatureSet<FloatType> opDNZernike = null;
 	// What about IntensityFeatureSet???
-	public StatsFeatureSet<T, DoubleType> opStats = null;
+	public StatsFeatureSet<FloatType, DoubleType> opStats = null;
 	public DefaultSmallestEnclosingCircle opEncircle = null;
-	public Tamura2DFeatureSet<T,DoubleType> opTamura = null;
-	public LBPHistogramFeatureSet<T> opLBP = null;
+	public Tamura2DFeatureSet<FloatType,DoubleType> opTamura = null;
+	public LBPHistogramFeatureSet<FloatType> opLBP = null;
 
 	public int total = 0, count = 0;
 	public int percentage = 0;
@@ -139,11 +142,14 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
 	@ParameterMarker(uiOrder = 0, name = "Channel dim name", description = "Channel dimension name in mask data.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "Channel")
 	String channelName;
+	
+	@ParameterMarker(uiOrder = 1, name = "Channel Offsets <Val1>,<Val2>,...<Valn>", description = "Set a single offset for all channels (e.g., positive 5.0 to subtract off 5.0 before doing calculations) or a different offset for each channel. Must have 1 value for each channel comma separated (e.g., '<Val1>,<Val2>,...<Valn>').", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "0.0")
+	String channelOffsets;
 
-	@ParameterMarker(uiOrder = 1, name = "'Whole Cell' mask channel value", description = "Which channel value of the mask image represents the whole cell that has a 1-to-1 mapping with the maxima points.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "WholeCell")
+	@ParameterMarker(uiOrder = 2, name = "'Whole Cell' mask channel value", description = "Which channel value of the mask image represents the whole cell that has a 1-to-1 mapping with the maxima points.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "WholeCell")
 	String maskWholeCellChannelValue;
 
-	@ParameterMarker(uiOrder = 2, name = "'Nuclear' mask channel value (optional)", description = "(Optional) If a nuclear mask exists and it is specified, additional nuanced calculations of Zernike features are provided (see comments in code).", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
+	@ParameterMarker(uiOrder = 3, name = "'Nuclear' mask channel value (optional)", description = "(Optional) If a nuclear mask exists and it is specified, additional nuanced calculations of Zernike features are provided (see comments in code).", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
 	String maskNuclearChannelValue;
 
 	//	@ParameterMarker(uiOrder = 3, name = "Image intensity offset", description = "Amount the images are offset from zero (will be subtracted before calculation)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "0.0")
@@ -215,7 +221,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	@OutputMarker(uiOrder = 1, name = "Feature CSV Table", type = MarkerConstants.TYPE_FILE, flavor = "", description = "Output in csv format (i.e., for Excel etc).", enabled = true)
 	JEXData outputCSV;
 
-	@OutputMarker(uiOrder = 2, name = "Feature ARFF Table", type = MarkerConstants.TYPE_FILE, flavor = "", description = "Test table output (i.e., for Weka etc).", enabled = true)
+	@OutputMarker(uiOrder = 2, name = "Feature ARFF Table", type = MarkerConstants.TYPE_FILE, flavor = "", description = "Output in arff format (e.g., for Weka etc).", enabled = true)
 	JEXData outputARFF;
 
 	// Define threading capability here (set to 1 if using non-final static
@@ -237,7 +243,10 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		}
 
 		// Initialize: imageMap, maskMap, roiMap, total, count, percentage, nucExists
-		this.initializeVariables();
+		if(!this.initializeVariables())
+		{
+			return false;
+		}
 
 		DimTable imageDimTable = imageData.getDimTable();
 		DimTable maskDimTable = maskData.getDimTable();
@@ -326,7 +335,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		}
 		else
 		{
-			this.wholeCellMaskImage = JEXReader.getSingleImage(path);
+			this.wholeCellMaskImage = JEXReader.getSingleImage(path, null);
 			this.wholeCellLabeling = utils.getLabeling(this.wholeCellMaskImage, connectedness.equals("4 Connected"));
 			this.wholeCellRegions = new LabelRegions<Integer>(this.wholeCellLabeling);
 		}
@@ -345,7 +354,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		}
 		else
 		{
-			this.image = JEXReader.getSingleImage(imageMap.get(this.mapImage));
+			this.image = JEXReader.getSingleFloatImage(imageMap.get(this.mapImage), this.channelOffsetValues.get(this.mapImage));
 		}
 	}
 
@@ -353,7 +362,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	{
 		Logs.log("Measuring mask: " + this.mapMask, this);
 		this.mapMask = mapMask;
-		this.mask = JEXReader.getSingleImage(maskMap.get(this.mapMask));
+		this.mask = JEXReader.getSingleImage(maskMap.get(this.mapMask), null);
 		
 		// Apply the labels of the whole cells to the mask (e.g., multiple subregions now get the same parent label)
 		this.maskParentLabeling = utils.applyLabeling(this.wholeCellLabeling, this.mask);
@@ -475,7 +484,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		}
 		mapM_Intensity.put("ImageChannel", imageChannelValue);
 
-		IterableInterval<T> ii = Regions.sample(this.combinedSubCellRegion, this.image); //Views.offsetInterval(this.image, this.wholeCellRegion));
+		IterableInterval<FloatType> ii = Regions.sample(this.combinedSubCellRegion, this.image); //Views.offsetInterval(this.image, this.wholeCellRegion));
 
 		this.putStats(mapM_Intensity, ii);
 		if (this.isCanceled()) { this.close(); return false;}
@@ -557,7 +566,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		}
 		mapM_Intensity.put("ImageChannel", imageChannelValue);
 
-		RandomAccessibleInterval<T> vals = utils.cropRealRAI(this.combinedSubCellRegion, this.image);
+		RandomAccessibleInterval<FloatType> vals = utils.cropRealRAI(this.combinedSubCellRegion, this.image);
 
 		// utils.show(vals);
 		this.putTamura(mapM_Intensity, vals);
@@ -770,7 +779,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	}
 
 	@SuppressWarnings("unchecked")
-	public void putStats(DimensionMap mapM, IterableInterval<T> vals)
+	public void putStats(DimensionMap mapM, IterableInterval<FloatType> vals)
 	{
 		if (stats) {
 			if (opStats == null) {
@@ -790,7 +799,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	}
 
 	@SuppressWarnings("unchecked")
-	public void putHaralick2D(DimensionMap mapM, IterableInterval<T> vals)
+	public void putHaralick2D(DimensionMap mapM, IterableInterval<FloatType> vals)
 	{
 		Map<NamedFeature, DoubleType> results;
 
@@ -852,7 +861,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	}
 
 	@SuppressWarnings("unchecked")
-	public void putTamura(DimensionMap mapM, RandomAccessibleInterval<T> vals)
+	public void putTamura(DimensionMap mapM, RandomAccessibleInterval<FloatType> vals)
 	{
 		if (tamura) {
 			if (opTamura == null) {
@@ -869,7 +878,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	}
 
 	@SuppressWarnings("unchecked")
-	public void putHistogram(DimensionMap mapM, IterableInterval<T> vals)
+	public void putHistogram(DimensionMap mapM, IterableInterval<FloatType> vals)
 	{
 		if (histogram) {
 			if (opHistogram == null) {
@@ -886,7 +895,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	}
 
 	@SuppressWarnings("unchecked")
-	public void putLBPHistogram(DimensionMap mapM, RandomAccessibleInterval<T> vals)
+	public void putLBPHistogram(DimensionMap mapM, RandomAccessibleInterval<FloatType> vals)
 	{
 		if (lbp) {
 			if (opLBP == null) {
@@ -904,7 +913,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	}
 
 	@SuppressWarnings("unchecked")
-	public void putMoments(DimensionMap mapM, IterableInterval<T> vals)
+	public void putMoments(DimensionMap mapM, IterableInterval<FloatType> vals)
 	{
 		if (moments) {
 			if (opMoments == null) {
@@ -921,7 +930,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	}
 
 	@SuppressWarnings("unchecked")
-	public void putZernike(DimensionMap mapM, IterableInterval<T> vals, Circle circle, String suffix, boolean firstTimeThrough)
+	public void putZernike(DimensionMap mapM, IterableInterval<FloatType> vals, Circle circle, String suffix, boolean firstTimeThrough)
 	{
 		if(zernike)
 		{
@@ -958,7 +967,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	}
 
 	@SuppressWarnings("unchecked")
-	public void putDNZernike(DimensionMap mapM, IterableInterval<T> vals, Circle innerCircle, Circle outerCircleAtEquivalentRadius, boolean firstTimeThrough)
+	public void putDNZernike(DimensionMap mapM, IterableInterval<FloatType> vals, Circle innerCircle, Circle outerCircleAtEquivalentRadius, boolean firstTimeThrough)
 	{
 		if(zernike && this.nucExists)
 		{
@@ -1053,11 +1062,41 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		return true;
 	}
 
-	public void initializeVariables()
+	public boolean initializeVariables()
 	{
 		imageMap = new TreeMap<>();
 		if (imageData != null) {
 			imageMap = ImageReader.readObjectToImagePathTable(imageData);
+			CSVList channelOffsetStrings = new CSVList(channelOffsets);
+			this.channelOffsetValues = new TreeMap<>();
+			Dim imageChannelDim = imageData.getDimTable().getDimWithName(this.channelName);
+			if(channelOffsetStrings.size() > 1 && channelOffsetStrings.size() != imageChannelDim.size())
+			{
+				JEXDialog.messageDialog("The number of channel offsets must either be of length 1, or the same length as the number of Channels in the specified Channel Dimension. Aborting.", this);
+				return false;
+			}
+			boolean repeat = channelOffsetStrings.size() == 1;
+			try
+			{
+				for(int i = 0; i < imageChannelDim.size(); i++)
+				{
+					if(repeat)
+					{
+						double offsetValue = Double.parseDouble(channelOffsetStrings.get(0));
+						this.channelOffsetValues.put(new DimensionMap(this.channelName + "=" + imageChannelDim.valueAt(i)), offsetValue);
+					}
+					else
+					{
+						double offsetValue = Double.parseDouble(channelOffsetStrings.get(i));
+						this.channelOffsetValues.put(new DimensionMap(this.channelName + "=" + imageChannelDim.valueAt(i)), offsetValue);
+					}
+				}
+			}
+			catch(NumberFormatException nf)
+			{
+				JEXDialog.messageDialog("At least one of the channel offsets couldn't be parsed as a number. Aborting.", this);
+				return false;
+			}
 		}
 		maskMap = ImageReader.readObjectToImagePathTable(maskData);
 		roiMap = RoiReader.readObjectToRoiMap(roiData);
@@ -1073,5 +1112,6 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		{
 			this.nucExists = true;
 		}
+		return true;
 	}
 }
