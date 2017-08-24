@@ -1,6 +1,7 @@
 package function.ops.stats;
 
 import org.scijava.Priority;
+import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
 import algorithms.MissingPreconditionException;
@@ -22,6 +23,12 @@ import net.imglib2.util.Pair;
 @Plugin(type = Ops.Stats.PearsonsCorrelationCoefficient.class, priority = Priority.NORMAL_PRIORITY)
 public class DefaultPearsonsCorrelationCoefficient<I1 extends RealType<I1>> extends AbstractBinaryFunctionOp<Pair<RandomAccessibleInterval<I1>, RandomAccessibleInterval<I1>>, Cursor<Void>, DoubleType>
 implements Ops.Stats.PearsonsCorrelationCoefficient {
+	
+	@Parameter(required = false)
+	Double imMean1 = null;
+
+	@Parameter(required = false)
+	Double imMean2 = null;
 
 	@Override
 	public DoubleType calculate(Pair<RandomAccessibleInterval<I1>, RandomAccessibleInterval<I1>> input1,
@@ -30,15 +37,21 @@ implements Ops.Stats.PearsonsCorrelationCoefficient {
 		try
 		{
 			PearsonsCorrelation<I1> pc = new PearsonsCorrelation<>(Implementation.Classic);
-			double mean1 = ImageStatistics.getImageMean(input1.getA());
-			double mean2 = ImageStatistics.getImageMean(input1.getB());
+			if(imMean1 == null)
+			{
+				imMean1 = ImageStatistics.getImageMean(input1.getA());
+			}
+			if(imMean2 == null)
+			{
+				imMean2 = ImageStatistics.getImageMean(input1.getB());
+			}
 			FeatureUtils utils = new FeatureUtils();
 			Cursor<BitType> c = utils.convertVoidTypeToBitTypeCursor(input2);
 			TwinCursor<I1> cursor = new TwinCursor<>(
 					input1.getA().randomAccess(),
 					input1.getB().randomAccess(),
 					c);
-			double r = pc.calculatePearsons(cursor, mean1, mean2, null, null, ThresholdMode.None);
+			double r = pc.calculatePearsons(cursor, imMean1, imMean2, null, null, ThresholdMode.None);
 			return new DoubleType(r);
 		} 
 		catch (MissingPreconditionException e)
@@ -46,5 +59,11 @@ implements Ops.Stats.PearsonsCorrelationCoefficient {
 			e.printStackTrace();
 			return new DoubleType(Double.NaN);
 		}
+	}
+	
+	public void setMeans(Double mean1, Double mean2)
+	{
+		this.imMean1 = mean1;
+		this.imMean2 = mean2;
 	}
 }
