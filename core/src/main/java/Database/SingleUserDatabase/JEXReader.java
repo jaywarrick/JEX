@@ -17,7 +17,7 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 
 public class JEXReader {
-	
+
 	public synchronized static ArrayList<ArrayList<String>> readCSVFileToDataMap(File f)
 	{
 		ArrayList<ArrayList<String>> ret = new ArrayList<ArrayList<String>>();
@@ -40,16 +40,16 @@ public class JEXReader {
 		{
 			e.printStackTrace();
 		}
-		
+
 		return ret;
 	}
-	
+
 	public synchronized static Img<FloatType> getSingleFloatImage(String path, Double offset)
 	{
 		Logs.log("Opening image - " + path, JEXReader.class);
 		ImagePlus im = new ImagePlus(path);
 		Img<FloatType> ret = ImageJFunctions.convertFloat(im);
-		
+
 		// Adjust the image if necessary.
 		if(offset != null && offset != 0.0)
 		{
@@ -58,15 +58,16 @@ public class JEXReader {
 				type.setReal(type.getRealDouble() - offset);
 			} 
 		}
+
 		return ret;
 	}
-	
+
 	public synchronized static <T extends RealType<T>> Img<T> getSingleImage(String path, Double offset)
 	{
 		Logs.log("Opening image - " + path, JEXReader.class);
 		ImagePlus im = new ImagePlus(path);
 		Img<T> ret = ImageJFunctions.wrapReal(im);
-		
+
 		// Adjust the image if necessary.
 		if(offset != null && offset != 0.0)
 		{
@@ -84,12 +85,12 @@ public class JEXReader {
 		}
 		return ret;
 	}
-	
+
 	public static JEXData readFileToJEXData(String file, TypeName tn)
 	{
 		JEXData ret = new JEXData(tn);
 		JEXDataIO.loadJXD(ret, file);
 		return ret;
 	}
-	
+
 }
