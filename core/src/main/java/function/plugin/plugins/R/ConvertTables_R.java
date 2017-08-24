@@ -190,7 +190,7 @@ public class ConvertTables_R extends JEXPlugin {
 			}
 			if(reorganize)
 			{
-				R.reorganize("temp", idCols, nameCols, valueCols, null);
+				R.reorganize("temp", idCols, nameCols, valueCols, "sep=" + R.sQuote("."));
 			}
 			count = count + 1;
 			percentage = 100 * count / total;
