@@ -1,25 +1,10 @@
 package function.plugin.plugins.imageThresholding;
 
-import ij.ImagePlus;
-import ij.ImageStack;
-import ij.plugin.CanvasResizer;
-import ij.plugin.MontageMaker;
-import ij.process.ByteProcessor;
-import ij.process.FloatProcessor;
-import ij.process.ImageProcessor;
-import image.roi.ROIPlus;
-
 import java.io.File;
 import java.util.TreeMap;
 
-import jex.statics.JEXStatics;
-import jex.utilities.FunctionUtility;
-import jex.utilities.ROIUtility;
-import miscellaneous.StatisticsUtility;
-
 import org.scijava.plugin.Plugin;
 
-import tables.DimensionMap;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;
@@ -32,6 +17,21 @@ import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.MarkerConstants;
 import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.plugin.CanvasResizer;
+import ij.plugin.MontageMaker;
+import ij.process.ByteProcessor;
+import ij.process.FloatProcessor;
+import ij.process.ImageProcessor;
+import image.roi.ROIPlus;
+import jex.statics.JEXStatics;
+import jex.utilities.FunctionUtility;
+import jex.utilities.ROIUtility;
+import miscellaneous.CSVList;
+import miscellaneous.StatisticsUtility;
+import tables.Dim;
+import tables.DimensionMap;
 
 
 /**
@@ -95,11 +95,14 @@ public class AutoLocalThresholding extends JEXPlugin{
 
 	@ParameterMarker(uiOrder=7, name="Hi Percentile (> Low Percentile <= 100)", description="The high percentile intensity limit used for preadjusting the image.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="99")
 	double hiP;
-	
+
 	Parameter p3 = new Parameter("'<Name>=<Value>' to Exclude (optional)", "Optionally specify a particular name value pair to exclude from thresholding. Useful for excluding bright-field (e.g., Channel=BF). Technically doesn't have to be the 'Channel' dimension.", "");
 
-	@ParameterMarker(uiOrder=8, name="'<Name>=<Value>' to Exclude (optional)", description="Optionally specify a particular name value pair to exclude from thresholding. Useful for excluding bright-field (e.g., Channel=BF). Technically doesn't have to be the 'Channel' dimension.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
+	@ParameterMarker(uiOrder=8, name="Exclusion Filter (optional)", description="'<Name>=<Val1>,<Val2>,...,<Valn>', Optionally specify a particular name value pair to exclude from thresholding. Useful for excluding bright-field (e.g., Channel=BF). Technically doesn't have to be the 'Channel' dimension. Leave blank to skip.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
 	String toExclude;
+	
+	@ParameterMarker(uiOrder=9, name="Keep Unproceessed Images?", description="Should images excluded from processing be kept in the output image object?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	boolean keepUnprocessed;
 
 	//	@ParameterMarker(uiOrder=5, name="Output Bit Depth", description="Depth of the outputted image", ui=MarkerConstants.UI_DROPDOWN, choices={ "8", "16", "32" }, defaultChoice=1)
 	//	static
@@ -127,12 +130,13 @@ public class AutoLocalThresholding extends JEXPlugin{
 		}
 
 		// Gather parameters
-		DimensionMap thingToExclude = null;
+		Dim filterDim = null;
 		if(toExclude != null && !toExclude.equals(""))
 		{
-			thingToExclude = new DimensionMap(toExclude);
+			String[] filterArray = toExclude.split("=");
+			filterDim = new Dim(filterArray[0], new CSVList(filterArray[1]));
 		}
-		
+
 		// Run the function
 		TreeMap<DimensionMap,String> imageMap = ImageReader.readObjectToImagePathTable(imageData);
 		TreeMap<DimensionMap,String> outputImageMap = new TreeMap<DimensionMap,String>();
@@ -147,14 +151,14 @@ public class AutoLocalThresholding extends JEXPlugin{
 			{
 				return false;
 			}
-			
-			if(map.compareTo(thingToExclude) == 0)
-			{
-				continue;
-			}
 
 			// call the real local threshold function and save the result
-			tempPath = this.saveAdjustedImage(imageMap.get(map));
+			boolean skip = false;
+			if(filterDim != null && filterDim.containsValue(map.get(filterDim.dimName)))
+			{
+				skip = true;
+			}
+			tempPath = this.saveAdjustedImage(imageMap.get(map), skip, keepUnprocessed);
 
 			if(tempPath != null)
 			{
@@ -178,7 +182,7 @@ public class AutoLocalThresholding extends JEXPlugin{
 		return true;
 	}
 
-	public String saveAdjustedImage(String imagePath )
+	public String saveAdjustedImage(String imagePath, boolean skip, boolean keepUnprocessed)
 	{
 		// Get image data
 		File f = new File(imagePath);
@@ -187,9 +191,17 @@ public class AutoLocalThresholding extends JEXPlugin{
 			return null;
 		}
 
-
+		if(skip && !keepUnprocessed)
+		{
+			return null;
+		}
+		
 		ImagePlus im = new ImagePlus(imagePath);
-
+		if(skip)
+		{
+			return(JEXWriter.saveImage(im));
+		}
+		
 		FloatProcessor imp = im.getProcessor().convertToFloatProcessor();
 		ByteProcessor impByte = null;
 		if(preAdjust)
