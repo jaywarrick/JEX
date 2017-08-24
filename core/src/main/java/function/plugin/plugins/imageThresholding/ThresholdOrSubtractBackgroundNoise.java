@@ -73,13 +73,15 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 
 	@ParameterMarker(uiOrder=5, name="Offset", description="Amount to add back to the image before saving. Useful for avoiding clipping of lows, essentially setting the background to a known non-zero offset.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
 	double offset;
-
-	@ParameterMarker(uiOrder=6, name="'<Name>=<Value>,...' pairs to Exclude (optional)", description="Optionally specify a particular name value pair to exclude from background correction. Useful for excluding bright-field (e.g., Channel=BF). Technically doesn't have to be the 'Channel' dimension.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
-	String toExclude;
-
-	@ParameterMarker(uiOrder=7, name="Evaluate Outside ROI?", description="If an ROI is specified, then indicate whether to use pixels inside or outside the ROI to determine background intensities. (checked uses pixels outside ROI)", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	
+	@ParameterMarker(uiOrder=6, name="Evaluate Outside ROI?", description="If an ROI is specified, then indicate whether to use pixels inside or outside the ROI to determine background intensities. (checked uses pixels outside ROI)", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
 	boolean outside;
 
+	@ParameterMarker(uiOrder=7, name="Exclusion Filter", description="<DimName>=<Val1>,<Val2>,...<Valn>, Specify the dimension and dimension values to exclude. Leave blank to process all. Useful for excluding bright-field (e.g., Channel=BF). Technically doesn't have to be the 'Channel' dimension.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
+	String toExclude;
+	
+	@ParameterMarker(uiOrder=8, name="Keep Unprocessed Images?", description="Should the images within the object that are exlcluded from analysis by the Dimension Filter be kept in the result?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	boolean keepUnprocessed;
 
 	/////////// Define Outputs here ///////////
 
@@ -96,7 +98,7 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 	int bitDepth = 8;
 	List<Double> nSigmas = null;
 
-	DimensionMap thingToExclude = null;
+	Dim filterDim = null;
 
 	// Define threading capability here (set to 1 if using non-final static variables shared between function instances).
 	@Override
@@ -123,11 +125,13 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 			return false;
 		}
 
+		filterDim = null;
 		if(toExclude != null && !toExclude.equals(""))
 		{
-			thingToExclude = new DimensionMap(toExclude);
+			String[] filterArray = toExclude.split("=");
+			filterDim = new Dim(filterArray[0], new CSVList(filterArray[1]));
 		}
-
+		
 		TreeMap<String,Object> output = null;
 		if(threshPerColor)
 		{
@@ -203,7 +207,7 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 				FloatProcessor ip = (FloatProcessor) im.getProcessor().convertToFloat();
 
 				String path = null;
-				if(this.threshold && map.compareTo(thingToExclude) != 0)
+				if(this.threshold && (filterDim == null || !filterDim.containsValue(map.get(filterDim.dimName))))
 				{
 					FunctionUtility.imThresh(ip, thresh, false);
 					if(this.isCanceled())
@@ -213,7 +217,7 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 					}
 					path = JEXWriter.saveImage(FunctionUtility.makeImageToSave(ip, "false", 8)); // Creating black and white image
 				}
-				else if(map.compareTo(thingToExclude) != 0)
+				else if(filterDim == null || !filterDim.containsValue(map.get(filterDim.dimName)))
 				{
 					ip.add(offset);
 					ip.subtract(thresh);
@@ -224,11 +228,8 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 					}
 					path = JEXWriter.saveImage(FunctionUtility.makeImageToSave(ip, ""+false, this.bitDepth)); // Creating black and white image
 				}
-				else if(!this.threshold)
+				else if(keepUnprocessed)
 				{
-					// It doesn't make sense to save original images with thresholded images, so just
-					// exclude those images when thresholding, but keep when doing background
-					// subtraction.
 					path = JEXWriter.saveImage(im);
 				}
 				if(path != null)
@@ -282,12 +283,9 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 				ImagePlus im = new ImagePlus(imageMap.get(map));
 				bitDepth = im.getBitDepth();
 
-				if(thingToExclude != null && map.compareTo(thingToExclude) == 0)
+				if(filterDim != null && filterDim.containsValue(map.get(filterDim.dimName)))
 				{
-					// It doesn't make sense to save original images with thresholded images, so just
-					// exclude those images when thresholding, but keep when doing background
-					// subtraction.
-					if(!this.threshold)
+					if(keepUnprocessed)
 					{
 						String path = JEXWriter.saveImage(im);
 						outputMap.put(map.copy(), path);
