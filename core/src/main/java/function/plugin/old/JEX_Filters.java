@@ -16,6 +16,8 @@ import ij.ImagePlus;
 import ij.plugin.filter.RankFilters;
 import ij.process.ImageProcessor;
 import jex.statics.JEXStatics;
+import miscellaneous.CSVList;
+import tables.Dim;
 import tables.DimensionMap;
 
 /**
@@ -143,6 +145,8 @@ public class JEX_Filters extends JEXCrunchable {
 		// Parameter("Dummy Parameter","Lets user know that the function has been selected.",FormLine.DROPDOWN,new
 		// String[] {"true"},0);
 		Parameter p1 = new Parameter("Filter Type", "Type of filter to apply.", Parameter.DROPDOWN, new String[] { MEAN, MIN, MAX, MEDIAN, VARIANCE }, 0);
+		Parameter p7 = new Parameter("Exclusion Filter", "<DimName>=<Val1>,<Val2>,...<Valn>, Specify the dimension and dimension values to exclude. Leave blank to process all.", "");
+		Parameter p8 = new Parameter("Keep Unprocessed Images?", "Should the images within the object that are exlcluded from analysis by the Dimension Filter be kept in the result?", Parameter.CHECKBOX, true);
 		Parameter p2 = new Parameter("Radius", "Radius of filter in pixels.", "2.0");
 		Parameter p3 = new Parameter("Output Bit-Depth", "Bit-Depth of the output image", Parameter.DROPDOWN, new String[] { "8", "16", "32" }, 2);
 		Parameter p4 = getNumThreadsParameter(10, 6);
@@ -152,6 +156,8 @@ public class JEX_Filters extends JEXCrunchable {
 		ParameterSet parameterArray = new ParameterSet();
 		parameterArray.addParameter(p4);
 		parameterArray.addParameter(p1);
+		parameterArray.addParameter(p7);
+		parameterArray.addParameter(p8);
 		parameterArray.addParameter(p2);
 		parameterArray.addParameter(p3);
 		parameterArray.addParameter(p5);
@@ -195,6 +201,15 @@ public class JEX_Filters extends JEXCrunchable {
 		// Gather parameters
 		double radius = Double.parseDouble(parameters.getValueOfParameter("Radius"));
 		String method = parameters.getValueOfParameter("Filter Type");
+		String filterString = parameters.getValueOfParameter("Exclusion Filter");
+		Dim filterDim = null;
+		if(filterString != null && !filterString.equals(""))
+		{
+			String[] filterArray = filterString.split("=");
+			filterDim = new Dim(filterArray[0], new CSVList(filterArray[1]));
+		}
+		
+		boolean keepUnprocessed = Boolean.parseBoolean(parameters.getValueOfParameter("Keep Unprocessed Images?"));
 		int bitDepth = Integer.parseInt(parameters.getValueOfParameter("Output Bit-Depth"));
 		boolean log = Boolean.parseBoolean(parameters.getValueOfParameter("Post-log Operation"));
 		double mult = Double.parseDouble(parameters.getValueOfParameter("Post-multiplier"));
@@ -209,7 +224,23 @@ public class JEX_Filters extends JEXCrunchable {
 			{
 				return false;
 			}
+			
+			
 			ImagePlus im = new ImagePlus(imageMap.get(map));
+			if(filterDim != null && filterDim.containsValue(map.get(filterDim.dimName)))
+			{
+				// Then skip, but save unprocessed image if necessary
+				if(keepUnprocessed)
+				{
+					String path = JEXWriter.saveImage(im);
+					outputImageMap.put(map, path);
+				}
+				count = count + 1;
+				percentage = (int) (100 * ((double) (count) / ((double) imageMap.size())));
+				JEXStatics.statusBar.setProgressPercentage(percentage);
+				continue;
+			}
+			
 			ImageProcessor ip = im.getProcessor().convertToFloat();
 
 			// //// Begin Actual Function
