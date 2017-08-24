@@ -71,6 +71,7 @@ public class JEXAvailableDatabases extends JPanel implements ActionListener, Mou
 		this.setLayout(new BorderLayout());
 		centerScrollPane.setBackground(DisplayStatics.background);
 		centerScrollPane.setBorder(BorderFactory.createEmptyBorder());
+		centerScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 		centerPane.setBackground(DisplayStatics.background);
 		centerPane.setLayout(new BoxLayout(centerPane, BoxLayout.PAGE_AXIS));
 		
