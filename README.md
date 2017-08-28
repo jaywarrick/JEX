@@ -5,6 +5,10 @@ JEX
 
 Java-based software and GUI to automatically manage/database large numbers of files (e.g., images) in a transparent file structure and perform batch processing with standard tools (ImageJ, R, Octave, Weka).
 
+#### Getting Java...
+
+Google "Download Java 1.8 Oracle", following the link for the Java (v1.8.X) SE standard development kit. Accept the license, download and install.
+
 #### Downloading the JEX Executable Version
 
 Executable jars and simple exectuable scripts to run those jars with specific java heap space arguments for increasing the amount of RAM that can be used are available for download at [sourceforge](http://sourceforge.net/projects/jextools/). Simply save and unzip the file anywhere you would like (except maybe your root directory of your hard drive such as 'C:/' as that is often weirdly write protected and can cause issues) and double-click the "JEX for Mac" or "JEX for Windows" exectubale script depending on your operating system (Linux users can double-click the jar directly or run the jar from the command line to change the memory settings). This will start a terminal window that will show information regarding any actions that JEX is taking as well as error information that would be very useful for debugging issues you might run into :-).
@@ -101,6 +105,8 @@ Option B: If you wish to potentially develop functions for JEX or develop JEX it
 3. Go to [http://github.com/jaywarrick/JEX](http://github.com/jaywarrick/JEX) and click the "Fork" button to create a copy of the source-code files stored on github as part of your new account and completely editable by yourself without impact on the original code at [http://github.com/jaywarrick/JEX](http://github.com/jaywarrick/JEX). You should now have been redirected to your new forked repository (i.e., a website with the an address similar to http://github.com/<your username>/JEX).
 4. Now click the "Clone in Desktop" button to save your forked repository to your computer via the GitHub.app you installed.
 5. Import this downloaded source-code following the instructions from "Using Eclipse to run or edit/develop the JEX and JEX functions..."
+
+Follow the same steps for cloning jaywarrick/imglib2 (master), jaywarrick/imagelib2-roi (Fix.Polygon.getVertices), and jaywarrick/imagej-ops (Add-Eclosing-Circle-to-Zernik...) repositories. The repositories should be set to the branches indicated in the parantheses (use the 'master' branch of JEX).
 
 #### Contributing to JEX
 
