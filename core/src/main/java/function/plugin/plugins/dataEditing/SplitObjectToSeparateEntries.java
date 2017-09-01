@@ -10,6 +10,7 @@ import org.scijava.plugin.Plugin;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.FileReader;
+import Database.DataReader.ImageReader;
 import Database.DataWriter.FileWriter;
 import Database.DataWriter.ImageWriter;
 import cruncher.Ticket;
@@ -19,6 +20,7 @@ import function.plugin.mechanism.MarkerConstants;
 import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
 import function.plugin.plugins.imageTools.ImageStackStitcher;
+import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import miscellaneous.Pair;
 import tables.Dim;
@@ -89,7 +91,7 @@ public class SplitObjectToSeparateEntries extends JEXPlugin {
 	public boolean run(JEXEntry optionalEntry)
 	{		
 		// Validate the input data
-		if(theData == null || !(theData.getTypeName().getType().equals(JEXData.FILE) || theData.getTypeName().getType().equals(JEXData.IMAGE)))	
+		if(myData == null || !(myData.getTypeName().getType().equals(JEXData.FILE) || myData.getTypeName().getType().equals(JEXData.IMAGE)))	
 		{
 			return false;
 		}
@@ -124,17 +126,29 @@ public class SplitObjectToSeparateEntries extends JEXPlugin {
 		double percentage = 0;
 
 		// Gather all the files to combine and split them up by the split dimension.
-		TreeMap<DimensionMap,String> files = FileReader.readObjectToFilePathTable(theData);
+		TreeMap<DimensionMap,String> files = null;
+		if(theData.getTypeName().getType().matches(JEXData.FILE))
+		{
+			files = FileReader.readObjectToFilePathTable(theData);
+		}
+		else
+		{
+			files = ImageReader.readObjectToImagePathTable(theData);
+		}
+		if(files == null)
+		{
+			JEXDialog.messageDialog("Couldn't read the files from the provided object. Make sure it is an Image or a File object.", this);
+		}
 
 		// Get the number of rows
 		Pair<Integer,Integer> selection = getSelectionRowsAndCols(ticket);
 		if(rows < 1)
 		{
-			rows = selection.p1;
+			rows = selection.p1 + 1; // Selection Rows and Cols are 0 indexed so add 1
 		}
 		if(cols < 1)
 		{
-			cols = selection.p2;
+			cols = selection.p2 + 1; // Selection Rows and Cols are 0 indexed so add 1
 		}
 
 		// Get the row column index look up table.
@@ -145,23 +159,22 @@ public class SplitObjectToSeparateEntries extends JEXPlugin {
 		Dim dim = dt.getDimWithName(dimToSplit);
 		for (Entry<JEXEntry,Set<JEXData>> e : ticket.getOutputList().entrySet())
 		{
-			DimensionMap rc = new DimensionMap("R=" + e.getKey().getTrayY() + "C=" + e.getKey().getTrayX());
+			DimensionMap rc = new DimensionMap("R=" + e.getKey().getTrayY() + ",C=" + e.getKey().getTrayX());
 			DimensionMap filter = new DimensionMap(dimToSplit + "=" + dim.dimValues.get(lut.get(rc)));
 			TreeMap<DimensionMap,String> subsetOfData = new TreeMap<>();
 			for(DimensionMap mapToGet : dt.getMapIterator(filter))
 			{
 				subsetOfData.put(mapToGet, files.get(mapToGet));
 			}
-			
 			// Make the data object to save
 			JEXData temp = null;
 			if(theData.getTypeName().getType().equals(JEXData.IMAGE))
 			{
-				temp = ImageWriter.makeImageStackFromPaths(ticket.getOutputNames()[0].getName(), files);
+				temp = ImageWriter.makeImageStackFromPaths(ticket.getOutputNames()[0].getName(), subsetOfData);
 			}
 			else
 			{
-				temp = FileWriter.makeFileObject(ticket.getOutputNames()[0].getName(), null, files);
+				temp = FileWriter.makeFileObject(ticket.getOutputNames()[0].getName(), null, subsetOfData);
 			}
 			
 			// Add the data to the set.
