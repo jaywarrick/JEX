@@ -15,7 +15,7 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.util.Pair;
 
-@Plugin(type = function.ops.stats.DefaultSpearmansRankCorrelationCoefficient.class, priority = Priority.NORMAL_PRIORITY)
+@Plugin(type = JEXOps.SpearmansRankCorrelationCoefficient.class, priority = Priority.NORMAL_PRIORITY)
 public class DefaultSpearmansRankCorrelationCoefficient<I1 extends RealType<I1>> extends AbstractBinaryFunctionOp<Pair<RandomAccessibleInterval<I1>, RandomAccessibleInterval<I1>>, Cursor<Void>, DoubleType>
 implements JEXOps.SpearmansRankCorrelationCoefficient {
 

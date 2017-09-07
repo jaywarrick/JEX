@@ -1,6 +1,7 @@
 // Define package name as "plugins" as show here
 package function.plugin.plugins.featureExtraction;
 
+import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.Vector;
 
@@ -13,6 +14,7 @@ import Database.DataReader.RoiReader;
 import Database.SingleUserDatabase.JEXReader;
 import function.ops.featuresets.wrappers.WriterWrapper;
 import function.ops.stats.DefaultPearsonsCorrelationCoefficient;
+import function.ops.stats.DefaultRadialLocalization;
 import function.ops.stats.DefaultSpearmansRankCorrelationCoefficient;
 import function.plugin.IJ2.IJ2PluginUtility;
 import function.plugin.mechanism.InputMarker;
@@ -29,10 +31,12 @@ import logs.Logs;
 import miscellaneous.CSVList;
 import miscellaneous.Pair;
 import net.imglib2.Cursor;
+import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.math.ImageStatistics;
 import net.imglib2.img.Img;
+import net.imglib2.roi.Regions;
 import net.imglib2.roi.labeling.ImgLabeling;
 import net.imglib2.roi.labeling.LabelRegion;
 import net.imglib2.roi.labeling.LabelRegions;
@@ -79,7 +83,7 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 
 	public DefaultPearsonsCorrelationCoefficient<FloatType> opR = null;
 	public DefaultSpearmansRankCorrelationCoefficient<FloatType> opRho = null;
-	boolean doPearsons = false, doSpearmans = false;
+	public DefaultRadialLocalization<FloatType> opRadial = null;
 
 	public int total = 0, count = 0;
 	public int percentage = 0;
@@ -87,6 +91,7 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 	public TreeMap<DimensionMap, String> imageMap = new TreeMap<DimensionMap, String>();
 	public TreeMap<DimensionMap, String> maskMap = new TreeMap<DimensionMap, String>();
 	public TreeMap<DimensionMap, ROIPlus> roiMap = new TreeMap<DimensionMap, ROIPlus>();
+	public TreeMap<DimensionMap,Double> maskInfo = null;
 	TreeMap<Integer, Integer> idToLabelMap = new TreeMap<Integer, Integer>();
 
 	FeatureUtils utils = new FeatureUtils();
@@ -129,8 +134,14 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 	@ParameterMarker(uiOrder = 6, name = "Image Channels to Exclude (optional)", description = "Which channels of the images to be measured should be excluded (this can dramatically reduce the number of combinations to be quantified).", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
 	String excludeString;
 	
-	@ParameterMarker(uiOrder = 7, name = "Person's or Spearman's (or both)", description = "Which colocalization metric should be used?", ui = MarkerConstants.UI_DROPDOWN, choices = {"Pearson's", "Spearman's", "Both" }, defaultChoice = 0)
-	String calculation;
+	@ParameterMarker(uiOrder = 7, name = "Calc. Pearson's Corr. Coef.?", description = "Should the Pearsons's Correlation Coefficient be calculated?", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
+	boolean doPearsons;
+	
+	@ParameterMarker(uiOrder = 8, name = "Calc. Spearman's Corr. Coef.?", description = "Should the Spearman's Correlation Coefficient be calculated?", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	boolean doSpearmans;
+	
+	@ParameterMarker(uiOrder = 9, name = "Calc. Radial Localization?", description = "Should the Radial Localization metric be calculated?", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
+	boolean doRadial;
 
 	/////////// Define Outputs here ///////////
 
@@ -205,6 +216,9 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 			DimTable imageSubsetTable = imageDimTable.getSubTable(this.mapMask_NoChannel);
 
 			// Loop over the image channel combinations to measure
+			// and if doRadial, then store info about the masks as well
+			// Use the TreeMap to accumulate mask info and eliminate duplicate info
+			maskInfo = new TreeMap<>();
 			for(Pair<String,String> channelCombo : channelCombos)
 			{
 				// Set the images to measure
@@ -220,7 +234,11 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 					this.updateStatus();
 				}
 			}
-
+			// Then write the unique mask info to the file.
+			for(Entry<DimensionMap,Double> e : maskInfo.entrySet())
+			{
+				this.write(e.getKey(), e.getValue());
+			}
 		}
 		this.close();
 		return true;
@@ -351,14 +369,14 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 			return true;
 		}
 
-		if(!this.putColocalizatoinValues())
+		if(!this.putColocalizationValues())
 			return false;
 
 		return true;
 
 	}
 
-	public boolean putColocalizatoinValues()
+	public boolean putColocalizationValues()
 	{
 		DimensionMap mapM_Intensity = this.mapMask_NoChannel.copyAndSet("MaskChannel=" + mapMask.get(channelName));
 		String image1ChannelValue = this.mapImage1.get(channelName);
@@ -403,14 +421,16 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 	}
 
 	@SuppressWarnings("unchecked")
-	public void putPearson(DimensionMap mapM, RandomAccessibleInterval<FloatType> subImage1, RandomAccessibleInterval<FloatType> subImage2, Cursor<Void> maskCursor)
+	public void putPearson(DimensionMap mapM, Img<FloatType> subImage1, Img<FloatType> subImage2, Cursor<Void> maskCursor)
 	{
 		if (doPearsons && opR == null) {
 			opR = IJ2PluginUtility.ij().op().op(DefaultPearsonsCorrelationCoefficient.class, new Pair<RandomAccessibleInterval<FloatType>, RandomAccessibleInterval<FloatType>>(), maskCursor);
-			
 		}
 		if (doSpearmans && opRho == null) {
 			opRho = IJ2PluginUtility.ij().op().op(DefaultSpearmansRankCorrelationCoefficient.class, new Pair<RandomAccessibleInterval<FloatType>, RandomAccessibleInterval<FloatType>>(), maskCursor);
+		}
+		if (doRadial && opRadial == null) {
+			opRadial = IJ2PluginUtility.ij().op().op(DefaultRadialLocalization.class, (IterableInterval<FloatType>) subImage1, (IterableInterval<FloatType>) subImage2);
 		}
 
 		DimensionMap newMap;
@@ -440,8 +460,15 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 		{
 			// We already used the cursor once so we have to reset it.
 			maskCursor.reset();
-			
-			DoubleType result_Rho = opRho.calculate(new Pair<RandomAccessibleInterval<FloatType>, RandomAccessibleInterval<FloatType>>(subImage1, subImage2), maskCursor);
+			DoubleType result_Rho = null;
+			try
+			{
+				result_Rho = opRho.calculate(new Pair<RandomAccessibleInterval<FloatType>, RandomAccessibleInterval<FloatType>>(subImage1, subImage2), maskCursor);
+			}
+			catch(Exception e)
+			{
+				JEXDialog.messageDialog("Found an errant Spearman's calculation case.", this);
+			}
 			measurement = "Measurement=net.imagej.ops.Ops$Stats$SpearmansRankCorrelationCoefficient";
 			if(transform)
 			{
@@ -458,6 +485,26 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 			{
 				this.write(newMap, result_Rho.get());
 			}
+		}
+		if(doRadial)
+		{
+			// We don't need a cursor, so we don't have to reset it.
+			
+			IterableInterval<FloatType> ii1 = Regions.sample(this.combinedSubCellRegion, this.image1);
+			IterableInterval<FloatType> ii2 = Regions.sample(this.combinedSubCellRegion, this.image2);
+			
+			DoubleType result_Radial = opRadial.calculate(ii1, ii2);
+			Double result_AreaRadius = Math.sqrt(((double) this.combinedSubCellRegion.size())/Math.PI) - 0.5; // Subtract 0.5 to go to the center of the pixel instead of the edge
+			measurement = "Measurement=function.ops.JEXOps$RadialLocalization";
+			newMap = mapM.copyAndSet(measurement);
+			newMap.put("Id", "" + this.pId);
+			newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
+			this.write(newMap, result_Radial.get());
+			measurement = "Measurement=function.ops.JEXOps$MaskRadius";
+			newMap = mapM.copyAndSet(measurement);
+			newMap.put("Id", "" + this.pId);
+			newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
+			this.maskInfo.put(newMap, result_AreaRadius);			
 		}
 
 		//		for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
@@ -511,9 +558,6 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 
 	public boolean initializeVariables()
 	{
-		this.doPearsons = !this.calculation.equals("Spearman's");
-		this.doSpearmans = !this.calculation.equals("Pearson's");
-		
 		imageMap = new TreeMap<>();
 		if (imageData != null) {
 			imageMap = ImageReader.readObjectToImagePathTable(imageData);
