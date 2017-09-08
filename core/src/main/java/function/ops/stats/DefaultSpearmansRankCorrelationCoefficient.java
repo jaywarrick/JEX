@@ -29,7 +29,15 @@ implements JEXOps.SpearmansRankCorrelationCoefficient {
 				input1.getA().randomAccess(),
 				input1.getB().randomAccess(),
 				c);
-		double r = SpearmanRankCorrelation.calculateSpearmanRank(cursor);
+		double r = DefaultSpearmansRankCorrelationCoefficient.calculateSpearmanRank(cursor);
 		return new DoubleType(r);
+	}
+	
+	// The Static method of the help class is not thread-safe so it causes errors when running multiple threads.
+	// This will funnel calls to the helper class through a synchronized method call.
+	private static synchronized <I1 extends RealType<I1>> double calculateSpearmanRank(TwinCursor<I1> c)
+	{
+		double r = SpearmanRankCorrelation.calculateSpearmanRank(c);
+		return r;
 	}
 }
