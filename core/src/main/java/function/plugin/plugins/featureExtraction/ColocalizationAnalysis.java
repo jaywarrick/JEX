@@ -502,6 +502,7 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 			this.write(newMap, result_Radial.get());
 			measurement = "Measurement=function.ops.JEXOps$MaskRadius";
 			newMap = mapM.copyAndSet(measurement);
+			newMap.put("ImageChannel", "None");
 			newMap.put("Id", "" + this.pId);
 			newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
 			this.maskInfo.put(newMap, result_AreaRadius);			
