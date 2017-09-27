@@ -24,6 +24,7 @@ import miscellaneous.CSVList;
 import miscellaneous.DirectoryManager;
 import miscellaneous.FileUtility;
 import miscellaneous.LSVList;
+import miscellaneous.StringUtility;
 import tables.DimensionMap;
 import tables.Table;
 
@@ -452,6 +453,17 @@ public class R {
 	public static String sQuote(String s)
 	{
 		return "'" + s + "'";
+	}
+	
+	public static CSVList sQuoteCSVList(String csvString)
+	{
+		CSVList csvl = StringUtility.getCSVListAndRemoveWhiteSpaceOnEnds(csvString);
+		CSVList ret = new CSVList();
+		for(String s : csvl)
+		{
+			ret.add(R.sQuote(s));
+		}
+		return(ret);
 	}
 	
 	/**
