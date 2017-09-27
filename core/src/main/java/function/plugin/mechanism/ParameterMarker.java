@@ -49,7 +49,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface ParameterMarker {
 	
-	/** Defines the order of the parameter in the UI. */
+	/** Defines the order of the parameter in the UI. JEX uses this in such a way that it converts to text so negative values create odd behavior when sorted. Thus, positive values are recommended.*/
 	int uiOrder() default 0;
 
 	/** Defines a label for the parameter. */

@@ -1,11 +1,9 @@
 package function.plugin.plugins.imageTools;
 
 import java.io.File;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.TreeMap;
 
 import org.scijava.plugin.Plugin;
@@ -13,9 +11,7 @@ import org.scijava.plugin.Plugin;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;
-import Database.DataWriter.FileWriter;
 import Database.DataWriter.ImageWriter;
-import Database.SingleUserDatabase.JEXWriter;
 import cruncher.Ticket;
 import function.plugin.mechanism.InputMarker;
 import function.plugin.mechanism.JEXPlugin;
@@ -26,11 +22,9 @@ import image.roi.PointList;
 import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import miscellaneous.StatisticsUtility;
-import rtools.R;
 import tables.Dim;
 import tables.DimTable;
 import tables.DimensionMap;
-import weka.core.converters.JEXTableWriter;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions
@@ -60,43 +54,43 @@ public class MakeEntryMontage extends JEXPlugin {
 	/////////// Define Parameters ///////////
 
 
-	//	@ParameterMarker(uiOrder=-1, name="Location Dim Name", description="Name of the row dimension in the imageset.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Location")
+	//	@ParameterMarker(uiOrder=1, name="Location Dim Name", description="Name of the row dimension in the imageset.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Location")
 	//	String locDimName;
 	//
-	//	@ParameterMarker(uiOrder=0, name="Number of Columns", description="Number of columns that make up the stitched image. (Can also specify a label name)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="2")
+	//	@ParameterMarker(uiOrder=2, name="Number of Columns", description="Number of columns that make up the stitched image. (Can also specify a label name)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="2")
 	//	String colsString;
 
-	//	@ParameterMarker(uiOrder=1, name="Starting Point", description="In what corner is the first image of each image group to be stitched.", ui=MarkerConstants.UI_DROPDOWN, choices={"UL", "UR", "LL", "LR"}, defaultChoice=0)
+	//	@ParameterMarker(uiOrder=3, name="Starting Point", description="In what corner is the first image of each image group to be stitched.", ui=MarkerConstants.UI_DROPDOWN, choices={"UL", "UR", "LL", "LR"}, defaultChoice=0)
 	//	String startPt = "UL";
 
-	//	@ParameterMarker(uiOrder=2, name="Horizontal First Movement?", description="From the start point, which direction is the next image, (checked = horizontal, unchecked = vertical)", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
+	//	@ParameterMarker(uiOrder=4, name="Horizontal First Movement?", description="From the start point, which direction is the next image, (checked = horizontal, unchecked = vertical)", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
 	//	boolean horizontal = true;
 
-	//	@ParameterMarker(uiOrder=3, name="Snaking Path?", description="From the start point, which direction is the next image", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	//	@ParameterMarker(uiOrder=5, name="Snaking Path?", description="From the start point, which direction is the next image", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
 	//	boolean snaking = false;
 
-	@ParameterMarker(uiOrder=5, name="Grid Width", description="Horizontal grid spacing (before scaling) on which to place the upper left corner of each image.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="100")
+	@ParameterMarker(uiOrder=6, name="Grid Width", description="Horizontal grid spacing (before scaling) on which to place the upper left corner of each image.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="100")
 	int gridWidth;
 
-	@ParameterMarker(uiOrder=6, name="Grid Height", description="Vertical grid spacing (before scaling) on which to place the upper left corner of each image.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="100")
+	@ParameterMarker(uiOrder=7, name="Grid Height", description="Vertical grid spacing (before scaling) on which to place the upper left corner of each image.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="100")
 	int gridHeight;
 
-	//	@ParameterMarker(uiOrder=7, name="Number of Pages", description="Number of pages to separate the result into.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
+	//	@ParameterMarker(uiOrder=8, name="Number of Pages", description="Number of pages to separate the result into.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
 	//	int pages;
 
-	@ParameterMarker(uiOrder=8, name="Size Scale", description="How much to multiply the image size (0.5 reduces image to half its original size)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1.0")
+	@ParameterMarker(uiOrder=9, name="Size Scale", description="How much to multiply the image size (0.5 reduces image to half its original size)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1.0")
 	double scale;
 
-	@ParameterMarker(uiOrder=9, name="Intensity Multiplier", description="How much to multiply the image intensity (0.5 reduces image to half its original size)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1.0")
+	@ParameterMarker(uiOrder=10, name="Intensity Multiplier", description="How much to multiply the image intensity (0.5 reduces image to half its original size)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1.0")
 	double multiplier;
 
-	@ParameterMarker(uiOrder=10, name="Output Bit Depth", description="Depth of the outputted image", ui=MarkerConstants.UI_DROPDOWN, choices={ "8", "16", "32" }, defaultChoice=1)
+	@ParameterMarker(uiOrder=11, name="Output Bit Depth", description="Depth of the outputted image", ui=MarkerConstants.UI_DROPDOWN, choices={ "8", "16", "32" }, defaultChoice=1)
 	int bitDepth;
 
-	@ParameterMarker(uiOrder=11, name="Stitched Image BG Intensity", description="Intensity to set for the background of the stitched image.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0")
+	@ParameterMarker(uiOrder=12, name="Stitched Image BG Intensity", description="Intensity to set for the background of the stitched image.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0")
 	double background;
 
-	@ParameterMarker(uiOrder=12, name="Normalize Intensities Fit Bit Depth", description="Scale intensities to go from 0 to max value determined by new bit depth (\'true\' overrides intensity multiplier).", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	@ParameterMarker(uiOrder=13, name="Normalize Intensities Fit Bit Depth", description="Scale intensities to go from 0 to max value determined by new bit depth (\'true\' overrides intensity multiplier).", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
 	boolean normalize;
 
 

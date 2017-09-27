@@ -72,31 +72,31 @@ public class ImageStitcher extends JEXPlugin {
 	/////////// Define Parameters ///////////
 	
 
-	@ParameterMarker(uiOrder=-1, name="Image Row Dim Name", description="Name of the row dimension in the imageset.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="ImRow")
+	@ParameterMarker(uiOrder=1, name="Image Row Dim Name", description="Name of the row dimension in the imageset.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="ImRow")
 	String rowDimName;
 	
-	@ParameterMarker(uiOrder=0, name="Image Col Dim Name", description="Name of the column dimension in the imageset", ui=MarkerConstants.UI_TEXTFIELD, defaultText="ImCol")
+	@ParameterMarker(uiOrder=2, name="Image Col Dim Name", description="Name of the column dimension in the imageset", ui=MarkerConstants.UI_TEXTFIELD, defaultText="ImCol")
 	String colDimName;
 	
-	@ParameterMarker(uiOrder=1, name="Starting Point", description="In what corner is the first image of each image group to be stitched.", ui=MarkerConstants.UI_DROPDOWN, choices={"UL", "UR", "LL", "LR"}, defaultChoice=0)
+	@ParameterMarker(uiOrder=3, name="Starting Point", description="In what corner is the first image of each image group to be stitched.", ui=MarkerConstants.UI_DROPDOWN, choices={"UL", "UR", "LL", "LR"}, defaultChoice=0)
 	String startPt;
 	
-	@ParameterMarker(uiOrder=2, name="Horizontal First Movement?", description="From the start point, which direction is the next image, (checked = horizontal, unchecked = vertical)", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
+	@ParameterMarker(uiOrder=4, name="Horizontal First Movement?", description="From the start point, which direction is the next image, (checked = horizontal, unchecked = vertical)", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
 	boolean horizontal;
 	
-	@ParameterMarker(uiOrder=3, name="Snaking Path?", description="From the start point, which direction is the next image", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	@ParameterMarker(uiOrder=5, name="Snaking Path?", description="From the start point, which direction is the next image", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
 	boolean snaking;
 	
-	@ParameterMarker(uiOrder=4, name="Size Scale", description="How much to multiply the image size (0.5 reduces image to half its original size)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1.0")
+	@ParameterMarker(uiOrder=6, name="Size Scale", description="How much to multiply the image size (0.5 reduces image to half its original size)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1.0")
 	double scale;
 	
-	@ParameterMarker(uiOrder=5, name="Intensity Multiplier", description="How much to multiply the image size (0.5 reduces image to half its original size)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1.0")
+	@ParameterMarker(uiOrder=7, name="Intensity Multiplier", description="How much to multiply the image size (0.5 reduces image to half its original size)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1.0")
 	double multiplier;
 	
-	@ParameterMarker(uiOrder=6, name="Output Bit Depth", description="Depth of the outputted image", ui=MarkerConstants.UI_DROPDOWN, choices={ "8", "16", "32" }, defaultChoice=1)
+	@ParameterMarker(uiOrder=8, name="Output Bit Depth", description="Depth of the outputted image", ui=MarkerConstants.UI_DROPDOWN, choices={ "8", "16", "32" }, defaultChoice=1)
 	int bitDepth;
 	
-	@ParameterMarker(uiOrder=7, name="Normalize Intensities Fit Bit Depth", description="Scale intensities to go from 0 to max value determined by new bit depth (\'true\' overrides intensity multiplier).", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	@ParameterMarker(uiOrder=9, name="Normalize Intensities Fit Bit Depth", description="Scale intensities to go from 0 to max value determined by new bit depth (\'true\' overrides intensity multiplier).", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
 	boolean normalize;
 	
 	
