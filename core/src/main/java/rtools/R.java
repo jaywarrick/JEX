@@ -24,23 +24,24 @@ import miscellaneous.CSVList;
 import miscellaneous.DirectoryManager;
 import miscellaneous.FileUtility;
 import miscellaneous.LSVList;
+import miscellaneous.SSVList;
 import miscellaneous.StringUtility;
 import tables.DimensionMap;
 import tables.Table;
 
 public class R {
-	
+
 	public static final String FONT_AVANTGARDE = "AvantGarde", FONT_BOOKMAN = "Bookman", FONT_COURIER = "Courier", FONT_HELVETICA = "Helvetica", FONT_HELVETICA_NARROW = "Helvetica-Narrow", FONT_NEWCENTURYSCHOOLBOOK = "NewCenturySchoolbook", FONT_PALATINO = "Palatino", FONT_TIMES = "Times";
 	private static final String[] fonts = new String[] { FONT_AVANTGARDE, FONT_BOOKMAN, FONT_COURIER, FONT_HELVETICA, FONT_HELVETICA_NARROW, FONT_NEWCENTURYSCHOOLBOOK, FONT_PALATINO, FONT_TIMES };
-	
+
 	public static final String COMPRESSION_NONE="none", COMPRESSION_RLE="rle", COMPRESSION_LZW="lzw", COMPRESSION_JPEG="jpeg", COMPRESSION_ZIP="zip";
 	public static final String[] compressions = new String[]{COMPRESSION_NONE, COMPRESSION_RLE, COMPRESSION_LZW, COMPRESSION_JPEG, COMPRESSION_ZIP};
-	
+
 	// R Statistical Analysis Software Package Server Connection
 	public static RConnection rConnection = null;
 	public static int numRetries = 0;
 	public static int numRetriesLimit = 2;
-	
+
 	private static RConnection connectNew()
 	{
 		RConnection ret = null;
@@ -49,7 +50,7 @@ public class R {
 			ret = new RConnection(); // Throws an exception if it
 			// doesn't connect
 			return ret;
-			
+
 		}
 		catch (Exception e)
 		{
@@ -77,7 +78,7 @@ public class R {
 			}
 		}
 	}
-	
+
 	private static boolean connect()
 	{
 		rConnection = R.connectNew(); // Throws an exception if it
@@ -87,7 +88,7 @@ public class R {
 		}
 		return true;
 	}
-	
+
 	private static boolean isConnected(RConnection c)
 	{
 		if(c != null && c.isConnected())
@@ -107,12 +108,12 @@ public class R {
 		}
 		return false;
 	}
-	
+
 	public static boolean isConnected()
 	{
 		return isConnected(R.rConnection);
 	}
-	
+
 	public static void close()
 	{
 		if(R.isConnected())
@@ -130,27 +131,27 @@ public class R {
 			}
 		}
 	}
-	
+
 	public static REXP eval(String command)
 	{
 		return evaluate(command, false, false);
 	}
-	
+
 	public static REXP evalLineByLine(String command)
 	{
 		return evaluate(command, false, true);
 	}
-	
+
 	public static REXP evalToConsole(String command)
 	{
 		return evaluate(command, true, false);
 	}
-	
+
 	public static REXP evalToConsoleLineByLine(String command)
 	{
 		return evaluate(command, true, true);
 	}
-	
+
 	/**
 	 * @param command
 	 * @param toConsole
@@ -159,15 +160,15 @@ public class R {
 	 */
 	private static REXP evaluate(String command, boolean toConsole, boolean lineByLine)
 	{
-//		if(!safe && command.endsWith(";"))
-//		{
-//			command = command.substring(0, command.length() - 1);
-//		}
-//		if(!safe && command.contains(";"))
-//		{
-//			// Then it is dangerous to use the the other evaluation options.
-//			safe = true;
-//		}
+		//		if(!safe && command.endsWith(";"))
+		//		{
+		//			command = command.substring(0, command.length() - 1);
+		//		}
+		//		if(!safe && command.contains(";"))
+		//		{
+		//			// Then it is dangerous to use the the other evaluation options.
+		//			safe = true;
+		//		}
 
 		Logs.log("Attemping command: " + command, 0, "R");
 		if(!R.isConnected()) // If not connected start the server and connect
@@ -189,17 +190,17 @@ public class R {
 					for(String s : commands)
 					{
 						Logs.log(s, R.class);
-//						ret = rConnection.eval(s);
+						//						ret = rConnection.eval(s);
 						rConnection.assign(".tmp.", s);
 						ret = rConnection.eval("paste(capture.output(print(try(eval(parse(text=.tmp.)),silent=TRUE))),collapse='\\n')");
 						if(ret.inherits("try-error"))
-					    {
-					    	Logs.log("Error: "+ret.toDebugString(), Logs.ERROR, R.class);
-					    }
-					    else
-					    {
-					    	Logs.log(ret.asString(), R.class);
-					    }
+						{
+							Logs.log("Error: "+ret.toDebugString(), Logs.ERROR, R.class);
+						}
+						else
+						{
+							Logs.log(ret.asString(), R.class);
+						}
 					}
 				}
 				else
@@ -207,15 +208,15 @@ public class R {
 					rConnection.assign(".tmp.", command);
 					ret = rConnection.eval("paste(capture.output(print(try(eval(parse(text=.tmp.)),silent=TRUE))),collapse='\\n')");
 					if(ret.inherits("try-error"))
-				    {
-				    	Logs.log("Error: "+ret.toDebugString(), Logs.ERROR, R.class);
-				    }
-				    else
-				    {
-				    	Logs.log(ret.asString(), R.class);
-				    }
+					{
+						Logs.log("Error: "+ret.toDebugString(), Logs.ERROR, R.class);
+					}
+					else
+					{
+						Logs.log(ret.asString(), R.class);
+					}
 				}
-				
+
 			}
 			else
 			{
@@ -225,33 +226,33 @@ public class R {
 					{
 						Logs.log(s, R.class);
 						rConnection.assign(".tmp.", s);
-					    ret = rConnection.eval("try(eval(parse(text=.tmp.)),silent=TRUE)");
-					    if(ret.inherits("try-error"))
-					    {
-					    	Logs.log("Printing Error", Logs.ERROR, R.class);
-					    	System.err.println("Error: "+ret.toDebugString());
-					    }
-					    else
-					    {
-					    	// Do nothing, keep the console clean
-					    }
+						ret = rConnection.eval("try(eval(parse(text=.tmp.)),silent=TRUE)");
+						if(ret.inherits("try-error"))
+						{
+							Logs.log("Printing Error", Logs.ERROR, R.class);
+							System.err.println("Error: "+ret.toDebugString());
+						}
+						else
+						{
+							// Do nothing, keep the console clean
+						}
 					}
 				}
 				else
 				{
 					rConnection.assign(".tmp.", command);
-				    ret = rConnection.eval("try(eval(parse(text=.tmp.)),silent=TRUE)");
-				    if(ret.inherits("try-error"))
-				    {
-				    	Logs.log("Printing Error", Logs.ERROR, R.class);
-				    	System.err.println("Error: "+ret.toDebugString());
-				    }
-				    else
-				    {
-				    	// Do nothing, keep the console clean
-				    }
+					ret = rConnection.eval("try(eval(parse(text=.tmp.)),silent=TRUE)");
+					if(ret.inherits("try-error"))
+					{
+						Logs.log("Printing Error", Logs.ERROR, R.class);
+						System.err.println("Error: "+ret.toDebugString());
+					}
+					else
+					{
+						// Do nothing, keep the console clean
+					}
 				}
-				
+
 			}
 		}
 		catch (RserveException e)
@@ -265,12 +266,12 @@ public class R {
 		}
 		return ret;
 	}
-	
+
 	public static REXP setwd(String path)
 	{
 		return R.eval("setwd(" + R.quotedPath(path) + ")");
 	}
-	
+
 	/**
 	 * Use this to source a .R file
 	 * 
@@ -281,7 +282,7 @@ public class R {
 	{
 		return R.eval("source(" + R.quotedPath(path) + ")");
 	}
-	
+
 	public static void serverSource(String path)
 	{
 		try
@@ -293,7 +294,7 @@ public class R {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public static void serverEval(String commands)
 	{
 		try
@@ -305,7 +306,7 @@ public class R {
 			e.printStackTrace();
 		}
 	}
-	
+
 	/**
 	 * Use this to load a library
 	 * 
@@ -316,7 +317,7 @@ public class R {
 	{
 		return R.eval("library(" + R.sQuote(library) + ")");
 	}
-	
+
 	/**
 	 * Returns the full path where this is being plotted
 	 * 
@@ -350,7 +351,7 @@ public class R {
 		}
 		return null;
 	}
-	
+
 	/**
 	 * Returns the full path where this is being plotted
 	 * 
@@ -410,7 +411,7 @@ public class R {
 					args.add("family=" + R.sQuote(FONT_HELVETICA));
 				}
 			}
-			
+
 		}
 		if(extension.equals("tif") && optionalTifCompression != null)
 		{
@@ -424,7 +425,7 @@ public class R {
 		}
 		return true;
 	}
-	
+
 	/**
 	 * Calls 'graphics.off()'
 	 */
@@ -432,7 +433,7 @@ public class R {
 	{
 		return R.eval("graphics.off()");
 	}
-	
+
 	/**
 	 * Put parentheses around the String
 	 * 
@@ -443,7 +444,7 @@ public class R {
 	{
 		return "(" + s + ")";
 	}
-	
+
 	/**
 	 * Put single quotes around a string
 	 * 
@@ -454,7 +455,7 @@ public class R {
 	{
 		return "'" + s + "'";
 	}
-	
+
 	public static CSVList sQuoteCSVList(String csvString)
 	{
 		CSVList csvl = StringUtility.getCSVListAndRemoveWhiteSpaceOnEnds(csvString);
@@ -465,7 +466,7 @@ public class R {
 		}
 		return(ret);
 	}
-	
+
 	/**
 	 * Put single quotes around a string
 	 * 
@@ -476,7 +477,7 @@ public class R {
 	{
 		return Pattern.quote(path);
 	}
-	
+
 	/**
 	 * 
 	 * 
@@ -487,7 +488,7 @@ public class R {
 	{
 		return "'" + path.replaceAll(Pattern.quote(File.separator), "/") + "'";
 	}
-	
+
 	/**
 	 * Put double quotes around a string
 	 * 
@@ -498,7 +499,7 @@ public class R {
 	{
 		return "\"" + s + "\"";
 	}
-	
+
 	private static boolean isPostScriptFont(String font)
 	{
 		for (String fontName : fonts)
@@ -510,7 +511,7 @@ public class R {
 		}
 		return false;
 	}
-	
+
 	public REXP get(String name)
 	{
 		REXP ret = null;
@@ -524,7 +525,7 @@ public class R {
 		}
 		return ret;
 	}
-	
+
 	public static <E> boolean makeVector(String vectorName, DimensionMap filter, Table<E> data)
 	{
 		if(data == null || data.data.size() == 0)
@@ -565,7 +566,7 @@ public class R {
 			return false;
 		}
 	}
-	
+
 	public static <E> boolean makeVector(String vectorName, Collection<E> data)
 	{
 		if(data == null || data.size() == 0)
@@ -594,7 +595,7 @@ public class R {
 			return false;
 		}
 	}
-	
+
 	public static boolean makeVector(String vectorName, double[] numbers)
 	{
 		try
@@ -608,7 +609,7 @@ public class R {
 			return false;
 		}
 	}
-	
+
 	public static boolean makeVector(String vectorName, int[] numbers)
 	{
 		try
@@ -622,7 +623,7 @@ public class R {
 			return false;
 		}
 	}
-	
+
 	public static boolean makeVector(String vectorName, String[] strings)
 	{
 		try
@@ -636,7 +637,7 @@ public class R {
 			return false;
 		}
 	}
-	
+
 	/**
 	 * Start Rsession, clear workspace variables, call library(foreign) for reading .arff files, create "jexTempRFolder" and "jexDBFolder"
 	 */
@@ -677,7 +678,7 @@ public class R {
 		R.eval(name + "$name <- " + R.sQuote(data.getTypeName().getName()));
 		R.eval(name + "$value <- read.arff(" + R.quotedPath(path) + ")");
 	}
-	
+
 	public static JEXData getCharacterVectorAsJEXDataFileObject(String expression, boolean createImageObject)
 	{
 		TreeMap<DimensionMap,String> files = new TreeMap<DimensionMap,String>();
@@ -712,7 +713,7 @@ public class R {
 		}
 		return null;
 	}
-	
+
 	public static JEXData getCharacterVariableAsJEXDataFileObject(String expression, boolean createImageObject)
 	{
 		REXP fileObject = R.eval(expression);
@@ -740,8 +741,8 @@ public class R {
 		}
 		return null;
 	}
-	
-	public static String getCharacterVariableValueAsString(String expression)
+
+	public static String getExpressionResultAsString(String expression)
 	{
 		REXP fileObject = R.eval(expression);
 		String fileString = null;
@@ -758,10 +759,196 @@ public class R {
 		}
 		return null;
 	}
-	
+
+	public static Boolean getExpressionResultAsBoolean(String expression)
+	{
+		String s = getExpressionResultAsString(expression);
+		return Boolean.parseBoolean(s);
+	}
+
+	public static Double getExpressionResultAsDouble(String expression)
+	{
+		String s = getExpressionResultAsString(expression);
+		return Double.parseDouble(s);
+	}
+
+	public static Integer getExpressionResultAsInteger(String expression)
+	{
+		String s = getExpressionResultAsString(expression);
+		return Integer.parseInt(s);
+	}
+
+	public static TreeMap<DimensionMap,String> getExpressionResultAsStringTable(String expression, String valueCol)
+	{
+		// Get the expression as a SSVList of CSVLists (semicolons for rows and commas for columns) with first as header
+		R.eval("getTableAsSVString <- function(x){paste(x[, do.call(paste, c(.SD, sep = ',')), .SDcols = names(duh)], collapse=';')}");
+		String s = getExpressionResultAsString("getTableAsSVString(" + expression + ")");
+		SSVList ssv = new SSVList(s);
+
+		// Grab/remove the header
+		CSVList header = new CSVList(ssv.remove(0));
+
+		// Get the index of the value column
+		int valCol = header.indexOf(valueCol);
+		if(valCol < 0)
+		{
+			JEXDialog.messageDialog("Couldn't find the column '" + valueCol + "' in the table. returning null", R.class);
+			return null;
+		}
+
+		// Gather the table of information
+		TreeMap<DimensionMap,String> ret = new TreeMap<>();
+		for(String row : ssv)
+		{
+			CSVList csv = new CSVList(row);
+			String val = null;
+			DimensionMap map = new DimensionMap();
+			for(int i = 0; i < csv.size(); i++)
+			{
+				if(i == valCol)
+				{
+					val = csv.get(i);
+				}
+				else
+				{
+					map.put(header.get(i), csv.get(i));
+				}
+			}
+			ret.put(map, val);
+		}
+
+		return ret;
+	}
+
+	public static TreeMap<DimensionMap,Double> getExpressionResultAsDoubleTable(String expression, String valueCol)
+	{
+		// Get the expression as a SSVList of CSVLists (semicolons for rows and commas for columns) with first as header
+		R.eval("getTableAsSVString <- function(x){paste(x[, do.call(paste, c(.SD, sep = ',')), .SDcols = names(duh)], collapse=';')}");
+		String s = getExpressionResultAsString("getTableAsSVString(" + expression + ")");
+		SSVList ssv = new SSVList(s);
+
+		// Grab/remove the header
+		CSVList header = new CSVList(ssv.remove(0));
+
+		// Get the index of the value column
+		int valCol = header.indexOf(valueCol);
+		if(valCol < 0)
+		{
+			JEXDialog.messageDialog("Couldn't find the column '" + valueCol + "' in the table. returning null", R.class);
+			return null;
+		}
+
+		// Gather the table of information
+		TreeMap<DimensionMap,Double> ret = new TreeMap<>();
+		for(String row : ssv)
+		{
+			CSVList csv = new CSVList(row);
+			Double val = null;
+			DimensionMap map = new DimensionMap();
+			for(int i = 0; i < csv.size(); i++)
+			{
+				if(i == valCol)
+				{
+					val = Double.parseDouble(csv.get(i));
+				}
+				else
+				{
+					map.put(header.get(i), csv.get(i));
+				}
+			}
+			ret.put(map, val);
+		}
+
+		return ret;
+	}
+
+	public static TreeMap<DimensionMap,Boolean> getExpressionResultAsBooleanTable(String expression, String valueCol)
+	{
+		// Get the expression as a SSVList of CSVLists (semicolons for rows and commas for columns) with first as header
+		R.eval("getTableAsSVString <- function(x){paste(x[, do.call(paste, c(.SD, sep = ',')), .SDcols = names(duh)], collapse=';')}");
+		String s = getExpressionResultAsString("getTableAsSVString(" + expression + ")");
+		SSVList ssv = new SSVList(s);
+
+		// Grab/remove the header
+		CSVList header = new CSVList(ssv.remove(0));
+
+		// Get the index of the value column
+		int valCol = header.indexOf(valueCol);
+		if(valCol < 0)
+		{
+			JEXDialog.messageDialog("Couldn't find the column '" + valueCol + "' in the table. returning null", R.class);
+			return null;
+		}
+
+		// Gather the table of information
+		TreeMap<DimensionMap,Boolean> ret = new TreeMap<>();
+		for(String row : ssv)
+		{
+			CSVList csv = new CSVList(row);
+			Boolean val = null;
+			DimensionMap map = new DimensionMap();
+			for(int i = 0; i < csv.size(); i++)
+			{
+				if(i == valCol)
+				{
+					val = Boolean.parseBoolean(csv.get(i));
+				}
+				else
+				{
+					map.put(header.get(i), csv.get(i));
+				}
+			}
+			ret.put(map, val);
+		}
+
+		return ret;
+	}
+
+	public static TreeMap<DimensionMap,Integer> getExpressionResultAsIntegerTable(String expression, String valueCol)
+	{
+		// Get the expression as a SSVList of CSVLists (semicolons for rows and commas for columns) with first as header
+		R.eval("getTableAsSVString <- function(x){paste(x[, do.call(paste, c(.SD, sep = ',')), .SDcols = names(duh)], collapse=';')}");
+		String s = getExpressionResultAsString("getTableAsSVString(" + expression + ")");
+		SSVList ssv = new SSVList(s);
+
+		// Grab/remove the header
+		CSVList header = new CSVList(ssv.remove(0));
+
+		// Get the index of the value column
+		int valCol = header.indexOf(valueCol);
+		if(valCol < 0)
+		{
+			JEXDialog.messageDialog("Couldn't find the column '" + valueCol + "' in the table. returning null", R.class);
+			return null;
+		}
+
+		// Gather the table of information
+		TreeMap<DimensionMap,Integer> ret = new TreeMap<>();
+		for(String row : ssv)
+		{
+			CSVList csv = new CSVList(row);
+			Integer val = null;
+			DimensionMap map = new DimensionMap();
+			for(int i = 0; i < csv.size(); i++)
+			{
+				if(i == valCol)
+				{
+					val = Integer.parseInt(csv.get(i));
+				}
+				else
+				{
+					map.put(header.get(i), csv.get(i));
+				}
+			}
+			ret.put(map, val);
+		}
+
+		return ret;
+	}
+
 	public static boolean reorganize(String dataName, String idCols, String measurementCols, String valueCols, String dcastArgs)
 	{
-		
+
 		if(measurementCols == null || measurementCols.equals(""))
 		{
 			JEXDialog.messageDialog("This function requires at least one 'Measurement' column name. (see ?dcast of data.table in R, formula = Id ~ Measurment and value.var= Value). Aborting.");
@@ -780,10 +967,10 @@ public class R {
 		{
 			idCols = R.sQuote(idCols);
 		}
-		
+
 		ScriptRepository.sourceGitHubFile("jaywarrick", "R-General", "master", ".Rprofile");
 		R.load("data.table");
-		
+
 		if(dcastArgs == null)
 		{
 			R.eval(dataName + " <- reorganize(data=" + dataName + ", idCols=" + idCols + ", measurementCols=" + R.sQuote(measurementCols) + ", valueCols=" + R.sQuote(valueCols) + ")");
@@ -795,6 +982,23 @@ public class R {
 		return true;
 	}
 	
+	public static Boolean hasColumn(String tableVarName, String colName)
+	{
+		return getExpressionResultAsBoolean(colName + " %in% names(" + tableVarName + ")");
+	}
+	
+	public static Boolean hasColumns(String tableVarName, Collection<String> colNames)
+	{
+		for(String col : colNames)
+		{
+			if(!hasColumn(tableVarName, col))
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
 	//	private static void defineReorganize()
 	//	{
 	//		LSVList func = new LSVList();
