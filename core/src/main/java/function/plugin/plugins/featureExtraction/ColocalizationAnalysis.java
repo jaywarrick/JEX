@@ -460,15 +460,8 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 		{
 			// We already used the cursor once so we have to reset it.
 			maskCursor.reset();
-			DoubleType result_Rho = null;
-			try
-			{
-				result_Rho = opRho.calculate(new Pair<RandomAccessibleInterval<FloatType>, RandomAccessibleInterval<FloatType>>(subImage1, subImage2), maskCursor);
-			}
-			catch(Exception e)
-			{
-				JEXDialog.messageDialog("Found an errant Spearman's calculation case.", this);
-			}
+			DoubleType result_Rho = opRho.calculate(new Pair<RandomAccessibleInterval<FloatType>, RandomAccessibleInterval<FloatType>>(subImage1, subImage2), maskCursor);
+				
 			measurement = "Measurement=net.imagej.ops.Ops$Stats$SpearmansRankCorrelationCoefficient";
 			if(transform)
 			{
