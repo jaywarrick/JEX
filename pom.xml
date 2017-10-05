@@ -90,6 +90,9 @@
 		<imagej-ops.version>0.36.1-SNAPSHOT</imagej-ops.version>
 		<imglib2.version>4.1.0-SNAPSHOT</imglib2.version>
 		<imglib2-roi.version>0.4.6-SNAPSHOT</imglib2-roi.version>
+
+		<!-- NB: Deploy releases to the ImageJ Maven repository. -->
+		<releaseProfiles>deploy-to-imagej</releaseProfiles>
 	</properties>
 
 	<repositories>
