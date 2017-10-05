@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+import java.util.Vector;
 
 import org.apache.commons.math3.distribution.NormalDistribution;
 import org.apache.commons.math3.distribution.TDistribution;
@@ -20,8 +21,8 @@ import image.roi.PointList;
 import logs.Logs;
 import net.imglib2.Interval;
 import net.imglib2.IterableRealInterval;
+import net.imglib2.Localizable;
 import net.imglib2.Point;
-import net.imglib2.PointSampleList;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessible;
 import net.imglib2.type.numeric.RealType;
@@ -1124,6 +1125,35 @@ public class StatisticsUtility {
 		return median(v);
 	}
 	
+	
+	public static Vector<Point> generateRandomPointsInRectangularRegion(Interval interval, int numPoints)
+	{
+		// the number of dimensions
+        int numDimensions = interval.numDimensions();
+ 
+        // a random number generator
+        Random rnd = new Random( 1332441549191l );
+ 
+        // a list of Samples with coordinates
+        Vector<Point> elements = new Vector<>();
+
+        // Make a separate method that returns the list of random locations within the interval
+        // Then just offset the locations by the min of each dimension.
+        for ( int i = 0; i < numPoints; ++i )
+        {
+            Point point = new Point( numDimensions );
+ 
+            for ( int d = 0; d < numDimensions; ++d )
+                point.setPosition( Math.round(rnd.nextDouble() *
+                    ( interval.realMax( d ) - interval.realMin( d ) ) + interval.realMin( d )), d );
+ 
+            // add a new element with a random intensity in the range 0...1
+            elements.add( point );
+        }
+ 
+        return elements;
+	}
+	
 	/**
 	 * Source: http://imagej.net/ImgLib2_Examples#Example_8b_-_Randomly_sample_an_existing_image_and_display_it
 	 * 
@@ -1135,7 +1165,37 @@ public class StatisticsUtility {
      *
      * @return a RealPointSampleList (which is an IterableRealInterval)
      */
-    public static < T extends RealType< T > > PointSampleList< T > sampleRandomPoints(
+    public static < T extends RealType< T > > double[] samplePoints(
+        RandomAccessible< T > input, Vector<Point> points, Localizable offset )
+    {
+    	// a random accessible in the image data to grep the right value
+        RandomAccess< T > randomAccess = input.randomAccess();
+        
+    	// Move the set of points according to the cursor position
+        double[] nums = new double[points.size()];
+        for(int i = 0; i < points.size(); i++)
+        {
+        	Point p = new Point(points.get(i));
+        	p.move(offset);
+        	randomAccess.setPosition(p);
+        	nums[i] = randomAccess.get().getRealDouble();
+        }
+ 
+        return nums;
+    }
+	
+	/**
+	 * Source: http://imagej.net/ImgLib2_Examples#Example_8b_-_Randomly_sample_an_existing_image_and_display_it
+	 * 
+     * Sample a number of n-dimensional random points in a certain interval having a
+     * random intensity 0...1
+     *
+     * @param interval - the interval in which points are created
+     * @param numPoints - the amount of points
+     *
+     * @return a RealPointSampleList (which is an IterableRealInterval)
+     */
+    public static < T extends RealType< T > > double[] sampleRandomPoints(
         RandomAccessible< T > input, Interval interval, int numPoints )
     {
         // the number of dimensions
@@ -1145,7 +1205,7 @@ public class StatisticsUtility {
         Random rnd = new Random( 1332441549191l );
  
         // a list of Samples with coordinates
-        PointSampleList< T > elements = new PointSampleList< T >( numDimensions );
+        double[] ret = new double[numPoints];
  
         // a random accessible in the image data to grep the right value
         RandomAccess< T > randomAccess = input.randomAccess();
@@ -1163,10 +1223,10 @@ public class StatisticsUtility {
             randomAccess.setPosition( point );
  
             // add a new element with a random intensity in the range 0...1
-            elements.add( point, randomAccess.get().copy() );
+            ret[i] = randomAccess.get().getRealDouble();
         }
  
-        return elements;
+        return ret;
     }
 	
 	/**

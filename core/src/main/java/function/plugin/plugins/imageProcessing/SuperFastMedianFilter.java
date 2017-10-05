@@ -2,6 +2,7 @@ package function.plugin.plugins.imageProcessing;
 
 import java.io.File;
 import java.util.TreeMap;
+import java.util.Vector;
 
 import org.scijava.plugin.Plugin;
 
@@ -15,13 +16,8 @@ import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.MarkerConstants;
 import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
-import function.plugin.plugins.medianFilterHelpers.FastMedian;
 import ij.ImagePlus;
-import ij.process.Blitter;
 import ij.process.FloatProcessor;
-import ij.process.ImageProcessor;
-import io.scif.img.ImgIOException;
-import io.scif.img.ImgOpener;
 import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import jex.utilities.FunctionUtility;
@@ -29,7 +25,7 @@ import logs.Logs;
 import miscellaneous.CSVList;
 import miscellaneous.StatisticsUtility;
 import net.imglib2.Cursor;
-import net.imglib2.PointSampleList;
+import net.imglib2.Point;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessible;
 import net.imglib2.algorithm.neighborhood.Neighborhood;
@@ -54,14 +50,14 @@ import tables.DimensionMap;
 
 @Plugin(
 		type = JEXPlugin.class,
-		name="Super Fast Median Background Subtraction",
+		name="Super Fast Median Filter",
 		menuPath="Image Processing",
 		visible=true,
-		description="Fast median filter background subtraction that uses a square shaped kernal instead of round like ImageJ's filters but also does random sampling of the region to reduce calc time. (~> 20 times faster)"
+		description="Fast median filter that uses a square shaped kernal and random sampling of the region to reduce calc time."
 		)
-public class SuperFastMedianBackgroundSubtract extends JEXPlugin {
+public class SuperFastMedianFilter extends JEXPlugin {
 
-	public SuperFastMedianBackgroundSubtract()
+	public SuperFastMedianFilter()
 	{}
 
 	/////////// Define Inputs ///////////
@@ -74,13 +70,21 @@ public class SuperFastMedianBackgroundSubtract extends JEXPlugin {
 	@ParameterMarker(uiOrder=1, name="Kernal Width", description="Pixel width of the kernal", ui=MarkerConstants.UI_TEXTFIELD, defaultText="10")
 	int kernalWidth;
 
-	@ParameterMarker(uiOrder=1, name="Random Sample Size", description="Size of the random sample within the kernal for calculating the median.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="100")
+	@ParameterMarker(uiOrder=2, name="Random Sample Size", description="Size of the random sample within the kernal for calculating the median.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="100")
 	int n;
-
-	@ParameterMarker(uiOrder=1, name="Nominal Value to Add Back", description="Nominal value to add to all pixels after background subtraction because some image formats don't allow negative numbers. (Use following notation to specify different parameters for differen dimension values, '<Dim Name>'=<val1>,<val2>,<val3>' e.g., 'Channel=0,100,100'. The values will be applied in that order for the ordered dim values.) ", ui=MarkerConstants.UI_TEXTFIELD, defaultText="100")
+	
+	@ParameterMarker(uiOrder=3, name="Resample Each Location?", description="If checked, this will regenerate random locations within each neighborhood at each pixel location, incurring time lost to generate random numbers.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
+	boolean resample;
+	
+	@ParameterMarker(uiOrder=4, name="Perform Subtraction?", description="If checked, this will return the original image minus the median filtered result instead of just the median filtered result.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
+	boolean performSubtraction;
+	
+	@ParameterMarker(uiOrder=5, name="Nominal Value to Add Back", description="Nominal value to add to all pixels after background subtraction because some image formats don't allow negative numbers. (Use following notation to specify different parameters for differen dimension values, '<Dim Name>'=<val1>,<val2>,<val3>' e.g., 'Channel=0,100,100'. The values will be applied in that order for the ordered dim values.) ", ui=MarkerConstants.UI_TEXTFIELD, defaultText="100")
 	String nominal;
 	
-	@ParameterMarker(uiOrder=1, name="Output Bit Depth", description="What bit depth should the output be saved as.", ui=MarkerConstants.UI_DROPDOWN, choices={"8","16","32"}, defaultChoice=1)
+	double nominalVal;
+	
+	@ParameterMarker(uiOrder=6, name="Output Bit Depth", description="What bit depth should the output be saved as.", ui=MarkerConstants.UI_DROPDOWN, choices={"8","16","32"}, defaultChoice=1)
 	int outputBitDepth;
 
 	/////////// Define Outputs ///////////
@@ -123,8 +127,12 @@ public class SuperFastMedianBackgroundSubtract extends JEXPlugin {
 				return false;
 			}
 			// Call helper method
-
-			ImagePlus out = this.getMedianBackground(imageMap.get(map), this.kernalWidth, this.n, true, outputBitDepth);
+			this.nominalVal = nominals.get(map);
+			ImagePlus out = this.getMedianBackground(imageMap.get(map), this.kernalWidth, this.n, this.performSubtraction, outputBitDepth, this.resample);
+			if(out == null)
+			{
+				return false;
+			}
 			tempPath = JEXWriter.saveImage(out);
 			if(tempPath != null)
 			{
@@ -217,7 +225,7 @@ public class SuperFastMedianBackgroundSubtract extends JEXPlugin {
 	 * @param source
 	 * @return
 	 */
-	public < T extends RealType< T >> ImagePlus getMedianBackground(String imagePath, int width, int sampleSize, boolean performSubtraction, int outputBitDepth)
+	public < T extends RealType< T >> ImagePlus getMedianBackground(String imagePath, int width, int sampleSize, boolean performSubtraction, int outputBitDepth, boolean resample)
 	{
 		Img<T> source = ImageJFunctions.wrapReal(new ImagePlus(imagePath));
 		ArrayImgFactory<FloatType> factory = new ArrayImgFactory<>();
@@ -236,12 +244,41 @@ public class SuperFastMedianBackgroundSubtract extends JEXPlugin {
 		// Look into using HyperSphereShape and neighborhoods
 
 		// iterate over the set of neighborhoods in the image
+		Vector<Point> pointsToSample = null;
+		long count = 0;
+		int percentage = 0;
+		int oldPercentage = -1;
 		for ( final Neighborhood< T > localNeighborhood : shape.neighborhoods( source ) )
 		{
-			toSet.setPosition(localNeighborhood);
-			PointSampleList<T> toSample = StatisticsUtility.sampleRandomPoints(sourceExt, localNeighborhood, sampleSize);
-			double median = StatisticsUtility.median(toSample);
-			toSet.get().setReal(median);
+			if(!resample)
+			{
+				if(pointsToSample == null)
+				{
+					pointsToSample = StatisticsUtility.generateRandomPointsInRectangularRegion(localNeighborhood, sampleSize);
+				}
+				double[] vals = StatisticsUtility.samplePoints(sourceExt, pointsToSample, localNeighborhood);
+				double median = StatisticsUtility.median(vals);
+				toSet.get().setReal(median);
+			}
+			else
+			{
+				double[] vals = StatisticsUtility.sampleRandomPoints(sourceExt, localNeighborhood, sampleSize);
+				double median = StatisticsUtility.median(vals);
+				toSet.get().setReal(median);
+			}
+			
+			count = count + 1;
+			percentage = (int) (100 * ((double) count) / ((double) source.size()));
+			if(oldPercentage != percentage)
+			{
+				JEXStatics.statusBar.setProgressPercentage(percentage);
+				if(this.isCanceled())
+				{
+					Logs.log("Function canceled.", this);
+					return null;
+				}
+				oldPercentage = percentage;
+			}
 		}
 		
 		if(performSubtraction)
@@ -255,7 +292,7 @@ public class SuperFastMedianBackgroundSubtract extends JEXPlugin {
 				srcC.fwd();
 				toSet.setPosition(srcC);
 				srcRA.move(srcC);
-				toSet.get().setReal(srcRA.get().getRealDouble() - toSet.get().getRealDouble());
+				toSet.get().setReal(srcRA.get().getRealDouble() - toSet.get().getRealDouble() + this.nominalVal);
 			}
 		}
 		
