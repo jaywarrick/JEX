@@ -56,7 +56,7 @@ public class FastMedianBackgroundSubtract extends JEXPlugin {
 	
 	/////////// Define Parameters ///////////
 	
-	@ParameterMarker(uiOrder=1, name="Kernal Width", description="Pixel width of the kernal", ui=MarkerConstants.UI_TEXTFIELD, defaultText="5")
+	@ParameterMarker(uiOrder=1, name="Kernal Width", description="Pixel width of the kernal. If > 100, then probably use the 'Super Fast Median Filter' instead.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="5")
 	int kernalWidth;
 	
 	@ParameterMarker(uiOrder=1, name="Nominal Value to Add Back", description="Nominal value to add to all pixels after background subtraction because some image formats don't allow negative numbers. (Use following notation to specify different parameters for differen dimension values, '<Dim Name>'=<val1>,<val2>,<val3>' e.g., 'Channel=0,100,100'. The values will be applied in that order for the ordered dim values.) ", ui=MarkerConstants.UI_TEXTFIELD, defaultText="100")

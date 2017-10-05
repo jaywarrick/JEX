@@ -67,7 +67,7 @@ public class SuperFastMedianFilter extends JEXPlugin {
 
 	/////////// Define Parameters ///////////
 
-	@ParameterMarker(uiOrder=1, name="Kernal Width", description="Pixel width of the kernal", ui=MarkerConstants.UI_TEXTFIELD, defaultText="10")
+	@ParameterMarker(uiOrder=1, name="Kernal Width", description="Pixel width of the kernal. If < 100, then probably should use 'Fast Median Background Subtraction/Filter' instead.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="150")
 	int kernalWidth;
 
 	@ParameterMarker(uiOrder=2, name="Random Sample Size", description="Size of the random sample within the kernal for calculating the median.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="100")
@@ -250,6 +250,8 @@ public class SuperFastMedianFilter extends JEXPlugin {
 		int oldPercentage = -1;
 		for ( final Neighborhood< T > localNeighborhood : shape.neighborhoods( source ) )
 		{
+			toSet.setPosition(localNeighborhood);
+			double median = 0;
 			if(!resample)
 			{
 				if(pointsToSample == null)
@@ -257,15 +259,14 @@ public class SuperFastMedianFilter extends JEXPlugin {
 					pointsToSample = StatisticsUtility.generateRandomPointsInRectangularRegion(localNeighborhood, sampleSize);
 				}
 				double[] vals = StatisticsUtility.samplePoints(sourceExt, pointsToSample, localNeighborhood);
-				double median = StatisticsUtility.median(vals);
-				toSet.get().setReal(median);
+				median = StatisticsUtility.median(vals);
 			}
 			else
 			{
 				double[] vals = StatisticsUtility.sampleRandomPoints(sourceExt, localNeighborhood, sampleSize);
-				double median = StatisticsUtility.median(vals);
-				toSet.get().setReal(median);
+				median = StatisticsUtility.median(vals);
 			}
+			toSet.get().setReal(median);
 			
 			count = count + 1;
 			percentage = (int) (100 * ((double) count) / ((double) source.size()));
@@ -291,7 +292,7 @@ public class SuperFastMedianFilter extends JEXPlugin {
 			{
 				srcC.fwd();
 				toSet.setPosition(srcC);
-				srcRA.move(srcC);
+				srcRA.setPosition(srcC);
 				toSet.get().setReal(srcRA.get().getRealDouble() - toSet.get().getRealDouble() + this.nominalVal);
 			}
 		}

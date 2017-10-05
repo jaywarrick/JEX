@@ -1132,7 +1132,7 @@ public class StatisticsUtility {
         int numDimensions = interval.numDimensions();
  
         // a random number generator
-        Random rnd = new Random( 1332441549191l );
+        Random rnd = new Random();
  
         // a list of Samples with coordinates
         Vector<Point> elements = new Vector<>();
@@ -1202,7 +1202,7 @@ public class StatisticsUtility {
         int numDimensions = interval.numDimensions();
  
         // a random number generator
-        Random rnd = new Random( 1332441549191l );
+        Random rnd = new Random();
  
         // a list of Samples with coordinates
         double[] ret = new double[numPoints];
