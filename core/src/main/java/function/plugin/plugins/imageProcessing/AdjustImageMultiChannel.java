@@ -106,11 +106,11 @@ public class AdjustImageMultiChannel extends JEXPlugin {
 		
 		try
 		{
-			TreeMap<DimensionMap,Double> oldMinsMap = StringUtility.getCSVStringAsDoubleTreeMapForDimTable(oldMins, imageData.getDimTable());
-			TreeMap<DimensionMap,Double> oldMaxsMap = StringUtility.getCSVStringAsDoubleTreeMapForDimTable(oldMaxs, imageData.getDimTable());
-			TreeMap<DimensionMap,Double> newMinsMap = StringUtility.getCSVStringAsDoubleTreeMapForDimTable(newMins, imageData.getDimTable());
-			TreeMap<DimensionMap,Double> newMaxsMap = StringUtility.getCSVStringAsDoubleTreeMapForDimTable(newMaxs, imageData.getDimTable());
-			TreeMap<DimensionMap,Double> gammasMap = StringUtility.getCSVStringAsDoubleTreeMapForDimTable(gammas, imageData.getDimTable());
+			TreeMap<DimensionMap,Double> oldMinsMap = StringUtility.getCSVStringAsDoubleTreeMapForDimTable(channelDimName + "=" + oldMins, imageData.getDimTable());
+			TreeMap<DimensionMap,Double> oldMaxsMap = StringUtility.getCSVStringAsDoubleTreeMapForDimTable(channelDimName + "=" + oldMaxs, imageData.getDimTable());
+			TreeMap<DimensionMap,Double> newMinsMap = StringUtility.getCSVStringAsDoubleTreeMapForDimTable(channelDimName + "=" + newMins, imageData.getDimTable());
+			TreeMap<DimensionMap,Double> newMaxsMap = StringUtility.getCSVStringAsDoubleTreeMapForDimTable(channelDimName + "=" + newMaxs, imageData.getDimTable());
+			TreeMap<DimensionMap,Double> gammasMap = StringUtility.getCSVStringAsDoubleTreeMapForDimTable(channelDimName + "=" + gammas, imageData.getDimTable());
 			
 			if(oldMinsMap == null || oldMaxsMap == null || newMinsMap == null || newMaxsMap == null || gammasMap == null)
 			{
