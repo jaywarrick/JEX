@@ -19,6 +19,7 @@ import javax.swing.JPanel;
 
 import jex.JEXManager;
 import jex.jexTabPanel.JEXTabPanelController;
+import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import logs.Logs;
 import miscellaneous.ArrayUtility;
@@ -228,6 +229,11 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 			// one cell selected
 			// so we don't risk an infinite loop and don't need to test what
 			// locations we have visited previously.
+			if(!this.hasValidCell())
+			{
+				JEXDialog.messageDialog("None of the array entries displayed are selected. Please select entries or navigate to a dataset with selected entries.", this);
+				return;
+			}
 			while (!this.isValidCell(cellX, cellY))
 			{
 				// Go to the next cell in the array
@@ -298,6 +304,26 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 		{
 			return true;
 		}
+	}
+	
+	/**
+	 * Return if cell at any location accepts drops
+	 * 
+	 * @param x
+	 * @param y
+	 * @return true if cell accepts drops
+	 */
+	private boolean hasValidCell()
+	{
+		HashMap<Point,Boolean> selectionArray = this.importController.getSelectionArray();
+		for(Boolean b : selectionArray.values())
+		{
+			if(b)
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	// ////////////////////
