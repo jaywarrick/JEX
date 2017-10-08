@@ -571,7 +571,19 @@ public class PointList extends Vector<IdPoint> implements Copiable<PointList> {
 			return ret;
 		}
 		
-	}	
+	}
+	
+	public IdPoint getPointWithId(int id)
+	{
+		for(IdPoint p : this)
+		{
+			if(p.id == id)
+			{
+				return(p);
+			}
+		}
+		return null;
+	}
 }
 
 
