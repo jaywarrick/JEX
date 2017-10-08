@@ -11,9 +11,18 @@ import java.io.InputStream;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map.Entry;
+
+import jex.statics.JEXDialog;
+
+import java.util.TreeMap;
+
+import tables.Dim;
+import tables.DimTable;
+import tables.DimensionMap;
 
 public class StringUtility implements Comparator<String> {
-	
+
 	// ------------------------------------
 	// --------- STRING UTILITIES ---------
 	// ------------------------------------
@@ -26,7 +35,7 @@ public class StringUtility implements Comparator<String> {
 		{
 			return false;
 		}
-		
+
 		for (String s : array)
 		{
 			if(s.equals(str))
@@ -34,10 +43,10 @@ public class StringUtility implements Comparator<String> {
 				return true;
 			}
 		}
-		
+
 		return false;
 	}
-	
+
 	/**
 	 * Add a string to a string array
 	 * 
@@ -50,7 +59,7 @@ public class StringUtility implements Comparator<String> {
 		result[result.length - 1] = s;
 		return result;
 	}
-	
+
 	/**
 	 * Remove a string from a string array
 	 * 
@@ -62,7 +71,7 @@ public class StringUtility implements Comparator<String> {
 		{
 			return array;
 		}
-		
+
 		String[] result = new String[array.length - 1];
 		int index = 0;
 		for (String str : array)
@@ -76,7 +85,7 @@ public class StringUtility implements Comparator<String> {
 		}
 		return result;
 	}
-	
+
 	// find and replace a string
 	public static String findReplace(String main, String find, String replace)
 	{
@@ -88,7 +97,7 @@ public class StringUtility implements Comparator<String> {
 		String result = main.substring(0, index) + replace + main.substring(index + find.length(), main.length());
 		return result;
 	}
-	
+
 	// fill a string on the left up to a size
 	public static String fillLeft(String s, int size, String character)
 	{
@@ -99,7 +108,7 @@ public class StringUtility implements Comparator<String> {
 		}
 		return result;
 	}
-	
+
 	// fill a string on the left up to a size
 	public static String fillRight(String s, int size, String character)
 	{
@@ -110,7 +119,7 @@ public class StringUtility implements Comparator<String> {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Return true if and only if S starts with string PREFIX
 	 * 
@@ -130,7 +139,7 @@ public class StringUtility implements Comparator<String> {
 			return false;
 		}
 	}
-	
+
 	/**
 	 * Return the string S with the prefix PREFIX removed
 	 * 
@@ -147,7 +156,7 @@ public class StringUtility implements Comparator<String> {
 		String result = s.substring(prefix.length() - 1);
 		return result;
 	}
-	
+
 	/**
 	 * Transform a string into an inputstream
 	 */
@@ -167,7 +176,7 @@ public class StringUtility implements Comparator<String> {
 		{}
 		return in;
 	}
-	
+
 	/**
 	 * Returns true is all characters in string s are digits
 	 * 
@@ -186,7 +195,7 @@ public class StringUtility implements Comparator<String> {
 		}
 		return true;
 	}
-	
+
 	/**
 	 * Save a string in a file at location PATH
 	 * 
@@ -207,7 +216,7 @@ public class StringUtility implements Comparator<String> {
 			System.out.println("ERROR saving text file");
 		}
 	}
-	
+
 	/**
 	 * Return the screen width of a given string displayed with font FONT
 	 * 
@@ -220,7 +229,7 @@ public class StringUtility implements Comparator<String> {
 		{
 			font = new Font("sans serif", Font.PLAIN, 11);
 		}
-		
+
 		// TODO
 		// java.awt.FontMetrics metric = new java.awt.FontMetrics(font);
 		// return metric.stringWidth(str);
@@ -228,7 +237,7 @@ public class StringUtility implements Comparator<String> {
 		int result = str.length() * 8;
 		return result;
 	}
-	
+
 	/**
 	 * Return the width of string str with font FONT in the program JEX
 	 * 
@@ -241,17 +250,17 @@ public class StringUtility implements Comparator<String> {
 		FontMetrics metrics = g.getFontMetrics(font);
 		return metrics.stringWidth(str);
 	}
-	
+
 	public static String truncateStringToWidth(String str, Font font, int length)
 	{
 		return str;
 	}
-	
+
 	public static void sortStringList(List<String> strings)
 	{
 		Collections.sort(strings, new StringUtility());
 	}
-	
+
 	/**
 	 * Path comparator method for sorting fileLists
 	 */
@@ -260,7 +269,7 @@ public class StringUtility implements Comparator<String> {
 	{
 		return compareString(thisString, thatString);
 	}
-	
+
 	public static String removeWhiteSpaceOnEnds(String s)
 	{
 		String temp = s;
@@ -274,12 +283,12 @@ public class StringUtility implements Comparator<String> {
 		}
 		return temp;
 	}
-	
+
 	public static String removeAllWhitespace(String toFix)
 	{
 		return toFix.replaceAll("\\s+","");
 	}
-	
+
 	/**
 	 * Alphanumeric string sorter
 	 * 
@@ -291,35 +300,35 @@ public class StringUtility implements Comparator<String> {
 	{
 		String string1 = thisString;
 		String string2 = thatString;
-		
+
 		if(string2 == null || string1 == null)
 		{
 			return 0;
 		}
-		
+
 		int lengthFirstStr = string1.length();
 		int lengthSecondStr = string2.length();
-		
+
 		int index1 = 0;
 		int index2 = 0;
-		
+
 		while (index1 < lengthFirstStr && index2 < lengthSecondStr)
 		{
 			char ch1 = string1.charAt(index1);
 			char ch2 = string2.charAt(index2);
-			
+
 			int maxLength = Math.max(lengthFirstStr, lengthSecondStr);
 			char[] space1 = new char[maxLength];
 			char[] space2 = new char[maxLength];
-			
+
 			int loc1 = 0;
 			int loc2 = 0;
-			
+
 			do
 			{
 				space1[loc1++] = ch1;
 				index1++;
-				
+
 				if(index1 < lengthFirstStr)
 				{
 					ch1 = string1.charAt(index1);
@@ -330,12 +339,12 @@ public class StringUtility implements Comparator<String> {
 				}
 			}
 			while (Character.isDigit(ch1) == Character.isDigit(space1[0]));
-			
+
 			do
 			{
 				space2[loc2++] = ch2;
 				index2++;
-				
+
 				if(index2 < lengthSecondStr)
 				{
 					ch2 = string2.charAt(index2);
@@ -346,12 +355,12 @@ public class StringUtility implements Comparator<String> {
 				}
 			}
 			while (Character.isDigit(ch2) == Character.isDigit(space2[0]));
-			
+
 			String str1 = new String(space1);
 			String str2 = new String(space2);
-			
+
 			int result;
-			
+
 			if(Character.isDigit(space1[0]) && Character.isDigit(space2[0]))
 			{
 				Long firstNumberToCompare = new Long(Long.parseLong(str1.trim()));
@@ -362,7 +371,7 @@ public class StringUtility implements Comparator<String> {
 			{
 				result = str1.compareTo(str2);
 			}
-			
+
 			if(result != 0)
 			{
 				return result;
@@ -370,7 +379,7 @@ public class StringUtility implements Comparator<String> {
 		}
 		return lengthFirstStr - lengthSecondStr;
 	}
-	
+
 	public static CSVList getCSVListAndRemoveWhiteSpaceOnEnds(String param)
 	{
 		CSVList temp = new CSVList(param);
@@ -379,6 +388,255 @@ public class StringUtility implements Comparator<String> {
 		{
 			// This list may not be the same length as the channel dim but we'll test for that elsewhere.
 			ret.add(StringUtility.removeWhiteSpaceOnEnds(p));
+		}
+		return ret;
+	}
+
+	public static CSVList getCSVStringAsCSVListWithoutWhiteSpace(String param)
+	{
+		CSVList temp = new CSVList(param);
+		CSVList ret = new CSVList();
+		for(String p : temp)
+		{
+			// This list may not be the same length as the channel dim but we'll test for that elsewhere.
+			ret.add(StringUtility.removeWhiteSpaceOnEnds(p));
+		}
+
+		return ret;
+	}
+
+	/**
+	 * Expecting csvparam in the form of <DimName>=<Val2>,<Val2>,...,<Valn>
+	 * Whitespace around commas is acceptable.
+	 * 
+	 * Unlike other variants, this will create a TreeMap with DimensionMaps
+	 * that are formed directly by the dimName and values provided.
+	 * 
+	 * E.g. <DimName>=<Val1>, <DimName>=<Val2>, ...
+	 * 
+	 * Key values in the TreeMap are just set to the string "0"
+	 * 
+	 * @param csvparam
+	 * @return
+	 */
+	public static TreeMap<DimensionMap,String> getCSVStringAsStringTreeMapForDimName(String csvparam, String dimName)
+	{
+		CSVList temp = getCSVStringAsCSVListWithoutWhiteSpace(csvparam);
+		TreeMap<DimensionMap,String> ret = new TreeMap<>();
+
+		for(int i = 0; i < temp.size(); i++)
+		{
+			// Repeat the value for as many channels that exist in the channel dimension.
+			ret.put(new DimensionMap(dimName + "=" + temp.get(i)), "0");
+		}
+
+		return ret;
+	}
+
+	/**
+	 * Expecting csvparam in the form of <DimName>=<Val2>,<Val2>,...,<Valn>
+	 * Whitespace around commas is acceptable.
+	 * 
+	 * Unlike other variants, this will create a TreeMap with DimensionMaps
+	 * that are formed directly by the dimName and values provided.
+	 * 
+	 * E.g. <DimName>=<Val1>, <DimName>=<Val2>, ...
+	 * 
+	 * Key values in the TreeMap are just set to the string "0"
+	 * 
+	 * @param csvparam
+	 * @return
+	 */
+	public static TreeMap<DimensionMap,String> getCSVStringAsStringTreeMap(String csvParamStartingWithDimName)
+	{
+		if(csvParamStartingWithDimName != null && !csvParamStartingWithDimName.equals("") && csvParamStartingWithDimName.contains("="))
+		{
+			String[] filterArray = csvParamStartingWithDimName.split("=");
+			return getCSVStringAsStringTreeMapForDimName(filterArray[1], StringUtility.removeWhiteSpaceOnEnds(filterArray[0]));
+		}
+		return null;
+	}
+
+	/**
+	 * Expecting csvparam in the form of <Val2>,<Val2>,...,<Valn>
+	 * Whitespace around commas is acceptable.
+	 * 
+	 * The result will be as follows...
+	 * 
+	 * <DimName>=<DimVal> = <Val1>
+	 * <DimName>=<DimVa2> = <Val2>
+	 * .
+	 * .
+	 * .
+	 * <DimName>=<DimVan> = <Valn>
+	 * 
+	 * If only 1 <Val> is provided, the valuee will be copied to all
+	 * possible DimensionMaps as follows
+	 * 
+	 * <DimName>=<DimVal> = <Val1>
+	 * <DimName>=<DimVa2> = <Val1>
+	 * .
+	 * .
+	 * .
+	 * <DimName>=<DimVan> = <Val1>
+	 * 
+	 * Thus, the number of values provided must be 1 or the same number
+	 * as the available  dim values
+	 * 
+	 * @param csvparam
+	 * @return
+	 */
+	public static TreeMap<DimensionMap,String> getCSVStringAsStringTreeMapForDim(String csvparam, Dim dim)
+	{
+		CSVList temp = getCSVStringAsCSVListWithoutWhiteSpace(csvparam);
+		TreeMap<DimensionMap,String> ret = new TreeMap<>();
+		if(temp.size() == 1)
+		{
+			for(int i = 0; i < dim.values().size(); i++)
+			{
+				// Repeat the value for as many channels that exist in the channel dimension.
+				ret.put(new DimensionMap(dim.dimName + "=" + dim.valueAt(i)), temp.get(0));
+			}
+		}
+		else
+		{
+			if(dim.values().size() != temp.size())
+			{
+				JEXDialog.messageDialog("The number of parameter values (" + temp.size() + ") provided does not match the number of dim values (" + dim.size() + "). Returning null.", StringUtility.class);
+				return null;
+			}
+			for(int i = 0; i < dim.values().size(); i++)
+			{
+				// Repeat the value for as many channels that exist in the channel dimension.
+				ret.put(new DimensionMap(dim.dimName + "=" + dim.valueAt(i)), temp.get(i));
+			}
+		}
+
+		return ret;
+	}
+
+	/**
+	 * Expecting csvparam in the form of <Val2>,<Val2>,...,<Valn>
+	 * Whitespace around commas is acceptable.
+	 * 
+	 * The result will be as follows...
+	 * 
+	 * <DimName>=<DimVal> = <Val1>
+	 * <DimName>=<DimVa2> = <Val2>
+	 * .
+	 * .
+	 * .
+	 * <DimName>=<DimVan> = <Valn>
+	 * 
+	 * If only 1 <Val> is provided, the valuee will be copied to all
+	 * possible DimensionMaps as follows
+	 * 
+	 * <DimName>=<DimVal> = <Val1>
+	 * <DimName>=<DimVa2> = <Val1>
+	 * .
+	 * .
+	 * .
+	 * <DimName>=<DimVan> = <Val1>
+	 * 
+	 * Thus, the number of values provided must be 1 or the same number
+	 * as the available  dim values
+	 * 
+	 * @param csvparam
+	 * @return
+	 */
+	public static TreeMap<DimensionMap,Double> getCSVStringAsDoubleTreeMapForDim(String csvparam, Dim dim)
+	{
+		TreeMap<DimensionMap,String> params = getCSVStringAsStringTreeMapForDim(csvparam, dim);
+		TreeMap<DimensionMap,Double> ret = new TreeMap<>();
+		for(Entry<DimensionMap,String> e : params.entrySet())
+		{
+			ret.put(e.getKey(), Double.parseDouble(e.getValue()));
+		}
+		return ret;
+	}
+
+	/**
+	 * Expecting pacsvParamStartingWithDimNameram in the form of <DimName>=<Val2>,<Val2>,...,<Valn>
+	 * Whitespace around commas is acceptable.
+	 * 
+	 * The result will be as follows...
+	 * 
+	 * <DimName>=<DimVal> = <Val1>
+	 * <DimName>=<DimVa2> = <Val2>
+	 * .
+	 * .
+	 * .
+	 * <DimName>=<DimVan> = <Valn>
+	 * 
+	 * If only 1 <Val> is provided, the valuee will be copied to all
+	 * possible DimensionMaps as follows
+	 * 
+	 * <DimName>=<DimVal> = <Val1>
+	 * <DimName>=<DimVa2> = <Val1>
+	 * .
+	 * .
+	 * .
+	 * <DimName>=<DimVan> = <Val1>
+	 * 
+	 * Thus, the number of values provided must be 1 or the same number
+	 * as the available  dim values
+	 * 
+	 * @param csvParamStartingWithDimName
+	 * @return
+	 */
+	public static TreeMap<DimensionMap,String> getCSVStringAsStringTreeMapForDimTable(String csvParamStartingWithDimName, DimTable dt)
+	{
+		Dim filterDim = null;
+		if(csvParamStartingWithDimName != null && !csvParamStartingWithDimName.equals("") && csvParamStartingWithDimName.contains("="))
+		{
+			String[] filterArray = csvParamStartingWithDimName.split("=");
+			filterDim = dt.getDimWithName(StringUtility.removeWhiteSpaceOnEnds(filterArray[0]));
+			if(filterDim == null)
+			{
+				JEXDialog.messageDialog("Couldn't find the dim named " + filterArray[0] + " in the DimTable provided... " + dt.toString());
+				return null;
+			}
+			return getCSVStringAsStringTreeMapForDim(filterArray[1], filterDim);
+		}
+		return null;
+	}
+
+	/**
+	 * Expecting csvParamStartingWithDimName in the form of <DimName>=<Val2>,<Val2>,...,<Valn>
+	 * Whitespace around commas is acceptable.
+	 * 
+	 * The result will be as follows...
+	 * 
+	 * <DimName>=<DimVal> = <Val1>
+	 * <DimName>=<DimVa2> = <Val2>
+	 * .
+	 * .
+	 * .
+	 * <DimName>=<DimVan> = <Valn>
+	 * 
+	 * If only 1 <Val> is provided, the valuee will be copied to all
+	 * possible DimensionMaps as follows
+	 * 
+	 * <DimName>=<DimVal> = <Val1>
+	 * <DimName>=<DimVa2> = <Val1>
+	 * .
+	 * .
+	 * .
+	 * <DimName>=<DimVan> = <Val1>
+	 * 
+	 * Thus, the number of values provided must be 1 or the same number
+	 * as the available  dim values
+	 * 
+	 * @param csvParamStartingWithDimName
+	 * @return
+	 */
+	public static TreeMap<DimensionMap,Double> getCSVStringAsDoubleTreeMapForDimTable(String csvParamStartingWithDimName, DimTable dt)
+	{
+		TreeMap<DimensionMap,String> params = getCSVStringAsStringTreeMapForDimTable(csvParamStartingWithDimName, dt);
+		TreeMap<DimensionMap,Double> ret = new TreeMap<>();
+		for(Entry<DimensionMap,String> e : params.entrySet())
+		{
+			ret.put(e.getKey(), Double.parseDouble(e.getValue()));
 		}
 		return ret;
 	}
