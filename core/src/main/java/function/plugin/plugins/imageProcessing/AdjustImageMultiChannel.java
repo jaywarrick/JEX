@@ -1,7 +1,6 @@
 package function.plugin.plugins.imageProcessing;
 
 import java.io.File;
-import java.util.List;
 import java.util.TreeMap;
 
 import org.scijava.plugin.Plugin;
@@ -21,9 +20,7 @@ import ij.process.FloatProcessor;
 import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import jex.utilities.FunctionUtility;
-import miscellaneous.CSVList;
 import miscellaneous.StringUtility;
-import tables.Dim;
 import tables.DimensionMap;
 
 /**
@@ -107,29 +104,18 @@ public class AdjustImageMultiChannel extends JEXPlugin {
 			return false;
 		}
 		
-		
-		
-		// Gather the parameters.
-		Dim channelDim = imageData.getDimTable().getDimWithName(channelDimName);
-		CSVList oldMinsList = getCSVList(oldMins, channelDim);
-		CSVList oldMaxsList = getCSVList(oldMaxs, channelDim);
-		CSVList newMinsList = getCSVList(newMins, channelDim);
-		CSVList newMaxsList = getCSVList(newMaxs, channelDim);
-		CSVList gammasList = getCSVList(gammas, channelDim);
-		
-		if(channelDim.size() != oldMinsList.size() || channelDim.size() != oldMaxsList.size() || channelDim.size() != newMinsList.size() || channelDim.size() != newMaxsList.size() || channelDim.size() != gammasList.size())
-		{
-			JEXDialog.messageDialog("The number of intensity values listed for each of the mins and maxs etc must be the same size as the number of channels in the image. Aborting.");
-			return false;
-		}
-		
 		try
 		{
-			TreeMap<String,Double> oldMinsMap = getMap(oldMinsList, channelDim);
-			TreeMap<String,Double> oldMaxsMap = getMap(oldMaxsList, channelDim);
-			TreeMap<String,Double> newMinsMap = getMap(newMinsList, channelDim);
-			TreeMap<String,Double> newMaxsMap = getMap(newMaxsList, channelDim);
-			TreeMap<String,Double> gammasMap = getMap(gammasList, channelDim);
+			TreeMap<DimensionMap,Double> oldMinsMap = StringUtility.getCSVStringAsDoubleTreeMapForDimTable(oldMins, imageData.getDimTable());
+			TreeMap<DimensionMap,Double> oldMaxsMap = StringUtility.getCSVStringAsDoubleTreeMapForDimTable(oldMaxs, imageData.getDimTable());
+			TreeMap<DimensionMap,Double> newMinsMap = StringUtility.getCSVStringAsDoubleTreeMapForDimTable(newMins, imageData.getDimTable());
+			TreeMap<DimensionMap,Double> newMaxsMap = StringUtility.getCSVStringAsDoubleTreeMapForDimTable(newMaxs, imageData.getDimTable());
+			TreeMap<DimensionMap,Double> gammasMap = StringUtility.getCSVStringAsDoubleTreeMapForDimTable(gammas, imageData.getDimTable());
+			
+			if(oldMinsMap == null || oldMaxsMap == null || newMinsMap == null || newMaxsMap == null || gammasMap == null)
+			{
+				return false;
+			}
 			
 			// Run the function
 			TreeMap<DimensionMap,String> imageMap = ImageReader.readObjectToImagePathTable(imageData);
@@ -145,7 +131,7 @@ public class AdjustImageMultiChannel extends JEXPlugin {
 				}
 				
 				// Call helper method
-				tempPath = saveAdjustedImage(imageMap.get(map), oldMinsMap.get(map.get(channelDimName)), oldMaxsMap.get(map.get(channelDimName)), newMinsMap.get(map.get(channelDimName)), newMaxsMap.get(map.get(channelDimName)), gammasMap.get(map.get(channelDimName)), bitDepth);
+				tempPath = saveAdjustedImage(imageMap.get(map), oldMinsMap.get(map), oldMaxsMap.get(map), newMinsMap.get(map), newMaxsMap.get(map), gammasMap.get(map), bitDepth);
 				if(tempPath != null)
 				{
 					outputImageMap.put(map, tempPath);
@@ -194,39 +180,5 @@ public class AdjustImageMultiChannel extends JEXPlugin {
 		
 		// return the filepath
 		return imPath;
-	}
-	
-	private CSVList getCSVList(String param, Dim channelDim)
-	{
-		CSVList temp = new CSVList(param);
-		CSVList ret = new CSVList();
-		if(temp.size() == 1)
-		{
-			for(int i = 0; i < channelDim.values().size(); i++)
-			{
-				// Repeat the value for as many channels that exist in the channel dimension.
-				ret.add(StringUtility.removeWhiteSpaceOnEnds(temp.get(0)));
-			}
-		}
-		else
-		{
-			for(String p : temp)
-			{
-				// This list may not be the same length as the channel dim but we'll test for that elsewhere.
-				ret.add(StringUtility.removeWhiteSpaceOnEnds(p));
-			}
-		}
-		
-		return ret;
-	}
-	
-	private TreeMap<String,Double> getMap(List<String> values, Dim channelDim) throws NumberFormatException
-	{
-		TreeMap<String,Double> ret = new TreeMap<>();
-		for(String channel : channelDim.values())
-		{
-			ret.put(channel, Double.parseDouble(values.get(channelDim.index(channel))));
-		}
-		return ret;
 	}
 }
