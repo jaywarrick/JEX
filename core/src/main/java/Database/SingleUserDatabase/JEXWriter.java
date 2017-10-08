@@ -174,6 +174,55 @@ public class JEXWriter {
 		}
 	}
 	
+	public static void convertToBitDepthIfNecessary(ImagePlus im, int bitDepth)
+	{
+		if(bitDepth != im.getBitDepth())
+		{
+			if(bitDepth == 8)
+			{
+				im.setProcessor(im.getProcessor().convertToByte(false));
+			}
+			else if(bitDepth == 16)
+			{
+				im.setProcessor(im.getProcessor().convertToShort(false));
+			}
+			else if(bitDepth == 32)
+			{
+				im.setProcessor(im.getProcessor().convertToFloat());
+			}
+		}
+	}
+	
+	/**
+	 * If conversion is necessary, a new object is returned. If not, the same instance is returned.
+	 * 
+	 * @param imp
+	 * @param bitDepth
+	 * @return
+	 */
+	public static ImageProcessor convertToBitDepthIfNecessary(ImageProcessor imp, int bitDepth)
+	{
+		if(bitDepth != imp.getBitDepth())
+		{
+			if(bitDepth == 8)
+			{
+				return imp.convertToByte(false);
+			}
+			else if(bitDepth == 16)
+			{
+				return imp.convertToShort(false);
+			}
+			else
+			{
+				return imp.convertToFloat();
+			}
+		}
+		else
+		{
+			return imp;
+		}
+	}
+	
 	/**
 	 * Save the image in the temporary database folder
 	 */
