@@ -156,7 +156,7 @@ public class PseudoFluorescenceBackgroundCorrection extends JEXPlugin {
 			imp = JEXWriter.convertToBitDepthIfNecessary(im.getProcessor(), 32);
 
 			//// Subtract the background from the filtered (Image-DF)
-			FloatProcessor impTemp = new FloatProcessor(imp.getFloatArray());
+			ImageProcessor impTemp = new FloatProcessor(imp.getFloatArray());
 			if(presmoothRadius > 0)
 			{
 				RankFilters rF = new RankFilters();
@@ -167,8 +167,10 @@ public class PseudoFluorescenceBackgroundCorrection extends JEXPlugin {
 			
 			// Amplify the logged signal to calculate the background (for some reason it matters for low intensity float images), then de-amplify
 			impTemp.multiply(65535.0/Math.log(max));
+			impTemp = JEXWriter.convertToBitDepthIfNecessary(impTemp, 16);
 			BackgroundSubtracter bS = new BackgroundSubtracter();
 			bS.rollingBallBackground(impTemp, radius, true, lightBackground, paraboloid, presmooth, true);
+			impTemp = JEXWriter.convertToBitDepthIfNecessary(impTemp, 32);
 			impTemp.multiply(Math.log(max)/65535.0);
 
 			// Subtract the background of the logged image from the logged image
