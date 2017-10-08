@@ -16,7 +16,6 @@ import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
 // Import needed classes here 
 import ij.ImagePlus;
-import ij.plugin.ImageCalculator;
 import ij.plugin.filter.BackgroundSubtracter;
 import ij.plugin.filter.RankFilters;
 import ij.process.FloatBlitter;
@@ -64,8 +63,11 @@ public class PseudoFluorescenceBackgroundCorrection extends JEXPlugin {
 	@ParameterMarker(uiOrder=4, name="Pre-smoothing Radius", description="Radius of a mean filter to apply prior to correction (set to 0 or less to skip).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="3.0")
 	double presmoothRadius;
 
-	@ParameterMarker(uiOrder=5, name="Post Multiplier", description="How much to multiply the result to raise values if desired (set to 1 to skip).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1.0")
+	@ParameterMarker(uiOrder=5, name="Post Multiplier", description="How much to multiply the result to alter values if desired (set to 1 to skip).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1.0")
 	double postMultiplier;
+	
+	@ParameterMarker(uiOrder=5, name="Post Addition", description="How much to add to the result to alter values if desired (set to 0 to skip).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
+	double postAddition;
 
 	@ParameterMarker(uiOrder=6, name="Exclusion Filter", description="<DimName>=<Val1>,<Val2>,...<Valn>, Specify the dimension and dimension values to exclude. Leave blank to process all.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
 	String exclusionFilter;
@@ -153,25 +155,7 @@ public class PseudoFluorescenceBackgroundCorrection extends JEXPlugin {
 			double max = imp.getMax();
 			imp = JEXWriter.convertToBitDepthIfNecessary(im.getProcessor(), 32);
 
-			imp.resetMinAndMax();
-			try {
-				FileUtility.openFileDefaultApplication(JEXWriter.saveImage(imp));
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-
-			//			imp.resetMinAndMax();
-			//			try {
-			//				
-			//				FileUtility.openFileDefaultApplication(JEXWriter.saveImage(imp));
-			//			} catch (Exception e) {
-			//				// TODO Auto-generated catch block
-			//				e.printStackTrace();
-			//			}
-
 			//// Subtract the background from the filtered (Image-DF)
-			BackgroundSubtracter bS = new BackgroundSubtracter();
 			FloatProcessor impTemp = new FloatProcessor(imp.getFloatArray());
 			if(presmoothRadius > 0)
 			{
@@ -180,76 +164,46 @@ public class PseudoFluorescenceBackgroundCorrection extends JEXPlugin {
 			}
 
 			impTemp.log();
+			
+			// Amplify the logged signal to calculate the background (for some reason it matters for low intensity float images), then de-amplify
 			impTemp.multiply(65535.0/Math.log(max));
-
-			//				impTemp.resetMinAndMax();
-			//				try {
-			//					FileUtility.openFileDefaultApplication(JEXWriter.saveImage(impTemp));
-			//				} catch (Exception e) {
-			//					// TODO Auto-generated catch block
-			//					e.printStackTrace();
-			//				}
-
-			// apply the function to imp
-			bS.rollingBallBackground(imp, radius, true, lightBackground, paraboloid, presmooth, true);
-
+			BackgroundSubtracter bS = new BackgroundSubtracter();
+			bS.rollingBallBackground(impTemp, radius, true, lightBackground, paraboloid, presmooth, true);
 			impTemp.multiply(Math.log(max)/65535.0);
 
-			// subtract the calculated background from the image
-			impTemp.resetMinAndMax();
-			try {
-				FileUtility.openFileDefaultApplication(JEXWriter.saveImage(impTemp));
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			imp.resetMinAndMax();
-			try {
-				FileUtility.openFileDefaultApplication(JEXWriter.saveImage(imp));
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			// Subtract the background of the logged image from the logged image
+			imp.log();
 			imp.copyBits(impTemp, 0, 0, FloatBlitter.SUBTRACT);
 
 			// Release memory of impTemp
 			impTemp = null;
 
-			imp.resetMinAndMax();
-			try {
-				FileUtility.openFileDefaultApplication(JEXWriter.saveImage(imp));
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			// "Un-log" the image
 			imp.exp();
-			imp.resetMinAndMax();
-			try {
-				FileUtility.openFileDefaultApplication(JEXWriter.saveImage(imp));
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-			}
+
+			// Subtract 1 given exp(0) is 1.
 			imp.add(-1);
-			imp.resetMinAndMax();
-			try {
-				FileUtility.openFileDefaultApplication(JEXWriter.saveImage(imp));
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+
+			// Perform post-multiplication if desired to bring signal levels up.
+			// Without post-multiplication, the result is essentially signal to noise ratio.
 			if(postMultiplier != 1.0)
 			{
 				imp.multiply(postMultiplier);
 			}
+			
+			// Perform post-addition if desired (e.g., to retain the "gaussian" nature of the noise)
+			if(postAddition != 0.0)
+			{
+				imp.add(postAddition);
+			}
 
-			// //// End Actual Function
+			// Convert the image to the appropriate bit depth and save
 			ImageProcessor toSave = JEXWriter.convertToBitDepthIfNecessary(imp, this.bitDepth);
 			String finalPath = JEXWriter.saveImage(toSave);
-
 			outputMap.put(map.copy(), finalPath);
+			
+			// Update display info of progress
 			Logs.log("Finished processing " + count + " of " + total + ".", 1, this);
-			count++;
-
 			count = count + 1;
 			percentage = (int) (100 * ((double) (count) / ((double) total)));
 			JEXStatics.statusBar.setProgressPercentage(percentage);
@@ -266,5 +220,15 @@ public class PseudoFluorescenceBackgroundCorrection extends JEXPlugin {
 
 		// Return status
 		return true;
+	}
+
+	public void debug(ImageProcessor imp)
+	{
+		imp.resetMinAndMax();
+		try {
+			FileUtility.openFileDefaultApplication(JEXWriter.saveImage(imp));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 }
