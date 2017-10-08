@@ -409,18 +409,26 @@ public class JEX_SingleCell_BackGroundCorrectCalibrated extends JEXCrunchable {
 			// //// Subtract the background from the filtered (Image-DF)
 			if(bgRadius > 0)
 			{
-				FloatProcessor impTemp = new FloatProcessor(imp.getFloatArray());
-				RankFilters rF = new RankFilters();
-				rF.rank(impTemp, bgPresmoothRadius, RankFilters.MEAN);
+				if(bgPresmoothRadius > 0)
+				{
+					FloatProcessor impTemp = new FloatProcessor(imp.getFloatArray());
+					RankFilters rF = new RankFilters();
+					rF.rank(impTemp, bgPresmoothRadius, RankFilters.MEAN);
+					
+					BackgroundSubtracter bS = new BackgroundSubtracter();			
+					bS.rollingBallBackground(impTemp, bgRadius, true, bgInverse, bgParaboloid, bgPresmooth, true);
 
-				BackgroundSubtracter bS = new BackgroundSubtracter();			
-				bS.rollingBallBackground(impTemp, bgRadius, true, bgInverse, bgParaboloid, bgPresmooth, true);
+					// subtract the calculated background from the image
+					blit.copyBits(impTemp, 0, 0, FloatBlitter.SUBTRACT);
 
-				// subtract the calculated background from the image
-				blit.copyBits(impTemp, 0, 0, FloatBlitter.SUBTRACT);
-
-				// Release memory of impTemp
-				impTemp = null;
+					// Release memory of impTemp
+					impTemp = null;
+				}
+				else
+				{
+					BackgroundSubtracter bS = new BackgroundSubtracter();			
+					bS.rollingBallBackground(imp, bgRadius, false, bgInverse, bgParaboloid, bgPresmooth, true);
+				}
 			}
 
 
