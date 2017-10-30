@@ -530,7 +530,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			if (this.isCanceled()) { this.close(); return false;}
 			this.putZernike(mapM_Intensity, ii, new Circle(this.nuclearInfo.get(this.pId).p2, this.nuclearInfo.get(this.pId).p1 * (this.zernikeFixedDiameter / this.zernikeNucDiameter)), "_NUCwPADDEDNUC", firstTimeThrough);
 			if (this.isCanceled()) { this.close(); return false;}
-			this.putDNZernike(mapM_Intensity, ii, new Circle(this.nuclearInfo.get(this.pId).p2, this.getEquivalentRadius(this.combinedSubCellRegion)), new Circle(this.nuclearInfo.get(pId).p2, this.getEquivalentRadius(this.combinedSubCellRegion)), firstTimeThrough);
+			this.putDNZernike(mapM_Intensity, ii, new Circle(this.nuclearInfo.get(this.pId).p2, this.nuclearInfo.get(this.pId).p1), new Circle(this.nuclearInfo.get(pId).p2, this.getEquivalentRadius(this.combinedSubCellRegion)), firstTimeThrough);
 			if (this.isCanceled()) { this.close(); return false;}
 		}
 
@@ -884,8 +884,8 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			if (opHistogram == null) {
 				opHistogram = IJ2PluginUtility.ij().op().op(HistogramFeatureSet.class, vals, histogramBins);
 			}
-			Map<NamedFeature, LongType> ret = opHistogram.calculate(vals);
-			for (Entry<NamedFeature, LongType> result : ret.entrySet()) {
+			Map<NamedFeature, DoubleType> ret = opHistogram.calculate(vals);
+			for (Entry<NamedFeature, DoubleType> result : ret.entrySet()) {
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
 				newMap.put("Id", "" + this.pId);
 				newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
@@ -972,7 +972,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		if(zernike && this.nucExists)
 		{
 			if (this.opDNZernike == null) {
-				opDNZernike = IJ2PluginUtility.ij().op().op(DoubleNormalizedZernikeFeatureSet.class, vals, null, zernikeMomentMin, zernikeMomentMax, innerCircle, outerCircleAtEquivalentRadius, 0.3);
+				opDNZernike = IJ2PluginUtility.ij().op().op(DoubleNormalizedZernikeFeatureSet.class, vals, null, zernikeMomentMin, zernikeMomentMax, innerCircle, outerCircleAtEquivalentRadius, 1.0/3.0);
 			}
 
 			Circle outerCircle = new Circle(outerCircleAtEquivalentRadius.getCenter(), 1.5*outerCircleAtEquivalentRadius.getRadius());

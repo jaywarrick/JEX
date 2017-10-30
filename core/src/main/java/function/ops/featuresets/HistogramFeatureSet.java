@@ -34,14 +34,14 @@ import org.scijava.ItemIO;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
+import function.ops.histogram.BoundedHistogramCreate;
 import net.imagej.ops.featuresets.AbstractIteratingFeatureSet;
 import net.imagej.ops.featuresets.FeatureSet;
-import net.imagej.ops.image.histogram.HistogramCreate;
 import net.imagej.ops.special.function.Functions;
 import net.imagej.ops.special.function.UnaryFunctionOp;
 import net.imglib2.histogram.Histogram1d;
 import net.imglib2.type.numeric.RealType;
-import net.imglib2.type.numeric.integer.LongType;
+import net.imglib2.type.numeric.real.DoubleType;
 
 /**
  * {@link FeatureSet} representing each bin of a histogram as a feature
@@ -50,8 +50,8 @@ import net.imglib2.type.numeric.integer.LongType;
  * @param <T>
  */
 @Plugin(type = FeatureSet.class, label = "Histogram Features", description = "Calculates the Histogram Features")
-public class HistogramFeatureSet<I extends RealType<I>> extends AbstractIteratingFeatureSet<Iterable<I>, LongType>
-		implements FeatureSet<Iterable<I>, LongType> {
+public class HistogramFeatureSet<I extends RealType<I>> extends AbstractIteratingFeatureSet<Iterable<I>, DoubleType>
+		implements FeatureSet<Iterable<I>, DoubleType> {
 
 	@Parameter(type = ItemIO.INPUT, label = "Number of Bins", description = "The number of bins of the histogram", min = "1", max = "2147483647", stepSize = "1")
 	private int numBins = 256;
@@ -64,8 +64,7 @@ public class HistogramFeatureSet<I extends RealType<I>> extends AbstractIteratin
 	@Override
 	public void initialize() {
 		super.initialize();
-		histogramFunc = Functions.unary(ops(), HistogramCreate.class, Histogram1d.class, in(), numBins);
-
+		histogramFunc = Functions.unary(ops(), BoundedHistogramCreate.class, Histogram1d.class, in(), numBins, BoundedHistogramCreate.SIGMA, -2.0, 2.0, true);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -80,8 +79,8 @@ public class HistogramFeatureSet<I extends RealType<I>> extends AbstractIteratin
 	}
 
 	@Override
-	protected LongType getResultAtIndex(int i) {
-		return new LongType(histogram.frequency(i));
+	protected DoubleType getResultAtIndex(int i) {
+		return new DoubleType(((double) histogram.frequency(i))/((double) histogram.totalCount()));
 	}
 
 	@Override
