@@ -14,6 +14,7 @@ import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.MarkerConstants;
 import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
+import function.plugin.plugins.medianFilterHelpers.FastMedian;
 // Import needed classes here 
 import ij.ImagePlus;
 import ij.plugin.filter.BackgroundSubtracter;
@@ -65,7 +66,7 @@ public class PseudoFluorescenceBackgroundCorrection extends JEXPlugin {
 
 	@ParameterMarker(uiOrder=5, name="Post Multiplier", description="How much to multiply the result to alter values if desired (set to 1 to skip).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1.0")
 	double postMultiplier;
-	
+
 	@ParameterMarker(uiOrder=5, name="Post Addition", description="How much to add to the result to alter values if desired (set to 0 to skip).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
 	double postAddition;
 
@@ -155,22 +156,24 @@ public class PseudoFluorescenceBackgroundCorrection extends JEXPlugin {
 			double max = imp.getMax();
 			imp = JEXWriter.convertToBitDepthIfNecessary(im.getProcessor(), 32);
 
-			//// Subtract the background from the filtered (Image-DF)
+
 			ImageProcessor impTemp = new FloatProcessor(imp.getFloatArray());
+			impTemp.log();
+
+			//// Subtract the background from the filtered (Image-DF)
+			
 			if(presmoothRadius > 0)
 			{
-				RankFilters rF = new RankFilters();
-				rF.rank(impTemp, presmoothRadius, RankFilters.MEAN);
+
+				impTemp = FastMedian.process(impTemp, (int) Math.round(radius*2));
+				//				RankFilters rF = new RankFilters();
+				//				rF.rank(impTemp, presmoothRadius, RankFilters.MEDIAN);
 			}
 
-			impTemp.log();
-			
 			// Amplify the logged signal to calculate the background (for some reason it matters for low intensity float images), then de-amplify
 			impTemp.multiply(65535.0/Math.log(max));
-			impTemp = JEXWriter.convertToBitDepthIfNecessary(impTemp, 16);
 			BackgroundSubtracter bS = new BackgroundSubtracter();
 			bS.rollingBallBackground(impTemp, radius, true, lightBackground, paraboloid, presmooth, true);
-			impTemp = JEXWriter.convertToBitDepthIfNecessary(impTemp, 32);
 			impTemp.multiply(Math.log(max)/65535.0);
 
 			// Subtract the background of the logged image from the logged image
@@ -192,7 +195,7 @@ public class PseudoFluorescenceBackgroundCorrection extends JEXPlugin {
 			{
 				imp.multiply(postMultiplier);
 			}
-			
+
 			// Perform post-addition if desired (e.g., to retain the "gaussian" nature of the noise)
 			if(postAddition != 0.0)
 			{
@@ -203,7 +206,7 @@ public class PseudoFluorescenceBackgroundCorrection extends JEXPlugin {
 			ImageProcessor toSave = JEXWriter.convertToBitDepthIfNecessary(imp, this.bitDepth);
 			String finalPath = JEXWriter.saveImage(toSave);
 			outputMap.put(map.copy(), finalPath);
-			
+
 			// Update display info of progress
 			Logs.log("Finished processing " + count + " of " + total + ".", 1, this);
 			count = count + 1;
