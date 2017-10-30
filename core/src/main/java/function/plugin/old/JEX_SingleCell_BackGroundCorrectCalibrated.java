@@ -280,7 +280,7 @@ public class JEX_SingleCell_BackGroundCorrectCalibrated extends JEXCrunchable {
 		double sigma = Double.parseDouble(this.parameters.getValueOfParameter("Est. BG sigma"));
 		double bgRadius = Double.parseDouble(this.parameters.getValueOfParameter("BG Sub. Radius"));
 		boolean bgInverse = false; // Boolean.parseBoolean(parameters.getValueOfParameter("Inverted"));
-		boolean bgParaboloid = Boolean.parseBoolean(this.parameters.getValueOfParameter("Paraboloid"));
+		boolean bgParaboloid = Boolean.parseBoolean(this.parameters.getValueOfParameter("BG Sub. Paraboloid"));
 		boolean bgPresmooth = false; // Boolean.parseBoolean(parameters.getValueOfParameter("Presmoothing"));
 		double bgPresmoothRadius = Double.parseDouble(this.parameters.getValueOfParameter("BG Sub. Presmooth Radius"));
 		int outputDepth = Integer.parseInt(this.parameters.getValueOfParameter("Output Bit Depth"));
