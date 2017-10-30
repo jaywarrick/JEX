@@ -51,6 +51,19 @@ public class OpTesters {
 		ret = limitFunc.calculate();
 		printLimitsOfHistogram(ret);
 		
+		/**
+		 * > getPercentileLimits(duh, .25, .75)
+		 * [1] -5  5
+		 * > daMed - 2*daMad
+		 * [1] -14.826
+		 * > daMed + 2*daMad
+		 * [1] 14.826
+		 * > daMean - 2*daStdDev
+		 * [1] -12.40967
+		 * > daMean + 2*daStdDev
+		 * [1] 12.40967
+		 */
+		
 	}
 	
 	private static void printLimitsOfHistogram(Histogram1d hist)
