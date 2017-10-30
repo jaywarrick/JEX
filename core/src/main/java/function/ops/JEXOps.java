@@ -74,4 +74,32 @@ public class JEXOps {
 		String NAME = "stats.radiusOfGyration";
 	}
 	
+	/**
+	 * Base interface for "limits" operations.
+	 * <p>
+	 * Implementing classes should be annotated with:
+	 * </p>
+	 *
+	 * <pre>
+	 * @Plugin(type = JEXOps.Limits.class
+	 * </pre>
+	 */
+	public interface Limits extends Op {
+		String NAME = "stats.limits";
+	}
+	
+	/**
+	 * Base interface for "mad" (median absolute deviation) operations.
+	 * <p>
+	 * Implementing classes should be annotated with:
+	 * </p>
+	 *
+	 * <pre>
+	 * @Plugin(type = JEXOps.MAD.class
+	 * </pre>
+	 */
+	public interface MAD extends Op {
+		String NAME = "stats.mad";
+	}
+	
 }

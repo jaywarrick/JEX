@@ -1347,7 +1347,7 @@ public class StatisticsUtility {
 			diffs[count] = Math.abs(d - med);
 			count++;
 		}
-		return median(diffs);
+		return 1.4826 * median(diffs);
 	}
 	
 	public static Double mad(Collection<Double> values)
@@ -1360,7 +1360,7 @@ public class StatisticsUtility {
 			diffs[count] = Math.abs(d - med);
 			count++;
 		}
-		return median(diffs);
+		return 1.4826 * median(diffs);
 	}
 	
 	public static Double sum(double[] values)
