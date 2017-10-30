@@ -162,7 +162,7 @@ public class JEXWriter {
 	/**
 	 * Save the image in the temporary database folder
 	 */
-	public static <T extends RealType<T>> void showImage(Img<T> img)
+	public static <T extends RealType<T>> void debugImage(Img<T> img)
 	{
 		ImagePlus im = ImageJFunctions.wrap(img, "temp");
 		String path = JEXWriter.saveImage(im);
@@ -170,6 +170,26 @@ public class JEXWriter {
 			FileUtility.openFileDefaultApplication(path);
 		} catch (Exception e) {
 			Logs.log("Couldn't save, open, and show the supplied image.", FileUtility.class);
+			e.printStackTrace();
+		}
+	}
+	
+	public static void debugImage(ImageProcessor imp)
+	{
+		imp.resetMinAndMax();
+		try {
+			FileUtility.openFileDefaultApplication(JEXWriter.saveImage(imp));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static void debugImage(ImagePlus imp)
+	{
+		imp.getProcessor().resetMinAndMax();
+		try {
+			FileUtility.openFileDefaultApplication(JEXWriter.saveImage(imp));
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}

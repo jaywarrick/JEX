@@ -223,14 +223,4 @@ public class PseudoFluorescenceBackgroundCorrection extends JEXPlugin {
 		// Return status
 		return true;
 	}
-
-	public void debug(ImageProcessor imp)
-	{
-		imp.resetMinAndMax();
-		try {
-			FileUtility.openFileDefaultApplication(JEXWriter.saveImage(imp));
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
 }
