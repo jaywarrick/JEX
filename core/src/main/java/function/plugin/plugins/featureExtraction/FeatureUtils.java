@@ -203,6 +203,30 @@ public class FeatureUtils {
 	{
 		this.showBooleanII(region, null, false);
 	}
+	
+	/**
+	 * Mainly used with MirroredLabelRegionCursor where you are using a cursor
+	 * other than that directly returned by the label region
+	 * @param c
+	 * @param i
+	 * @param defaultApp
+	 */
+	public void showVoidCursor(Cursor< Void > c, Interval i, boolean defaultApp)
+	{
+		this.show(this.makeImgFromVoidCursor(c, i), defaultApp);
+	}
+	
+	/**
+	 * Mainly used with MirroredLabelRegionCursor where you are using a cursor
+	 * other than that directly returned by the label region
+	 * @param c
+	 * @param i
+	 * @param defaultApp
+	 */
+	public void showVoidCursor(Cursor< Void > c, Interval i)
+	{
+		this.show(this.makeImgFromVoidCursor(c, i), false);
+	}
 
 	public void showVoidII(IterableInterval< Void > region, Interval i, boolean defaultApp)
 	{
@@ -407,6 +431,43 @@ public class FeatureUtils {
 	public Img<UnsignedByteType> makeImgFromVoidII(IterableInterval< Void > region)
 	{
 		return makeImgFromVoidII(region, region);
+	}
+	
+	/**
+	 * This is mainly used for MirroredLabelRegionCursors as you will have a cursor
+	 * that you want to visualize that isn't the cursor directly returned by the
+	 * label region object.
+	 * @param c
+	 * @param region
+	 * @return
+	 */
+	public Img<UnsignedByteType> makeImgFromVoidCursor(Cursor<Void> c, Interval region)
+	{
+		final Img<UnsignedByteType> ret;
+		ret = makeBlackByteImageFromInterval(region);
+
+		Point min = new Point(0,0);
+		Point max = new Point(0,0);
+		Point cur = new Point(0,0);
+		region.min(min);
+		region.max(max);
+		RandomAccess<UnsignedByteType> ra = ret.randomAccess();
+		//System.out.println(min + ", " + max);
+		while(c.hasNext())
+		{
+			c.fwd();
+			//System.out.println("" + (c.getIntPosition(0)-min.getIntPosition(0)) + " , " + (c.getIntPosition(1)-min.getIntPosition(1)));
+			// Draw the image relative to itself
+			cur.setPosition(c.getIntPosition(0)-min.getIntPosition(0), 0); 
+			cur.setPosition(c.getIntPosition(1)-min.getIntPosition(1), 1);
+			ra.setPosition(cur);
+			UnsignedByteType toSet = ra.get();
+			if(toSet != null)
+			{
+				toSet.set(255);
+			}
+		}
+		return ret;
 	}
 
 	public Img<UnsignedByteType> makeImgFromVoidII(IterableInterval< Void > region, Interval i)
