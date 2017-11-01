@@ -3,11 +3,11 @@ package function.ops.stats;
 import org.scijava.Priority;
 import org.scijava.plugin.Plugin;
 
-import algorithms.SpearmanRankCorrelation;
 import function.ops.JEXOps;
 import function.plugin.plugins.featureExtraction.FeatureUtils;
 import net.imagej.ops.special.function.AbstractBinaryFunctionOp;
 import net.imglib2.Cursor;
+import net.imglib2.PairIterator;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.TwinCursor;
 import net.imglib2.type.logic.BitType;
@@ -32,12 +32,44 @@ implements JEXOps.SpearmansRankCorrelationCoefficient {
 		double r = DefaultSpearmansRankCorrelationCoefficient.calculateSpearmanRank(cursor);
 		return new DoubleType(r);
 	}
-	
+
 	// The Static method of the help class is not thread-safe so it causes errors when running multiple threads.
 	// This will funnel calls to the helper class through a synchronized method call.
-	private static synchronized <I1 extends RealType<I1>> double calculateSpearmanRank(TwinCursor<I1> c)
+	public static <T extends RealType<T>, C extends Cursor<T> & PairIterator<T>> double calculateSpearmanRank(C c)
 	{
-		double r = SpearmanRankCorrelation.calculateSpearmanRank(c);
+		SpearmanCalculator<T> spc = new SpearmanCalculator<>();
+		double r = spc.calculateSpearmanRank(c);
 		return r;
 	}
+
+	public static <T extends RealType<T>, C extends Cursor<T> & PairIterator<T>> double[][] getPairedData(C c)
+	{
+		// Step 0: Count the pixels first.
+		int n = 0;
+		while (c.hasNext()) {
+			n++;
+			c.fwd();
+		}
+		c.reset();
+
+		double[][] data = new double[n][2];
+
+		for (int i = 0; i < n; i++) {
+			c.fwd();
+			data[i][0] = c.getFirst().getRealDouble();
+			data[i][1] = c.getSecond().getRealDouble();
+		}
+
+		return data;
+	}
+
+	// The Static method of the help class is not thread-safe so it causes errors when running multiple threads.
+	// This will funnel calls to the helper class through a synchronized method call.
+	public static synchronized <T extends RealType<T>, C extends Cursor<T> & PairIterator<T>> double calculateSpearmanRankSynchronized(C c)
+	{
+		double[][] data = getPairedData(c);
+		double r = algorithms.SpearmanRankCorrelation.calculateSpearmanRank(data);
+		return r;
+	}
+
 }
