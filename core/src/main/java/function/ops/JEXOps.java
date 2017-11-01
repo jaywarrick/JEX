@@ -102,4 +102,32 @@ public class JEXOps {
 		String NAME = "stats.mad";
 	}
 	
+	/**
+	 * Base interface for "symmetrylineangle" operations.
+	 * <p>
+	 * Implementing classes should be annotated with:
+	 * </p>
+	 *
+	 * <pre>
+	 * @Plugin(type = JEXOps.SymmetryLineAngle.class
+	 * </pre>
+	 */
+	public interface SymmetryLineAngle extends Op {
+		String NAME = "geometry.symmetrylineangle";
+	}
+	
+	/**
+	 * Base interface for "symmetrycoefficients" operations.
+	 * <p>
+	 * Implementing classes should be annotated with:
+	 * </p>
+	 *
+	 * <pre>
+	 * @Plugin(type = JEXOps.SymmetryLineAngle.class
+	 * </pre>
+	 */
+	public interface SymmetryCoefficients extends Op {
+		String NAME = "geometry.symmetrycoefficients";
+	}
+	
 }
