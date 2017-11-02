@@ -126,6 +126,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	public TreeMap<DimensionMap, String> maskMap = new TreeMap<DimensionMap, String>();
 	public TreeMap<DimensionMap, ROIPlus> roiMap = new TreeMap<DimensionMap, ROIPlus>();
 	TreeMap<Integer, Integer> idToLabelMap = new TreeMap<Integer, Integer>();
+	DimTable filterTable = new DimTable();
 
 	FeatureUtils utils = new FeatureUtils();
 
@@ -157,38 +158,41 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
 	@ParameterMarker(uiOrder = 3, name = "'Nuclear' mask channel value (optional)", description = "(Optional) If a nuclear mask exists and it is specified, additional nuanced calculations of Zernike features are provided (see comments in code).", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
 	String maskNuclearChannelValue;
-
+	
+	@ParameterMarker(uiOrder = 4, name = "Exclusion Filter DimTable", description = "Filter specific dimension combinations from analysis. (Format: <DimName1>=<a1,a2,...>;<DimName2>=<b1,b2...>)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
+	String filterDimTableString;
+	
 	//	@ParameterMarker(uiOrder = 3, name = "Image intensity offset", description = "Amount the images are offset from zero (will be subtracted before calculation)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "0.0")
 	//	double offset;
 
-	@ParameterMarker(uiOrder = 4, name = "** Compute Stats Features?", description = "Whether to quantify first order statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
+	@ParameterMarker(uiOrder = 5, name = "** Compute Stats Features?", description = "Whether to quantify first order statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
 	boolean stats;
 
-	@ParameterMarker(uiOrder = 5, name = "** Compute 2D Geometric Features?", description = "Whether to quantify geometric statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	@ParameterMarker(uiOrder = 6, name = "** Compute 2D Geometric Features?", description = "Whether to quantify geometric statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean geometric;
 
-	@ParameterMarker(uiOrder = 6, name = "** Compute 2D Haralick Features?", description = "Whether to quantify Haralick texture statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	@ParameterMarker(uiOrder = 7, name = "** Compute 2D Haralick Features?", description = "Whether to quantify Haralick texture statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean haralick2D;
 
-	@ParameterMarker(uiOrder = 7, name = "** Compute Histogram Features?", description = "Whether to quantify histogram statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	@ParameterMarker(uiOrder = 8, name = "** Compute Histogram Features?", description = "Whether to quantify histogram statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean histogram;
 
-	@ParameterMarker(uiOrder = 8, name = "** Compute Moments Features?", description = "Whether to quantify image moment statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	@ParameterMarker(uiOrder = 9, name = "** Compute Moments Features?", description = "Whether to quantify image moment statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean moments;
 
-	@ParameterMarker(uiOrder = 9, name = "** Compute LBP Features?", description = "Whether to quantify linear binary pattern (LBP) statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	@ParameterMarker(uiOrder = 10, name = "** Compute LBP Features?", description = "Whether to quantify linear binary pattern (LBP) statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean lbp;
 
-	@ParameterMarker(uiOrder = 10, name = "** Compute Tamura Features?", description = "Whether to quantify Tamura statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	@ParameterMarker(uiOrder = 11, name = "** Compute Tamura Features?", description = "Whether to quantify Tamura statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean tamura;
 
-	@ParameterMarker(uiOrder = 11, name = "** Compute Zernike Features?", description = "Whether to quantify Zernike shape statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	@ParameterMarker(uiOrder = 12, name = "** Compute Zernike Features?", description = "Whether to quantify Zernike shape statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean zernike;
 
-	@ParameterMarker(uiOrder = 12, name = "** Connectedness Features", description = "The structuring element or number of neighbors to require to be part of the neighborhood.", ui = MarkerConstants.UI_DROPDOWN, choices = {"4 Connected", "8 Connected" }, defaultChoice = 0)
+	@ParameterMarker(uiOrder = 13, name = "** Connectedness Features", description = "The structuring element or number of neighbors to require to be part of the neighborhood.", ui = MarkerConstants.UI_DROPDOWN, choices = {"4 Connected", "8 Connected" }, defaultChoice = 0)
 	String connectedness;
 
-	// Feature set parameters	
+	// Feature set parameters
 
 	@ParameterMarker(uiOrder = 18, name = "Haralick Gray Levels", description = "Number of gray levels for Haralick calculations", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "8")
 	int haralickGrayLevels;
@@ -260,6 +264,8 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		Dim maskChannelDim = maskDimTable.getDimWithName(channelName);
 		int subcount = imageDimTable.getSubTable(maskDimTable_NoChannel.getMapIterator().iterator().next()).mapCount();
 		this.total = maskDimTable.mapCount() * subcount;
+		
+		this.filterTable = new DimTable(this.filterDimTableString);
 
 		// For each whole cell mask
 		for(DimensionMap mapMask_NoChannelTemp : maskDimTable_NoChannel.getMapIterator())
@@ -269,6 +275,12 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			this.mapMask_NoChannel = mapMask_NoChannelTemp;
 			DimensionMap mapMask_WholeCell = this.mapMask_NoChannel.copyAndSet(channelName + "=" + maskWholeCellChannelValue);
 
+			// Skip if we can
+			if(this.filterTable.testDimensionMapUsingDimTableAsFilter(mapMask_WholeCell))
+			{
+				continue;
+			}
+			
 			this.setWholeCellMask(mapMask_WholeCell);
 			if(this.wholeCellMaskImage == null) { continue; }
 			if (this.isCanceled()) { this.close(); return false; }
@@ -282,6 +294,12 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			boolean firstTimeThrough = true;
 			for(DimensionMap mapMaskTemp: imageSubsetTable.getMapIterator())
 			{
+				// Skip if we can
+				if(this.filterTable.testDimensionMapUsingDimTableAsFilter(mapMaskTemp))
+				{
+					continue;
+				}
+				
 				// Set the image
 				this.setImageToMeasure(mapMaskTemp);
 				if(this.image == null)
@@ -364,10 +382,9 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		}
 	}
 
-	public void setMaskToMeasure(DimensionMap mapMask)
+	public void setMaskToMeasure()
 	{
 		Logs.log("Measuring mask: " + this.mapMask, this);
-		this.mapMask = mapMask;
 		this.mask = JEXReader.getSingleImage(maskMap.get(this.mapMask), null);
 
 		// Apply the labels of the whole cells to the mask (e.g., multiple subregions now get the same parent label)
@@ -435,7 +452,12 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
 	public boolean quantifyFeatures(String maskChannelName, boolean firstTimeThrough)
 	{
-		this.setMaskToMeasure(this.mapMask_NoChannel.copyAndSet(this.channelName + "=" + maskChannelName));
+		this.mapMask = this.mapMask_NoChannel.copyAndSet(this.channelName + "=" + maskChannelName);
+		if(this.filterTable.testDimensionMapUsingDimTableAsFilter(this.mapMask))
+		{
+			return true; // i.e., skip
+		}
+		this.setMaskToMeasure();
 		for(IdPoint p : this.maxima.getPointList())
 		{
 			// Set geometries and quantify

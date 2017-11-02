@@ -2,11 +2,13 @@ package tables;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 
 import miscellaneous.Copiable;
 import miscellaneous.SSVList;
+import miscellaneous.StringUtility;
 import weka.core.Attribute;
 
 /**
@@ -45,12 +47,14 @@ public class DimTable extends ArrayList<Dim> implements Copiable<DimTable> {
 	/**
 	 * Class constructor 
 	 * Load from a SSV-CSV string
+	 * Smart enough to remove whitespace on ends etc.
 	 * 
 	 * @param csvString a concatenation of csvStrings separated by semicolon
 	 */
 	public DimTable(String csvString)
 	{
 		this();
+		csvString = StringUtility.removeWhiteSpaceOnEnds(csvString);
 		if(csvString != null && !csvString.equals(""))
 		{
 			// get a list of csvStrings 
@@ -59,6 +63,7 @@ public class DimTable extends ArrayList<Dim> implements Copiable<DimTable> {
 			for (String dimStr : ssvDim)
 			{
 				// convert each csvString to a Dim including dimName at pos 0, dimValues at pos 1 to ...
+				// Dim is smart enough to remove whitespace on ends
 				Dim dim = new Dim(dimStr);
 				this.add(dim);
 			}
@@ -422,7 +427,37 @@ public class DimTable extends ArrayList<Dim> implements Copiable<DimTable> {
 	}
 	
 	/**
-	 * returned true if the given DimensionMap matches DimTable
+	 * true is returned if all of the Dim objects of the Dim table have DimName-DimValue pairs in the provided DimensionMap
+	 * If you want the opposite see 'hasDimensionMap' where true is returned if ALL the DimName-DimValues from the Dimension Map exist in the Dim objects of the DimTable
+	 * 
+	 * 
+	 * @param map DimensionMap
+	 * @return true if the given DimensionMap matches DimTable
+	 */
+	public boolean testDimensionMapUsingDimTableAsFilter(DimensionMap map)
+	{
+		int count = 0;
+		for(Entry<String,String> e : map.entrySet())
+		{
+			Dim d = this.getDimWithName(e.getKey());
+			if(d == null)
+			{
+				continue;
+			}
+			
+			if(!d.containsValue(e.getValue()))
+			{
+				return false;
+			}
+			count = count + 1;
+		}
+		return count == this.size();
+	}
+	
+	/**
+	 * true is returned if ALL the DimName-DimValues from the Dimension Map exist in the Dim objects of the DimTable
+	 * 
+	 * If you want the opposite see 'testDimensionMapUsingDimTableAsFilter' where true is returned if all of the Dim objects of the Dim table have DimName-DimValue pairs in the provided DimensionMap
 	 * 
 	 * @param map DimensionMap
 	 * @return true if the given DimensionMap matches DimTable

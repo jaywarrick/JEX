@@ -26,6 +26,7 @@ import jex.utilities.FunctionUtility;
 import logs.Logs;
 import miscellaneous.CSVList;
 import tables.Dim;
+import tables.DimTable;
 import tables.DimensionMap;
 
 /**
@@ -59,8 +60,14 @@ public class FastMedianBackgroundSubtract extends JEXPlugin {
 	@ParameterMarker(uiOrder=1, name="Kernal Width", description="Pixel width of the kernal. If > 100, then probably use the 'Super Fast Median Filter' instead.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="5")
 	int kernalWidth;
 	
-	@ParameterMarker(uiOrder=1, name="Nominal Value to Add Back", description="Nominal value to add to all pixels after background subtraction because some image formats don't allow negative numbers. (Use following notation to specify different parameters for differen dimension values, '<Dim Name>'=<val1>,<val2>,<val3>' e.g., 'Channel=0,100,100'. The values will be applied in that order for the ordered dim values.) ", ui=MarkerConstants.UI_TEXTFIELD, defaultText="100")
+	@ParameterMarker(uiOrder=2, name="Nominal Value to Add Back", description="Nominal value to add to all pixels after background subtraction because some image formats don't allow negative numbers. (Use following notation to specify different parameters for differen dimension values, '<Dim Name>'=<val1>,<val2>,<val3>' e.g., 'Channel=0,100,100'. The values will be applied in that order for the ordered dim values.) ", ui=MarkerConstants.UI_TEXTFIELD, defaultText="100")
 	String nominal;
+	
+	@ParameterMarker(uiOrder=3, name="Exclusion Filter DimTable", description="Exclude combinatoins of Dimension Names and values. (Use following notation '<DimName1>=<a1,a2,...>;<DimName2>=<b1,b2,...>' e.g., 'Channel=0,100,100; Time=1,2,3,4,5' (spaces are ok).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
+	String exclusionFilterString;
+	
+	@ParameterMarker(uiOrder=4, name="Keep Excluded Images?", description="Should images excluded by the filter be copied to the new object?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
+	boolean keepExcluded;
 	
 	/////////// Define Outputs ///////////
 	
@@ -89,6 +96,8 @@ public class FastMedianBackgroundSubtract extends JEXPlugin {
 			return false;
 		}
 		
+		DimTable filterTable = new DimTable(this.exclusionFilterString);
+		
 		// Run the function
 		TreeMap<DimensionMap,String> imageMap = ImageReader.readObjectToImagePathTable(imageData);
 		TreeMap<DimensionMap,String> outputImageMap = new TreeMap<DimensionMap,String>();
@@ -96,6 +105,28 @@ public class FastMedianBackgroundSubtract extends JEXPlugin {
 		String tempPath;
 		for (DimensionMap map : imageMap.keySet())
 		{
+			if(filterTable.testDimensionMapUsingDimTableAsFilter(map))
+			{
+				if(this.keepExcluded)
+				{
+					Logs.log("Skipping the processing of " + map.toString(), this);
+					ImagePlus out = new ImagePlus(imageMap.get(map));
+					tempPath = JEXWriter.saveImage(out);
+					if(tempPath != null)
+					{
+						outputImageMap.put(map, tempPath);
+					}
+					
+				}
+				else
+				{
+					Logs.log("Skipping the processing and saving of " + map.toString(), this);
+				}
+				count = count + 1;
+				percentage = (int) (100 * ((double) (count) / ((double) imageMap.size())));
+				JEXStatics.statusBar.setProgressPercentage(percentage);
+				continue;
+			}
 			if(this.isCanceled())
 			{
 				Logs.log("Function canceled.", this);

@@ -20,7 +20,9 @@ import ij.process.FloatProcessor;
 import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import jex.utilities.FunctionUtility;
+import logs.Logs;
 import miscellaneous.StringUtility;
+import tables.DimTable;
 import tables.DimensionMap;
 
 /**
@@ -72,6 +74,12 @@ public class AdjustImageMultiChannel extends JEXPlugin {
 	@ParameterMarker(uiOrder=7, name="Output Bit Depth", description="Depth of the outputted image for all channels.", ui=MarkerConstants.UI_DROPDOWN, choices={ "8", "16", "32" }, defaultChoice=1)
 	int bitDepth;
 	
+	@ParameterMarker(uiOrder=8, name="Exclusion Filter DimTable", description="Filter specific dimension combinations from analysis. (Format: <DimName1>=<a1,a2,...>;<DimName2>=<b1,b2...>)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
+	String filterDimTableString;
+	
+	@ParameterMarker(uiOrder=9, name="Keep Excluded Images?", description="Should images excluded by the filter be copied to the new object?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
+	boolean keepExcluded;
+	
 	/////////// Define Outputs ///////////
 	
 	@OutputMarker(uiOrder=1, name="Adjusted Image", type=MarkerConstants.TYPE_IMAGE, flavor="", description="The resultant adjusted image", enabled=true)
@@ -117,6 +125,8 @@ public class AdjustImageMultiChannel extends JEXPlugin {
 				return false;
 			}
 			
+			DimTable filterTable = new DimTable(this.filterDimTableString);
+			
 			// Run the function
 			TreeMap<DimensionMap,String> imageMap = ImageReader.readObjectToImagePathTable(imageData);
 			TreeMap<DimensionMap,String> outputImageMap = new TreeMap<DimensionMap,String>();
@@ -124,6 +134,30 @@ public class AdjustImageMultiChannel extends JEXPlugin {
 			String tempPath;
 			for (DimensionMap map : imageMap.keySet())
 			{
+				if(filterTable.testDimensionMapUsingDimTableAsFilter(map))
+				{
+					if(this.keepExcluded)
+					{
+						Logs.log("Skipping the processing of " + map.toString(), this);
+						ImagePlus out = new ImagePlus(imageMap.get(map));
+						tempPath = JEXWriter.saveImage(out);
+						if(tempPath != null)
+						{
+							outputImageMap.put(map, tempPath);
+						}
+						count = count + 1;
+						percentage = (int) (100 * ((double) (count) / ((double) imageMap.size())));
+						JEXStatics.statusBar.setProgressPercentage(percentage);
+					}
+					else
+					{
+						Logs.log("Skipping the processing and saving of " + map.toString(), this);
+						count = count + 1;
+						percentage = (int) (100 * ((double) (count) / ((double) imageMap.size())));
+						JEXStatics.statusBar.setProgressPercentage(percentage);
+					}
+					continue;
+				}
 				// Check if canceled
 				if(this.isCanceled())
 				{
