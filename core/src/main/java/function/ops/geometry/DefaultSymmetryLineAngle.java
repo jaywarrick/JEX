@@ -56,7 +56,7 @@ implements JEXOps.SymmetryLineAngle {
 				double val = cur.get().getRealDouble();
 				totalSin = totalSin + Math.sin(((double) foldSymmetry) * coords.getB()) * val;
 				totalCos = totalCos + Math.cos(((double) foldSymmetry) * coords.getB()) * val;
-				total = total + val;
+				total = total + Math.abs(val); // We do this because some vals might be negative but could add to sin/cos amplitude 
 				n++;
 			}
 		}
