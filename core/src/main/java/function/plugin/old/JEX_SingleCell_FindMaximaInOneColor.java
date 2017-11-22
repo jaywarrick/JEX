@@ -262,7 +262,7 @@ public class JEX_SingleCell_FindMaximaInOneColor extends JEXCrunchable {
 				{
 					// //// Smooth the nuclear image
 					RankFilters rF = new RankFilters();
-					rF.setup(JEX_Filters.MEAN, ip);
+					rF.setup(JEX_ImageFilters.MEAN, ip);
 					rF.rank(imp, radius, RankFilters.MEAN);
 				}
 				

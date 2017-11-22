@@ -12,8 +12,9 @@ import Database.Definition.ParameterSet;
 import Database.Definition.TypeName;
 import Database.SingleUserDatabase.JEXWriter;
 import function.JEXCrunchable;
+import function.plugin.plugins.imageProcessing.RankFilters2;
 import ij.ImagePlus;
-import ij.plugin.filter.RankFilters;
+import ij.process.Blitter;
 import ij.process.ImageProcessor;
 import jex.statics.JEXStatics;
 import miscellaneous.CSVList;
@@ -30,11 +31,11 @@ import tables.DimensionMap;
  * @author erwinberthier
  * 
  */
-public class JEX_Filters extends JEXCrunchable {
+public class JEX_ImageFilters extends JEXCrunchable {
 
-	public static String MEAN = "mean", MIN = "min", MAX = "max", MEDIAN = "median", VARIANCE = "variance";
+	public static String MEAN = "mean", MIN = "min", MAX = "max", MEDIAN = "median", VARIANCE = "variance", OUTLIERS="outliers", DESPECKLE="despeckle", REMOVE_NAN="remove NaN", OPEN="open", CLOSE="close", OPEN_TOPHAT="open top-hat", CLOSE_TOPHAT="close top-hat", SUM="sum";
 
-	public JEX_Filters()
+	public JEX_ImageFilters()
 	{}
 
 	// ----------------------------------------------------
@@ -144,7 +145,7 @@ public class JEX_Filters extends JEXCrunchable {
 		// Parameter p0 = new
 		// Parameter("Dummy Parameter","Lets user know that the function has been selected.",FormLine.DROPDOWN,new
 		// String[] {"true"},0);
-		Parameter p1 = new Parameter("Filter Type", "Type of filter to apply.", Parameter.DROPDOWN, new String[] { MEAN, MIN, MAX, MEDIAN, VARIANCE }, 0);
+		Parameter p1 = new Parameter("Filter Type", "Type of filter to apply.", Parameter.DROPDOWN, new String[] { MEAN, MIN, MAX, MEDIAN, VARIANCE, OUTLIERS, DESPECKLE, REMOVE_NAN, OPEN, CLOSE, OPEN_TOPHAT, CLOSE_TOPHAT, SUM }, 0);
 		Parameter p7 = new Parameter("Exclusion Filter", "<DimName>=<Val1>,<Val2>,...<Valn>, Specify the dimension and dimension values to exclude. Leave blank to process all.", "");
 		Parameter p8 = new Parameter("Keep Unprocessed Images?", "Should the images within the object that are exlcluded from analysis by the Dimension Filter be kept in the result?", Parameter.CHECKBOX, true);
 		Parameter p2 = new Parameter("Radius", "Radius of filter in pixels.", "2.0");
@@ -242,10 +243,22 @@ public class JEX_Filters extends JEXCrunchable {
 			}
 			
 			ImageProcessor ip = im.getProcessor().convertToFloat();
+			ImageProcessor orig = null;
+			
+			if(method.equals(OPEN_TOPHAT) || method.equals(CLOSE_TOPHAT))
+			{
+				orig = ip.duplicate();
+			}
 
 			// //// Begin Actual Function
-			RankFilters rF = new RankFilters();
+			RankFilters2 rF = new RankFilters2();
 			rF.rank(ip, radius, getMethodInt(method));
+			if(method.equals(OPEN_TOPHAT) || method.equals(CLOSE_TOPHAT))
+			{
+				orig.copyBits(ip, 0, 0, Blitter.SUBTRACT);
+				ip = orig;
+				orig = null;
+			}
 			
 			if(log)
 			{
@@ -256,19 +269,8 @@ public class JEX_Filters extends JEXCrunchable {
 				ip.multiply(mult);
 			}
 			
-			// //// End Actual Function
-
-			ImageProcessor toSave = ip;
-			if(bitDepth == 8)
-			{
-				toSave = ip.convertToByte(false);
-			}
-			else if(bitDepth == 16)
-			{
-				toSave = ip.convertToShort(false);
-			}
-
-			String path = JEXWriter.saveImage(toSave);
+			ip = JEXWriter.convertToBitDepthIfNecessary(ip, bitDepth);
+			String path = JEXWriter.saveImage(ip);
 
 			if(path != null)
 			{
@@ -295,22 +297,46 @@ public class JEX_Filters extends JEXCrunchable {
 	
 	public static int getMethodInt(String method)
 	{
-		int methodInt = RankFilters.MEAN;
+		int methodInt = RankFilters2.MEAN;
 		if(method.equals(MIN))
 		{
-			methodInt = RankFilters.MIN;
+			methodInt = RankFilters2.MIN;
 		}
 		else if(method.equals(MAX))
 		{
-			methodInt = RankFilters.MAX;
+			methodInt = RankFilters2.MAX;
 		}
 		else if(method.equals(MEDIAN))
 		{
-			methodInt = RankFilters.MEDIAN;
+			methodInt = RankFilters2.MEDIAN;
 		}
 		else if(method.equals(VARIANCE))
 		{
-			methodInt = RankFilters.VARIANCE;
+			methodInt = RankFilters2.VARIANCE;
+		}
+		else if(method.equals(OUTLIERS))
+		{
+			methodInt = RankFilters2.OUTLIERS;
+		}
+		else if(method.equals(DESPECKLE))
+		{
+			methodInt = RankFilters2.DESPECKLE;
+		}
+		else if(method.equals(REMOVE_NAN))
+		{
+			methodInt = RankFilters2.REMOVE_NAN;
+		}
+		else if(method.equals(OPEN) || method.equals(OPEN_TOPHAT))
+		{
+			methodInt = RankFilters2.OPEN;
+		}
+		else if(method.equals(CLOSE) || method.equals(CLOSE_TOPHAT))
+		{
+			methodInt = RankFilters2.CLOSE;
+		}
+		else if(method.equals(SUM))
+		{
+			methodInt = RankFilters2.SUM;
 		}
 		return methodInt;
 	}

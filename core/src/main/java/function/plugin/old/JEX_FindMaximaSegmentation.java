@@ -440,7 +440,7 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 						{
 							// Smooth the image
 							RankFilters rF = new RankFilters();
-							rF.setup(JEX_Filters.MEDIAN, imToSeg);
+							rF.setup(JEX_ImageFilters.MEDIAN, imToSeg);
 							rF.rank(toSeg, despeckleR, RankFilters.MEDIAN);
 							rF.run(toSeg);
 						}
@@ -458,7 +458,7 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 						{
 							// Smooth the image
 							RankFilters rF = new RankFilters();
-							rF.setup(JEX_Filters.MEAN, imToSeg);
+							rF.setup(JEX_ImageFilters.MEAN, imToSeg);
 							rF.rank(toSeg, smoothR, RankFilters.MEAN);
 						}
 						if(this.isCanceled())
