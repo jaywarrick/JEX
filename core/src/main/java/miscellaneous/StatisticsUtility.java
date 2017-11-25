@@ -1126,7 +1126,7 @@ public class StatisticsUtility {
 	}
 	
 	
-	public static Vector<Point> generateRandomPointsInRectangularRegion(Interval interval, int numPoints)
+	public static Vector<Point> generateRandomPointsInRectangularRegion(Interval interval, long numPoints)
 	{
 		// the number of dimensions
         int numDimensions = interval.numDimensions();
@@ -1139,7 +1139,7 @@ public class StatisticsUtility {
 
         // Make a separate method that returns the list of random locations within the interval
         // Then just offset the locations by the min of each dimension.
-        for ( int i = 0; i < numPoints; ++i )
+        for ( long i = 0; i < numPoints; ++i )
         {
             Point point = new Point( numDimensions );
  
