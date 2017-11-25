@@ -1,11 +1,16 @@
 package function.plugin.plugins.test;
 
+import java.awt.geom.Ellipse2D;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Vector;
 
+import function.algorithm.neighborhood.EdgeCursor;
+import function.algorithm.neighborhood.Indexer;
+import function.algorithm.neighborhood.PositionableRunningNeighborhood;
+import function.algorithm.neighborhood.SnakingCursor;
 import function.ops.geometry.DefaultSmallestEnclosingCircle;
 import function.ops.zernike.ZernikeComputer;
 import function.plugin.IJ2.IJ2PluginUtility;
@@ -24,12 +29,14 @@ import net.imagej.ops.geom.geom2d.Circle;
 import net.imagej.ops.special.function.Functions;
 import net.imagej.ops.special.function.UnaryFunctionOp;
 import net.imglib2.Cursor;
+import net.imglib2.FinalInterval;
 import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealCursor;
 import net.imglib2.RealLocalizable;
 import net.imglib2.img.Img;
+import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.roi.geometric.PointCollection;
 import net.imglib2.roi.geometric.Polygon;
@@ -41,13 +48,92 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.IntType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.real.DoubleType;
+import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.ValuePair;
 import rtools.R;
 
 public class TestStuff {
+	
+	public static FeatureUtils utils = new FeatureUtils();
+	
+	static
+	{
+		DirectoryManager.setHostDirectory("/Users/jaywarrick/Downloads");
+	}
 
 	public static void main (String[] args) throws Exception
 	{
-		tryLabelSubLabelRegion();
+		tryMakingSpeckledImg();
+	}	
+	
+	public static void tryMakingSpeckledImg()
+	{
+		Img<UnsignedByteType> img = utils.makeImageFromInterval(new FinalInterval(100, 100), new UnsignedByteType(0));
+		utils.addRandomSpeckles(img, 1000, new UnsignedByteType(255));
+		utils.show(img, false);
+	}
+	
+	public static void trySnakingIndexer()
+	{
+		long[] dims = new long[]{10,10};
+		Indexer snake = new Indexer(dims, true);
+		while(snake.hasNext())
+		{
+			snake.indexPos();
+			long[] cur = snake.getCurrent();
+			System.out.println("X:" + cur[0] + " Y:" + cur[1]);
+		}
+	}
+	
+	public static void tryRunningNeighborhood()
+	{
+		FeatureUtils utils = new FeatureUtils();
+		IJ2PluginUtility.ij().op();
+//		ImagePlus im = new ImagePlus("/Users/jaywarrick/Downloads/Image of 1's.tif");
+		ImagePlus im = new ImagePlus("/Users/jaywarrick/Documents/Miyamoto/Grants/Submitted/2017 R01 - MM TME/Figures/SymmetryTests/Nuclei-01.tif");
+		Img<UnsignedByteType> img = ImageJFunctions.wrapByte(im);
+		PositionableRunningNeighborhood<UnsignedByteType> p = new PositionableRunningNeighborhood<>(new Ellipse2D.Double(0,0,41,11), img, PositionableRunningNeighborhood.BORDER);
+		Cursor<UnsignedByteType> c = new SnakingCursor<UnsignedByteType>(img);
+		ArrayImgFactory<FloatType> f = new ArrayImgFactory<>();
+		long[] dims = new long[img.numDimensions()];
+		img.dimensions(dims);
+		Img<FloatType> img2 = f.create(dims, new FloatType(0));
+		RandomAccess<FloatType> ra2 = img2.randomAccess();
+		float sum = 0;
+		while(c.hasNext())
+		{
+			c.fwd();
+			p.setPosition(c);
+			ValuePair<EdgeCursor<UnsignedByteType>, EdgeCursor<UnsignedByteType>> edges = p.getEdgeCursors();
+			if(edges == null)
+			{
+				sum = 0;
+				while(p.hasNext())
+				{
+					p.fwd();
+					sum = sum + p.get().getRealFloat();
+				}
+			}
+			else
+			{
+				// Add new values
+				while(edges.a.hasNext())
+				{
+					edges.a.fwd();
+					sum = sum + edges.a.get().getRealFloat();
+				}
+				// Subtract old values
+				while(edges.b.hasNext())
+				{
+					edges.b.fwd();
+					sum = sum - edges.b.get().getRealFloat();
+				}
+			}
+			ra2.setPosition(c);
+			ra2.get().set(sum);
+		}
+		utils.show(img, true);
+		utils.show(img2, true);
 	}
 	
 	public static void tryLabelSubLabelRegion()
