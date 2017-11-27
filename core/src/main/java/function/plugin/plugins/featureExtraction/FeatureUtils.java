@@ -1,6 +1,7 @@
 package function.plugin.plugins.featureExtraction;
 
 import java.io.File;
+import java.util.Random;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.Vector;
@@ -10,8 +11,10 @@ import function.ops.intervals.CroppedRealRAI;
 import function.ops.intervals.IntersectedBooleanRAI;
 import function.ops.intervals.MapIIToSamplingRAI;
 import function.plugin.IJ2.IJ2PluginUtility;
+
 import ij.ImagePlus;
 import ij.process.ByteProcessor;
+import ij.process.ImageProcessor;
 import image.roi.IdPoint;
 import image.roi.PointList;
 import image.roi.PointSamplerList;
@@ -58,8 +61,10 @@ import net.imglib2.type.logic.BoolType;
 import net.imglib2.type.numeric.IntegerType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.IntType;
+import net.imglib2.type.numeric.integer.LongType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
+import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.IterableRandomAccessibleInterval;
 import net.imglib2.view.Views;
@@ -347,11 +352,11 @@ public class FeatureUtils {
 		final Img<UnsignedShortType> ret;
 		if(i == null)
 		{
-			ret = makeBlackShortImageFromInterval(region);
+			ret = makeImageFromInterval(region, new UnsignedShortType(0));
 		}
 		else
 		{
-			ret = makeBlackShortImageFromInterval(i);
+			ret = makeImageFromInterval(i, new UnsignedShortType(0));
 		}
 		Cursor<T> c = region.cursor();
 		Point min = new Point(0,0);
@@ -393,11 +398,11 @@ public class FeatureUtils {
 		final Img<UnsignedByteType> ret;
 		if(i == null)
 		{
-			ret = makeBlackByteImageFromInterval(region);
+			ret = makeImageFromInterval(region, new UnsignedByteType(0));
 		}
 		else
 		{
-			ret = makeBlackByteImageFromInterval(i);
+			ret = makeImageFromInterval(i, new UnsignedByteType(0));
 		}
 		Cursor<T> c = region.cursor();
 		Point min = new Point(0,0);
@@ -448,7 +453,7 @@ public class FeatureUtils {
 	public Img<UnsignedByteType> makeImgFromVoidCursor(Cursor<Void> c, Interval region)
 	{
 		final Img<UnsignedByteType> ret;
-		ret = makeBlackByteImageFromInterval(region);
+		ret = makeImageFromInterval(region, new UnsignedByteType(0));
 
 		Point min = new Point(0,0);
 		Point max = new Point(0,0);
@@ -479,11 +484,11 @@ public class FeatureUtils {
 		final Img<UnsignedByteType> ret;
 		if(i == null)
 		{
-			ret = makeBlackByteImageFromInterval(region);
+			ret = makeImageFromInterval(region, new UnsignedByteType(0));
 		}
 		else
 		{
-			ret = makeBlackByteImageFromInterval(i);
+			ret = makeImageFromInterval(i, new UnsignedByteType(0));
 		}
 
 		Cursor<Void> c = region.cursor();
@@ -520,52 +525,259 @@ public class FeatureUtils {
 		return ret;
 	}
 
-	public Img<UnsignedByteType> makeBlackByteImageFromInterval(Interval i)
+	@SuppressWarnings("unchecked")
+	public <T extends RealType<T>> Img<T> makeImageFromInterval(Interval i, T val)
 	{
-		long[] dimensions = new long[i.numDimensions()];
-		i.dimensions(dimensions);
-		final Img<UnsignedByteType> ret = ArrayImgs.unsignedBytes( dimensions );
-		return ret;
-	}
-
-	public Img<UnsignedByteType> makeWhiteByteImageFromInterval(Interval i)
-	{
-		final Img<UnsignedByteType> ret = makeBlackByteImageFromInterval(i);
-
-		Cursor<UnsignedByteType> c = ret.cursor();
-		while(c.hasNext())
+		if(val instanceof UnsignedByteType)
 		{
-			c.fwd();
-			c.get().set(255);
+			ArrayImgFactory<UnsignedByteType> f = new ArrayImgFactory<>();
+			return (Img<T>) f.create(i, (UnsignedByteType) val);
 		}
-		return ret;
-	}
-
-	public Img<UnsignedShortType> makeBlackShortImageFromInterval(Interval i)
-	{
-		long[] dimensions = new long[i.numDimensions()];
-		i.dimensions(dimensions);
-		final Img<UnsignedShortType> ret = ArrayImgs.unsignedShorts( dimensions );
-		return ret;
-	}
-
-	public Img<UnsignedShortType> makeWhiteShortImageFromInterval(Interval i)
-	{
-		final Img<UnsignedShortType> ret = makeBlackShortImageFromInterval(i);
-
-		Cursor<UnsignedShortType> c = ret.cursor();
-		while(c.hasNext())
+		else if(val instanceof UnsignedShortType)
 		{
-			c.fwd();
-			c.get().set(65535);
+			ArrayImgFactory<UnsignedShortType> f = new ArrayImgFactory<>();
+			return (Img<T>) f.create(i, (UnsignedShortType) val);
 		}
-		return ret;
+		else if(val instanceof FloatType)
+		{
+			ArrayImgFactory<FloatType> f = new ArrayImgFactory<>();
+			return (Img<T>) f.create(i, (FloatType) val);
+		}
+		else if(val instanceof BitType)
+		{
+			ArrayImgFactory<BitType> f = new ArrayImgFactory<>();
+			return (Img<T>) f.create(i, (BitType) val);
+		}
+		else if(val instanceof IntType)
+		{
+			ArrayImgFactory<IntType> f = new ArrayImgFactory<>();
+			return (Img<T>) f.create(i, (IntType) val);
+		}
+		else if(val instanceof LongType)
+		{
+			ArrayImgFactory<LongType> f = new ArrayImgFactory<>();
+			return (Img<T>) f.create(i, (LongType) val);
+		}
+		else if(val instanceof LongType)
+		{
+			ArrayImgFactory<LongType> f = new ArrayImgFactory<>();
+			return (Img<T>) f.create(i, (LongType) val);
+		}
+		else return null;
+	}
+
+	public <T extends RealType<T>> void addRandomSpeckles(Img<T> img, long numberOfSpecks, T val)
+	{
+		long totMax = 1L;
+		long[] dims = new long[img.numDimensions()];
+		img.dimensions(dims);
+		for(int d=0; d < img.numDimensions(); d++)
+		{
+			totMax = totMax * dims[d];
+		}
+
+		if(((long) 0.9 * totMax >= numberOfSpecks))
+		{
+			// Set all to true otherwise takes longer to randomly fill to 90% or more.
+			Cursor<T> c = img.cursor();
+			while(c.hasNext())
+			{
+				c.fwd();
+				c.get().set(val);
+			}
+			return;
+		}
+
+		RandomAccess<T> ra = img.randomAccess();
+
+		// the number of dimensions
+		int numDimensions = img.numDimensions();
+
+		// a random number generator
+		Random rnd = new Random();
+		long tot = 0L;
+		double testVal = val.getRealDouble();
+		while( tot < numberOfSpecks)
+		{
+			for ( int d = 0; d < numDimensions; ++d )
+			{
+				ra.setPosition( Math.round(rnd.nextDouble() * ( img.realMax( d ) - img.realMin( d ) ) + img.realMin( d )), d );
+			}
+
+			if(ra.get().getRealDouble() == testVal)
+			{
+				continue;
+			}
+
+			// add a new element with a random intensity in the range 0...1
+			ra.get().set(val);
+
+			tot = tot + 1;
+		}
+	}
+	
+	public <T extends RealType<T>> Vector<Double> hexagonallySampleN(ImageProcessor img, long numberOfSpeckles)
+	{
+		// hexagonal closepacked is horizontal spacing of one diameter (2*r) and vertical spacing of dia * sqrt(3)/2
+		// The number of unit rectangles in the horizontal direction is width/(2*r)
+		// The number of unit rectangles in the vertical direction is height / (2* dia * sqrt(3)/2)
+		// The number of points per unit square is 2
+		// Area_image is width * height
+		// Area_unit is dia * (2 * dia * sqrt(3)/2)
+		// Number of unit squares N_unit = Area_image/Area_unit
+		// N_points = 2 * N_unit
+		// N_unit = N_points/2
+		// Area_image/Area_unit = N_points/2 = (w * h) / ( dia^2 * sqrt(3) )
+		// Solve this for diameter to start putting points in the image.
+		// dia = sqrt( N_points / (2*sqrt(3)))
+		double w = img.getWidth();
+		double h = img.getHeight();
+		double dia = Math.sqrt( ( 2 * (w * h) / numberOfSpeckles ) / Math.sqrt(3) );
+		double dx = dia;
+		double dy = dia * Math.sqrt(3) / 2;
+
+		// Make a separate method that returns the list of random locations within the interval
+		// Then just offset the locations by the min of each dimension.
+		boolean oddRow = true;
+		long tot = 0L;
+		Vector<Double> samples = new Vector<>();
+		for(double y=0; y <= h; y = y + dy)
+		{
+			for(double x=0; x <= w; x = x + dx)
+			{
+				if(oddRow)
+				{
+					samples.add(new Double(img.getPixelValue((int) x, (int) y)));
+					tot = tot + 1;
+				}
+				else
+				{
+					samples.add(new Double(img.getPixelValue((int) (x + dx/2.0), (int) y)));
+					tot = tot + 1;
+				}
+			}
+			oddRow = !oddRow;
+		}
+		
+		return samples;
+		//System.out.println("Tried to make " + numberOfSpeckles + " but actually made " + tot);
+	}
+
+	public <T extends RealType<T>> Vector<Double> hexagonallySampleN(Img<T> img, long numberOfSpeckles)
+	{
+		// hexagonal closepacked is horizontal spacing of one diameter (2*r) and vertical spacing of dia * sqrt(3)/2
+		// The number of unit rectangles in the horizontal direction is width/(2*r)
+		// The number of unit rectangles in the vertical direction is height / (2* dia * sqrt(3)/2)
+		// The number of points per unit square is 2
+		// Area_image is width * height
+		// Area_unit is dia * (2 * dia * sqrt(3)/2)
+		// Number of unit squares N_unit = Area_image/Area_unit
+		// N_points = 2 * N_unit
+		// N_unit = N_points/2
+		// Area_image/Area_unit = N_points/2 = (w * h) / ( dia^2 * sqrt(3) )
+		// Solve this for diameter to start putting points in the image.
+		// dia = sqrt( N_points / (2*sqrt(3)))
+		double w = img.dimension(0);
+		double h = img.dimension(1);
+		double dia = Math.sqrt( ( 2 * (w * h) / numberOfSpeckles ) / Math.sqrt(3) );
+		double dx = dia;
+		double dy = dia * Math.sqrt(3) / 2;
+
+		// Make a separate method that returns the list of random locations within the interval
+		// Then just offset the locations by the min of each dimension.
+		RandomAccess<T> ra = img.randomAccess();
+		boolean oddRow = true;
+		long tot = 0L;
+		Vector<Double> samples = new Vector<>();
+		for(double y=0; y <= h; y = y + dy)
+		{
+			for(double x=0; x <= w; x = x + dx)
+			{
+				if(oddRow)
+				{
+					ra.setPosition(new long[]{(long) x, (long) y});
+					samples.add(ra.get().getRealDouble());
+					tot = tot + 1;
+				}
+				else
+				{
+					ra.setPosition(new long[]{(long) (x + dx/2.0), (long) y});
+					samples.add(ra.get().getRealDouble());
+					tot = tot + 1;
+				}
+			}
+			oddRow = !oddRow;
+		}
+		
+		return samples;
+		//System.out.println("Tried to make " + numberOfSpeckles + " but actually made " + tot);
+	}
+
+	public <T extends RealType<T>> void addHexPackedSpeckles(Img<T> img, long numberOfSpeckles, T val)
+	{
+		// hexagonal closepacked is horizontal spacing of one diameter (2*r) and vertical spacing of dia * sqrt(3)/2
+		// The number of unit rectangles in the horizontal direction is width/(2*r)
+		// The number of unit rectangles in the vertical direction is height / (2* dia * sqrt(3)/2)
+		// The number of points per unit square is 2
+		// Area_image is width * height
+		// Area_unit is dia * (2 * dia * sqrt(3)/2)
+		// Number of unit squares N_unit = Area_image/Area_unit
+		// N_points = 2 * N_unit
+		// N_unit = N_points/2
+		// Area_image/Area_unit = N_points/2 = (w * h) / ( dia^2 * sqrt(3) )
+		// Solve this for diameter to start putting points in the image.
+		// dia = sqrt( N_points / (2*sqrt(3)))
+		double w = img.dimension(0);
+		double h = img.dimension(1);
+		double dia = Math.sqrt( ( 2 * (w * h) / numberOfSpeckles ) / Math.sqrt(3) );
+		double dx = dia;
+		double dy = dia * Math.sqrt(3) / 2;
+
+		// Make a separate method that returns the list of random locations within the interval
+		// Then just offset the locations by the min of each dimension.
+		RandomAccess<T> ra = img.randomAccess();
+		boolean oddRow = true;
+		long tot = 0L;
+		for(double y=0; y <= h; y = y + dy)
+		{
+			for(double x=0; x <= w; x = x + dx)
+			{
+				if(oddRow)
+				{
+					ra.setPosition(new long[]{(long) x, (long) y});
+					ra.get().set(val);
+					tot = tot + 1;
+				}
+				else
+				{
+					ra.setPosition(new long[]{(long) (x + dx/2.0), (long) y});
+					ra.get().set(val);
+					tot = tot + 1;
+				}
+			}
+			oddRow = !oddRow;
+		}
+		//System.out.println("Tried to make " + numberOfSpeckles + " but actually made " + tot);
+	}
+
+	public <T extends RealType<T>> Img<T> makeImgWithHexPackedSpeckles(Interval i, long numberOfSpecks, T val)
+	{
+		Img<T> img = this.makeImageFromInterval(i, val);
+		this.addHexPackedSpeckles(img, numberOfSpecks, val);
+		return img;
+	}
+
+	public <T extends RealType<T>> Img<T> makeImgWithRandomSpeckles(Interval i, long numberOfSpecks, T val)
+	{
+		Img<T> img = this.makeImageFromInterval(i, val);
+		this.addRandomSpeckles(img, numberOfSpecks, val);
+		return img;
 	}
 
 	public Img<UnsignedByteType> makeImgMaskFromLabeling(ImgLabeling<Integer,IntType> labeling)
 	{
 		LabelRegions<Integer> regions = new LabelRegions<>(labeling);
-		final Img< UnsignedByteType > ret = makeBlackByteImageFromInterval(labeling);
+		final Img< UnsignedByteType > ret = makeImageFromInterval(labeling, new UnsignedByteType(0));
 		RandomAccess<UnsignedByteType> ra = ret.randomAccess();
 		for(LabelRegion<Integer> region : regions)
 		{
@@ -584,7 +796,7 @@ public class FeatureUtils {
 	{
 		LabelRegions<Integer> regions = new LabelRegions<>(labeling);
 
-		final Img< UnsignedShortType > ret = makeBlackShortImageFromInterval(labeling);
+		final Img< UnsignedShortType > ret = makeImageFromInterval(labeling, new UnsignedShortType(0));
 		RandomAccess<UnsignedShortType> ra = ret.randomAccess();
 		for(LabelRegion<Integer> region : regions)
 		{

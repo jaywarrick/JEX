@@ -295,6 +295,7 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 				{
 					FloatProcessor ip = (FloatProcessor) im.getProcessor().convertToFloat();
 
+					ip.log();
 					// Do threshold
 					ROIPlus roi = rois.get(map);
 					float[] tempPixels = null;
@@ -326,10 +327,11 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 					{
 						return this.makeTreeMap("Success", false);
 					}
-					mad = StatisticsUtility.mad(med, pixels); // Multiplier converts the mad to an approximation of the standard deviation without the effects of outliers
+					mad = StatisticsUtility.stdDev(pixels); // Multiplier converts the mad to an approximation of the standard deviation without the effects of outliers
 					threshold = med + sigma * mad;
+					threshold = Math.exp(threshold);
 					String path = null;
-
+					ip.exp();
 					if(!threshPerColor)
 					{
 						if(this.threshold)

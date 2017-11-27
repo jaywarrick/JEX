@@ -1,6 +1,5 @@
 package function.plugin.plugins.imageProcessing;
 
-import java.io.File;
 import java.util.TreeMap;
 
 import org.scijava.plugin.Plugin;
@@ -105,6 +104,12 @@ public class FastMedianBackgroundSubtract extends JEXPlugin {
 		String tempPath;
 		for (DimensionMap map : imageMap.keySet())
 		{
+			if(this.isCanceled())
+			{
+				Logs.log("Function canceled.", this);
+				return false;
+			}
+			
 			if(filterTable.testDimensionMapUsingDimTableAsFilter(map))
 			{
 				if(this.keepExcluded)
@@ -127,11 +132,7 @@ public class FastMedianBackgroundSubtract extends JEXPlugin {
 				JEXStatics.statusBar.setProgressPercentage(percentage);
 				continue;
 			}
-			if(this.isCanceled())
-			{
-				Logs.log("Function canceled.", this);
-				return false;
-			}
+			
 			// Call helper method
 			
 			FloatProcessor fp = null;
@@ -206,28 +207,5 @@ public class FastMedianBackgroundSubtract extends JEXPlugin {
 			}
 			return ret;
 		}
-	}
-	
-	public static String saveAdjustedImage(String imagePath, double oldMin, double oldMax, double newMin, double newMax, double gamma, int bitDepth)
-	{
-		// Get image data
-		File f = new File(imagePath);
-		if(!f.exists())
-		{
-			return null;
-		}
-		ImagePlus im = new ImagePlus(imagePath);
-		FloatProcessor imp = (FloatProcessor) im.getProcessor().convertToFloat(); // should be a float processor
-		
-		// Adjust the image
-		FunctionUtility.imAdjust(imp, oldMin, oldMax, newMin, newMax, gamma);
-		
-		// Save the results
-		ImagePlus toSave = FunctionUtility.makeImageToSave(imp, "false", bitDepth);
-		String imPath = JEXWriter.saveImage(toSave);
-		im.flush();
-		
-		// return the filepath
-		return imPath;
 	}
 }

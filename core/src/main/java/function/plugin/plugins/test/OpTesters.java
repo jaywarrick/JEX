@@ -1,4 +1,4 @@
-package function.ops;
+package function.plugin.plugins.test;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -52,7 +52,6 @@ public class OpTesters {
 	public static void main(String[] args) throws Exception
 	{
 		testSymmetryFeatures();
-
 	}
 
 	public static void testSymmetryFeatures()

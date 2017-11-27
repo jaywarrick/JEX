@@ -1,6 +1,8 @@
 package function.plugin.plugins.imageProcessing;
 
-import java.io.File;
+import java.awt.Shape;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Rectangle2D;
 import java.util.TreeMap;
 import java.util.Vector;
 
@@ -11,16 +13,19 @@ import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;
 import Database.DataWriter.ImageWriter;
 import Database.SingleUserDatabase.JEXWriter;
+import function.algorithm.neighborhood.EdgeCursor;
+import function.algorithm.neighborhood.PositionableRunningNeighborhood;
+import function.algorithm.neighborhood.SnakingCursor;
 import function.plugin.mechanism.InputMarker;
 import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.MarkerConstants;
 import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
+import function.plugin.plugins.featureExtraction.FeatureUtils;
+import function.plugin.plugins.medianFilterHelpers.RedBlackTreeFloat;
 import ij.ImagePlus;
-import ij.process.FloatProcessor;
 import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
-import jex.utilities.FunctionUtility;
 import logs.Logs;
 import miscellaneous.CSVList;
 import miscellaneous.StatisticsUtility;
@@ -34,9 +39,12 @@ import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.ValuePair;
 import net.imglib2.view.Views;
 import tables.Dim;
+import tables.DimTable;
 import tables.DimensionMap;
 
 /**
@@ -53,7 +61,7 @@ import tables.DimensionMap;
 		name="Super Fast Median Filter",
 		menuPath="Image Processing",
 		visible=true,
-		description="Fast median filter that uses a square shaped kernal and random sampling of the region to reduce calc time."
+		description="Fast median filter that uses a square shaped kernel and random sampling of the region to reduce calc time."
 		)
 public class SuperFastMedianFilter extends JEXPlugin {
 
@@ -66,26 +74,44 @@ public class SuperFastMedianFilter extends JEXPlugin {
 	JEXData imageData;
 
 	/////////// Define Parameters ///////////
+	
+	@ParameterMarker(uiOrder=0, name="Operation", description="Which running math operation should be performed", ui=MarkerConstants.UI_DROPDOWN, choices={"Median", "Mean"}, defaultChoice=0)
+	String operation;
 
-	@ParameterMarker(uiOrder=1, name="Kernal Width", description="Pixel width of the kernal. If < 100, then probably should use 'Fast Median Background Subtraction/Filter' instead.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="150")
-	int kernalWidth;
+	@ParameterMarker(uiOrder=1, name="Kernal Shape", description="What shape should the kernel be?", ui=MarkerConstants.UI_DROPDOWN, choices={"Rectangle", "Ellipse"}, defaultChoice=1)
+	String shape;
+	
+	@ParameterMarker(uiOrder=2, name="Kernal Width", description="Pixel width of the kernel. If < 100, then probably should use 'Fast Median Background Subtraction/Filter' instead.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="100.0")
+	double kernelWidth;
+	
+	@ParameterMarker(uiOrder=3, name="Kernal Height", description="Pixel height of the kernel. If < 100, then probably should use 'Fast Median Background Subtraction/Filter' instead.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="100.0")
+	double kernelHeight;
 
-	@ParameterMarker(uiOrder=2, name="Random Sample Size", description="Size of the random sample within the kernal for calculating the median.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="100")
+	@ParameterMarker(uiOrder=4, name="Kernel Sample Size", description="Size of the sample within the kernel for calculating the median.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="100")
 	int n;
 	
-	@ParameterMarker(uiOrder=3, name="Resample Each Location?", description="If checked, this will regenerate random locations within each neighborhood at each pixel location, incurring time lost to generate random numbers.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
+	@ParameterMarker(uiOrder=5, name="Kernel Sampling Method", description="How should the spacing of the samples be chosen?", ui=MarkerConstants.UI_DROPDOWN, choices={"Random", "Hexagonal Spacing"}, defaultChoice=1)
+	String samplingMethod;
+
+	@ParameterMarker(uiOrder=6, name="Regenerate Sampling Locations for Each Image?", description="If checked, this will regenerate random locations for each image, incurring time lost to generate random numbers and the backing image associated with it.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
 	boolean resample;
-	
-	@ParameterMarker(uiOrder=4, name="Perform Subtraction?", description="If checked, this will return the original image minus the median filtered result instead of just the median filtered result.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
+
+	@ParameterMarker(uiOrder=7, name="Perform Subtraction?", description="If checked, this will return the original image minus the median filtered result instead of just the median filtered result.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
 	boolean performSubtraction;
-	
-	@ParameterMarker(uiOrder=5, name="Nominal Value to Add Back", description="Nominal value to add to all pixels after background subtraction because some image formats don't allow negative numbers. (Use following notation to specify different parameters for differen dimension values, '<Dim Name>'=<val1>,<val2>,<val3>' e.g., 'Channel=0,100,100'. The values will be applied in that order for the ordered dim values.) ", ui=MarkerConstants.UI_TEXTFIELD, defaultText="100")
+
+	@ParameterMarker(uiOrder=8, name="Nominal Value to Add Back", description="Nominal value to add to all pixels after background subtraction because some image formats don't allow negative numbers. (Use following notation to specify different parameters for differen dimension values, '<Dim Name>'=<val1>,<val2>,<val3>' e.g., 'Channel=0,100,100'. The values will be applied in that order for the ordered dim values.) ", ui=MarkerConstants.UI_TEXTFIELD, defaultText="100")
 	String nominal;
-	
+
 	double nominalVal;
-	
-	@ParameterMarker(uiOrder=6, name="Output Bit Depth", description="What bit depth should the output be saved as.", ui=MarkerConstants.UI_DROPDOWN, choices={"8","16","32"}, defaultChoice=1)
+
+	@ParameterMarker(uiOrder=9, name="Output Bit Depth", description="What bit depth should the output be saved as.", ui=MarkerConstants.UI_DROPDOWN, choices={"8","16","32"}, defaultChoice=1)
 	int outputBitDepth;
+	
+	@ParameterMarker(uiOrder=10, name="Exclusion Filter DimTable", description="Exclude combinatoins of Dimension Names and values. (Use following notation '<DimName1>=<a1,a2,...>;<DimName2>=<b1,b2,...>' e.g., 'Channel=0,100,100; Time=1,2,3,4,5' (spaces are ok).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
+	String exclusionFilterString;
+	
+	@ParameterMarker(uiOrder=11, name="Keep Excluded Images?", description="Should images excluded by the filter be copied to the new object?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
+	boolean keepExcluded;
 
 	/////////// Define Outputs ///////////
 
@@ -98,14 +124,29 @@ public class SuperFastMedianFilter extends JEXPlugin {
 		return 10;
 	}
 
+	FeatureUtils utils = new FeatureUtils();
+	Img<UnsignedByteType> samplingImg = null;
+	PositionableRunningNeighborhood<UnsignedByteType> p = null;
+	SnakingCursor<UnsignedByteType> sc = null;
+	int op = 0;
+
 	@Override
 	public boolean run(JEXEntry optionalEntry)
 	{
+		this.samplingImg = null;
+		
+		if(this.operation.equals("Mean"))
+		{
+			this.op = 1;
+		}
+		
 		// Validate the input data
 		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
 		{
 			return false;
 		}
+		
+		DimTable filterTable = new DimTable(this.exclusionFilterString);
 
 		// Get the nominal add back values (typically different for fluorescence and brightfield
 		TreeMap<DimensionMap,Double> nominals = getNominals();
@@ -119,6 +160,7 @@ public class SuperFastMedianFilter extends JEXPlugin {
 		TreeMap<DimensionMap,String> outputImageMap = new TreeMap<DimensionMap,String>();
 		int count = 0, percentage = 0;
 		String tempPath;
+
 		for (DimensionMap map : imageMap.keySet())
 		{
 			if(this.isCanceled())
@@ -126,9 +168,42 @@ public class SuperFastMedianFilter extends JEXPlugin {
 				Logs.log("Function canceled.", this);
 				return false;
 			}
+			
+			if(filterTable.testDimensionMapUsingDimTableAsFilter(map))
+			{
+				if(this.keepExcluded)
+				{
+					Logs.log("Skipping the processing of " + map.toString(), this);
+					ImagePlus out = new ImagePlus(imageMap.get(map));
+					tempPath = JEXWriter.saveImage(out);
+					if(tempPath != null)
+					{
+						outputImageMap.put(map, tempPath);
+					}
+				}
+				else
+				{
+					Logs.log("Skipping the processing and saving of " + map.toString(), this);
+				}
+				count = count + 1;
+				percentage = (int) (100 * ((double) (count) / ((double) imageMap.size())));
+				JEXStatics.statusBar.setProgressPercentage(percentage);
+				continue;
+			}
+			
 			// Call helper method
 			this.nominalVal = nominals.get(map);
-			ImagePlus out = this.getMedianBackground(imageMap.get(map), this.kernalWidth, this.n, this.performSubtraction, outputBitDepth, this.resample);
+			
+			Shape s = null;
+			if(this.shape.equals("Rectangle"))
+			{
+				s = new Rectangle2D.Double(0,0,this.kernelWidth, this.kernelHeight);
+			}
+			else
+			{
+				s = new Ellipse2D.Double(0,  0, this.kernelWidth, this.kernelHeight);
+			}
+			ImagePlus out = this.getMedianBackground2(imageMap.get(map), s, this.performSubtraction, outputBitDepth);
 			if(out == null)
 			{
 				return false;
@@ -197,27 +272,170 @@ public class SuperFastMedianFilter extends JEXPlugin {
 		}
 	}
 
-	public static String saveAdjustedImage(String imagePath, double oldMin, double oldMax, double newMin, double newMax, double gamma, int bitDepth)
+	/**
+	 * Based upon: http://imagej.net/ImgLib2_Examples#Example_3a_-_Min.2FMax_search example 4b
+	 * @param source
+	 * @return
+	 */
+	public < T extends RealType< T >> ImagePlus getMedianBackground2(String imagePath, Shape s, boolean performSubtraction, int outputBitDepth)
 	{
-		// Get image data
-		File f = new File(imagePath);
-		if(!f.exists())
+
+		Img<T> source = ImageJFunctions.wrapReal(new ImagePlus(imagePath));
+		if(this.samplingImg == null || this.resample)
 		{
-			return null;
+			this.samplingImg = this.utils.makeImageFromInterval(source, new UnsignedByteType(0));
+			this.p = new PositionableRunningNeighborhood<>(s, this.samplingImg, PositionableRunningNeighborhood.MIRROR);
+			
+			// Add speckles to aid random sampling of the source image.
+			double imgN = source.size();
+			double kN = p.getKernelSize();
+			double alpha = imgN/kN;
+			if(this.samplingMethod.equals("Random"))
+			{
+				this.utils.addRandomSpeckles(this.samplingImg, Math.round(this.n*alpha), new UnsignedByteType(255));
+			}
+			else
+			{
+				this.utils.addHexPackedSpeckles(this.samplingImg, Math.round(this.n*alpha), new UnsignedByteType(255));
+			}
+			this.sc = new SnakingCursor<>(this.samplingImg);
+			this.utils.show(this.samplingImg, true);
 		}
-		ImagePlus im = new ImagePlus(imagePath);
-		FloatProcessor imp = (FloatProcessor) im.getProcessor().convertToFloat(); // should be a float processor
+		Img< FloatType > ret = this.utils.makeImageFromInterval(source, new FloatType(0.0f));
+		RandomAccess<FloatType> toSet = ret.randomAccess();
+		RandomAccess<T> toGet = Views.extendMirrorSingle(source).randomAccess();
 
-		// Adjust the image
-		FunctionUtility.imAdjust(imp, oldMin, oldMax, newMin, newMax, gamma);
 
-		// Save the results
-		ImagePlus toSave = FunctionUtility.makeImageToSave(imp, "false", bitDepth);
-		String imPath = JEXWriter.saveImage(toSave);
-		im.flush();
+		long count = 0;
+		int percentage = 0;
+		int oldPercentage = -1;
+		this.sc.reset();
+		this.p.reset();
+		RedBlackTreeFloat rbt = new RedBlackTreeFloat();
+		float tot = 0;
+		float size = 0;
+		while(sc.hasNext())
+		{
+			sc.fwd();
+			p.setPosition(sc); // this causes a reset of the neighborhood cursor.
+			toSet.setPosition(sc);
+			ValuePair<EdgeCursor<UnsignedByteType>, EdgeCursor<UnsignedByteType>> edges = p.getEdgeCursors();
+			if(edges == null)
+			{
+				tot = 0;
+				size = 0;
+				rbt.clear();
+				while(p.hasNext())
+				{
+					p.fwd();
+					toGet.setPosition(p);
+					if(p.get().get() != 0)
+					{
+						if(op == 0)
+						{
+							rbt.insert(toGet.get().getRealFloat());
+						}
+						else
+						{
+							tot = tot + toGet.get().getRealFloat();
+							size = size + 1;
+						}
+					}
+				}
+			}
+			else
+			{
+				// Add new values
+				while(edges.a.hasNext())
+				{
+					edges.a.fwd();
+					if(edges.a.get().get() != 0)
+					{
+						toGet.setPosition(edges.a.getSamplerLoc());
+						if(op == 0)
+						{
+							rbt.insert(toGet.get().getRealFloat());
+						}
+						else
+						{
+							tot = tot + toGet.get().getRealFloat();
+							size = size + 1;
+						}
+					}
+				}
+				// Subtract old values
+				while(edges.b.hasNext())
+				{
+					edges.b.fwd();
+					if(edges.b.get().get() != 0)
+					{
+						toGet.setPosition(edges.b.getSamplerLoc());
+						if(op == 0)
+						{
+							rbt.remove(toGet.get().getRealFloat());
+						}
+						else
+						{
+							tot = tot - toGet.get().getRealFloat();
+							size = size - 1;
+						}
+					}
+				}
+			}
+			if(this.op == 0)
+			{
+				final int medianRank = rbt.size() / 2 + 1;
+				toSet.get().set(rbt.select(medianRank));
+			}
+			else
+			{
+				toSet.get().set(tot/size);
+			}
 
-		// return the filepath
-		return imPath;
+			count = count + 1;
+			percentage = (int) (100 * ((double) count) / ((double) source.size()));
+			if(oldPercentage != percentage)
+			{
+				JEXStatics.statusBar.setProgressPercentage(percentage);
+				if(this.isCanceled())
+				{
+					Logs.log("Function canceled.", this);
+					return null;
+				}
+				oldPercentage = percentage;
+			}
+		}
+
+		if(performSubtraction)
+		{
+			// create a Cursor that iterates over the source along with the neighborhoods.
+			// (the center cursor runs over the image in the same iteration order as neighborhood)
+			final Cursor< T > srcC = Views.iterable( source ).cursor();
+			RandomAccess< T > srcRA = source.randomAccess();
+			while(srcC.hasNext())
+			{
+				srcC.fwd();
+				toSet.setPosition(srcC);
+				srcRA.setPosition(srcC);
+				toSet.get().setReal(srcRA.get().getRealDouble() - toSet.get().getRealDouble() + this.nominalVal);
+			}
+		}
+
+		ImagePlus ret2 = null;
+		if(outputBitDepth == 8)
+		{
+			ret2 = ImageJFunctions.wrapUnsignedByte(ret, "Background Subtracted");
+		}
+		else if(outputBitDepth == 16)
+		{
+			ret2 = ImageJFunctions.wrapUnsignedShort(ret, "Background Subtracted");
+		}
+		else
+		{
+			ret2 = ImageJFunctions.wrapFloat(ret, "Background Subtracted");
+		}
+
+		return ret2;
 	}
 
 	/**
@@ -230,7 +448,7 @@ public class SuperFastMedianFilter extends JEXPlugin {
 		Img<T> source = ImageJFunctions.wrapReal(new ImagePlus(imagePath));
 		ArrayImgFactory<FloatType> factory = new ArrayImgFactory<>();
 		Img< FloatType > ret = factory.create(source, new FloatType());
-		
+
 		RandomAccess<FloatType> toSet = ret.randomAccess();
 
 		// create an infinite view where all values outside of the Interval are
@@ -267,7 +485,7 @@ public class SuperFastMedianFilter extends JEXPlugin {
 				median = StatisticsUtility.median(vals);
 			}
 			toSet.get().setReal(median);
-			
+
 			count = count + 1;
 			percentage = (int) (100 * ((double) count) / ((double) source.size()));
 			if(oldPercentage != percentage)
@@ -281,12 +499,12 @@ public class SuperFastMedianFilter extends JEXPlugin {
 				oldPercentage = percentage;
 			}
 		}
-		
+
 		if(performSubtraction)
 		{
 			// create a Cursor that iterates over the source along with the neighborhoods.
 			// (the center cursor runs over the image in the same iteration order as neighborhood)
-	        final Cursor< T > srcC = Views.iterable( source ).cursor();
+			final Cursor< T > srcC = Views.iterable( source ).cursor();
 			RandomAccess< T > srcRA = source.randomAccess();
 			while(srcC.hasNext())
 			{
@@ -296,7 +514,7 @@ public class SuperFastMedianFilter extends JEXPlugin {
 				toSet.get().setReal(srcRA.get().getRealDouble() - toSet.get().getRealDouble() + this.nominalVal);
 			}
 		}
-		
+
 		ImagePlus ret2 = null;
 		if(outputBitDepth == 8)
 		{
@@ -310,7 +528,7 @@ public class SuperFastMedianFilter extends JEXPlugin {
 		{
 			ret2 = ImageJFunctions.wrapFloat(ret, "Background Subtracted");
 		}
-		
+
 		return ret2;
 	}
 }
