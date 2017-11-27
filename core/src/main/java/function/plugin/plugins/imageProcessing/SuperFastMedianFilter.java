@@ -299,7 +299,7 @@ public class SuperFastMedianFilter extends JEXPlugin {
 				this.utils.addHexPackedSpeckles(this.samplingImg, Math.round(this.n*alpha), new UnsignedByteType(255));
 			}
 			this.sc = new SnakingCursor<>(this.samplingImg);
-			this.utils.show(this.samplingImg, true);
+			//			this.utils.show(this.samplingImg, true);
 		}
 		Img< FloatType > ret = this.utils.makeImageFromInterval(source, new FloatType(0.0f));
 		RandomAccess<FloatType> toSet = ret.randomAccess();
