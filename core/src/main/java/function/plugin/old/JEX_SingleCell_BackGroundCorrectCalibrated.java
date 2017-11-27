@@ -24,6 +24,7 @@ import jex.statics.JEXStatics;
 import jex.utilities.FunctionUtility;
 import jex.utilities.ImageUtility;
 import logs.Logs;
+import tables.DimTable;
 import tables.DimensionMap;
 
 /**
@@ -83,7 +84,7 @@ public class JEX_SingleCell_BackGroundCorrectCalibrated extends JEXCrunchable {
 	@Override
 	public boolean showInList()
 	{
-		return true;
+		return false;
 	}
 
 	/**
@@ -168,8 +169,9 @@ public class JEX_SingleCell_BackGroundCorrectCalibrated extends JEXCrunchable {
 		// Parameter p7 = new
 		// Parameter("Noise Filter Radius","Radius of the mean filter used to determine the mean of the remainder of the background noise after the rolling ball background subtraction.","20");
 		Parameter p8 = new Parameter("Nominal Value to Add Back", "Nominal value to add back to the image so that we don't clip values below zero", "100");
-		Parameter p9 = new Parameter("'<Name>=<Value>' to Exclude (optional)", "Optionally specify a particular name value pair to exclude from background correction. Useful for excluding bright-field (e.g., Channel=BF). Technically doesn't have to be the 'Channel' dimension.", "");
-
+		Parameter p9 = new Parameter("Exclusion Filter DimTable (optional)", "Filter specific dimension combinations from analysis. (Format: <DimName1>=<a1,a2,...>;<DimName2>=<b1,b2...>)", "");
+		Parameter p10 = new Parameter("Keep Excluded Images?", "Should images excluded by the filter be copied to the new object?", Parameter.CHECKBOX, true);
+		
 		// Make an array of the parameters and return it
 		ParameterSet parameterArray = new ParameterSet();
 		parameterArray.addParameter(pa0);
@@ -188,6 +190,7 @@ public class JEX_SingleCell_BackGroundCorrectCalibrated extends JEXCrunchable {
 		// parameterArray.addParameter(p7);
 		parameterArray.addParameter(p8);
 		parameterArray.addParameter(p9);
+		parameterArray.addParameter(p10);
 		return parameterArray;
 	}
 
@@ -284,12 +287,9 @@ public class JEX_SingleCell_BackGroundCorrectCalibrated extends JEXCrunchable {
 		boolean bgPresmooth = false; // Boolean.parseBoolean(parameters.getValueOfParameter("Presmoothing"));
 		double bgPresmoothRadius = Double.parseDouble(this.parameters.getValueOfParameter("BG Sub. Presmooth Radius"));
 		int outputDepth = Integer.parseInt(this.parameters.getValueOfParameter("Output Bit Depth"));
-		String toExclude = this.parameters.getValueOfParameter("'<Name>=<Value>' to Exclude (optional)");
-		DimensionMap thingToExclude = null;
-		if(toExclude != null && !toExclude.equals(""))
-		{
-			thingToExclude = new DimensionMap(toExclude);
-		}
+		String filterDimTableString = this.parameters.getValueOfParameter("Exclusion Filter DimTable (optional)");
+		DimTable filterTable = new DimTable(filterDimTableString);
+		boolean keepExcluded = Boolean.parseBoolean(this.parameters.getValueOfParameter("Keep Excluded Images?"));
 
 		// double noiseRadius =
 		// Double.parseDouble(parameters.getValueOfParameter("Noise Filter Radius"));
@@ -300,7 +300,7 @@ public class JEX_SingleCell_BackGroundCorrectCalibrated extends JEXCrunchable {
 		// Boolean.parseBoolean(parameters.getValueOfParameter("Normalize"));
 
 		// Run the function
-		TreeMap<DimensionMap,String> images = ImageReader.readObjectToImagePathTable(data);
+		TreeMap<DimensionMap,String> imageMap = ImageReader.readObjectToImagePathTable(data);
 		TreeMap<DimensionMap,String> outputMap = new TreeMap<DimensionMap,String>();
 
 		// //// Create a reference to a Blitter for float operations
@@ -338,9 +338,10 @@ public class JEX_SingleCell_BackGroundCorrectCalibrated extends JEXCrunchable {
 		}
 
 		int count = 0;
-		int total = images.size();
+		int percentage = 0;
 		JEXStatics.statusBar.setProgressPercentage(0);
-		for (DimensionMap dim : images.keySet())
+		String tempPath;
+		for (DimensionMap map : imageMap.keySet())
 		{
 			FloatProcessor croppedIllumImp = illumImp;
 			FloatProcessor croppedDarkImp = darkImp;
@@ -348,50 +349,61 @@ public class JEX_SingleCell_BackGroundCorrectCalibrated extends JEXCrunchable {
 			{
 				return false;
 			}
-			String path = images.get(dim);
+			String path = imageMap.get(map);
+			
+			// If the image is to be excluded, then skip (saving original if necessary)
+			if(filterTable.testDimensionMapUsingDimTableAsFilter(map))
+			{
+				// Then the image fits the exclusion filter
+				if(keepExcluded)
+				{
+					Logs.log("Skipping the processing of " + map.toString(), this);
+					ImagePlus out = new ImagePlus(imageMap.get(map));
+					tempPath = JEXWriter.saveImage(out); // Don't convert the bitDepth of this output since it is "not be in processed".
+					if(tempPath != null)
+					{
+						outputMap.put(map, tempPath);
+					}
+					count = count + 1;
+					percentage = (int) (100 * ((double) (count) / ((double) imageMap.size())));
+					JEXStatics.statusBar.setProgressPercentage(percentage);
+				}
+				else
+				{
+					Logs.log("Skipping the processing and saving of " + map.toString(), this);
+					count = count + 1;
+					percentage = (int) (100 * ((double) (count) / ((double) imageMap.size())));
+					JEXStatics.statusBar.setProgressPercentage(percentage);
+				}
+				continue;
+			}
+			// Else, proceed to process the image
 
-
-			Logs.log("Calibrating image for " + dim.toString(), this);
-
+			Logs.log("Calibrating image for " + map.toString(), this);
+			
 			// /// Get the image
 			ImagePlus im = new ImagePlus(path);
 			FloatProcessor imp = (FloatProcessor) im.getProcessor().convertToFloat(); // should be a float processor
 
 			// //// crop if desired
-			ROIPlus cropRoi = roiMap.get(dim);
+			ROIPlus cropRoi = roiMap.get(map);
 			if(cropRoi != null)
 			{
 				imp.setRoi(cropRoi.getRoi());
 				imp = (FloatProcessor) imp.crop();
 				
-				// For efficiency, we don't need to do this if we are going to skip the rest of the steps anyway
-				if(thingToExclude == null || dim.compareTo(thingToExclude) != 0)
+				if(croppedIllumImp != null)
 				{
-					if(croppedIllumImp != null)
-					{
-						croppedIllumImp.setRoi(cropRoi.getRoi());
-						croppedIllumImp = (FloatProcessor) croppedIllumImp.crop();
-					}
-					if(croppedDarkImp != null)
-					{
-						croppedDarkImp.setRoi(cropRoi.getRoi());
-						croppedDarkImp = (FloatProcessor) croppedDarkImp.crop();
-					}
+					croppedIllumImp.setRoi(cropRoi.getRoi());
+					croppedIllumImp = (FloatProcessor) croppedIllumImp.crop();
+				}
+				if(croppedDarkImp != null)
+				{
+					croppedDarkImp.setRoi(cropRoi.getRoi());
+					croppedDarkImp = (FloatProcessor) croppedDarkImp.crop();
 				}
 			}
 			
-			if(thingToExclude != null && dim.compareTo(thingToExclude) == 0)
-			{
-				// Then it is a match for the thing to exclude
-				// Just save a copy of the original (cropped) image.
-				ImagePlus toSave = FunctionUtility.makeImageToSave(imp, "false", outputDepth);
-				String temp = JEXWriter.saveImage(toSave);
-				outputMap.put(dim.copy(), temp);
-				Logs.log("Finished processing " + count + " of " + total + ".", 1, this);
-				count++;
-				continue;
-			}
-
 			// //// First calculate (Image-DF)
 			blit = new FloatBlitter(imp);
 			if(darkImp != null)
@@ -469,12 +481,12 @@ public class JEX_SingleCell_BackGroundCorrectCalibrated extends JEXCrunchable {
 			ImagePlus toSave = FunctionUtility.makeImageToSave(imp, "false", outputDepth);
 			String finalPath1 = JEXWriter.saveImage(toSave);
 
-			outputMap.put(dim.copy(), finalPath1);
-			Logs.log("Finished processing " + count + " of " + total + ".", 1, this);
+			outputMap.put(map.copy(), finalPath1);
+			Logs.log("Finished processing " + count + " of " + imageMap.size() + ".", 1, this);
 			count++;
 
 			// Status bar
-			int percentage = (int) (100 * ((double) count / (double) images.size()));
+			percentage = (int) (100 * ((double) count / (double) imageMap.size()));
 			JEXStatics.statusBar.setProgressPercentage(percentage);
 		}
 
