@@ -281,6 +281,26 @@ public class JEXWriter {
 	}
 	
 	/**
+	 * Save the image in the temporary database folder
+	 */
+	public static String saveImage(ImageProcessor imp, int bitDepth)
+	{
+		imp = JEXWriter.convertToBitDepthIfNecessary(imp, bitDepth);
+		return saveImage(new ImagePlus("", imp));
+	}
+	
+	/**
+	 * Save the image in the temporary database folder
+	 * 
+	 * WARNING: this converts the ImagePlus to the specified bitDepth internally if necessary.
+	 */
+	public static String saveImage(ImagePlus im, int bitDepth)
+	{
+		JEXWriter.convertToBitDepthIfNecessary(im, bitDepth);
+		return saveImage(im);
+	}
+	
+	/**
 	 * Save figure in using type defined by extension (jpg, tif, or png)
 	 * 
 	 * @param bImage
