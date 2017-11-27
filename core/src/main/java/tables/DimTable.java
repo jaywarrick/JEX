@@ -427,8 +427,11 @@ public class DimTable extends ArrayList<Dim> implements Copiable<DimTable> {
 	}
 	
 	/**
-	 * true is returned if all of the Dim objects of the Dim table have DimName-DimValue pairs in the provided DimensionMap
-	 * If you want the opposite see 'hasDimensionMap' where true is returned if ALL the DimName-DimValues from the Dimension Map exist in the Dim objects of the DimTable
+	 * true is returned if any of the Dim objects of the Dim table have DimName-DimValue pairs in the provided DimensionMap
+	 * 
+	 * Effectively this tests returns true if any of the DimName-DimValue pairs in the DimensionMap show up in the filter table.
+	 * Therefore, for example, if the DimTable has Channel=0,1;Time=1; any dimension map that has Channel=0 || Channel=1 || Time=1 returns true (i.e., the DimensionMap should be filtered).
+	 * If you want essentially the opposite, see 'hasDimensionMap' where true is returned if ALL the DimName-DimValues from the Dimension Map exist in the Dim objects of the DimTable
 	 * 
 	 * 
 	 * @param map DimensionMap
@@ -436,7 +439,6 @@ public class DimTable extends ArrayList<Dim> implements Copiable<DimTable> {
 	 */
 	public boolean testDimensionMapUsingDimTableAsFilter(DimensionMap map)
 	{
-		int count = 0;
 		for(Entry<String,String> e : map.entrySet())
 		{
 			Dim d = this.getDimWithName(e.getKey());
@@ -445,13 +447,12 @@ public class DimTable extends ArrayList<Dim> implements Copiable<DimTable> {
 				continue;
 			}
 			
-			if(!d.containsValue(e.getValue()))
+			if(d.containsValue(e.getValue()))
 			{
-				return false;
+				return true;
 			}
-			count = count + 1;
 		}
-		return count == this.size();
+		return false;
 	}
 	
 	/**
