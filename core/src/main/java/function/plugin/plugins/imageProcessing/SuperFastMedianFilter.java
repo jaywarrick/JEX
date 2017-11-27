@@ -87,27 +87,30 @@ public class SuperFastMedianFilter extends JEXPlugin {
 	@ParameterMarker(uiOrder=3, name="Kernal Height", description="Pixel height of the kernel. If < 100, then probably should use 'Fast Median Background Subtraction/Filter' instead.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="100.0")
 	double kernelHeight;
 
-	@ParameterMarker(uiOrder=4, name="Random Sample Size", description="Size of the random sample within the kernel for calculating the median.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="100")
+	@ParameterMarker(uiOrder=4, name="Kernel Sample Size", description="Size of the sample within the kernel for calculating the median.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="100")
 	int n;
+	
+	@ParameterMarker(uiOrder=5, name="Kernel Sampling Method", description="How should the spacing of the samples be chosen?", ui=MarkerConstants.UI_DROPDOWN, choices={"Random", "Hexagonal Spacing"}, defaultChoice=1)
+	String samplingMethod;
 
-	@ParameterMarker(uiOrder=5, name="Regenerate Sampling Locations for Each Image?", description="If checked, this will regenerate random locations for each image, incurring time lost to generate random numbers and the backing image associated with it.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	@ParameterMarker(uiOrder=6, name="Regenerate Sampling Locations for Each Image?", description="If checked, this will regenerate random locations for each image, incurring time lost to generate random numbers and the backing image associated with it.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
 	boolean resample;
 
-	@ParameterMarker(uiOrder=6, name="Perform Subtraction?", description="If checked, this will return the original image minus the median filtered result instead of just the median filtered result.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
+	@ParameterMarker(uiOrder=7, name="Perform Subtraction?", description="If checked, this will return the original image minus the median filtered result instead of just the median filtered result.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
 	boolean performSubtraction;
 
-	@ParameterMarker(uiOrder=7, name="Nominal Value to Add Back", description="Nominal value to add to all pixels after background subtraction because some image formats don't allow negative numbers. (Use following notation to specify different parameters for differen dimension values, '<Dim Name>'=<val1>,<val2>,<val3>' e.g., 'Channel=0,100,100'. The values will be applied in that order for the ordered dim values.) ", ui=MarkerConstants.UI_TEXTFIELD, defaultText="100")
+	@ParameterMarker(uiOrder=8, name="Nominal Value to Add Back", description="Nominal value to add to all pixels after background subtraction because some image formats don't allow negative numbers. (Use following notation to specify different parameters for differen dimension values, '<Dim Name>'=<val1>,<val2>,<val3>' e.g., 'Channel=0,100,100'. The values will be applied in that order for the ordered dim values.) ", ui=MarkerConstants.UI_TEXTFIELD, defaultText="100")
 	String nominal;
 
 	double nominalVal;
 
-	@ParameterMarker(uiOrder=8, name="Output Bit Depth", description="What bit depth should the output be saved as.", ui=MarkerConstants.UI_DROPDOWN, choices={"8","16","32"}, defaultChoice=1)
+	@ParameterMarker(uiOrder=9, name="Output Bit Depth", description="What bit depth should the output be saved as.", ui=MarkerConstants.UI_DROPDOWN, choices={"8","16","32"}, defaultChoice=1)
 	int outputBitDepth;
 	
-	@ParameterMarker(uiOrder=9, name="Exclusion Filter DimTable", description="Exclude combinatoins of Dimension Names and values. (Use following notation '<DimName1>=<a1,a2,...>;<DimName2>=<b1,b2,...>' e.g., 'Channel=0,100,100; Time=1,2,3,4,5' (spaces are ok).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
+	@ParameterMarker(uiOrder=10, name="Exclusion Filter DimTable", description="Exclude combinatoins of Dimension Names and values. (Use following notation '<DimName1>=<a1,a2,...>;<DimName2>=<b1,b2,...>' e.g., 'Channel=0,100,100; Time=1,2,3,4,5' (spaces are ok).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
 	String exclusionFilterString;
 	
-	@ParameterMarker(uiOrder=10, name="Keep Excluded Images?", description="Should images excluded by the filter be copied to the new object?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
+	@ParameterMarker(uiOrder=11, name="Keep Excluded Images?", description="Should images excluded by the filter be copied to the new object?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
 	boolean keepExcluded;
 
 	/////////// Define Outputs ///////////
@@ -287,9 +290,16 @@ public class SuperFastMedianFilter extends JEXPlugin {
 			double imgN = source.size();
 			double kN = p.getKernelSize();
 			double alpha = imgN/kN;
-			this.utils.addRandomSpeckles(this.samplingImg, Math.round(this.n*alpha), new UnsignedByteType(255));
+			if(this.samplingMethod.equals("Random"))
+			{
+				this.utils.addRandomSpeckles(this.samplingImg, Math.round(this.n*alpha), new UnsignedByteType(255));
+			}
+			else
+			{
+				this.utils.addHexPackedSpeckles(this.samplingImg, Math.round(this.n*alpha), new UnsignedByteType(255));
+			}
 			this.sc = new SnakingCursor<>(this.samplingImg);
-			this.utils.show(this.samplingImg);
+			this.utils.show(this.samplingImg, true);
 		}
 		Img< FloatType > ret = this.utils.makeImageFromInterval(source, new FloatType(0.0f));
 		RandomAccess<FloatType> toSet = ret.randomAccess();
