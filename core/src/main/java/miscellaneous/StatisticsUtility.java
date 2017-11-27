@@ -63,7 +63,7 @@ import net.imglib2.type.numeric.RealType;
  * For additional documentation, see <a href="http://www.cs.princeton.edu/introcs/22library">Section 2.2</a> of <i>Introduction to Programming in Java: An Interdisciplinary Approach</i> by Robert Sedgewick and Kevin Wayne.
  */
 public class StatisticsUtility {
-	
+
 	/**
 	 * Return real number uniformly in [0, 1).
 	 */
@@ -71,7 +71,7 @@ public class StatisticsUtility {
 	{
 		return Math.random();
 	}
-	
+
 	/**
 	 * Return real number uniformly in [a, b).
 	 */
@@ -79,7 +79,7 @@ public class StatisticsUtility {
 	{
 		return a + Math.random() * (b - a);
 	}
-	
+
 	/**
 	 * Return an integer uniformly between 0 and N-1.
 	 */
@@ -87,7 +87,7 @@ public class StatisticsUtility {
 	{
 		return (int) (Math.random() * N);
 	}
-	
+
 	/**
 	 * Return a boolean, which is true with probability p, and false otherwise.
 	 */
@@ -95,7 +95,7 @@ public class StatisticsUtility {
 	{
 		return Math.random() < p;
 	}
-	
+
 	/**
 	 * Return a boolean, which is true with probability .5, and false otherwise.
 	 */
@@ -103,7 +103,7 @@ public class StatisticsUtility {
 	{
 		return bernoulli(0.5);
 	}
-	
+
 	/**
 	 * Return a real number with a standard Gaussian distribution.
 	 */
@@ -119,11 +119,11 @@ public class StatisticsUtility {
 		}
 		while (r >= 1 || r == 0);
 		return x * Math.sqrt(-2 * Math.log(r) / r);
-		
+
 		// Remark: y * Math.sqrt(-2 * Math.log(r) / r)
 		// is an independent random gaussian
 	}
-	
+
 	/**
 	 * Return a real number from a gaussian distribution with given mean and stddev
 	 */
@@ -131,7 +131,7 @@ public class StatisticsUtility {
 	{
 		return mean + stddev * gaussian();
 	}
-	
+
 	/**
 	 * Return an integer with a geometric distribution with mean 1/p.
 	 */
@@ -140,7 +140,7 @@ public class StatisticsUtility {
 		// using algorithm given by Knuth
 		return (int) Math.ceil(Math.log(uniform()) / Math.log(1.0 - p));
 	}
-	
+
 	/**
 	 * Return an integer with a Poisson distribution with mean lambda.
 	 */
@@ -159,7 +159,7 @@ public class StatisticsUtility {
 		while (p >= L);
 		return k - 1;
 	}
-	
+
 	/**
 	 * Return a real number with a Pareto distribution with parameter alpha.
 	 */
@@ -167,7 +167,7 @@ public class StatisticsUtility {
 	{
 		return Math.pow(1 - uniform(), -1.0 / alpha) - 1.0;
 	}
-	
+
 	/**
 	 * Return a real number with a Cauchy distribution.
 	 */
@@ -175,7 +175,7 @@ public class StatisticsUtility {
 	{
 		return Math.tan(Math.PI * (uniform() - 0.5));
 	}
-	
+
 	/**
 	 * Return a number from a discrete distribution: i with probability a[i].
 	 */
@@ -195,7 +195,7 @@ public class StatisticsUtility {
 		assert (false);
 		return -1;
 	}
-	
+
 	/**
 	 * Return a real number from an exponential distribution with rate lambda.
 	 */
@@ -203,7 +203,7 @@ public class StatisticsUtility {
 	{
 		return -Math.log(1 - Math.random()) / lambda;
 	}
-	
+
 	/**
 	 * Return the mean value of the list
 	 * 
@@ -219,7 +219,7 @@ public class StatisticsUtility {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Return the mean value of the list
 	 * 
@@ -235,7 +235,7 @@ public class StatisticsUtility {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Return the min of the list
 	 * 
@@ -254,7 +254,7 @@ public class StatisticsUtility {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Return the min of the list
 	 * 
@@ -273,7 +273,7 @@ public class StatisticsUtility {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Return the min of the list
 	 * 
@@ -293,7 +293,7 @@ public class StatisticsUtility {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Return the min of the list
 	 * 
@@ -312,7 +312,7 @@ public class StatisticsUtility {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Return the min of the list
 	 * 
@@ -331,7 +331,7 @@ public class StatisticsUtility {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Return the list of numbers multiplied by a value
 	 * 
@@ -345,7 +345,7 @@ public class StatisticsUtility {
 		}
 		return ret;
 	}
-	
+
 	/**
 	 * Return the list of numbers normalized to either the (min and max) or just (max) alone
 	 * 
@@ -368,7 +368,7 @@ public class StatisticsUtility {
 		}
 		return ret;
 	}
-	
+
 	/**
 	 * Return the list of numbers offset by a value (the value is added)
 	 * 
@@ -383,7 +383,7 @@ public class StatisticsUtility {
 		}
 		return ret;
 	}
-	
+
 	/**
 	 * Return the element-wise difference between two lists of numbers (a-b)
 	 * 
@@ -402,7 +402,7 @@ public class StatisticsUtility {
 		}
 		return ret;
 	}
-	
+
 	/**
 	 * Return the element-wise absolute value of a list of numbers (|a|)
 	 * 
@@ -419,7 +419,7 @@ public class StatisticsUtility {
 		}
 		return ret;
 	}
-	
+
 	/**
 	 * Calculate the max fraction of the signal that could be explained by the window
 	 * 
@@ -459,9 +459,9 @@ public class StatisticsUtility {
 				truncWindow[i] = window[i];
 			}
 		}
-		
+
 		double[] sigOffset = add(offset, truncSig);
-		
+
 		double[] ratio = ratio(sigOffset, truncWindow);
 		int minRatioI = -1;
 		double minRatio = Double.MAX_VALUE;
@@ -477,16 +477,16 @@ public class StatisticsUtility {
 		{
 			minRatio = 0;
 		}
-		
+
 		double[] scaledWindow = multiply(truncWindow, minRatio);
 		double[] normWindow = multiply(truncWindow, offset / max(truncWindow));
-		
+
 		// Return the total signal and the portion of the signal within the window
 		Pair<Double,Double> ret = new Pair<Double,Double>(sum(sigOffset) - offset * sigOffset.length, sum(scaledWindow) - sum(normWindow));
-		
+
 		return ret;
 	}
-	
+
 	/**
 	 * Window fraction based on the max-normalizing the signal and window, taking the min of the two, summing the result and dividing by the sum of the max-normalized signal.
 	 * 
@@ -523,13 +523,13 @@ public class StatisticsUtility {
 		double[] min = min(sigNorm, windowNorm);
 		double frac = sum(min) / sum(sigNorm);
 		double sum = sum(sig);
-		
+
 		// Return the total signal and the portion of the signal within the window
 		Pair<Double,Double> ret = new Pair<Double,Double>(sum, frac * sum);
-		
+
 		return ret;
 	}
-	
+
 	/**
 	 * Return the element-wise absolute value of a list of numbers (|a|)
 	 * 
@@ -546,7 +546,7 @@ public class StatisticsUtility {
 		}
 		return ret;
 	}
-	
+
 	/**
 	 * Return the element-wise difference between two lists of numbers (a-b)
 	 * 
@@ -568,7 +568,7 @@ public class StatisticsUtility {
 		}
 		return ret;
 	}
-	
+
 	/**
 	 * Return the element-wise difference between two lists of numbers (a-b)
 	 * 
@@ -590,7 +590,7 @@ public class StatisticsUtility {
 		}
 		return ret;
 	}
-	
+
 	/**
 	 * Return the element-wise difference between two lists of numbers (a-b)
 	 * 
@@ -609,7 +609,7 @@ public class StatisticsUtility {
 		}
 		return ret;
 	}
-	
+
 	/**
 	 * Return the element-wise multiplication of two lists of numbers (a*b)
 	 * 
@@ -628,7 +628,7 @@ public class StatisticsUtility {
 		}
 		return ret;
 	}
-	
+
 	/**
 	 * Return the element-wise multiplication of two lists of numbers (a*b)
 	 * 
@@ -650,7 +650,7 @@ public class StatisticsUtility {
 		}
 		return ret;
 	}
-	
+
 	/**
 	 * Return the list of numbers multiplied by a value
 	 * 
@@ -671,7 +671,7 @@ public class StatisticsUtility {
 		}
 		return ret;
 	}
-	
+
 	/**
 	 * Return the list of numbers normalized to either the (min and max) or just (max) alone
 	 * 
@@ -698,7 +698,7 @@ public class StatisticsUtility {
 		}
 		return ret;
 	}
-	
+
 	/**
 	 * Return the list of numbers offset by a value (the value is added)
 	 * 
@@ -719,7 +719,7 @@ public class StatisticsUtility {
 		}
 		return ret;
 	}
-	
+
 	/**
 	 * Return the index of the first value closest to the specified value in the list
 	 * 
@@ -742,7 +742,7 @@ public class StatisticsUtility {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Return the index of the first value closest to the specified value in the list
 	 * 
@@ -765,7 +765,7 @@ public class StatisticsUtility {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Return the index of the first min value of the list
 	 * 
@@ -786,7 +786,7 @@ public class StatisticsUtility {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Return the index of the first max value of the list
 	 * 
@@ -807,7 +807,7 @@ public class StatisticsUtility {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Rearrange the elements of an array in random order.
 	 */
@@ -822,7 +822,7 @@ public class StatisticsUtility {
 			a[r] = temp;
 		}
 	}
-	
+
 	/**
 	 * Rearrange the elements of a double array in random order.
 	 */
@@ -837,7 +837,7 @@ public class StatisticsUtility {
 			a[r] = temp;
 		}
 	}
-	
+
 	/**
 	 * Rearrange the elements of an int array in random order.
 	 */
@@ -852,7 +852,7 @@ public class StatisticsUtility {
 			a[r] = temp;
 		}
 	}
-	
+
 	/**
 	 * For this distribution, X, this method returns P(X < x).
 	 * 
@@ -863,7 +863,7 @@ public class StatisticsUtility {
 		TDistribution tdist = new TDistribution(dof);
 		return tdist.cumulativeProbability(x);
 	}
-	
+
 	/**
 	 * For this distribution, X, this method returns the critical point x, such that P(X < x) = p. Returns Double.NEGATIVE_INFINITY for p=0 and Double.POSITIVE_INFINITY for p=1.
 	 */
@@ -872,7 +872,7 @@ public class StatisticsUtility {
 		TDistribution tdist = new TDistribution(dof);
 		return tdist.inverseCumulativeProbability(p_value);
 	}
-	
+
 	/**
 	 * Get the critical value for determining outliers using Grubb's method http://www.itl.nist.gov/div898/handbook/eda/section3/eda35h1.htm
 	 * 
@@ -889,7 +889,7 @@ public class StatisticsUtility {
 		double g_critical = ((n - 1) / (Math.sqrt(n))) * Math.sqrt((t * t) / (n - 2 + t * t));
 		return g_critical;
 	}
-	
+
 	/**
 	 * Use Grubb's statistic for determining if there is an outlier and throw the point with the largest deviation from the mean if true.
 	 * 
@@ -926,7 +926,7 @@ public class StatisticsUtility {
 		}
 		return outlierIndex;
 	}
-	
+
 	/**
 	 * Return the boolean array indicating whether it passes the threshold
 	 * @param values
@@ -984,10 +984,10 @@ public class StatisticsUtility {
 				}
 			}
 		}
-		
+
 		return filtered;
 	}
-	
+
 	public static boolean[] union(boolean[] a, boolean[] b)
 	{
 		if(a.length != b.length)
@@ -1002,7 +1002,7 @@ public class StatisticsUtility {
 		}
 		return ret;
 	}
-	
+
 	public static boolean[] intersection(boolean[] a, boolean[] b)
 	{
 		if(a.length != b.length)
@@ -1017,7 +1017,7 @@ public class StatisticsUtility {
 		}
 		return ret;
 	}
-	
+
 	public static int countFilter(boolean[] filter, boolean countPositives)
 	{
 		// get the number of true elements for initialize the return object
@@ -1026,7 +1026,7 @@ public class StatisticsUtility {
 		{
 			if(b) count++;
 		}
-		
+
 		if(countPositives)
 		{
 			return count;
@@ -1036,21 +1036,21 @@ public class StatisticsUtility {
 			return(filter.length-count);
 		}
 	}
-	
+
 	public static double[] applyFilter(double[] values, boolean[] filter)
 	{
 		if(values.length != filter.length)
 		{
 			Logs.log("Arguments not the same length. Returning null.", Logs.ERROR, StatisticsUtility.class);
 		}
-		
+
 		// get the number of true elements for initialize the return object
 		int count = 0;
 		for(boolean b : filter)
 		{
 			if(b) count++;
 		}
-		
+
 		// Put matching values into the return object
 		double[] ret = new double[count];
 		count = 0;
@@ -1064,7 +1064,7 @@ public class StatisticsUtility {
 		}
 		return ret;
 	}
-	
+
 	public static double[] toArray(List<Double> values)
 	{
 		int count = 0;
@@ -1076,23 +1076,112 @@ public class StatisticsUtility {
 		}
 		return arrayValues;
 	}
-	
+
 	public static Double stdDev(double[] values)
 	{
 		StandardDeviation stdevCalculator = new StandardDeviation();
 		return stdevCalculator.evaluate(values);
 	}
-	
+
 	public static Double variance(double[] values)
 	{
 		Variance stdevCalculator = new Variance();
 		return stdevCalculator.evaluate(values);
 	}
-	
+
 	public static Double mean(double[] values)
 	{
 		Mean meanCalculator = new Mean();
 		return meanCalculator.evaluate(values);
+	}
+	
+	/**
+	 * The algorithm first determines a traditional median to seed the algorithm
+	 * Each value is then weighted according to (abs(x-mean))^(scaling).
+	 * The weighted median (i.e., the value at the index where the cumulative
+	 * normalized weight is <= 0.5. If the cumulative weight of the median is 0.5,
+	 * then the median of the upper and lower medians are returned.
+	 * 
+	 * Convergence typically occurs at iterations 4-6 with a scaling of 0.25-0.1
+	 * 
+	 * @param values
+	 * @param iters
+	 * @param scaling
+	 * @return The adaptively determined weighted mean.
+	 */
+	public static Double adaptiveMedian(double[] values, int iters, double scaling)
+	{
+		AdaptiveMedian am = new AdaptiveMedian(values, scaling);
+		return am.evaluate(iters);
+	}
+	
+	public static Double adaptiveMedian(double[] values, int iters)
+	{
+		return adaptiveMedian(values, iters, 5.0);
+	}
+	
+	/**
+	 * The algorithm first determines a traditional median to seed the algorithm
+	 * Each value is then weighted according to (abs(x-mean))^(scaling).
+	 * The weighted median (i.e., the value at the index where the cumulative
+	 * normalized weight is <= 0.5. If the cumulative weight of the median is 0.5,
+	 * then the median of the upper and lower medians are returned.
+	 * 
+	 * Convergence typically occurs at iterations 4-6 with a scaling of 0.25-0.1
+	 * 
+	 * @param values
+	 * @param iters
+	 * @param scaling
+	 * @return The adaptively determined weighted mean.
+	 */
+	public static Double adaptiveMedian(Collection<Double> values, int iters, double scaling)
+	{
+		double[] v = new double[values.size()];
+		int count = 0;
+		for (Double d : values)
+		{
+			v[count] = d;
+			count++;
+		}
+		AdaptiveMedian am = new AdaptiveMedian(v, scaling);
+		return am.evaluate(iters);
+	}
+	
+	public static Double adaptiveMedian(Collection<Double> values, int iters)
+	{
+		return adaptiveMedian(values, iters, 5.0);
+	}
+	
+	/**
+	 * The algorithm first determines a traditional median to seed the algorithm
+	 * Each value is then weighted according to (abs(x-mean))^(scaling).
+	 * The weighted median (i.e., the value at the index where the cumulative
+	 * normalized weight is <= 0.5. If the cumulative weight of the median is 0.5,
+	 * then the median of the upper and lower medians are returned.
+	 * 
+	 * Convergence typically occurs at iterations 4-6 with a scaling of 0.25-0.1
+	 * 
+	 * @param values
+	 * @param iters
+	 * @param scaling
+	 * @return The adaptively determined weighted mean.
+	 */
+	public static < T extends RealType< T > > Double adaptiveMedian(IterableRealInterval<T> values, int iters, double scaling)
+	{
+		double[] v = new double[(int) values.size()];
+		int count = 0;
+		for (T d : values)
+		{
+			v[count] = d.getRealDouble();
+			count++;
+		}
+		AdaptiveMedian am = new AdaptiveMedian(v, scaling);
+		return am.evaluate(iters);
+	}
+	
+	public static < T extends RealType< T > > Double adaptiveMedian(IterableRealInterval<T> values, int iters)
+	{
+		return adaptiveMedian(values, iters, 5.0);
 	}
 	
 	public static Double median(double[] values)
@@ -1100,7 +1189,7 @@ public class StatisticsUtility {
 		Median medianCalculator = new Median();
 		return medianCalculator.evaluate(values);
 	}
-	
+
 	public static Double median(Collection<Double> values)
 	{
 		double[] v = new double[values.size()];
@@ -1112,7 +1201,7 @@ public class StatisticsUtility {
 		}
 		return median(v);
 	}
-	
+
 	public static < T extends RealType< T > > Double median(IterableRealInterval<T> values)
 	{
 		double[] v = new double[(int) values.size()];
@@ -1124,111 +1213,110 @@ public class StatisticsUtility {
 		}
 		return median(v);
 	}
-	
-	
+
 	public static Vector<Point> generateRandomPointsInRectangularRegion(Interval interval, int numPoints)
 	{
 		// the number of dimensions
-        int numDimensions = interval.numDimensions();
- 
-        // a random number generator
-        Random rnd = new Random();
- 
-        // a list of Samples with coordinates
-        Vector<Point> elements = new Vector<>();
+		int numDimensions = interval.numDimensions();
 
-        // Make a separate method that returns the list of random locations within the interval
-        // Then just offset the locations by the min of each dimension.
-        for ( int i = 0; i < numPoints; ++i )
-        {
-            Point point = new Point( numDimensions );
- 
-            for ( int d = 0; d < numDimensions; ++d )
-                point.setPosition( Math.round(rnd.nextDouble() *
-                    ( interval.realMax( d ) - interval.realMin( d ) ) + interval.realMin( d )), d );
- 
-            // add a new element with a random intensity in the range 0...1
-            elements.add( point );
-        }
- 
-        return elements;
+		// a random number generator
+		Random rnd = new Random();
+
+		// a list of Samples with coordinates
+		Vector<Point> elements = new Vector<>();
+
+		// Make a separate method that returns the list of random locations within the interval
+		// Then just offset the locations by the min of each dimension.
+		for ( int i = 0; i < numPoints; ++i )
+		{
+			Point point = new Point( numDimensions );
+
+			for ( int d = 0; d < numDimensions; ++d )
+				point.setPosition( Math.round(rnd.nextDouble() *
+						( interval.realMax( d ) - interval.realMin( d ) ) + interval.realMin( d )), d );
+
+			// add a new element with a random intensity in the range 0...1
+			elements.add( point );
+		}
+
+		return elements;
 	}
-	
+
 	/**
 	 * Source: http://imagej.net/ImgLib2_Examples#Example_8b_-_Randomly_sample_an_existing_image_and_display_it
 	 * 
-     * Sample a number of n-dimensional random points in a certain interval having a
-     * random intensity 0...1
-     *
-     * @param interval - the interval in which points are created
-     * @param numPoints - the amount of points
-     *
-     * @return a RealPointSampleList (which is an IterableRealInterval)
-     */
-    public static < T extends RealType< T > > double[] samplePoints(
-        RandomAccessible< T > input, Vector<Point> points, Localizable offset )
-    {
-    	// a random accessible in the image data to grep the right value
-        RandomAccess< T > randomAccess = input.randomAccess();
-        
-    	// Move the set of points according to the cursor position
-        double[] nums = new double[points.size()];
-        for(int i = 0; i < points.size(); i++)
-        {
-        	Point p = new Point(points.get(i));
-        	p.move(offset);
-        	randomAccess.setPosition(p);
-        	nums[i] = randomAccess.get().getRealDouble();
-        }
- 
-        return nums;
-    }
-	
+	 * Sample a number of n-dimensional random points in a certain interval having a
+	 * random intensity 0...1
+	 *
+	 * @param interval - the interval in which points are created
+	 * @param numPoints - the amount of points
+	 *
+	 * @return a RealPointSampleList (which is an IterableRealInterval)
+	 */
+	public static < T extends RealType< T > > double[] samplePoints(
+			RandomAccessible< T > input, Vector<Point> points, Localizable offset )
+	{
+		// a random accessible in the image data to grep the right value
+		RandomAccess< T > randomAccess = input.randomAccess();
+
+		// Move the set of points according to the cursor position
+		double[] nums = new double[points.size()];
+		for(int i = 0; i < points.size(); i++)
+		{
+			Point p = new Point(points.get(i));
+			p.move(offset);
+			randomAccess.setPosition(p);
+			nums[i] = randomAccess.get().getRealDouble();
+		}
+
+		return nums;
+	}
+
 	/**
 	 * Source: http://imagej.net/ImgLib2_Examples#Example_8b_-_Randomly_sample_an_existing_image_and_display_it
 	 * 
-     * Sample a number of n-dimensional random points in a certain interval having a
-     * random intensity 0...1
-     *
-     * @param interval - the interval in which points are created
-     * @param numPoints - the amount of points
-     *
-     * @return a RealPointSampleList (which is an IterableRealInterval)
-     */
-    public static < T extends RealType< T > > double[] sampleRandomPoints(
-        RandomAccessible< T > input, Interval interval, int numPoints )
-    {
-        // the number of dimensions
-        int numDimensions = interval.numDimensions();
- 
-        // a random number generator
-        Random rnd = new Random();
- 
-        // a list of Samples with coordinates
-        double[] ret = new double[numPoints];
- 
-        // a random accessible in the image data to grep the right value
-        RandomAccess< T > randomAccess = input.randomAccess();
- 
-        // Make a separate method that returns the list of random locations within the interval
-        // Then just offset the locations by the min of each dimension.
-        for ( int i = 0; i < numPoints; ++i )
-        {
-            Point point = new Point( numDimensions );
- 
-            for ( int d = 0; d < numDimensions; ++d )
-                point.setPosition( Math.round(rnd.nextDouble() *
-                    ( interval.realMax( d ) - interval.realMin( d ) ) + interval.realMin( d )), d );
- 
-            randomAccess.setPosition( point );
- 
-            // add a new element with a random intensity in the range 0...1
-            ret[i] = randomAccess.get().getRealDouble();
-        }
- 
-        return ret;
-    }
-	
+	 * Sample a number of n-dimensional random points in a certain interval having a
+	 * random intensity 0...1
+	 *
+	 * @param interval - the interval in which points are created
+	 * @param numPoints - the amount of points
+	 *
+	 * @return a RealPointSampleList (which is an IterableRealInterval)
+	 */
+	public static < T extends RealType< T > > double[] sampleRandomPoints(
+			RandomAccessible< T > input, Interval interval, int numPoints )
+	{
+		// the number of dimensions
+		int numDimensions = interval.numDimensions();
+
+		// a random number generator
+		Random rnd = new Random();
+
+		// a list of Samples with coordinates
+		double[] ret = new double[numPoints];
+
+		// a random accessible in the image data to grep the right value
+		RandomAccess< T > randomAccess = input.randomAccess();
+
+		// Make a separate method that returns the list of random locations within the interval
+		// Then just offset the locations by the min of each dimension.
+		for ( int i = 0; i < numPoints; ++i )
+		{
+			Point point = new Point( numDimensions );
+
+			for ( int d = 0; d < numDimensions; ++d )
+				point.setPosition( Math.round(rnd.nextDouble() *
+						( interval.realMax( d ) - interval.realMin( d ) ) + interval.realMin( d )), d );
+
+			randomAccess.setPosition( point );
+
+			// add a new element with a random intensity in the range 0...1
+			ret[i] = randomAccess.get().getRealDouble();
+		}
+
+		return ret;
+	}
+
 	/**
 	 * @param values
 	 * @param percentile value be > 0 and <= 100
@@ -1238,7 +1326,7 @@ public class StatisticsUtility {
 	{
 		return StatUtils.percentile(values, percentile);
 	}
-	
+
 	/**
 	 * @param values
 	 * @param percentile value be > 0 and <= 100
@@ -1255,7 +1343,7 @@ public class StatisticsUtility {
 		}
 		return StatUtils.percentile(v, percentile);
 	}
-	
+
 	/**
 	 * @param values
 	 * @param percentiles value be > 0 and <= 100
@@ -1263,7 +1351,7 @@ public class StatisticsUtility {
 	 */
 	public static double[] percentile(double[] values, double[] percentiles)
 	{
-		
+
 		Percentile p = new Percentile();
 		p.setData(values);
 		double[] ret = new double[percentiles.length];
@@ -1273,7 +1361,7 @@ public class StatisticsUtility {
 		}
 		return ret;
 	}
-	
+
 	/**
 	 * @param values
 	 * @param percentiles value be > 0 and <= 100
@@ -1290,29 +1378,24 @@ public class StatisticsUtility {
 		}
 		return StatisticsUtility.percentile(v, percentiles);
 	}
-	
-	public static int[] modes(int[] values)
+
+	public static int mode(int[] values)
 	{
 		double[] d = new double[values.length];
 		for(int i=0; i < values.length; i++)
 		{
 			d[i] = values[i];
 		}
-	    double[] modes = StatUtils.mode(d);
-	    int[] ret = new int[modes.length];
-	    for(int i=0; i < modes.length; i++)
-		{
-			ret[i] = (int) modes[i];
-		}
-	    return ret;
+		double[] modes = StatUtils.mode(d);
+		return (int) Math.round(modes[0]);
 	}
-	
-	public static double[] modes(double[] values)
+
+	public static double mode(double[] values)
 	{
-		return StatUtils.mode(values);
+		return StatUtils.mode(values)[0];
 	}
-	
-	public static double[] modes(Collection<Double> values)
+
+	public static double mode(Collection<Double> values)
 	{
 		double[] v = new double[values.size()];
 		int count = 0;
@@ -1321,9 +1404,15 @@ public class StatisticsUtility {
 			v[count] = d;
 			count++;
 		}
-		return StatUtils.mode(v);
+		return StatUtils.mode(v)[0];
 	}
-	
+
+	/**
+	 * MEDIAN absolute deviation
+	 * @param median
+	 * @param values
+	 * @return
+	 */
 	public static Double mad(double median, double[] values)
 	{
 		double med = median;
@@ -1336,7 +1425,7 @@ public class StatisticsUtility {
 		}
 		return 1.4826 * median(diffs);
 	}
-	
+
 	public static Double mad(double[] values)
 	{
 		double med = median(values);
@@ -1349,7 +1438,7 @@ public class StatisticsUtility {
 		}
 		return 1.4826 * median(diffs);
 	}
-	
+
 	public static Double mad(Collection<Double> values)
 	{
 		double med = median(values);
@@ -1362,7 +1451,7 @@ public class StatisticsUtility {
 		}
 		return 1.4826 * median(diffs);
 	}
-	
+
 	public static Double sum(double[] values)
 	{
 		double sum = 0;
@@ -1372,7 +1461,7 @@ public class StatisticsUtility {
 		}
 		return new Double(sum);
 	}
-	
+
 	public static Double sum(Collection<Double> values)
 	{
 		double sum = 0;
@@ -1382,7 +1471,7 @@ public class StatisticsUtility {
 		}
 		return sum;
 	}
-	
+
 	public static Double stdDev(Collection<Double> values)
 	{
 		double[] v = new double[values.size()];
@@ -1394,7 +1483,7 @@ public class StatisticsUtility {
 		}
 		return stdDev(v);
 	}
-	
+
 	public static Double variance(Collection<Double> values)
 	{
 		double[] v = new double[values.size()];
@@ -1406,21 +1495,21 @@ public class StatisticsUtility {
 		}
 		return variance(v);
 	}
-	
+
 	public static double normalCDF(double x, double mean, double sigma)
 	{
 		NormalDistribution normDist = new NormalDistribution(mean, sigma);
 		double ret = normDist.cumulativeProbability(x);
 		return ret;
 	}
-	
+
 	public static double normalInverseCDF(double pValue, double mean, double sigma)
 	{
 		NormalDistribution normDist = new NormalDistribution(mean, sigma);
 		double ret = normDist.inverseCumulativeProbability(pValue);
 		return ret;
 	}
-	
+
 	public static double normalPDF(double x, double mean, double sigma)
 	{
 		double A = 1 / (sigma * Math.sqrt(2 * Math.PI));
@@ -1428,11 +1517,11 @@ public class StatisticsUtility {
 		double ret = A * Math.exp(B);
 		return ret;
 	}
-	
+
 	public static PointList getMinDistanceMappingOfB(PointList a, PointList b)
 	{
 		double[][] d = new double[a.size()][b.size()];
-		
+
 		for (int r = 0; r < a.size(); r++)
 		{
 			for (int c = 0; c < b.size(); c++)
@@ -1442,16 +1531,16 @@ public class StatisticsUtility {
 		}
 		HungarianAlgorithm h = new HungarianAlgorithm(d);
 		int[] map = h.execute();
-		
+
 		PointList ret = new PointList();
 		for (int i : map)
 		{
 			ret.add(b.elementAt(i).copy());
 		}
-		
+
 		return ret;
 	}
-	
+
 	public static double getMappingDistance(PointList a, PointList b)
 	{
 		double ret = 0;
@@ -1459,10 +1548,20 @@ public class StatisticsUtility {
 		{
 			ret = ret + IdPoint.distance(a.elementAt(r).x, a.elementAt(r).y, b.elementAt(r).x, b.elementAt(r).y);
 		}
-		
+
 		return ret;
 	}
 	
+	public static boolean isEven(int n)
+	{
+		return (n & 1) == 0;
+	}
+	
+	public static boolean isOdd(int n)
+	{
+		return (n & 1) != 0;
+	}
+
 }
 
 /*
@@ -1492,7 +1591,7 @@ public class StatisticsUtility {
  * @author Kevin L. Stern
  */
 class HungarianAlgorithm {
-	
+
 	private final double[][] costMatrix;
 	private final int rows, cols, dim;
 	private final double[] labelByWorker, labelByJob;
@@ -1501,7 +1600,7 @@ class HungarianAlgorithm {
 	private final int[] matchJobByWorker, matchWorkerByJob;
 	private final int[] parentWorkerByCommittedJob;
 	private final boolean[] committedWorkers;
-	
+
 	/**
 	 * Construct an instance of the algorithm.
 	 * 
@@ -1540,7 +1639,7 @@ class HungarianAlgorithm {
 		this.matchWorkerByJob = new int[this.dim];
 		Arrays.fill(this.matchWorkerByJob, -1);
 	}
-	
+
 	/**
 	 * Compute an initial feasible solution by assigning zero labels to the workers and by assigning to each job a label equal to the minimum cost among its incident edges.
 	 */
@@ -1561,7 +1660,7 @@ class HungarianAlgorithm {
 			}
 		}
 	}
-	
+
 	/**
 	 * Execute the algorithm.
 	 * 
@@ -1575,7 +1674,7 @@ class HungarianAlgorithm {
 		this.reduce();
 		this.computeInitialFeasibleSolution();
 		this.greedyMatch();
-		
+
 		int w = this.fetchUnmatchedWorker();
 		while (w < this.dim)
 		{
@@ -1593,7 +1692,7 @@ class HungarianAlgorithm {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Execute a single phase of the algorithm. A phase of the Hungarian algorithm consists of building a set of committed workers and a set of committed jobs from a root unmatched worker by following alternating unmatched/matched zero-slack edges.
 	 * If an unmatched job is encountered, then an augmenting path has been found and the matching is grown. If the connected zero-slack edges have been exhausted, the labels of committed workers are increased by the minimum slack among committed
@@ -1668,7 +1767,7 @@ class HungarianAlgorithm {
 			}
 		}
 	}
-	
+
 	/**
 	 * 
 	 * @return the first unmatched worker or {@link #dim} if none.
@@ -1685,7 +1784,7 @@ class HungarianAlgorithm {
 		}
 		return w;
 	}
-	
+
 	/**
 	 * Find a valid matching by greedily selecting among zero-cost matchings. This is a heuristic to jump-start the augmentation algorithm.
 	 */
@@ -1702,7 +1801,7 @@ class HungarianAlgorithm {
 			}
 		}
 	}
-	
+
 	/**
 	 * Initialize the next phase of the algorithm by clearing the committed workers and jobs sets and by initializing the slack arrays to the values corresponding to the specified root worker.
 	 * 
@@ -1720,7 +1819,7 @@ class HungarianAlgorithm {
 			this.minSlackWorkerByJob[j] = w;
 		}
 	}
-	
+
 	/**
 	 * Helper method to record a matching between worker w and job j.
 	 */
@@ -1729,7 +1828,7 @@ class HungarianAlgorithm {
 		this.matchJobByWorker[w] = j;
 		this.matchWorkerByJob[j] = w;
 	}
-	
+
 	/**
 	 * Reduce the cost matrix by subtracting the smallest element of each row from all elements of the row as well as the smallest element of each column from all elements of the column. Note that an optimal assignment for a reduced cost matrix is
 	 * optimal for the original cost matrix.
@@ -1774,7 +1873,7 @@ class HungarianAlgorithm {
 			}
 		}
 	}
-	
+
 	/**
 	 * Update labels with the specified slack by adding the slack value for committed workers and by subtracting the slack value for committed jobs. In addition, update the minimum slack values appropriately.
 	 */
@@ -1799,4 +1898,126 @@ class HungarianAlgorithm {
 			}
 		}
 	}
+}
+
+@SuppressWarnings("rawtypes")
+class ComparablePair<T1 extends Comparable, T2> extends Pair<T1, T2> implements Comparable<Pair<T1, T2>>
+{
+
+	public ComparablePair(T1 p1, T2 p2)
+	{
+		super(p1, p2);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public int compareTo(Pair<T1, T2> o) {
+		return this.p1.compareTo(o.p1);
+	}
+}
+
+class AdaptiveMedian
+{
+	double[] data, weights;
+	double totalWeight = 0;
+	double scaling;
+
+	public AdaptiveMedian(double[] data)
+	{
+		this(data, 5.0);
+	}
+	
+	public AdaptiveMedian(double[] data, double scaling)
+	{
+		this.data = data;
+		weights = new double[data.length];
+		this.scaling = scaling;
+	}
+
+	public Double evaluate(int iters)
+	{
+		if(data.length == 0)
+		{
+			return null;
+		}
+		if(data.length == 1)
+		{
+			return data[0];
+		}
+		Arrays.sort(data);
+
+		// get an initial median
+		int n = data.length;
+		int medianIndex = ((n+1)/2)-1;
+		double median = data[medianIndex];
+		if(StatisticsUtility.isEven(data.length))
+		{
+			median = (median + data[medianIndex + 1])/2.0;
+		}
+		
+		// iteratively approach weighted median
+		int index = 0;
+		double oldMed = Double.MIN_VALUE;
+		double oldOldMed = Double.MIN_VALUE;
+		while(iters > 0 && median != oldMed && median != oldOldMed)
+		{
+			oldOldMed = oldMed;
+			oldMed = median;
+			this.calculateWeights(median, scaling);
+			double cumWeight = 0;
+			index = 0;
+			for(double p : weights)
+			{
+				if(cumWeight > 0.5)
+				{
+					break;
+				}
+				cumWeight = cumWeight + p/totalWeight;
+				index = index + 1;
+			}
+			if(index >= data.length)
+			{
+				index = medianIndex;
+			}
+			median = data[index];
+			iters = iters - 1;
+		}
+		
+		if(weights[index] == 0.5)
+		{
+			median = (median + data[index + 1])/2.0;
+		}
+		return median;
+	}
+
+	private void calculateWeights(double median, double scaling)
+	{
+		/*
+		 * From R test code
+		 * 
+		 * a=1 near optimal;
+		 * 
+		 * b=5 performs well
+		 * 
+		 * getWeights <- function(x, med, a, b)
+		 * {
+		 * 		w <- abs(x-med)
+		 *      w <- w/(a*mad(x, center=med))
+		 *  	w <- 1/(1+w^b)
+		 *		w <- w/sum(w)
+		 *		return(w)
+		 * }
+		 */
+		totalWeight = 0;
+		double w = 0.0;
+		double mad = StatisticsUtility.mad(median, data);
+		for(int i=0; i < data.length; i++)
+		{
+			w = Math.abs(data[i]-median);
+			w = w / mad;
+			w = 1/(1 + Math.pow(w, scaling));
+			weights[i] = w;
+			totalWeight = totalWeight + w;
+		}
+	}	
 }
