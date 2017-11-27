@@ -1,5 +1,8 @@
 package function.plugin.old;
 
+import java.util.HashMap;
+import java.util.TreeMap;
+
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;
@@ -10,11 +13,7 @@ import Database.Definition.TypeName;
 import Database.SingleUserDatabase.JEXWriter;
 import function.JEXCrunchable;
 import ij.ImagePlus;
-import ij.process.ByteProcessor;
-
-import java.util.HashMap;
-import java.util.TreeMap;
-
+import ij.process.FloatProcessor;
 import jex.statics.JEXStatics;
 import logs.Logs;
 import tables.DimensionMap;
@@ -79,7 +78,7 @@ public class JEX_FindEdges extends JEXCrunchable {
 	@Override
 	public boolean showInList()
 	{
-		return true;
+		return false;
 	}
 	
 	/**
@@ -201,7 +200,7 @@ public class JEX_FindEdges extends JEXCrunchable {
 			
 			// get the image
 			ImagePlus im = new ImagePlus(path);
-			ByteProcessor bimp = (ByteProcessor) im.getProcessor().convertToByte(true); // should
+			FloatProcessor bimp = (FloatProcessor) im.getProcessor().convertToFloat(); // should
 			// be
 			// a
 			// float
