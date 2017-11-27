@@ -2,6 +2,7 @@ package jex.utilities;
 
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.Shape;
 import java.util.Vector;
 
 import ij.gui.Roi;
@@ -53,13 +54,13 @@ public class ROIUtility {
 			return null;
 		}
 		Rectangle r = new Rectangle(ip.getWidth(), ip.getHeight());
-		Roi roi2 = roi.getRoi();
+		Shape s = roi.getShape();
 		PointList outside = new PointList();
 		for (int y = r.y; y < r.y + r.height; y++)
 		{
 			for (int x = r.x; x < r.x + r.width; x++)
 			{
-				if(!roi2.contains(x, y))
+				if(!s.contains(x, y))
 				{
 					outside.add(x, y);
 				}
