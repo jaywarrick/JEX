@@ -16,6 +16,8 @@ import javax.swing.JOptionPane;
 import org.apache.commons.io.FileUtils;
 
 import Database.SingleUserDatabase.JEXWriter;
+import ij.ImagePlus;
+import ij.process.ImageProcessor;
 import jex.statics.JEXStatics;
 import logs.Logs;
 import net.imglib2.RandomAccessibleInterval;
@@ -28,6 +30,43 @@ public class FileUtility implements Comparator<File> {
 	{
 		Desktop.getDesktop().open(new File(name));
 		System.out.println("Executed ! ");
+	}
+	
+	public static void showImg(ImagePlus im, boolean defaultApp)
+	{
+		if(defaultApp)
+		{
+			String path = JEXWriter.saveImage(im);
+			try {
+				FileUtility.openFileDefaultApplication(path);
+			} catch (Exception e) {
+				Logs.log("Couldn't save, open, and show image.", FileUtility.class);
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			im.show();
+		}
+	}
+	
+	public static void showImg(ImageProcessor imp, boolean defaultApp)
+	{
+		ImagePlus im = new ImagePlus("temp", imp);
+		if(defaultApp)
+		{
+			String path = JEXWriter.saveImage(im);
+			try {
+				FileUtility.openFileDefaultApplication(path);
+			} catch (Exception e) {
+				Logs.log("Couldn't save, open, and show image.", FileUtility.class);
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			im.show();
+		}
 	}
 	
 	public static <T extends RealType<T>> void showImg(RandomAccessibleInterval<T> img, boolean defaultApp)
