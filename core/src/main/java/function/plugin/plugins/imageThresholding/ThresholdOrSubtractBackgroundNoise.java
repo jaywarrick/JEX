@@ -19,6 +19,7 @@ import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.MarkerConstants;
 import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
+import function.plugin.plugins.featureExtraction.FeatureUtils;
 // Import needed classes here 
 import ij.ImagePlus;
 import ij.process.FloatProcessor;
@@ -26,7 +27,6 @@ import image.roi.ROIPlus;
 import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import jex.utilities.FunctionUtility;
-import jex.utilities.ROIUtility;
 import miscellaneous.CSVList;
 import miscellaneous.StatisticsUtility;
 import miscellaneous.StringUtility;
@@ -68,19 +68,25 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 	@ParameterMarker(uiOrder=3, name="Number of Sigma", description="Number of sigma to determine subtraction value or value at which to threshold image. (Comma separated list results in outputs for each value and negative values (-x) result in keeping values below -x sigma)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="5.0")
 	String nSigma;
 
-	@ParameterMarker(uiOrder=4, name="Single Threshold per Color?", description="Calculate a single threhsold for each color or a threshold for each image in data set. The combined thresh is calcualted as the median of the individual thresholds.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	@ParameterMarker(uiOrder=4, name="Fraction to Sample", description="What fraction of the pixels should be sampled?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.05")
+	double fraction;
+
+	@ParameterMarker(uiOrder=5, name="Use adaptive algorithm?", description="Should the background level be refined by iteratively weighting the pixels by their proximity to the current median value?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
+	boolean adaptive;
+
+	@ParameterMarker(uiOrder=6, name="Single Threshold per Color?", description="Calculate a single threhsold for each color or a threshold for each image in data set. The combined thresh is calcualted as the median of the individual thresholds.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
 	boolean threshPerColor;
 
-	@ParameterMarker(uiOrder=5, name="Offset", description="Amount to add back to the image before saving. Useful for avoiding clipping of lows, essentially setting the background to a known non-zero offset.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
+	@ParameterMarker(uiOrder=7, name="Offset", description="Amount to add back to the image before saving. Useful for avoiding clipping of lows, essentially setting the background to a known non-zero offset.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
 	double offset;
-	
-	@ParameterMarker(uiOrder=6, name="Evaluate Outside ROI?", description="If an ROI is specified, then indicate whether to use pixels inside or outside the ROI to determine background intensities. (checked uses pixels outside ROI)", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+
+	@ParameterMarker(uiOrder=8, name="Evaluate Outside ROI?", description="If an ROI is specified, then indicate whether to use pixels inside or outside the ROI to determine background intensities. (checked uses pixels outside ROI)", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
 	boolean outside;
 
-	@ParameterMarker(uiOrder=7, name="Exclusion Filter", description="<DimName>=<Val1>,<Val2>,...<Valn>, Specify the dimension and dimension values to exclude. Leave blank to process all. Useful for excluding bright-field (e.g., Channel=BF). Technically doesn't have to be the 'Channel' dimension.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
+	@ParameterMarker(uiOrder=9, name="Exclusion Filter", description="<DimName>=<Val1>,<Val2>,...<Valn>, Specify the dimension and dimension values to exclude. Leave blank to process all. Useful for excluding bright-field (e.g., Channel=BF). Technically doesn't have to be the 'Channel' dimension.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
 	String toExclude;
-	
-	@ParameterMarker(uiOrder=8, name="Keep Unprocessed Images?", description="Should the images within the object that are exlcluded from analysis by the Dimension Filter be kept in the result?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+
+	@ParameterMarker(uiOrder=10, name="Keep Unprocessed Images?", description="Should the images within the object that are exlcluded from analysis by the Dimension Filter be kept in the result?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
 	boolean keepUnprocessed;
 
 	/////////// Define Outputs here ///////////
@@ -107,6 +113,8 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 		return 10;
 	}
 
+	FeatureUtils utils = new FeatureUtils();
+
 	// Code the actions of the plugin here using comments for significant sections of code to enhance readability as shown here
 	@SuppressWarnings("unchecked")
 	@Override
@@ -118,7 +126,7 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 			JEXDialog.messageDialog("The ability to use multiple sigma values and the one threshold per color option are incompatabile. Choose to do one or the other. Aborting.", this);
 			return false;
 		}
-		
+
 		// Collect the inputs
 		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
 		{
@@ -131,7 +139,7 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 			String[] filterArray = toExclude.split("=");
 			filterDim = new Dim(filterArray[0], new CSVList(filterArray[1]));
 		}
-		
+
 		TreeMap<String,Object> output = null;
 		if(threshPerColor)
 		{
@@ -272,7 +280,7 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 					return this.makeTreeMap("Success", false);
 				}
 
-				Double med = Double.NaN, mad = Double.NaN, threshold = Double.NaN;
+				Double med = Double.NaN, mad = Double.NaN, threshold = Double.NaN, n = Double.NaN;
 
 				// Get the image
 				String imPath = imageMap.get(map);
@@ -293,45 +301,79 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 				}
 				else
 				{
-					FloatProcessor ip = (FloatProcessor) im.getProcessor().convertToFloat();
-
-					ip.log();
-					// Do threshold
-					ROIPlus roi = rois.get(map);
-					float[] tempPixels = null;
-					if(roi != null)
-					{
-						if(outside)
-						{
-							tempPixels = ROIUtility.getPixelsOutsideRoi(ip, roi);
-						}
-						else
-						{
-							tempPixels = ROIUtility.getPixelsInRoi(ip, roi);
-						}
-					}
-					if(tempPixels == null)
-					{
-						tempPixels = (float[]) ip.getPixels();
-					}
-					double[] pixels = new double[tempPixels.length];
-					int i = 0;
-					for (float f : tempPixels)
-					{
-						pixels[i] = f;
-						i++;
-					}
-					tempPixels = null;
-					med = StatisticsUtility.median(pixels);
 					if(this.isCanceled())
 					{
 						return this.makeTreeMap("Success", false);
 					}
-					mad = StatisticsUtility.stdDev(pixels); // Multiplier converts the mad to an approximation of the standard deviation without the effects of outliers
+					
+					FloatProcessor ip = (FloatProcessor) im.getProcessor().convertToFloat();
+
+					int numToSample = (int) (ip.getWidth() * ip.getHeight() * this.fraction);
+
+					// Get the appropriate pixels for calculating the median and get the med and mad values
+					ROIPlus roi = rois.get(map);
+					
+					if(this.fraction > 0.75)
+					{
+						Vector<Double> tempPixels = null;
+						if(roi != null)
+						{
+							tempPixels = this.utils.sampleFromShape(ip, roi.getShape(), !outside);
+						}
+						else
+						{
+							tempPixels = this.utils.sampleFromShape(ip, null, !outside);
+						}
+						
+						// Get the median of the sampled pixels
+						if(adaptive)
+						{
+							med = StatisticsUtility.adaptiveMedian(tempPixels);
+							n = (double) tempPixels.size();
+						}
+						else
+						{
+							med = StatisticsUtility.median(tempPixels);
+							n = (double) tempPixels.size();
+						}
+						mad = StatisticsUtility.mad(med, tempPixels); // Multiplier converts the mad to an approximation of the standard deviation without the effects of outliers
+					}
+					else
+					{
+						Vector<Double> tempPixels = null;
+						if(roi != null)
+						{
+							tempPixels = this.utils.hexagonallySampleN(ip, roi.getShape(), !outside, numToSample);
+							//						if(outside)
+							//						{
+							//							tempPixels = ROIUtility.getPixelsOutsideRoi(ip, roi);
+							//						}
+							//						else
+							//						{
+							//							tempPixels = ROIUtility.getPixelsInRoi(ip, roi);
+							//						}
+						}
+						else
+						{
+							tempPixels = this.utils.hexagonallySampleN(ip, null, !outside, numToSample);
+						}
+						// Get the median of the sampled pixels
+						if(adaptive)
+						{
+							med = StatisticsUtility.adaptiveMedian(tempPixels);
+							n = (double) tempPixels.size();
+						}
+						else
+						{
+							med = StatisticsUtility.median(tempPixels);
+							n = (double) tempPixels.size();
+						}
+						mad = StatisticsUtility.mad(med, tempPixels); // Multiplier converts the mad to an approximation of the standard deviation without the effects of outliers
+					}
+					
 					threshold = med + sigma * mad;
-					threshold = Math.exp(threshold);
 					String path = null;
-					ip.exp();
+
 					if(!threshPerColor)
 					{
 						if(this.threshold)
@@ -385,6 +427,8 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 					statsMap.put(map2.copy(), med);
 					map2.put("Measurement", "MAD");
 					statsMap.put(map2.copy(), mad);
+					map2.put("Measurement", "n");
+					statsMap.put(map2.copy(), n);
 					outputThreshMap.put(map, threshold);
 				}
 				else
@@ -394,7 +438,9 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 					statsMap.put(map2.copy(), med);
 					map2.put("Measurement", "MAD_" + sigma);
 					statsMap.put(map2.copy(), mad);
-					
+					map2.put("Measurement", "n_" + sigma);
+					statsMap.put(map2.copy(), n);
+
 					DimensionMap toSave = map.copy();
 					toSave.put(colorDimName, map.get(colorDimName) + "_" + sigma);
 					outputThreshMap.put(toSave, threshold);
