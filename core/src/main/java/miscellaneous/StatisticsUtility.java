@@ -1117,7 +1117,12 @@ public class StatisticsUtility {
 	
 	public static Double adaptiveMedian(double[] values, int iters)
 	{
-		return adaptiveMedian(values, iters, 5.0);
+		return adaptiveMedian(values, iters, AdaptiveMedian.SCALING);
+	}
+	
+	public static Double adaptiveMedian(double[] values)
+	{
+		return adaptiveMedian(values, AdaptiveMedian.ITERS, AdaptiveMedian.SCALING);
 	}
 	
 	/**
@@ -1149,7 +1154,12 @@ public class StatisticsUtility {
 	
 	public static Double adaptiveMedian(Collection<Double> values, int iters)
 	{
-		return adaptiveMedian(values, iters, 5.0);
+		return adaptiveMedian(values, iters, AdaptiveMedian.SCALING);
+	}
+	
+	public static Double adaptiveMedian(Collection<Double> values)
+	{
+		return adaptiveMedian(values, AdaptiveMedian.ITERS, AdaptiveMedian.SCALING);
 	}
 	
 	/**
@@ -1181,7 +1191,12 @@ public class StatisticsUtility {
 	
 	public static < T extends RealType< T > > Double adaptiveMedian(IterableRealInterval<T> values, int iters)
 	{
-		return adaptiveMedian(values, iters, 5.0);
+		return adaptiveMedian(values, iters, AdaptiveMedian.SCALING);
+	}
+	
+	public static < T extends RealType< T > > Double adaptiveMedian(IterableRealInterval<T> values)
+	{
+		return adaptiveMedian(values, AdaptiveMedian.ITERS, AdaptiveMedian.SCALING);
 	}
 	
 	public static Double median(double[] values)
@@ -1428,20 +1443,12 @@ public class StatisticsUtility {
 
 	public static Double mad(double[] values)
 	{
-		double med = median(values);
-		double[] diffs = new double[values.length];
-		int count = 0;
-		for (Double d : values)
-		{
-			diffs[count] = Math.abs(d - med);
-			count++;
-		}
-		return 1.4826 * median(diffs);
+		return mad(median(values), values);
 	}
-
-	public static Double mad(Collection<Double> values)
+	
+	public static Double mad(double median, Collection<Double> values)
 	{
-		double med = median(values);
+		double med = median;
 		double[] diffs = new double[values.size()];
 		int count = 0;
 		for (Double d : values)
@@ -1450,6 +1457,11 @@ public class StatisticsUtility {
 			count++;
 		}
 		return 1.4826 * median(diffs);
+	}
+	
+	public static Double mad(Collection<Double> values)
+	{
+		return mad(median(values), values);
 	}
 
 	public static Double sum(double[] values)
@@ -1918,6 +1930,8 @@ class ComparablePair<T1 extends Comparable, T2> extends Pair<T1, T2> implements 
 
 class AdaptiveMedian
 {
+	public static final double SCALING = 5.0;
+	public static final int ITERS = 4;
 	double[] data, weights;
 	double totalWeight = 0;
 	double scaling;
