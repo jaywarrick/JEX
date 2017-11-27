@@ -1,5 +1,7 @@
 package function.plugin.plugins.featureExtraction;
 
+import java.awt.Rectangle;
+import java.awt.Shape;
 import java.io.File;
 import java.util.Random;
 import java.util.TreeMap;
@@ -11,8 +13,8 @@ import function.ops.intervals.CroppedRealRAI;
 import function.ops.intervals.IntersectedBooleanRAI;
 import function.ops.intervals.MapIIToSamplingRAI;
 import function.plugin.IJ2.IJ2PluginUtility;
-
 import ij.ImagePlus;
+import ij.gui.Roi;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import image.roi.IdPoint;
@@ -616,7 +618,65 @@ public class FeatureUtils {
 		}
 	}
 	
-	public <T extends RealType<T>> Vector<Double> hexagonallySampleN(ImageProcessor img, long numberOfSpeckles)
+	public <T extends RealType<T>> Vector<Double> hexagonallySampleN(ImageProcessor img, boolean inside, long numberOfSpeckles)
+	{
+		Roi roi = (new ImagePlus("duh", img)).getRoi();
+		ROIPlus roip = null;
+		if(roi != null)
+		{
+			roip = new ROIPlus(roi);
+		}
+		else
+		{
+			roip = new ROIPlus(new Rectangle(0,0, img.getWidth(), img.getHeight()));
+		}
+		return hexagonallySampleN(img, roip.getShape(), inside, numberOfSpeckles);
+	}
+	
+	public <T extends RealType<T>> Vector<Double> sampleFromShape(ImageProcessor img, Shape s, boolean inside)
+	{
+		double w = img.getWidth();
+		double h = img.getHeight();
+		double dx = 1;
+		double dy = 1;
+		
+		long tot = 0L;
+		Vector<Double> samples = new Vector<>();
+		if(s != null)
+		{
+			for(double y=0; y <= h; y = y + dy)
+			{
+				for(double x=0; x <= w; x = x + dx)
+				{
+					if(inside && s.contains(x, y))
+					{
+						samples.add(new Double(img.getPixelValue((int) (x + dx/2.0), (int) y)));
+						tot = tot + 1;
+					}
+					else if(!inside && !s.contains(x,  y))
+					{
+						samples.add(new Double(img.getPixelValue((int) (x + dx/2.0), (int) y)));
+						tot = tot + 1;
+					}
+				}
+			}
+		}
+		else
+		{
+			for(double y=0; y <= h; y = y + dy)
+			{
+				for(double x=0; x <= w; x = x + dx)
+				{
+					samples.add(new Double(img.getPixelValue((int) (x + dx/2.0), (int) y)));
+					tot = tot + 1;
+				}
+			}
+		}
+		
+		return samples;
+	}
+	
+	public <T extends RealType<T>> Vector<Double> hexagonallySampleN(ImageProcessor img, Shape s, boolean inside, long numberOfSpeckles)
 	{
 		// hexagonal closepacked is horizontal spacing of one diameter (2*r) and vertical spacing of dia * sqrt(3)/2
 		// The number of unit rectangles in the horizontal direction is width/(2*r)
@@ -641,29 +701,68 @@ public class FeatureUtils {
 		boolean oddRow = true;
 		long tot = 0L;
 		Vector<Double> samples = new Vector<>();
-		for(double y=0; y <= h; y = y + dy)
+		if(s != null)
 		{
-			for(double x=0; x <= w; x = x + dx)
+			for(double y=0; y <= h; y = y + dy)
 			{
-				if(oddRow)
+				for(double x=0; x <= w; x = x + dx)
 				{
-					samples.add(new Double(img.getPixelValue((int) x, (int) y)));
-					tot = tot + 1;
+					if(oddRow)
+					{
+						if(inside && s.contains(x, y))
+						{
+							samples.add(new Double(img.getPixelValue((int) x, (int) y)));
+							tot = tot + 1;
+						}
+						else if(!inside && !s.contains(x,  y))
+						{
+							samples.add(new Double(img.getPixelValue((int) x, (int) y)));
+							tot = tot + 1;
+						}
+					}
+					else
+					{
+						if(inside && s.contains(x, y))
+						{
+							samples.add(new Double(img.getPixelValue((int) (x + dx/2.0), (int) y)));
+							tot = tot + 1;
+						}
+						else if(!inside && !s.contains(x,  y))
+						{
+							samples.add(new Double(img.getPixelValue((int) (x + dx/2.0), (int) y)));
+							tot = tot + 1;
+						}
+					}
 				}
-				else
-				{
-					samples.add(new Double(img.getPixelValue((int) (x + dx/2.0), (int) y)));
-					tot = tot + 1;
-				}
+				oddRow = !oddRow;
 			}
-			oddRow = !oddRow;
+		}
+		else
+		{
+			for(double y=0; y <= h; y = y + dy)
+			{
+				for(double x=0; x <= w; x = x + dx)
+				{
+					if(oddRow)
+					{
+						samples.add(new Double(img.getPixelValue((int) x, (int) y)));
+						tot = tot + 1;
+					}
+					else
+					{
+						samples.add(new Double(img.getPixelValue((int) (x + dx/2.0), (int) y)));
+						tot = tot + 1;
+					}
+				}
+				oddRow = !oddRow;
+			}
 		}
 		
 		return samples;
 		//System.out.println("Tried to make " + numberOfSpeckles + " but actually made " + tot);
 	}
 
-	public <T extends RealType<T>> Vector<Double> hexagonallySampleN(Img<T> img, long numberOfSpeckles)
+	public <T extends RealType<T>> Vector<Double> hexagonallySampleN(Img<T> img, Shape s, boolean inside, long numberOfSpeckles)
 	{
 		// hexagonal closepacked is horizontal spacing of one diameter (2*r) and vertical spacing of dia * sqrt(3)/2
 		// The number of unit rectangles in the horizontal direction is width/(2*r)
@@ -689,24 +788,67 @@ public class FeatureUtils {
 		boolean oddRow = true;
 		long tot = 0L;
 		Vector<Double> samples = new Vector<>();
-		for(double y=0; y <= h; y = y + dy)
+		if(s != null)
 		{
-			for(double x=0; x <= w; x = x + dx)
+			for(double y=0; y <= h; y = y + dy)
 			{
-				if(oddRow)
+				for(double x=0; x <= w; x = x + dx)
 				{
-					ra.setPosition(new long[]{(long) x, (long) y});
-					samples.add(ra.get().getRealDouble());
-					tot = tot + 1;
+					if(oddRow)
+					{
+						if(inside && s.contains(x, y))
+						{
+							ra.setPosition(new long[]{(long) x, (long) y});
+							samples.add(ra.get().getRealDouble());
+							tot = tot + 1;
+						}
+						else if(!inside && !s.contains(x,  y))
+						{
+							ra.setPosition(new long[]{(long) x, (long) y});
+							samples.add(ra.get().getRealDouble());
+							tot = tot + 1;
+						}
+					}
+					else
+					{
+						if(inside && s.contains(x, y))
+						{
+							ra.setPosition(new long[]{(long) (x + dx/2.0), (long) y});
+							samples.add(ra.get().getRealDouble());
+							tot = tot + 1;
+						}
+						else if(!inside && !s.contains(x,  y))
+						{
+							ra.setPosition(new long[]{(long) (x + dx/2.0), (long) y});
+							samples.add(ra.get().getRealDouble());
+							tot = tot + 1;
+						}
+					}
 				}
-				else
-				{
-					ra.setPosition(new long[]{(long) (x + dx/2.0), (long) y});
-					samples.add(ra.get().getRealDouble());
-					tot = tot + 1;
-				}
+				oddRow = !oddRow;
 			}
-			oddRow = !oddRow;
+		}
+		else
+		{
+			for(double y=0; y <= h; y = y + dy)
+			{
+				for(double x=0; x <= w; x = x + dx)
+				{
+					if(oddRow)
+					{
+						ra.setPosition(new long[]{(long) x, (long) y});
+						samples.add(ra.get().getRealDouble());
+						tot = tot + 1;
+					}
+					else
+					{
+						ra.setPosition(new long[]{(long) (x + dx/2.0), (long) y});
+						samples.add(ra.get().getRealDouble());
+						tot = tot + 1;
+					}
+				}
+				oddRow = !oddRow;
+			}
 		}
 		
 		return samples;
