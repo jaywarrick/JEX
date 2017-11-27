@@ -1,13 +1,17 @@
 package function.plugin.plugins.featureExtraction;
 
+import java.io.File;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.Vector;
 
+import Database.SingleUserDatabase.JEXReader;
 import function.ops.intervals.CroppedRealRAI;
 import function.ops.intervals.IntersectedBooleanRAI;
 import function.ops.intervals.MapIIToSamplingRAI;
 import function.plugin.IJ2.IJ2PluginUtility;
+import ij.ImagePlus;
+import ij.process.ByteProcessor;
 import image.roi.IdPoint;
 import image.roi.PointList;
 import image.roi.PointSamplerList;
@@ -96,7 +100,7 @@ public class FeatureUtils {
 
 		return labeling;
 	}
-	
+
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public <T, I extends IntegerType<I>> ImgLabeling <T, I> applyLabeling(ImgLabeling<T, I> labeling, RandomAccessibleInterval<? extends RealType> mask)
 	{
@@ -104,13 +108,13 @@ public class FeatureUtils {
 		long[] dims = new long[mask.numDimensions()];
 		mask.dimensions(dims);
 		ImgLabeling<T, I> ret = new ImgLabeling(new ArrayImgFactory< IntType >().create( dims, new IntType() ));
-		
+
 		// Turn the mask into a Boolean type RAI
 		RandomAccess<BoolType> raMask = this.convertRealToBooleanTypeRAI(mask, new BoolType(false)).randomAccess();
-		
+
 		// Get the RandomAccess of the blank labeling
 		RandomAccess<LabelingType<T>> raRet = ret.randomAccess();
-		
+
 		// Loop through the provided labeling
 		Cursor<LabelingType<T>> cLabeling = labeling.cursor();
 		while(cLabeling.hasNext())
@@ -127,7 +131,7 @@ public class FeatureUtils {
 				}
 			}
 		}
-		
+
 		return ret;
 	}
 
@@ -152,7 +156,7 @@ public class FeatureUtils {
 	{
 		ImageJFunctions.showUnsignedByte(region, new BooleanTypeToUnsignedByteTypeConverter<T>(), title);
 	}
-	
+
 	public void showRegion(LabelRegion<?> region, boolean defaultApp)
 	{
 		showVoidII(region, defaultApp);
@@ -203,7 +207,7 @@ public class FeatureUtils {
 	{
 		this.showBooleanII(region, null, false);
 	}
-	
+
 	/**
 	 * Mainly used with MirroredLabelRegionCursor where you are using a cursor
 	 * other than that directly returned by the label region
@@ -215,7 +219,7 @@ public class FeatureUtils {
 	{
 		this.show(this.makeImgFromVoidCursor(c, i), defaultApp);
 	}
-	
+
 	/**
 	 * Mainly used with MirroredLabelRegionCursor where you are using a cursor
 	 * other than that directly returned by the label region
@@ -252,7 +256,7 @@ public class FeatureUtils {
 	{
 		this.show(this.makeImgFromRealII(region), defaultApp);
 	}
-	
+
 	public <T extends RealType<T>>void showRealII(IterableInterval< T > region, Interval i, boolean defaultApp)
 	{
 		this.show(this.makeImgFromRealII(region, i), defaultApp);
@@ -432,7 +436,7 @@ public class FeatureUtils {
 	{
 		return makeImgFromVoidII(region, region);
 	}
-	
+
 	/**
 	 * This is mainly used for MirroredLabelRegionCursors as you will have a cursor
 	 * that you want to visualize that isn't the cursor directly returned by the
@@ -641,6 +645,129 @@ public class FeatureUtils {
 	//////////// Sub-routines ///////////////
 	/////////////////////////////////////////
 
+	public void filterMaskRegions(ImagePlus im, int minSize, int maxSize, boolean fourConnected, boolean filterWhite, boolean keep)
+	{
+		this.filterMaskRegions((ByteProcessor) im.getProcessor(), minSize, maxSize, fourConnected, filterWhite, keep);
+	}
+
+	public Img<UnsignedByteType> filterMaskRegions(String imagePath, int minSize, int maxSize, boolean fourConnected, boolean filterWhite, boolean keep)
+	{
+		// Get image data
+		File f = new File(imagePath);
+		if(!f.exists())
+		{
+			return null;
+		}
+
+		Img<UnsignedByteType> img = JEXReader.getSingleImage(imagePath, 0.0);
+		filterMaskRegions(img, minSize, maxSize, fourConnected, filterWhite, keep);
+		return img;
+	}
+
+	public void invert(Img<UnsignedByteType> img)
+	{
+		for(UnsignedByteType t : img)
+		{
+			if(t.getInteger() == 0)
+			{
+				t.setInteger(255);
+			}
+			else
+			{
+				t.setInteger(0);
+			}
+		}
+	}
+
+	public void filterMaskRegions(Img<UnsignedByteType> img, int minSize, int maxSize, boolean fourConnected, boolean filterWhite, boolean keep)
+	{
+		if(!filterWhite)
+		{
+			this.invert(img);
+		}
+		ImgLabeling<Integer, IntType> labeling = this.getLabeling(img, fourConnected);
+		LabelRegions<Integer> regions = new LabelRegions<>(labeling);
+		for(LabelRegion<Integer> r : regions)
+		{
+			if(keep)
+			{
+				if(r.size() <= minSize || r.size() >= maxSize)
+				{
+					this.setPixelsInRegion(img, r, 0);
+				}
+			}
+			else
+			{
+				if(r.size() >= minSize && r.size() <= maxSize)
+				{
+					this.setPixelsInRegion(img, r, 0);
+				}
+			}
+		}
+
+		if(!filterWhite)
+		{
+			this.invert(img);
+		}
+	}
+
+	public void filterMaskRegions(ByteProcessor bp, int minSize, int maxSize, boolean fourConnected, boolean filterWhite, boolean keep)
+	{
+		if(!filterWhite)
+		{
+			bp.invert();
+		}
+		Img<UnsignedByteType> img = ImageJFunctions.wrapByte(new ImagePlus("bp",bp));
+		ImgLabeling<Integer, IntType> labeling = this.getLabeling(img, fourConnected);
+		LabelRegions<Integer> regions = new LabelRegions<>(labeling);
+		for(LabelRegion<Integer> r : regions)
+		{
+			if(keep)
+			{
+				if(r.size() <= minSize || r.size() >= maxSize)
+				{
+					this.setPixelsInRegion(bp, r, 0);
+				}
+			}
+			else
+			{
+				if(r.size() >= minSize && r.size() <= maxSize)
+				{
+					this.setPixelsInRegion(bp, r, 0);
+				}
+			}
+		}
+
+		if(!filterWhite)
+		{
+			bp.invert();
+		}
+	}
+
+	public void setPixelsInRegion(Img<UnsignedByteType> mask, LabelRegion<Integer> region, int val)
+	{
+		Cursor<Void> c = region.cursor();
+		RandomAccess<UnsignedByteType> ra = mask.randomAccess();
+		while(c.hasNext())
+		{
+			c.fwd();
+			ra.setPosition(c);
+			ra.get().setInteger(val);
+		}
+	}
+
+	public void setPixelsInRegion(ByteProcessor mask, LabelRegion<Integer> region, int val)
+	{
+		Cursor<Void> c = region.cursor();
+		int[] pos = new int[2];
+		while(c.hasNext())
+		{
+			c.fwd();
+			c.localize(pos);
+			mask.set(pos[0], pos[1], val);
+		}
+	}
+
 	public Pair<Img<UnsignedByteType>,TreeMap<Integer,PointList>> keepRegionsWithMaxima(Img<UnsignedByteType> mask, boolean fourConnected, ROIPlus maxima, boolean removeClumps, Canceler canceler)
 	{
 		// Create a blank image
@@ -780,7 +907,7 @@ public class FeatureUtils {
 	/////////////////////////////////////////
 	////////////// Conversion ///////////////
 	/////////////////////////////////////////
-	
+
 	public <T extends BooleanType<T>> RandomAccessibleInterval<UnsignedByteType> convertBooleanTypeToByteRAI(RandomAccessibleInterval<T> rai)
 	{
 		return new ConvertedRandomAccessibleInterval<T, UnsignedByteType>(rai, new BooleanTypeToUnsignedByteTypeConverter<T>(), new UnsignedByteType(0));
@@ -806,7 +933,7 @@ public class FeatureUtils {
 		ConvertedCursor< Void, BitType > ret = new ConvertedCursor<>( c, new VoidToBitTypeConverter(), new BitType(false) );
 		return ret;
 	}
-	
+
 	public <T> IterableRandomAccessibleInterval<T> convertRAItoIterableRAI(RandomAccessibleInterval<T> rai)
 	{
 		return IterableRandomAccessibleInterval.create(rai);
