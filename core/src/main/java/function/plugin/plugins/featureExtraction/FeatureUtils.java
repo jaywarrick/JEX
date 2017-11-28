@@ -700,7 +700,7 @@ public class FeatureUtils {
 		// Then just offset the locations by the min of each dimension.
 		boolean oddRow = true;
 		long tot = 0L;
-		Vector<Double> samples = new Vector<>();
+		Vector<Double> samples = new Vector<>((int) numberOfSpeckles);
 		if(s != null)
 		{
 			for(double y=0; y <= h; y = y + dy)
@@ -787,7 +787,7 @@ public class FeatureUtils {
 		RandomAccess<T> ra = img.randomAccess();
 		boolean oddRow = true;
 		long tot = 0L;
-		Vector<Double> samples = new Vector<>();
+		Vector<Double> samples = new Vector<>((int) numberOfSpeckles);
 		if(s != null)
 		{
 			for(double y=0; y <= h; y = y + dy)
