@@ -68,8 +68,8 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 	@ParameterMarker(uiOrder=3, name="Number of Sigma", description="Number of sigma to determine subtraction value or value at which to threshold image. (Comma separated list results in outputs for each value and negative values (-x) result in keeping values below -x sigma)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="5.0")
 	String nSigma;
 
-	@ParameterMarker(uiOrder=4, name="Fraction to Sample", description="What fraction of the pixels should be sampled?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.05")
-	double fraction;
+	@ParameterMarker(uiOrder=4, name="Number of Pixels Sample", description="How many pixels should be sampled? Typically after more than 300, the result doesn't change much. Use 0 or less to sample all", ui=MarkerConstants.UI_TEXTFIELD, defaultText="300")
+	int numToSample;
 
 	@ParameterMarker(uiOrder=5, name="Use adaptive algorithm?", description="Should the background level be refined by iteratively weighting the pixels by their proximity to the current median value?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
 	boolean adaptive;
@@ -308,12 +308,12 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 					
 					FloatProcessor ip = (FloatProcessor) im.getProcessor().convertToFloat();
 
-					int numToSample = (int) (ip.getWidth() * ip.getHeight() * this.fraction);
+					//int numToSample = (int) (ip.getWidth() * ip.getHeight() * this.numToSample);
 
 					// Get the appropriate pixels for calculating the median and get the med and mad values
 					ROIPlus roi = rois.get(map);
 					
-					if(this.fraction > 0.75)
+					if(this.numToSample <= 0)
 					{
 						Vector<Double> tempPixels = null;
 						if(roi != null)
