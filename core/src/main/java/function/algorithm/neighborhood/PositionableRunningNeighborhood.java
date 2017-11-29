@@ -257,11 +257,22 @@ public class PositionableRunningNeighborhood<T extends RealType<T>> implements C
 
 	@Override
 	public T get() {
+		this.updateSamplerLoc();
+		this.raSampler.setPosition(this.samplerLoc);
+		return this.raSampler.get();
+	}
+	
+	private void updateSamplerLoc()
+	{
 		this.samplerLoc.setPosition(this.raImage);
 		this.samplerLoc.move(this.kernelCenterOffset);
 		this.samplerLoc.move(this.cKernel);
-		this.raSampler.setPosition(this.samplerLoc);
-		return this.raSampler.get();
+	}
+	
+	public Point getSamplerLoc()
+	{
+		this.updateSamplerLoc();
+		return new Point(this.samplerLoc);
 	}
 
 	@Override
@@ -300,22 +311,22 @@ public class PositionableRunningNeighborhood<T extends RealType<T>> implements C
 
 	@Override
 	public void localize(int[] position) {
-		this.cKernel.localize(position);
+		this.raImage.localize(position);
 	}
 
 	@Override
 	public void localize(long[] position) {
-		this.cKernel.localize(position);
+		this.raImage.localize(position);
 	}
 
 	@Override
 	public int getIntPosition(int d) {
-		return this.cKernel.getIntPosition(d);
+		return this.raImage.getIntPosition(d);
 	}
 
 	@Override
 	public long getLongPosition(int d) {
-		return this.cKernel.getLongPosition(d);
+		return this.raImage.getLongPosition(d);
 	}
 
 	@Override
@@ -503,14 +514,14 @@ public class PositionableRunningNeighborhood<T extends RealType<T>> implements C
 				ra.setPosition(neg);
 				if(ra.get().getInteger() == 0)
 				{
-					old = Arrays.copyOf(neg, pos.length);
+					old = Arrays.copyOf(neg, neg.length);
 					negOldEdges.get(d).add(old);
 					negNewEdges.get(d).add(Arrays.copyOf(cur, cur.length));
 				}
 				
 				// Undo the offset of the neg and pos position
-				neg[d] = cur[d] + 1;
-				pos[d] = cur[d] - 1;
+				neg[d] = cur[d];
+				pos[d] = cur[d];
 			}
 		}
 	}
