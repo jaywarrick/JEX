@@ -165,8 +165,9 @@ public class WeightedMeanFilter extends JEXPlugin {
 			// Get the variance filtered image
 			RankFilters2 rF = new RankFilters2();
 			rF.rank(w, varRadius, RankFilters2.VARIANCE);
-			//w.log();
 			
+			// Find the median of the whole WEIGHTS image (w) using a small subsample (use sqrt of pixel variance
+			// values (i.e., stdev) because that is what we'll be working with in the next step.
 			FeatureUtils utils = new FeatureUtils();
 			Vector<Double> sampleOfWeights = utils.hexagonallySampleN(w, null, true, 300);
 			double[] temp = new double[sampleOfWeights.size()];
@@ -174,12 +175,30 @@ public class WeightedMeanFilter extends JEXPlugin {
 			{
 				temp[i] = Math.sqrt(sampleOfWeights.get(i));
 			}
+			
+			// Use the adaptive median here for fun but can probably use
+			// regular median. The adaptive median just approximates the
+			// median of the "majority" of the pixel population more
+			// closely (i.e., it approximates mode without bins etc)
 			double med = StatisticsUtility.adaptiveMedian(temp);
-			double mad = StatisticsUtility.mad(med, temp);
+			
+			// Get the mad of the image as a way to appropriately scale the image weights
+			double mad = StatisticsUtility.mad(med, temp); // Calculate mad relative to the adaptive med.
 
-			//FileUtility.showImg(w, true);
-			// Invert the weights
-			//			float max = (float) w.getMax();
+			// Debug
+			// FileUtility.showImg(w, true);
+			
+			// Take the square root of the variance to get std dev which is
+			// less volatile than variance and is scaled appropriately for the job.
+			// Then the weight becomes the difference between the median variance and the actual variance
+			// and is scaled by dividing by the mad to essentially go between 0 to 1 for typical bg pixels
+			// and  > 1 for non bg pixels.
+			// Then we transform the weights using 1/(1+w^scalingFactor). 
+			// this approach is better behaved that 1/x^scalingFactor because 
+			// a scaled variance of zero computes to 1 instead of infinity.
+			// The scaling factor just determines how gradually it transitions from
+			// 1 @ scaled variance < 1, to 0 @ at variance > 1. Higher value, harder
+			// transition right around the cutoff of 1.
 			float[] pixels = (float[]) w.getPixels();
 			if(this.weightScale == 1.0)
 			{
@@ -196,12 +215,12 @@ public class WeightedMeanFilter extends JEXPlugin {
 				}
 			}
 			
+			// Save the weighting image to see how filter radii affect weighting.
 			if(this.saveWeights)
 			{
 				String tempWeightPath = JEXWriter.saveImage(w, 32);
 				outputWeightMap.put(map, tempWeightPath);
 			}
-			
 			
 			// Multiply the original image by the weights
 			ret.copyBits(w, 0, 0, Blitter.MULTIPLY);
@@ -210,12 +229,10 @@ public class WeightedMeanFilter extends JEXPlugin {
 			rF.rank(w, meanRadius, RankFilters2.SUM);
 			rF.rank(ret, meanRadius, RankFilters2.SUM);
 
-			// Perform the final division
+			// Perform the final division to get weighted means for each pixel.
 			ret.copyBits(w, 0, 0, Blitter.DIVIDE);
 			
-			
-
-			// Call helper method
+			// Perform subtraction if desired.
 			double nominal = nominals.get(map);
 			if(subtract)
 			{
