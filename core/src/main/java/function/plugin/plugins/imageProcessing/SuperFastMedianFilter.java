@@ -299,7 +299,7 @@ public class SuperFastMedianFilter extends JEXPlugin {
 				this.utils.addHexPackedSpeckles(this.samplingImg, Math.round(this.n*alpha), new UnsignedByteType(255));
 			}
 			this.sc = new SnakingCursor<>(this.samplingImg);
-			//			this.utils.show(this.samplingImg, true);
+			//this.utils.show(this.samplingImg, true);
 		}
 		Img< FloatType > ret = this.utils.makeImageFromInterval(source, new FloatType(0.0f));
 		RandomAccess<FloatType> toSet = ret.randomAccess();
@@ -324,15 +324,16 @@ public class SuperFastMedianFilter extends JEXPlugin {
 			{
 				tot = 0;
 				size = 0;
-				rbt.clear();
+				rbt = new RedBlackTreeFloat();
 				while(p.hasNext())
 				{
 					p.fwd();
-					toGet.setPosition(p);
+					toGet.setPosition(p.getSamplerLoc());
 					if(p.get().get() != 0)
 					{
 						if(op == 0)
 						{
+							//System.out.println("Inserting: " + toGet.get().getRealFloat() + " X: " + toGet.getFloatPosition(0) + "," + p.getSamplerLoc().getFloatPosition(0) + " Y: " + toGet.getFloatPosition(1) + "," + p.getSamplerLoc().getFloatPosition(1));
 							rbt.insert(toGet.get().getRealFloat());
 						}
 						else
@@ -354,6 +355,7 @@ public class SuperFastMedianFilter extends JEXPlugin {
 						toGet.setPosition(edges.a.getSamplerLoc());
 						if(op == 0)
 						{
+							//System.out.println("Inserting: " + toGet.get().getRealFloat() + " X: " + toGet.getFloatPosition(0) + "," + edges.a.getSamplerLoc().getFloatPosition(0) + " Y: " + toGet.getFloatPosition(1) + "," + edges.a.getSamplerLoc().getFloatPosition(1));
 							rbt.insert(toGet.get().getRealFloat());
 						}
 						else
@@ -372,6 +374,7 @@ public class SuperFastMedianFilter extends JEXPlugin {
 						toGet.setPosition(edges.b.getSamplerLoc());
 						if(op == 0)
 						{
+							//System.out.println("Removing: " + toGet.get().getRealFloat() + " X: " + toGet.getFloatPosition(0) + "," + edges.b.getSamplerLoc().getFloatPosition(0) + " Y: " + toGet.getFloatPosition(1) + "," + edges.b.getSamplerLoc().getFloatPosition(1));
 							rbt.remove(toGet.get().getRealFloat());
 						}
 						else
@@ -384,8 +387,13 @@ public class SuperFastMedianFilter extends JEXPlugin {
 			}
 			if(this.op == 0)
 			{
+				//System.out.println("==== Finding Median ====");
+				//rbt.printTree();
 				final int medianRank = rbt.size() / 2 + 1;
 				toSet.get().set(rbt.select(medianRank));
+				//System.out.println("Found Median: " + rbt.select(medianRank));
+				//System.out.println("========================\n\n\n");
+				//toSet.get().set(rbt.size());
 			}
 			else
 			{
@@ -410,14 +418,25 @@ public class SuperFastMedianFilter extends JEXPlugin {
 		{
 			// create a Cursor that iterates over the source along with the neighborhoods.
 			// (the center cursor runs over the image in the same iteration order as neighborhood)
-			final Cursor< T > srcC = Views.iterable( source ).cursor();
+			final Cursor< T > srcC = source.cursor();
 			RandomAccess< T > srcRA = source.randomAccess();
+			srcRA.setPosition(new int[]{0,0});
+			T testVal = srcRA.get();
+			boolean truncate = !(testVal instanceof FloatType);
 			while(srcC.hasNext())
 			{
 				srcC.fwd();
 				toSet.setPosition(srcC);
-				srcRA.setPosition(srcC);
-				toSet.get().setReal(srcRA.get().getRealDouble() - toSet.get().getRealDouble() + this.nominalVal);
+				double val = srcC.get().getRealDouble() - toSet.get().getRealDouble() + this.nominalVal;
+				toSet.get().setReal(val);
+//				if(truncate && val < 0)
+//				{
+//					toSet.get().setReal(0.0d);
+//				}
+//				else
+//				{
+//					toSet.get().setReal(val);
+//				}
 			}
 		}
 
