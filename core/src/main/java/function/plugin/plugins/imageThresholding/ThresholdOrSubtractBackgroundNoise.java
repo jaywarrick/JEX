@@ -27,7 +27,9 @@ import image.roi.ROIPlus;
 import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import jex.utilities.FunctionUtility;
+import jex.utilities.ImageUtility;
 import miscellaneous.CSVList;
+import miscellaneous.Pair;
 import miscellaneous.StatisticsUtility;
 import miscellaneous.StringUtility;
 import tables.Dim;
@@ -71,22 +73,25 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 	@ParameterMarker(uiOrder=4, name="Number of Pixels Sample", description="How many pixels should be sampled? Typically after more than 300, the result doesn't change much. Use 0 or less to sample all", ui=MarkerConstants.UI_TEXTFIELD, defaultText="300")
 	int numToSample;
 
-	@ParameterMarker(uiOrder=5, name="Use adaptive algorithm?", description="Should the background level be refined by iteratively weighting the pixels by their proximity to the current median value?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
-	boolean adaptive;
+	@ParameterMarker(uiOrder=5, name="Refinement Algorithm?", description="Should the background level be refined by the 'Adaptive' algorithm (iteratively weighting the pixels by their proximity to the current median value) or the 'Variance Weighted' algorithm (use a variance filtered version of image to weight pixels to determin median)?", ui=MarkerConstants.UI_DROPDOWN, choices={"None","Adaptive","Variance Weighted","Mode Weighted"}, defaultChoice=0)
+	String algorithm;
+	
+	@ParameterMarker(uiOrder=6, name="Variance Filter Radius", description="If 'Variance Weighted' algorithm is being used, what radius should the variance filter be set to. (typically ~2.0)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="2.0")
+	double varianceFilterRadius;
 
-	@ParameterMarker(uiOrder=6, name="Single Threshold per Color?", description="Calculate a single threhsold for each color or a threshold for each image in data set. The combined thresh is calcualted as the median of the individual thresholds.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	@ParameterMarker(uiOrder=7, name="Single Threshold per Color?", description="Calculate a single threhsold for each color or a threshold for each image in data set. The combined thresh is calcualted as the median of the individual thresholds.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
 	boolean threshPerColor;
 
-	@ParameterMarker(uiOrder=7, name="Offset", description="Amount to add back to the image before saving. Useful for avoiding clipping of lows, essentially setting the background to a known non-zero offset.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
+	@ParameterMarker(uiOrder=8, name="Offset", description="Amount to add back to the image before saving. Useful for avoiding clipping of lows, essentially setting the background to a known non-zero offset.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
 	double offset;
 
 	@ParameterMarker(uiOrder=8, name="Evaluate Outside ROI?", description="If an ROI is specified, then indicate whether to use pixels inside or outside the ROI to determine background intensities. (checked uses pixels outside ROI)", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
 	boolean outside;
 
-	@ParameterMarker(uiOrder=9, name="Exclusion Filter", description="<DimName>=<Val1>,<Val2>,...<Valn>, Specify the dimension and dimension values to exclude. Leave blank to process all. Useful for excluding bright-field (e.g., Channel=BF). Technically doesn't have to be the 'Channel' dimension.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
+	@ParameterMarker(uiOrder=10, name="Exclusion Filter", description="<DimName>=<Val1>,<Val2>,...<Valn>, Specify the dimension and dimension values to exclude. Leave blank to process all. Useful for excluding bright-field (e.g., Channel=BF). Technically doesn't have to be the 'Channel' dimension.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
 	String toExclude;
 
-	@ParameterMarker(uiOrder=10, name="Keep Unprocessed Images?", description="Should the images within the object that are exlcluded from analysis by the Dimension Filter be kept in the result?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	@ParameterMarker(uiOrder=11, name="Keep Unprocessed Images?", description="Should the images within the object that are exlcluded from analysis by the Dimension Filter be kept in the result?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
 	boolean keepUnprocessed;
 
 	/////////// Define Outputs here ///////////
@@ -308,72 +313,94 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 					
 					FloatProcessor ip = (FloatProcessor) im.getProcessor().convertToFloat();
 
-					//int numToSample = (int) (ip.getWidth() * ip.getHeight() * this.numToSample);
-
-					// Get the appropriate pixels for calculating the median and get the med and mad values
+					// Get the appropriate pixels for calculating the median and get the med, mad, and n values
 					ROIPlus roi = rois.get(map);
-					
-					if(this.numToSample <= 0)
+					if(this.algorithm.equals("Variance Weighted") || this.algorithm.equals("Mode Weighted"))
 					{
-						Vector<Double> tempPixels = null;
-						if(roi != null)
+						// THEN 'VARIANCE WEIGHTED' ALGORITHM
+						
+						// Get the 'weights' version of the image.
+						// This would be for 'Mode Weighted'
+						FloatProcessor weights = null;
+						if(this.algorithm.equals("Variance Weighted"))
 						{
-							tempPixels = this.utils.sampleFromShape(ip, roi.getShape(), !outside);
+							// This is for 'Variance Weighted'
+							Pair<FloatProcessor[], FloatProcessor> temp = ImageUtility.getImageVarianceWeights(ip, this.varianceFilterRadius, false, false, 2.0);
+							weights = temp.p1[0];
+							//FileUtility.showImg(weights.p1, true);
 						}
 						else
 						{
-							tempPixels = this.utils.sampleFromShape(ip, null, !outside);
+							// This is for 'Mode Weighted'
+							weights = ImageUtility.getImageModeWeights(ip, false, 2.0)[0];
 						}
 						
-						// Get the median of the sampled pixels
-						if(adaptive)
+						// Sample the same pixels from the test image and the weights image according to the provided roi.
+						Pair<Vector<Double>, Vector<Double>> samples = null;
+						if(this.numToSample <= 0)
 						{
-							med = StatisticsUtility.adaptiveMedian(tempPixels);
-							n = (double) tempPixels.size();
+							samples = this.utils.sampleTwoImagesFromShape(ip, weights, roi, !outside);
 						}
 						else
 						{
-							med = StatisticsUtility.median(tempPixels);
-							n = (double) tempPixels.size();
+							samples = this.utils.hexagonallySampleNFromTwoImages(ip, weights, roi, !outside, this.numToSample);
 						}
-						mad = StatisticsUtility.mad(med, tempPixels); // Multiplier converts the mad to an approximation of the standard deviation without the effects of outliers
+						
+						//FileUtility.showImg(weights, true);
+						
+						med = StatisticsUtility.weightedMedian(samples.p1, samples.p2);
+						mad = StatisticsUtility.weightedMad(samples.p1, samples.p2, med);
+						n = (double) samples.p1.size();
+						
+						//double med2 = StatisticsUtility.median(samples.p1);
+						//double mad2 = StatisticsUtility.mad(med, samples.p1);
+						Pair<double[], int[]> hist2 = ImageUtility.getHistogram(samples.p1, Math.max(0.1,med-3*mad), med+3*mad, -1, false);
+						ImageUtility.getHistogramPlot(hist2.p1, hist2.p2, true, med);
+						
 					}
 					else
 					{
-						Vector<Double> tempPixels = null;
-						if(roi != null)
+						// ELSE IT IS EITHER 'NONE' OR 'ADAPTIVE'
+						
+						// Sample the pixels according to the provided roi.
+						Vector<Double> samples = null;
+						if(this.numToSample <= 0)
 						{
-							tempPixels = this.utils.hexagonallySampleN(ip, roi.getShape(), !outside, numToSample);
-							//						if(outside)
-							//						{
-							//							tempPixels = ROIUtility.getPixelsOutsideRoi(ip, roi);
-							//						}
-							//						else
-							//						{
-							//							tempPixels = ROIUtility.getPixelsInRoi(ip, roi);
-							//						}
+							samples = this.utils.sampleFromShape(ip, roi, !outside);
 						}
 						else
 						{
-							tempPixels = this.utils.hexagonallySampleN(ip, null, !outside, numToSample);
+							samples = this.utils.hexagonallySampleN(ip, roi, !outside, this.numToSample);
 						}
+						
 						// Get the median of the sampled pixels
-						if(adaptive)
+						if(algorithm.equals("Adaptive"))
 						{
-							med = StatisticsUtility.adaptiveMedian(tempPixels);
-							n = (double) tempPixels.size();
+							med = StatisticsUtility.adaptiveMedian(samples);
 						}
 						else
 						{
-							med = StatisticsUtility.median(tempPixels);
-							n = (double) tempPixels.size();
+							med = StatisticsUtility.median(samples);
 						}
-						mad = StatisticsUtility.mad(med, tempPixels); // Multiplier converts the mad to an approximation of the standard deviation without the effects of outliers
+						
+						// Get the corresponding mad for the median
+						mad = StatisticsUtility.mad(med, samples); // Multiplier converts the mad to an approximation of the standard deviation without the effects of outliers
+						n = (double) samples.size();
+						
+						// Debug code.
+						//Pair<double[], int[]> hist2 = ImageUtility.getHistogram(samples, med-3*mad, med+3*mad, -1, false);
+						//ImageUtility.getHistogramPlot(hist2.p1, hist2.p2, true, med-mad, med, med+mad);
 					}
 					
+					// USE THIS OPPURTUNITY
+					if(this.isCanceled())
+					{
+						return this.makeTreeMap("Success", false);
+					}
+					
+					// USE THE INFORMATION TO PERFORM THRESHOLDING / SUBTRACTION
 					threshold = med + sigma * mad;
 					String path = null;
-
 					if(!threshPerColor)
 					{
 						if(this.threshold)
