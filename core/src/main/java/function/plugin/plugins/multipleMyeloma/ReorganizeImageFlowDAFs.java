@@ -43,7 +43,7 @@ public class ReorganizeImageFlowDAFs extends JEXPlugin {
 	/////////// Define Inputs ///////////
 
 	//	@InputMarker(uiOrder=1, name="Data Table (compiled)", type=MarkerConstants.TYPE_FILE, description="Table of (R)ed and (G)reen fluorescence data in arff format.", optional=false)
-	//	JEXData fileData;
+	//	JEXData folderData;
 
 	/////////// Define Parameters ///////////
 
