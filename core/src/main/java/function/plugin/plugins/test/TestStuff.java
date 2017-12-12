@@ -12,17 +12,23 @@ import function.algorithm.neighborhood.Indexer;
 import function.algorithm.neighborhood.PositionableRunningNeighborhood;
 import function.algorithm.neighborhood.SnakingCursor;
 import function.ops.geometry.DefaultSmallestEnclosingCircle;
+import function.ops.histogram.PolynomialRegression;
 import function.ops.zernike.ZernikeComputer;
 import function.plugin.IJ2.IJ2PluginUtility;
 import function.plugin.plugins.featureExtraction.FeatureUtils;
 import ij.ImagePlus;
+import ij.process.FloatProcessor;
+import ij.process.ImageStatistics;
 import image.roi.PointList;
 import image.roi.PointSample;
 import image.roi.PointSampler;
 import image.roi.PointSamplerII;
 import image.roi.PointSamplerList;
+import jex.utilities.ImageUtility;
+import logs.Logs;
 import miscellaneous.DirectoryManager;
 import miscellaneous.FileUtility;
+import miscellaneous.Pair;
 import net.imagej.ops.Ops;
 import net.imagej.ops.features.zernike.helper.ZernikeMoment;
 import net.imagej.ops.geom.geom2d.Circle;
@@ -58,13 +64,163 @@ public class TestStuff {
 	
 	static
 	{
-		DirectoryManager.setHostDirectory("/Users/jaywarrick/Downloads");
+		//DirectoryManager.setHostDirectory("/Users/jaywarrick/Downloads");
+		DirectoryManager.setHostDirectory("C:/Users/User/Downloads");
 	}
 
 	public static void main (String[] args) throws Exception
 	{
-		tryMakingSpeckledImg();
+		tryTroubleImageModeFinding2();
 	}	
+	
+	public static void tryTroubleImageModeFinding2()
+	{
+		ImagePlus im = new ImagePlus("C:/Users/User/Desktop/TroubleImage1.tif");
+		ImageUtility.getImageVarianceWeights(im.getProcessor(), 2, true, true, 2);
+		System.out.println("Yo");
+	}
+	
+	public static void tryTroubleImageModeFinding()
+	{
+		ImagePlus im = new ImagePlus("C:/Users/User/Desktop/TroubleImage1.tif");
+		Pair<FloatProcessor[],FloatProcessor> test = ImageUtility.getImageVarianceWeights(im.getProcessor(), 2, true, true, 2);
+		FloatProcessor weights = test.p2;
+		ImageStatistics stats = weights.getStatistics();
+		double min = stats.min;
+		double max = stats.median;
+		min = min + (max-min)/100.0;
+		int nBins = ImageUtility.getReasonableNumberOfBinsForHistogram(weights.getWidth()*weights.getHeight()/2, 10, 250);
+		Pair<double[], int[]> ret = ImageUtility.getHistogram(weights, min, max, nBins, false);
+		double[] values = ret.p1;
+		int[] counts = ret.p2;
+		ImageUtility.getHistogramPlot(values, counts, true, 65.0);
+		
+		int window = (int) Math.max(5, Math.round(0.05*nBins));
+		
+		double minDiff = Double.MAX_VALUE;
+		double diff = 0.0;
+		for(int left = 0; left < values.length - window + 1; left++)
+		{
+			int right = left + window - 1;
+			double[] valuesSubset = ImageUtility.getRange(values, left, right);
+			int[] countsSubset = ImageUtility.getRange(counts, left, right);
+			PolynomialRegression p = new PolynomialRegression(valuesSubset, countsSubset, 2);
+			Double vertex = getVertex(p);
+			diff = Math.abs(vertex - values[(right + left)/2]);
+			Logs.log(values[(left + right)/2] + " - " + vertex + " - " + diff , TestStuff.class);
+			if(p.beta(2) < 1)
+			{
+				if(diff > minDiff)
+				{
+					Logs.log("I think I found it at " + vertex, TestStuff.class);
+				}
+				else
+				{
+					minDiff = diff;
+				}
+			}
+		}
+	}
+	
+	private static Double getVertex(PolynomialRegression p)
+	{
+		if(p.degree() == 2)
+		{
+			return -1*p.beta(1)/(2.0*p.beta(2));
+		}
+		else
+		{
+			return null;
+		}
+	}
+	
+	public static void tryModeFitting()
+	{
+		ImagePlus im = new ImagePlus("C:/Users/User/Desktop/TestVarianceImage3.tif");
+		ImageStatistics stats = im.getProcessor().getStatistics();
+		Pair<double[], int[]> ret = ImageUtility.getHistogram(im.getProcessor(), stats.min, stats.median, -1, false);
+		
+		
+		double[] values = ret.p1;
+		int[] counts = ret.p2;
+		int i = ImageUtility.getHistogramModeIndex(counts);
+		int left = i;
+		while(left > 0 && counts[left] > 0.9 * counts[i])
+		{
+			left = left - 1;
+		}
+		int right = i;
+		while(right < counts.length-1 && counts[right] > 0.9 * counts[i])
+		{
+			right = right + 1;
+		}
+		
+		double[] valuesSubset = ImageUtility.getRange(values, left, right);
+		int[] countsSubset = ImageUtility.getRange(counts, left, right);
+		PolynomialRegression p = new PolynomialRegression(valuesSubset, countsSubset, 2);
+		Logs.log("Degree = " + p.degree(), TestStuff.class);
+		double mode = values[i];
+		if(p.degree() == 2)
+		{
+			mode = -1*p.beta(1)/(2.0*p.beta(2));
+		}
+		for(int j = 0; j < p.degree() + 1; j++)
+		{
+			Logs.log(j + "th Regression Coefficient = " + p.beta(j), TestStuff.class);
+		}
+		
+		ImageUtility.getHistogramPlot(values, counts, true, values[i], mode);
+	}
+	
+	public static void tryHistogram()
+	{
+		ImagePlus im = new ImagePlus("C:/Users/User/Desktop/TestConfluentBFImage.tif");
+		Pair<double[], int[]> ret = ImageUtility.getHistogram(im.getProcessor(), 10000, 25535, 50, true);
+		for(int i = 0; i < ret.p1.length; i ++)
+		{
+			System.out.println(ret.p1[i] + " - " + ret.p2[i]);
+		}
+	}
+	
+	public static void tryGettingVarianceWeightImage()
+	{
+		ImagePlus im = new ImagePlus("C:/Users/User/Desktop/TestConfluentBFImage.tif");
+		Pair<FloatProcessor[],FloatProcessor> ret1 = ImageUtility.getImageVarianceWeights(im.getProcessor(), 2.0, false, true, 2.0);
+		FileUtility.showImg(ret1.p1[0], true);
+	}
+	
+	public static void tryGettingMode()
+	{
+		ImagePlus im = new ImagePlus("C:/Users/User/Desktop/TestVarianceImage.tif");
+		FileUtility.showImg(im, true);
+		FloatProcessor fp = (FloatProcessor) im.getProcessor();
+		fp.resetMinAndMax();
+		double min = fp.getMin();
+		double max = fp.getMax();
+		
+		// Calculate
+		Pair<double[], int[]> hist = ImageUtility.getHistogram(fp, min, max, -1, false);
+		int i = ImageUtility.getHistogramModeIndex(hist.p2);
+		ImageUtility.getHistogramPlot(hist.p1, hist.p2, true, hist.p1[0], hist.p1[i], hist.p1[i] + (hist.p1[i]-hist.p1[0]));
+		Logs.log(hist.p1[0] + " - " + hist.p1[i], TestStuff.class);
+	}
+	
+	public static void tryStringSplitting()
+	{
+		String s = ".";
+		String regS = "\\" + s;
+		String toSplit = ".This is . a fine.row. to Hoe.";
+		String[] ret = toSplit.split(regS);
+		int i = 0;
+		for(String ss : ret)
+		{
+			System.out.println("_" + ss + "-" + i);
+			i = i + 1;
+		}
+		System.out.println(toSplit);
+		System.out.println(toSplit.replace("Hello", "There"));
+		System.out.println("Rep.001".replace("00", ""));
+	}
 	
 	public static void tryMakingSpeckledImg()
 	{
