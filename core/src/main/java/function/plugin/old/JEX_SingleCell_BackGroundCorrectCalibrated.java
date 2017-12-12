@@ -24,6 +24,7 @@ import jex.statics.JEXStatics;
 import jex.utilities.FunctionUtility;
 import jex.utilities.ImageUtility;
 import logs.Logs;
+import miscellaneous.Pair;
 import tables.DimTable;
 import tables.DimensionMap;
 
@@ -449,7 +450,8 @@ public class JEX_SingleCell_BackGroundCorrectCalibrated extends JEXCrunchable {
 			// //the background to be zero
 			if(sigma > 0)
 			{
-				double remainderMean = ImageUtility.getHistogramPeakBin(imp, -sigma, sigma, -1, false);
+				Pair<double[], int[]> hist = ImageUtility.getHistogram(imp, -sigma, sigma, -1, false);
+				double remainderMean = ImageUtility.getHistogramMode(hist.p1, hist.p2, true, true, false);
 				// try
 				// {
 				// FileUtility.openFileDefaultApplication(JEXWriter.saveImage(imp));

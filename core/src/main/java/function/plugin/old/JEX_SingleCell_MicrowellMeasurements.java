@@ -616,8 +616,8 @@ public class JEX_SingleCell_MicrowellMeasurements extends JEXCrunchable {
 		double binSize = (histMax-histMin)/histN;
 		if(tempStats.mode == 0)
 		{
-			String histogramPlot1 = ImageUtility.makeHistogramPlot(tempStats1.histogram, false);
-			String histogramPlot2 = ImageUtility.makeHistogramPlot(tempStats2.histogram, false);
+			String histogramPlot1 = ImageUtility.getHistogramPlot(tempStats1.histogram, false);
+			String histogramPlot2 = ImageUtility.getHistogramPlot(tempStats2.histogram, false);
 			// String histogramPlot3 = ImageUtility.makeHistogramPlot(tempStats3.histogram, false);
 			Logs.log("Potential bad 0_Mode measurement!!! X=" + entry.getTrayX() + " Y=" + entry.getTrayY() + " " + baseResultsMap.toString() + ". See temp histogram plots " + histogramPlot1 + " & " + histogramPlot2 + ".", 0, this);
 			errorMessage = "Check Entry X=" + entry.getTrayX() + " Y=" + entry.getTrayY() + " " + baseResultsMap.toString() + ". See temp histogram plots " + histogramPlot1 + " & " + histogramPlot2 + ".";
