@@ -1,4 +1,4 @@
-package function.plugin.plugins.Import;
+package function.plugin.plugins.FileIO;
 
 import ij.process.Blitter;
 import ij.process.ImageProcessor;
@@ -56,7 +56,7 @@ import function.plugin.mechanism.ParameterMarker;
 @Plugin(
 		type = JEXPlugin.class,
 		name="Import ND2 Files",
-		menuPath="Import",
+		menuPath="File IO",
 		visible=false,
 		description="Import image sets saved as a single multi-dimensional ND2 file."
 		)

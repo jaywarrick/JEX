@@ -1,4 +1,4 @@
-package function.plugin.plugins.Import;
+package function.plugin.plugins.FileIO;
 
 import org.scijava.plugin.Plugin;
 
@@ -22,7 +22,7 @@ import function.plugin.mechanism.ParameterMarker;
 @Plugin(
 		type = JEXPlugin.class,
 		name="Import JEX ROI",
-		menuPath="Import",
+		menuPath="File IO",
 		visible=true,
 		description="Import a JEX ROI from a file."
 		)
