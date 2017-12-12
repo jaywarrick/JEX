@@ -135,7 +135,7 @@ public class JEX_ChangeFileName extends JEXCrunchable {
 	{
 		Parameter p0 = new Parameter("File extension", "Changes only those with a matching file extension.", "tif");
 		Parameter p1 = new Parameter("Skip/Keep first N characters (prefix)", "Number of characters at beginning of name to keep.", "0");
-		Parameter p2 = new Parameter("Skip/Keep last M characters (suffix)", "Number of prefix characters to keep", "5");
+		Parameter p2 = new Parameter("Skip/Keep last M characters (suffix)", "Number of suffix characters to keep", "5");
 		Parameter p3 = new Parameter("Old middle part", "Old middle part to match (* is a wildcard, all characters after N character prefix and before M character suffix ('.' and the extension are NOT part of the suffix) will be changed to the new middle part", "*");
 		Parameter p4 = new Parameter("New middle part", "New middle part to use", "Image_");
 		
