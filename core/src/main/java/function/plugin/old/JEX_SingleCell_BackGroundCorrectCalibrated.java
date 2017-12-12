@@ -352,7 +352,7 @@ public class JEX_SingleCell_BackGroundCorrectCalibrated extends JEXCrunchable {
 			String path = imageMap.get(map);
 			
 			// If the image is to be excluded, then skip (saving original if necessary)
-			if(filterTable.testDimensionMapUsingDimTableAsFilter(map))
+			if(filterTable.testMapAsExclusionFilter(map))
 			{
 				// Then the image fits the exclusion filter
 				if(keepExcluded)

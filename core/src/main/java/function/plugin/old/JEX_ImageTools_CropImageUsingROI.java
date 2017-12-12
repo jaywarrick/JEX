@@ -18,6 +18,7 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import image.roi.ROIPlus;
 import jex.statics.JEXStatics;
+import tables.DimTable;
 import tables.DimensionMap;
 
 /**
@@ -140,7 +141,8 @@ public class JEX_ImageTools_CropImageUsingROI extends JEXCrunchable {
 	@Override
 	public ParameterSet requiredParameters()
 	{
-		Parameter p0 = new Parameter("Are You Sure?", "Dummy Parameter.", Parameter.DROPDOWN, new String[] { "yes" }, 0);
+		Parameter p0 = new Parameter("Exclusion Filter DimTable", "Exclude combinatoins of Dimension Names and values. (Use following notation '<DimName1>=<a1,a2,...>;<DimName2>=<b1,b2,...>' e.g., 'Channel=0,100,100; Time=1,2,3,4,5' (spaces are ok).", Parameter.TEXTFIELD, "");
+
 		// Parameter p1 = new
 		// Parameter("Interpolation Method","Reassigns Pixel Intensities Based on This Method",FormLine.DROPDOWN,new
 		// String[] {"Bilinear","Bicubic","Nearest Neighbor"},0);
@@ -205,6 +207,9 @@ public class JEX_ImageTools_CropImageUsingROI extends JEXCrunchable {
 		if(regionData == null || !regionData.getTypeName().getType().equals(JEXData.ROI))
 			return false;
 		
+		String exclusionFilterString = parameters.getValueOfParameter("Exclusion Filter DimTable");
+		DimTable filterTable = new DimTable(exclusionFilterString);
+		
 		// Run the function
 		TreeMap<DimensionMap,String> imageList = ImageReader.readObjectToImagePathTable(imageFiles);
 		TreeMap<DimensionMap,ROIPlus> regionROI = RoiReader.readObjectToRoiMap(regionData);
@@ -223,6 +228,14 @@ public class JEX_ImageTools_CropImageUsingROI extends JEXCrunchable {
 			{
 				return false;
 			}
+			
+			if(!filterTable.testMapAsExclusionFilter(map))
+			{
+				count = count + 1;
+				JEXStatics.statusBar.setProgressPercentage(count * 100 / total);
+				continue;
+			}
+			
 			image = new ImagePlus(imageList.get(map));
 			imageP = image.getProcessor();
 			region = regionROI.get(map);

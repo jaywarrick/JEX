@@ -110,7 +110,7 @@ public class FastMedianBackgroundSubtract extends JEXPlugin {
 				return false;
 			}
 			
-			if(filterTable.testDimensionMapUsingDimTableAsFilter(map))
+			if(filterTable.testMapAsExclusionFilter(map))
 			{
 				if(this.keepExcluded)
 				{

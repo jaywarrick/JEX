@@ -106,7 +106,7 @@ public class JEX_StackProjection extends JEXCrunchable {
 	@Override
 	public boolean allowMultithreading()
 	{
-		return false;
+		return true;
 	}
 
 	// ----------------------------------------------------
@@ -156,6 +156,8 @@ public class JEX_StackProjection extends JEXCrunchable {
 		Parameter p2 = new Parameter("Sliding Window Projection", "Perform the projection for the whole stack or for N number of images at a time, shifting by 1 each time.", Parameter.DROPDOWN, new String[] { "true", "false" }, 1);
 		Parameter p3 = new Parameter("N", "Number of images in sliding window (ignored if not sliding window).", "2");
 		Parameter p4 = getNumThreadsParameter(10, 6);
+		Parameter p5 = new Parameter("Exclusion Filter DimTable", "Exclude combinatoins of Dimension Names and values. (Use following notation '<DimName1>=<a1,a2,...>;<DimName2>=<b1,b2,...>' e.g., 'Channel=0,100,100; Time=1,2,3,4,5' (spaces are ok).", Parameter.TEXTFIELD, "");
+
 		// Parameter("New Max","Image Intensity Value","65535.0");
 		// Parameter p5 = new
 		// Parameter("Gamma","0.1-5.0, value of 1 results in no change","1.0");
@@ -170,9 +172,7 @@ public class JEX_StackProjection extends JEXCrunchable {
 		parameterArray.addParameter(p1);
 		parameterArray.addParameter(p2);
 		parameterArray.addParameter(p3);
-
-		// parameterArray.addParameter(p5);
-		// parameterArray.addParameter(p6);
+		parameterArray.addParameter(p5);
 		return parameterArray;
 	}
 
@@ -214,6 +214,8 @@ public class JEX_StackProjection extends JEXCrunchable {
 		String mathOperation = parameters.getValueOfParameter("Math Operation");
 		boolean slidingWindow = Boolean.parseBoolean(parameters.getValueOfParameter("Sliding Window Projection"));
 		int slidingWindowSize = Integer.parseInt(parameters.getValueOfParameter("N"));
+		String exclusionFilterString = parameters.getValueOfParameter("Exclusion Filter DimTable");
+		DimTable filterTable = new DimTable(exclusionFilterString);
 
 		// Run the function
 		Dim dimToProject = originalDimTable.getDimWithName(dimName);
@@ -241,7 +243,8 @@ public class JEX_StackProjection extends JEXCrunchable {
 					{
 						return false;
 					}
-					List<DimensionMap> stackMaps = this.getSomeStackMaps(map, dimToProject, slidingWindowSize, i);
+					
+					List<DimensionMap> stackMaps = this.getSomeStackMaps(map, dimToProject, slidingWindowSize, i, filterTable);
 
 					ImageProcessor finalImp = null;
 					if(mathOperation.equals(METHOD_DIFF))
@@ -270,7 +273,7 @@ public class JEX_StackProjection extends JEXCrunchable {
 				{
 					return false;
 				}
-				List<DimensionMap> stackMaps = this.getAllStackMaps(map, dimToProject);
+				List<DimensionMap> stackMaps = this.getAllStackMaps(map, dimToProject, filterTable);
 
 				ImageProcessor finalImp = null;
 				if(mathOperation.equals(METHOD_DIFF))
@@ -378,23 +381,31 @@ public class JEX_StackProjection extends JEXCrunchable {
 		return p.getProjection().getProcessor();
 	}
 
-	private List<DimensionMap> getAllStackMaps(DimensionMap map, Dim dimToProject)
+	private List<DimensionMap> getAllStackMaps(DimensionMap map, Dim dimToProject, DimTable filterTable)
 	{
 		List<DimensionMap> ret = new Vector<DimensionMap>();
 		for (int i = 0; i < dimToProject.size(); i++)
 		{
-			ret.add(this.getAStackMap(map, dimToProject, i));
+			DimensionMap temp = this.getAStackMap(map, dimToProject, i);
+			if(!filterTable.testMapAsExclusionFilter(temp))
+			{
+				ret.add(temp);
+			}
 		}
 		return ret;
 	}
 
-	private List<DimensionMap> getSomeStackMaps(DimensionMap map, Dim dimToProject, int slidingWindowSize, int i)
+	private List<DimensionMap> getSomeStackMaps(DimensionMap map, Dim dimToProject, int slidingWindowSize, int i, DimTable filterTable)
 	{
 		Dim subDim = this.getSubDim(dimToProject, slidingWindowSize, i);
 		List<DimensionMap> ret = new Vector<DimensionMap>();
 		for (int j = 0; j < subDim.size(); j++)
 		{
-			ret.add(this.getAStackMap(map, subDim, j));
+			DimensionMap temp = this.getAStackMap(map, subDim, j);
+			if(!filterTable.testMapAsExclusionFilter(temp))
+			{
+				ret.add(temp);
+			}
 		}
 		return ret;
 	}

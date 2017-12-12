@@ -106,7 +106,7 @@ public class FindEdges extends JEXPlugin {
 				return false;
 			}
 			
-			if(filterTable.testDimensionMapUsingDimTableAsFilter(map))
+			if(filterTable.testMapAsExclusionFilter(map))
 			{
 				// Then the image fits the exclusion filter
 				if(this.keepExcluded)

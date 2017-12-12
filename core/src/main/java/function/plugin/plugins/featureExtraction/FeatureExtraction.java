@@ -276,7 +276,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			DimensionMap mapMask_WholeCell = this.mapMask_NoChannel.copyAndSet(channelName + "=" + maskWholeCellChannelValue);
 
 			// Skip if we can
-			if(this.filterTable.testDimensionMapUsingDimTableAsFilter(mapMask_WholeCell))
+			if(this.filterTable.testMapAsExclusionFilter(mapMask_WholeCell))
 			{
 				continue;
 			}
@@ -295,7 +295,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			for(DimensionMap mapMaskTemp: imageSubsetTable.getMapIterator())
 			{
 				// Skip if we can
-				if(this.filterTable.testDimensionMapUsingDimTableAsFilter(mapMaskTemp))
+				if(this.filterTable.testMapAsExclusionFilter(mapMaskTemp))
 				{
 					continue;
 				}
@@ -453,7 +453,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	public boolean quantifyFeatures(String maskChannelName, boolean firstTimeThrough)
 	{
 		this.mapMask = this.mapMask_NoChannel.copyAndSet(this.channelName + "=" + maskChannelName);
-		if(this.filterTable.testDimensionMapUsingDimTableAsFilter(this.mapMask))
+		if(this.filterTable.testMapAsExclusionFilter(this.mapMask))
 		{
 			return true; // i.e., skip
 		}

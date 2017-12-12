@@ -134,7 +134,7 @@ public class AdjustImageMultiChannel extends JEXPlugin {
 			String tempPath;
 			for (DimensionMap map : imageMap.keySet())
 			{
-				if(filterTable.testDimensionMapUsingDimTableAsFilter(map))
+				if(filterTable.testMapAsExclusionFilter(map))
 				{
 					if(this.keepExcluded)
 					{
