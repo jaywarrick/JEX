@@ -33,7 +33,8 @@ import tables.DimensionMap;
  */
 public class JEX_ImageFilters extends JEXCrunchable {
 
-	public static String MEAN = "mean", MIN = "min", MAX = "max", MEDIAN = "median", VARIANCE = "variance", OUTLIERS="outliers", DESPECKLE="despeckle", REMOVE_NAN="remove NaN", OPEN="open", CLOSE="close", OPEN_TOPHAT="open top-hat", CLOSE_TOPHAT="close top-hat", SUM="sum";
+	public static String MEAN = "mean", MIN = "min", MAX = "max", MEDIAN = "median", VARIANCE = "variance", STDEV = "std. dev.", OUTLIERS="outliers", DESPECKLE="despeckle", REMOVE_NAN="remove NaN", OPEN="open", CLOSE="close", OPEN_TOPHAT="open top-hat", CLOSE_TOPHAT="close top-hat", SUM="sum";
+	public static String OP_NONE = "None", OP_LOG = "Natural Log", OP_EXP="Exp", OP_SQRT="Square Root", OP_SQR="Square", OP_INVERT="Invert";
 
 	public JEX_ImageFilters()
 	{}
@@ -145,14 +146,14 @@ public class JEX_ImageFilters extends JEXCrunchable {
 		// Parameter p0 = new
 		// Parameter("Dummy Parameter","Lets user know that the function has been selected.",FormLine.DROPDOWN,new
 		// String[] {"true"},0);
-		Parameter p1 = new Parameter("Filter Type", "Type of filter to apply.", Parameter.DROPDOWN, new String[] { MEAN, MIN, MAX, MEDIAN, VARIANCE, OUTLIERS, DESPECKLE, REMOVE_NAN, OPEN, CLOSE, OPEN_TOPHAT, CLOSE_TOPHAT, SUM }, 0);
+		Parameter p1 = new Parameter("Filter Type", "Type of filter to apply.", Parameter.DROPDOWN, new String[] { MEAN, MIN, MAX, MEDIAN, VARIANCE, STDEV, OUTLIERS, DESPECKLE, REMOVE_NAN, OPEN, CLOSE, OPEN_TOPHAT, CLOSE_TOPHAT, SUM }, 0);
 		Parameter p7 = new Parameter("Exclusion Filter", "<DimName>=<Val1>,<Val2>,...<Valn>, Specify the dimension and dimension values to exclude. Leave blank to process all.", "");
 		Parameter p8 = new Parameter("Keep Unprocessed Images?", "Should the images within the object that are exlcluded from analysis by the Dimension Filter be kept in the result?", Parameter.CHECKBOX, true);
 		Parameter p2 = new Parameter("Radius", "Radius of filter in pixels.", "2.0");
 		Parameter p3 = new Parameter("Output Bit-Depth", "Bit-Depth of the output image", Parameter.DROPDOWN, new String[] { "8", "16", "32" }, 2);
 		Parameter p4 = getNumThreadsParameter(10, 6);
-		Parameter p5 = new Parameter("Post-log Operation", "Should a log of the values be taken after processing and before saving.", Parameter.CHECKBOX, false);
-		Parameter p6 = new Parameter("Post-multiplier", "Value to multiply by after processing and any log operation and before saving.", "1.0");
+		Parameter p5 = new Parameter("Post-math Operation", "Choose a post math operation to perform if desired. Otherwise, leave as 'None'.", Parameter.DROPDOWN, new String[] { OP_NONE, OP_LOG, OP_EXP, OP_SQRT, OP_SQR, OP_INVERT}, 0);
+		Parameter p6 = new Parameter("Post-multiplier", "Value to multiply by after processing and any math operation and before saving.", "1.0");
 		// Make an array of the parameters and return it
 		ParameterSet parameterArray = new ParameterSet();
 		parameterArray.addParameter(p4);
@@ -212,7 +213,7 @@ public class JEX_ImageFilters extends JEXCrunchable {
 		
 		boolean keepUnprocessed = Boolean.parseBoolean(parameters.getValueOfParameter("Keep Unprocessed Images?"));
 		int bitDepth = Integer.parseInt(parameters.getValueOfParameter("Output Bit-Depth"));
-		boolean log = Boolean.parseBoolean(parameters.getValueOfParameter("Post-log Operation"));
+		String mathOp = parameters.getValueOfParameter("Post-math Operation");
 		double mult = Double.parseDouble(parameters.getValueOfParameter("Post-multiplier"));
 
 		// Run the function
@@ -260,9 +261,29 @@ public class JEX_ImageFilters extends JEXCrunchable {
 				orig = null;
 			}
 			
-			if(log)
+			if(!mathOp.equals(OP_NONE))
 			{
-				ip.log();
+				if(mathOp.equals(OP_EXP))
+				{
+					ip.exp();
+				}
+				else if(mathOp.equals(OP_LOG))
+				{
+					ip.ln();
+				}
+				else if(mathOp.equals(OP_SQR))
+				{
+					ip.sqr();
+				}
+				else if(mathOp.equals(OP_SQRT))
+				{
+					ip.sqrt();
+				}
+				else if(mathOp.equals(OP_INVERT))
+				{
+					ip.resetMinAndMax();
+					ip.invert();
+				}
 			}
 			if(mult != 1.0)
 			{
@@ -313,6 +334,10 @@ public class JEX_ImageFilters extends JEXCrunchable {
 		else if(method.equals(VARIANCE))
 		{
 			methodInt = RankFilters2.VARIANCE;
+		}
+		else if(method.equals(STDEV))
+		{
+			methodInt = RankFilters2.STDEV;
 		}
 		else if(method.equals(OUTLIERS))
 		{

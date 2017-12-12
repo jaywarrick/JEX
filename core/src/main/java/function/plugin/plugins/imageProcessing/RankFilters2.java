@@ -26,7 +26,7 @@ import ij.process.ImageProcessor;
  // Version 2014-10-10 M. Schmid:   Fixes a bug that caused Threshold=0 when calling from API
 
 public class RankFilters2 implements ExtendedPlugInFilter, DialogListener {
-	public static final int	 SUM=-1, MEAN=0, MIN=1, MAX=2, VARIANCE=3, MEDIAN=4, OUTLIERS=5, DESPECKLE=6, REMOVE_NAN=7,
+	public static final int	 STDEV=-2, SUM=-1, MEAN=0, MIN=1, MAX=2, VARIANCE=3, MEDIAN=4, OUTLIERS=5, DESPECKLE=6, REMOVE_NAN=7,
 			OPEN=8, CLOSE=9;
 	public static final int BRIGHT_OUTLIERS = 0, DARK_OUTLIERS = 1;
 	private static final String[] outlierStrings = {"Bright","Dark"};
@@ -89,6 +89,8 @@ public class RankFilters2 implements ExtendedPlugInFilter, DialogListener {
 			filterType = CLOSE;
 		else if (arg.equals("open"))
 			filterType = OPEN;
+		else if (arg.equals("stdev"))
+			filterType = STDEV;
 		else if (arg.equals("nan")) {
 			filterType = REMOVE_NAN;
 			if (imp!=null && imp.getBitDepth()!=32) {
@@ -152,7 +154,7 @@ public class RankFilters2 implements ExtendedPlugInFilter, DialogListener {
 				size = roiRect.width * roiRect.height;
 			}
 			double workToDo = size*(double)radius;	//estimate computing time (arb. units)
-			if (filterType==MEAN || filterType==VARIANCE) workToDo *= 0.5;
+			if (filterType==MEAN || filterType==VARIANCE || filterType==STDEV) workToDo *= 0.5;
 			else if (filterType==MEDIAN) workToDo *= radius*0.5;
 			if (workToDo < 1e6 && imp.getImageStackSize()>=numThreads) {
 				numThreads = 1;				//for fast operations, avoid overhead of multi-threading in each image
@@ -351,7 +353,7 @@ public class RankFilters2 implements ExtendedPlugInFilter, DialogListener {
 		
 		boolean minOrMax = filterType == MIN || filterType == MAX;
 		boolean minOrMaxOrOutliers = minOrMax || filterType == OUTLIERS;
-		boolean sumFilter = filterType == MEAN || filterType == VARIANCE || filterType == SUM;
+		boolean sumFilter = filterType == MEAN || filterType == VARIANCE || filterType == SUM || filterType == STDEV;
 		boolean medianFilter = filterType == MEDIAN || filterType == OUTLIERS;
 		double[] sums = sumFilter ? new double[2] : null;
 		float[] medianBuf1 = (medianFilter||filterType==REMOVE_NAN) ? new float[kNPoints] : null;
@@ -515,8 +517,12 @@ public class RankFilters2 implements ExtendedPlugInFilter, DialogListener {
 						values[valuesP] = (float)(sums[0]);
 					else	{// Variance: sum of squares - square of sums
 						float value = (float)((sums[1] - sums[0]*sums[0]/kNPoints)/kNPoints);
+						if (value<0) value = 0;
+						if(filterType == STDEV) value = (float) Math.sqrt(value);
 						if (value>maxValue) value = maxValue;
 						values[valuesP] = value;
+						if(value < 0)
+							values[valuesP] = 0; // variance should never be negative (happens due to rounding error)
 					}
 				} else if (filterType == MEDIAN) {
 					median = getMedian(cache, x, cachePointers, medianBuf1, medianBuf2, kNPoints, median);
