@@ -231,7 +231,7 @@ public class JEXTableReader {
 				while ((instance = this.loader.m_ArffReader.readInstance(this.structure)) != null)
 				{
 					pair = this.getPair(instance);
-					if(pair.p2 != null && filteredDimTable.hasDimensionMap(pair.p1))
+					if(pair.p2 != null && filteredDimTable.testUnderdefinedMap(pair.p1))
 					{
 						data.put(pair.p1, pair.p2);
 					}
