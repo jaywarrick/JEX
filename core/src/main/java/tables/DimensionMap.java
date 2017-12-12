@@ -198,7 +198,7 @@ public class DimensionMap extends TreeMap<String,String> implements Comparable<D
 	}
 	
 	/**
-	 * Return a comparaison with another DimensionMap. This DimensionMap can be overdefined compared to d and still return 0. Thus, A = B doesn't necessarily mean B = A but having this behavior allows us to access items in maps sorted by
+	 * Return a comparison with another DimensionMap. This DimensionMap can be overdefined compared to d and still return 0. Thus, A = B doesn't necessarily mean B = A but having this behavior allows us to access items in maps sorted by
 	 * DimensionMaps with overdefined DimensionMaps. In other words, if we have an array of rois on a single image, we can use the DimensionMap of the rois to access the appropriate image in the imageSet by simply using the get method for a
 	 * TreeMap with DimensionMap key and String value.
 	 */
