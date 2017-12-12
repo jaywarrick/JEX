@@ -4,7 +4,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Random;
+import java.util.TreeMap;
 import java.util.Vector;
 
 import org.apache.commons.math3.distribution.NormalDistribution;
@@ -1095,6 +1097,179 @@ public class StatisticsUtility {
 		return meanCalculator.evaluate(values);
 	}
 	
+	public static <T extends Number, K extends Number> Double weightedMad(Iterable<T> values, double[] weights, double median)
+	{
+		
+		Iterator<T> itrV = values.iterator();
+		TreeMap<Double, Double> temp = new TreeMap<>();
+		double totWeight = 0.0d;
+		int count = -1;
+		while(itrV.hasNext())
+		{
+			//temp.put(itrV.next().doubleValue() - median, itrW.next());
+			count = count + 1;
+			double key = Math.abs(itrV.next().doubleValue() - median);
+			double w = weights[count];
+			totWeight = totWeight + w;
+			Double oldW = temp.get(key);
+			if(oldW == null)
+			{
+				oldW = 0.0d;
+			}
+			temp.put(key, w + oldW);
+		}
+		if(count + 1 != weights.length)
+		{
+			throw new IllegalArgumentException("There must be an equal number of values and weights. Aborting.");
+		}
+		return(1.4826 * weightedMedian(temp, totWeight));
+	}
+	
+	public static Double weightedMad(double[] values, double[] weights, double median)
+	{
+		if(values.length != weights.length)
+		{
+			throw new IllegalArgumentException("There must be an equal number of values and weights. Aborting.");
+		}
+		TreeMap<Double, Double> temp = new TreeMap<>();
+		double totWeight = 0.0d;
+		for(int i = 0; i < values.length; i++)
+		{
+			//temp.put(itrV.next().doubleValue() - median, itrW.next());
+			double key = Math.abs(values[i] - median);
+			double w = weights[i];
+			totWeight = totWeight + w;
+			Double oldW = temp.get(key);
+			if(oldW == null)
+			{
+				oldW = 0.0d;
+			}
+			temp.put(key, w + oldW);
+		}
+		return(1.4826 * weightedMedian(temp, totWeight));
+	}
+	
+	public static <T extends Number, K extends Number> Double weightedMad(TreeMap<T,K> dataAndWeights, double median)
+	{
+		TreeMap<Double, Double> temp = new TreeMap<>();
+		double totWeight = 0.0d;
+		for(Entry<T,K> e : dataAndWeights.entrySet())
+		{
+			//temp.put(itrV.next().doubleValue() - median, itrW.next());
+			double key = Math.abs(e.getKey().doubleValue() - median);
+			double w = e.getValue().doubleValue();
+			totWeight = totWeight + w;
+			Double oldW = temp.get(key);
+			if(oldW == null)
+			{
+				oldW = 0.0d;
+			}
+			temp.put(key, w + oldW);
+		}
+		return(1.4826 * weightedMedian(temp, totWeight));
+	}
+	
+	public static <T extends Number, K extends Number> Double weightedMad(Iterable<T> values, Iterable<K> weights, double median)
+	{
+		
+		Iterator<T> itrV = values.iterator();
+		Iterator<K> itrW = weights.iterator();
+		TreeMap<Double, Double> temp = new TreeMap<>();
+		double totWeight = 0.0d;
+		while(itrV.hasNext() && itrW.hasNext())
+		{
+			//temp.put(itrV.next().doubleValue() - median, itrW.next());
+			
+			double key = Math.abs(itrV.next().doubleValue() - median);
+			double w = itrW.next().doubleValue();
+			totWeight = totWeight + w;
+			Double oldW = temp.get(key);
+			if(oldW == null)
+			{
+				oldW = 0.0d;
+			}
+			temp.put(key, w + oldW);
+		}
+		if(itrV.hasNext() || itrW.hasNext())
+		{
+			throw new IllegalArgumentException("There must be an equal number of values and weights. Aborting.");
+		}
+		return(1.4826 * weightedMedian(temp, totWeight));
+	}
+	
+	public static <T extends Number, K extends Number> Double weightedMedian(TreeMap<T, K> values, double totWeight)
+	{
+		double test = 0.0d;
+		Iterator<Entry<T, K>> itr = values.entrySet().iterator();
+		T ret = null;
+		while(test < 0.5 && itr.hasNext())
+		{
+			Entry<T, K> e = itr.next();
+			ret = e.getKey();
+			test = test + e.getValue().doubleValue()/totWeight;
+		}
+		
+		// Capture special cases
+		if(ret == null)
+		{
+			return null; // This should hopefully never happen.
+		}
+		if(test == 0.5d)
+		{
+			if(itr.hasNext())
+			{
+				return (ret.doubleValue() + itr.next().getKey().doubleValue())/2.0d;
+			}
+			else
+			{
+				return ret.doubleValue();
+			}
+		}
+		else
+		{
+			return ret.doubleValue();
+		}
+	}
+	
+	public static <T extends Number, K extends Number> Double weightedMedian(TreeMap<T, K> values, boolean normalizeWeights)
+	{
+		double totWeight = 1.0d;
+		if(normalizeWeights)
+		{
+			totWeight = 0.0d;
+			for(Entry<T, K> e : values.entrySet())
+			{
+				totWeight = totWeight + e.getValue().doubleValue();
+			}
+		}
+		return weightedMedian(values, totWeight);
+	}
+	
+	public static <T extends Number, K extends Number> Double weightedMedian(Iterable<T> values, Iterable<K> weights)
+	{
+		Iterator<T> itrV = values.iterator();
+		Iterator<K> itrW = weights.iterator();
+		TreeMap<T, Double> temp = new TreeMap<>();
+		double totWeight = 0.0d;
+		while(itrV.hasNext() && itrW.hasNext())
+		{
+			T key = itrV.next();
+			double w = itrW.next().doubleValue();
+			totWeight = totWeight + w;
+			Double oldW = temp.get(key);
+			if(oldW == null)
+			{
+				oldW = 0.0d;
+			}
+			temp.put(key, w + oldW);
+		}
+		if(itrV.hasNext() || itrW.hasNext())
+		{
+			throw new IllegalArgumentException("There must be an equal number of values and weights. Aborting.");
+		}
+		return(weightedMedian(temp, totWeight));
+	}
+	
 	/**
 	 * The algorithm first determines a traditional median to seed the algorithm
 	 * Each value is then weighted according to (abs(x-mean))^(scaling).
@@ -1199,10 +1374,67 @@ public class StatisticsUtility {
 		return adaptiveMedian(values, AdaptiveMedian.ITERS, AdaptiveMedian.SCALING);
 	}
 	
+	public static Double median(Object values)
+	{
+		if(values instanceof byte[])
+		{
+			return median((byte[]) values);
+		}
+		else if(values instanceof int[])
+		{
+			return median((int[]) values);
+		}
+		else if(values instanceof short[])
+		{
+			return median((short[]) values);
+		}
+		else if(values instanceof float[])
+		{
+			return median((float[]) values);
+		}
+		else
+		{
+			return median((double[]) values);
+		}
+	}
+	
 	public static Double median(double[] values)
 	{
 		Median medianCalculator = new Median();
 		return medianCalculator.evaluate(values);
+	}
+	
+	public static Double median(float[] values)
+	{
+		Median medianCalculator = new Median();
+		double[] temp = new double[values.length];
+		for(int i=0; i < values.length; i++)
+		{
+			temp[i] = values[i];
+		}
+		return medianCalculator.evaluate(temp);
+	}
+	
+	public static Double median(short[] values)
+	{
+		Median medianCalculator = new Median();
+		double[] temp = new double[values.length];
+		for(int i=0; i < values.length; i++)
+		{
+			temp[i] = values[i];
+		}
+		return medianCalculator.evaluate(temp);
+	}
+	
+	public static Double median(byte[] values)
+	{
+		Median medianCalculator = new Median();
+		double[] temp = new double[values.length];
+		for(int i=0; i < values.length; i++)
+		{
+			temp[i] = values[i];
+		}
+		return medianCalculator.evaluate(temp);
 	}
 
 	public static Double median(Collection<Double> values)
@@ -1358,15 +1590,78 @@ public class StatisticsUtility {
 		}
 		return StatUtils.percentile(v, percentile);
 	}
+	
+	public static double[] percentile(Object values, double...percentiles)
+	{
+		if(values instanceof byte[])
+		{
+			return percentile((byte[]) values, percentiles);
+		}
+		else if(values instanceof int[])
+		{
+			return percentile((int[]) values, percentiles);
+		}
+		else if(values instanceof short[])
+		{
+			return percentile((short[]) values, percentiles);
+		}
+		else if(values instanceof float[])
+		{
+			return percentile((float[]) values, percentiles);
+		}
+		else
+		{
+			return percentile((double[]) values, percentiles);
+		}
+	}
+	
+	public static double[] percentile(byte[] values, double...percentiles)
+	{
+		double[] temp = new double[values.length];
+		for(int i = 0; i < values.length; i++)
+		{
+			temp[i] = values[i];
+		}
+		return percentile(temp, percentiles);
+	}
+	
+	public static double[] percentile(int[] values, double...percentiles)
+	{
+		double[] temp = new double[values.length];
+		for(int i = 0; i < values.length; i++)
+		{
+			temp[i] = values[i];
+		}
+		return percentile(temp, percentiles);
+	}
+	
+	public static double[] percentile(short[] values, double...percentiles)
+	{
+		double[] temp = new double[values.length];
+		for(int i = 0; i < values.length; i++)
+		{
+			temp[i] = values[i];
+		}
+		return percentile(temp, percentiles);
+	}
+	
+	public static double[] percentile(float[] values, double...percentiles)
+	{
+		double[] temp = new double[values.length];
+		for(int i = 0; i < values.length; i++)
+		{
+			temp[i] = values[i];
+		}
+		return percentile(temp, percentiles);
+	}
 
 	/**
 	 * @param values
 	 * @param percentiles value be > 0 and <= 100
 	 * @return
 	 */
-	public static double[] percentile(double[] values, double[] percentiles)
+	public static double[] percentile(double[] values, double...percentiles)
 	{
-
 		Percentile p = new Percentile();
 		p.setData(values);
 		double[] ret = new double[percentiles.length];
@@ -1928,6 +2223,139 @@ class ComparablePair<T1 extends Comparable, T2> extends Pair<T1, T2> implements 
 	}
 }
 
+//class AdaptiveWeightedMedian
+//{
+//	public static final double SCALING = 5.0;
+//	public static final int ITERS = 4;
+//	TreeMap<Double,Double> data;
+//	double[] weights;
+//	double totalWeight = 0;
+//	double scaling;
+//
+//	public AdaptiveWeightedMedian(double[] data, double[] weights)
+//	{
+//		this(data, weights, 5.0);
+//	}
+//	
+//	public AdaptiveWeightedMedian(double[] data, double[] weights, double scaling)
+//	{
+//		if(data.length != weights.length)
+//		{
+//			throw new IllegalArgumentException("The data and weights must be the same length.");
+//		}
+//		this.data = new TreeMap<>();
+//		for(int i = 0; i < data.length; i++)
+//		{
+//			this.data.put(data[i], weights[i]);
+//		}
+//		weights = new double[data.length];
+//		this.scaling = scaling;
+//	}
+//	
+//	private Entry<Double,Double> get(int i)
+//	{
+//		int count = 0;
+//		if(i < 0 || i >= this.data.size())
+//		{
+//			return null;
+//		}
+//		for(Entry<Double,Double> e : this.data.entrySet())
+//		{
+//			if(count == i)
+//			{
+//				return e;
+//			}
+//		}
+//		return null;
+//	}
+//
+//	public Double evaluate(int iters)
+//	{
+//		if(data.size() == 0)
+//		{
+//			return null;
+//		}
+//		if(data.size() == 1)
+//		{
+//			this.get(0);
+//		}
+//
+//		// get an initial median
+//		int n = data.size();
+//		int medianIndex = ((n+1)/2)-1;
+//		double median = this.get(medianIndex).getKey();
+//		if(StatisticsUtility.isEven(data.size()))
+//		{
+//			median = (median + this.get(medianIndex + 1).getKey())/2.0;
+//		}
+//		
+//		// iteratively approach weighted median
+//		int index = 0;
+//		double oldMed = Double.MIN_VALUE;
+//		double oldOldMed = Double.MIN_VALUE;
+//		while(iters > 0 && median != oldMed && median != oldOldMed)
+//		{
+//			oldOldMed = oldMed;
+//			oldMed = median;
+//			this.calculateWeights(median, scaling);
+//			double cumWeight = 0;
+//			index = 0;
+//			for(double p : weights)
+//			{
+//				if(cumWeight > 0.5)
+//				{
+//					break;
+//				}
+//				cumWeight = cumWeight + p/totalWeight;
+//				index = index + 1;
+//			}
+//			if(index >= data.size())
+//			{
+//				index = medianIndex;
+//			}
+//			median = this.get(index).getKey();
+//			iters = iters - 1;
+//		}
+//		
+//		if(weights[index] == 0.5)
+//		{
+//			median = (median + this.get(index + 1).getKey())/2.0;
+//		}
+//		return median;
+//	}
+//
+//	private void calculateWeights(double median, double scaling)
+//	{
+//		/*
+//		 * From R test code
+//		 * 
+//		 * a=1 near optimal;
+//		 * 
+//		 * b=5 performs well
+//		 * 
+//		 * getWeights <- function(x, med, a, b)
+//		 * {
+//		 * 		w <- abs(x-med)
+//		 *      w <- w/(mad(x, center=med))
+//		 *  	w <- 1/(1+w^b)
+//		 *		w <- w/sum(w)
+//		 *		return(w)
+//		 * }
+//		 */
+//		totalWeight = 0;
+//		double w = 0.0;
+//		double mad = StatisticsUtility.weightedMad(this.data.keySet(), weights, median);
+//		for(Entry<>)
+//		{
+//			w = Math.abs(data[i]-median);
+//			w = w / mad;
+//			w = 1/(1 + Math.pow(w, scaling));
+//			weights[i] = w;
+//			totalWeight = totalWeight + w;
+//		}
+//	}	
+//}
+
 class AdaptiveMedian
 {
 	public static final double SCALING = 5.0;
@@ -2016,7 +2444,7 @@ class AdaptiveMedian
 		 * getWeights <- function(x, med, a, b)
 		 * {
 		 * 		w <- abs(x-med)
-		 *      w <- w/(a*mad(x, center=med))
+		 *      w <- w/(mad(x, center=med))
 		 *  	w <- 1/(1+w^b)
 		 *		w <- w/sum(w)
 		 *		return(w)
@@ -2024,7 +2452,7 @@ class AdaptiveMedian
 		 */
 		totalWeight = 0;
 		double w = 0.0;
-		double mad = StatisticsUtility.mad(median, data);
+		double mad = StatisticsUtility.weightedMad(data, weights, median);
 		for(int i=0; i < data.length; i++)
 		{
 			w = Math.abs(data[i]-median);
