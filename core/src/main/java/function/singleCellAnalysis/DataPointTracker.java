@@ -125,8 +125,8 @@ public class DataPointTracker implements Comparator<Pair<DataPoint,DataPoint>> {
 		this.medianFC = fcs.get(fcs.size() / 2);
 		if(createHistograms)
 		{
-			this.histD = ImageUtility.makeHistogramPlot(ds, 0, 20, 0.5, 50, false, this.medianD);
-			this.histFC = ImageUtility.makeHistogramPlot(fcs, 0, 0.75, 0.5, 50, false, this.medianFC);
+			this.histD = ImageUtility.getHistogramPlot(ds, 0, 20, 0.5, 50, false, this.medianD);
+			this.histFC = ImageUtility.getHistogramPlot(fcs, 0, 0.75, 0.5, 50, false, this.medianFC);
 		}
 		else
 		{
