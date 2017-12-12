@@ -399,7 +399,10 @@ public class FileUtility implements Comparator<File> {
 		}
 		for (File f : files)
 		{
-			fileList.add(f);
+			if(!f.getName().startsWith("."))
+			{
+				fileList.add(f);
+			}
 		}
 		sortFileList(fileList);
 		return fileList;
