@@ -103,6 +103,7 @@ public class SliceObject extends JEXPlugin {
 		{
 			for(DimensionMap map : inputData.getDimTable().getMapIterator())
 			{
+				success = false;
 				JEXDataSingle toAdd = null;
 				if(inputData.getData(map) != null)
 				{
@@ -140,7 +141,11 @@ public class SliceObject extends JEXPlugin {
 					}
 				}
 
-				retMap.put(map.copy(), toAdd);
+				if(success)
+				{
+					retMap.put(map.copy(), toAdd);
+				}
+				
 				// Status bar
 				count = count + 1;
 				percentage = (int) (100 * ((double) count / (double) tot));

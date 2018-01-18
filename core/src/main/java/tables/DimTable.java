@@ -443,6 +443,10 @@ public class DimTable extends ArrayList<Dim> implements Copiable<DimTable> {
 	 */
 	public boolean testMapAsExclusionFilter(DimensionMap map)
 	{
+		if(this.size() == 0)
+		{
+			return false;
+		}
 		for(Entry<String,String> e : map.entrySet())
 		{
 			Dim d = this.getDimWithName(e.getKey());
