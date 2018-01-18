@@ -26,6 +26,8 @@ import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
 import function.plugin.plugins.featureExtraction.FeatureUtils;
 import ij.ImagePlus;
+import ij.gui.Roi;
+import ij.plugin.filter.RankFilters;
 import ij.process.Blitter;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
@@ -73,7 +75,7 @@ public class ImportFlowImages extends JEXPlugin {
 
 	public ImportFlowImages()
 	{}
-	
+
 	FeatureUtils utils = new FeatureUtils();
 
 	/////////// Define Inputs ///////////
@@ -86,43 +88,52 @@ public class ImportFlowImages extends JEXPlugin {
 	@ParameterMarker(uiOrder=1, name="Folder of Images", description="If no folder specified as an input object, select the folder that contains the .ome.tif images you would like to import.", ui=MarkerConstants.UI_FILECHOOSER, defaultText="")
 	String folderString;
 
-	@ParameterMarker(uiOrder=2, name="File Prefix", description="Prefix of the *.ome.tif files to grab.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Image_")
+	@ParameterMarker(uiOrder=2, name="Number of Cells to Import", description="How many cells should be imported? (use number <= 0 to indicate all images)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="-1")
+	int numCells;
+
+	@ParameterMarker(uiOrder=3, name="File Prefix", description="Prefix of the *.ome.tif files to grab.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Image_")
 	String prefix;
 
-	@ParameterMarker(uiOrder=3, name="Thumb Size", description="About how wide/tall (square) of an area (pixels) is needed to encompass an image of a cell (estimate large to ensure large enough for all).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="100")
+	@ParameterMarker(uiOrder=4, name="Thumb Size", description="About how wide/tall (square) of an area (pixels) is needed to encompass an image of a cell (estimate large to ensure large enough for all).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="100")
 	int thumbSize;
 
-	@ParameterMarker(uiOrder=4, name="# of Rows", description="How many rows of images should be put into each page of thumbs?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="20")
+	@ParameterMarker(uiOrder=5, name="# of Rows", description="How many rows of images should be put into each page of thumbs?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="20")
 	int nRows;
 
-	@ParameterMarker(uiOrder=5, name="# of Cols", description="How many cols of images should be put into each page of thumbs?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="20")
+	@ParameterMarker(uiOrder=6, name="# of Cols", description="How many cols of images should be put into each page of thumbs?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="20")
 	int nCols;
 
-	@ParameterMarker(uiOrder=6, name="BG Ellipse Definition (pixels)", description="How many pixels in from the corner of the images should a circle be drawn to define 'background' pixels for background subtraction and thresholding?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="10")
+	@ParameterMarker(uiOrder=7, name="BG Ellipse Definition (pixels)", description="How many pixels in from the corner of the images should a circle be drawn to define 'background' pixels for background subtraction and thresholding?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="10")
 	int nBG;
-
-	@ParameterMarker(uiOrder=7, name="BF # of Sigmas", description="How many standard deviations (sigmas) above and below BG median should be used to define masked regions of the brightfield image?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="4")
+	
+	@ParameterMarker(uiOrder=8, name="BF # of Sigmas", description="How many standard deviations (sigmas) above background noise should be used to define masked regions of the brightfield image?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="4")
 	double BFSigma;
 
-	@ParameterMarker(uiOrder=8, name="Fluor. # of Sigmas", description="How many standard deviations (sigmas) above BG median should be used to define masked regions of the fluorescent images?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="3")
+	@ParameterMarker(uiOrder=9, name="Fill Holes Smaller Than...", description="What size holes (in total number of pixels) in the BF mask should be filled?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="100")
+	int fillSize;
+
+	@ParameterMarker(uiOrder=9, name="BF Mask Erosion Radius", description="How much should the BF mask be eroded?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1.7")
+	double bfRadius;
+	
+	@ParameterMarker(uiOrder=10, name="Fluor. # of Sigmas", description="How many standard deviations (sigmas) above BG median should be used to define masked regions of the fluorescent images?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="3")
 	double FluorSigma;
 
-	@ParameterMarker(uiOrder=9, name="Fluor. Auto-threshold?", description="Should the fluorescent images also be auto-thresholded to create additional masks?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
+	@ParameterMarker(uiOrder=11, name="Fluor. Auto-threshold?", description="Should the fluorescent images also be auto-thresholded to create additional masks?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
 	boolean autoThresh;
 
-	@ParameterMarker(uiOrder=10, name="Auto-thresh. Method", description="Which method of auto-thresholding should be used?", ui=MarkerConstants.UI_DROPDOWN, choices={ "HUANG", "INTERMODES", "ISODATA", "LI", "MAXENTROPY", "MEAN", "MINERROR", "MINIMUM", "MOMENTS", "OTSU", "PERCENTILE", "RENYIENTROPY", "SHANBHAG", "TRIANGLE", "YEN" }, defaultChoice=9)
+	@ParameterMarker(uiOrder=12, name="Auto-thresh. Method", description="Which method of auto-thresholding should be used?", ui=MarkerConstants.UI_DROPDOWN, choices={ "HUANG", "INTERMODES", "ISODATA", "LI", "MAXENTROPY", "MEAN", "MINERROR", "MINIMUM", "MOMENTS", "OTSU", "PERCENTILE", "RENYIENTROPY", "SHANBHAG", "TRIANGLE", "YEN" }, defaultChoice=9)
 	String autoThreshMethod;
 
-	@ParameterMarker(uiOrder=11, name="Auto-thresh. Multiplier", description="A value by which to scale the threshold provided by the autothreshold routine.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.55")
+	@ParameterMarker(uiOrder=13, name="Auto-thresh. Multiplier", description="A value by which to scale the threshold provided by the autothreshold routine.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.55")
 	double autoThreshMultiplier;
 
-	@ParameterMarker(uiOrder=12, name="Merge Sigma/Auto-Thresh Masks?", description="If both the sigma method and the auto-method were used to create masks, should the masks be merged using an AND operation?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
+	@ParameterMarker(uiOrder=14, name="Merge Sigma/Auto-Thresh Masks?", description="If both the sigma method and the auto-method were used to create masks, should the masks be merged using an AND operation?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
 	boolean merge;
-	
-	@ParameterMarker(uiOrder=13, name="Cell Id Channel", description="Channel to use for producing a point inside the cell marked with the cell ID.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
+
+	@ParameterMarker(uiOrder=15, name="Cell Id Channel", description="Channel to use for producing a point inside the cell marked with the cell ID.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="5")
 	String nucChannel;
 
-	@ParameterMarker(uiOrder=14, name="Offset Intensity (integer)", description="How much itnensity should be added back after background subtraction to preserve background noise characteristics?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="500")
+	@ParameterMarker(uiOrder=16, name="Offset Intensity (integer)", description="How much itnensity should be added back after background subtraction to preserve background noise characteristics?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="500")
 	int offset;
 
 
@@ -149,6 +160,7 @@ public class ImportFlowImages extends JEXPlugin {
 	@Override
 	public boolean run(JEXEntry optionalEntry)
 	{
+		FeatureUtils utils = new FeatureUtils();
 		File folder = new File(folderString);
 		if(folderData != null)
 		{
@@ -180,18 +192,39 @@ public class ImportFlowImages extends JEXPlugin {
 		TreeMap<DimensionMap,String> maskPages = new TreeMap<>();
 		TreeMap<DimensionMap,ROIPlus> cellNumberRoiMap = new TreeMap<>();
 		int pageCounter = 1;
-		Vector<Double> bfMedians = new Vector<>();
+		TreeMap<String, Vector<Double>> channelBgMedians = new TreeMap<>();
+		for(String val : channelDim.dimValues)
+		{
+			channelBgMedians.put(val, new Vector<Double>());
+		}
+		TreeMap<String, Vector<Double>> channelBgMads = new TreeMap<>();
+		for(String val : channelDim.dimValues)
+		{
+			channelBgMads.put(val, new Vector<Double>());
+		}
+		Vector<Double> edgeMedians = new Vector<>();
+		Vector<Double> edgeMads = new Vector<>();
 		Iterator<DimTable> itr = fileDimTable.getSubTableIterator("Cell").iterator();
 		int count = 0, percentage = 0;
 		int total = fileDimTable.getDimWithName("Cell").size();
-		while(itr.hasNext())
+		if(numCells <= 0)
+		{
+			numCells = total;
+		}
+		else
+		{
+			total = numCells;
+		}
+		// For each cell
+		while(itr.hasNext() && count <= numCells-1)
 		{
 			DimTable cellTable = itr.next();
 			if(this.isCanceled())
 			{
 				return false;
 			}
-
+			
+			// For all channels
 			for(DimensionMap map : cellTable.getMapIterator())
 			{
 				// Check if canceled
@@ -211,36 +244,36 @@ public class ImportFlowImages extends JEXPlugin {
 				ROIPlus circle = getCircle(p);
 
 				// Get the background median
-				Pair<Double,Double> med_mad = getMedianAndMad(circle, imp);
+				Pair<Double,Double> med_mad = getMedAndMad(circle, imp);
+				
+				channelBgMedians.get(map.get(channelDim.dimName)).add(med_mad.p1);
+				channelBgMads.get(map.get(channelDim.dimName)).add(med_mad.p2);
 
 				// Get background subtracted image
 				if(map.get("Channel").equals("1"))
-				{
-					// Store the median for later
-					bfMedians.add(med_mad.p1);
-
+				{					
 					// Don't correct the BF channel
 					FloatProcessor bf = (new ImagePlus(sortedFiles.get(map))).getProcessor().convertToFloatProcessor();
 					Pair<Integer,FloatProcessor> pairBF = new Pair<>(cellCounter, bf);
 					imageMap.put(map.copy(), pairBF);
 
-					// Get the lower mask
-					FloatProcessor maskLower = copyProcessor(imp);
-					double thresh = med_mad.p1 - BFSigma * med_mad.p2;
-					FunctionUtility.imThresh(maskLower, thresh, false);
-					ByteProcessor bpLower = getByteProcessor(maskLower, true);
-					DimensionMap lower = map.copyAndSet("Channel=1_Lower");
-					Pair<Integer,ByteProcessor> pairLower = new Pair<>(cellCounter, bpLower);
-					maskMap.put(lower, pairLower);
-
-					// Get the upper mask
-					FloatProcessor maskUpper = copyProcessor(imp);
-					thresh = med_mad.p1 + BFSigma * med_mad.p2;
-					FunctionUtility.imThresh(maskUpper, thresh, false);
-					ByteProcessor bpUpper = getByteProcessor(maskUpper, false);
-					DimensionMap upper = map.copyAndSet("Channel=1_Upper");
-					Pair<Integer,ByteProcessor> pairUpper = new Pair<>(cellCounter, bpUpper);
-					maskMap.put(upper, pairUpper);
+					// Do the edge detection
+					FloatProcessor edge = copyProcessor(imp);
+					edge.findEdges();
+					Pair<Double,Double> edge_med_mad = getMedAndMad(circle, edge);
+					edgeMedians.add(edge_med_mad.p1);
+					edgeMads.add(edge_med_mad.p2);
+					//					double thresh = edge_med_mad.p1 + BFSigma * edge_med_mad.p2;
+					//					//					// FileUtility.showImg(maskUpper, true);
+					//					FunctionUtility.imThresh(maskUpper, thresh, false);
+					//					//					// FileUtility.showImg(maskUpper, true);
+					//					ByteProcessor bpUpper = getByteProcessor(maskUpper, false);
+					//					//					FileUtility.showImg(bpUpper, true);
+					//					utils.filterMaskRegions(bpUpper, 0, fillSize, true, false, false);
+					//					//					FileUtility.showImg(bpUpper, true);
+					//					DimensionMap upper = map.copyAndSet("Channel=1_Upper");
+					//					Pair<Integer,ByteProcessor> pairUpper = new Pair<>(cellCounter, bpUpper);
+					//					maskMap.put(upper, pairUpper);
 				}
 				else
 				{
@@ -251,51 +284,66 @@ public class ImportFlowImages extends JEXPlugin {
 					Pair<Integer,FloatProcessor> pairBG = new Pair<>(cellCounter, bg);
 					imageMap.put(map.copy(), pairBG);
 
-					// Get the sigma mask
-					FloatProcessor maskSigma = copyProcessor(imp);
-					double thresh = med_mad.p1 + FluorSigma * med_mad.p2;
-					FunctionUtility.imThresh(maskSigma, thresh, false);
-					ByteProcessor bpSigma = getByteProcessor(maskSigma, false); // Creating black and white image
-
-					// Get the auto mask
-					FloatProcessor maskAuto = copyProcessor(imp);
-					thresh = getThreshold(maskAuto, methodInt);
-					FunctionUtility.imThresh(maskAuto, thresh, false);
-					ByteProcessor bpAuto = getByteProcessor(maskAuto, false); // Creating black and white image
-
-					// Merge masks?
-					if(merge)
+					if(autoThresh)
 					{
-						bpSigma.copyBits(bpAuto, 0, 0, Blitter.AND);
-						maskMap.put(map.copy(), new Pair<Integer,ByteProcessor>(cellCounter, bpSigma));
-					}
-					else
-					{
-						DimensionMap mapSigma = map.copyAndSet("Channel=" + map.get("Channel") + "_Sigma");
-						DimensionMap mapAuto = map.copyAndSet("Channel=" + map.get("Channel") + "_Auto");
-						Pair<Integer,ByteProcessor> pairSigma = new Pair<>(cellCounter, bpSigma);
+						// Get the auto mask
+						FloatProcessor maskAuto = copyProcessor(imp);
+						double thresh = getThreshold(maskAuto, methodInt);
+						FunctionUtility.imThresh(maskAuto, thresh, false);
+						ByteProcessor bpAuto = getByteProcessor(maskAuto, false); // Creating black and white image
+						DimensionMap mapAuto = map.copy();
 						Pair<Integer,ByteProcessor> pairAuto = new Pair<>(cellCounter, bpAuto);
-						maskMap.put(mapSigma, pairSigma);
 						maskMap.put(mapAuto, pairAuto);
+						//
+						//					// Merge masks?
+						//					if(merge)
+						//					{
+						//						bpSigma.copyBits(bpAuto, 0, 0, Blitter.AND);
+						//						maskMap.put(map.copy(), new Pair<Integer,ByteProcessor>(cellCounter, bpSigma));
+						//					}
+						//					else
+						//					{
+						//						DimensionMap mapSigma = map.copyAndSet("Channel=" + map.get("Channel") + "_Sigma");
+						//						DimensionMap mapAuto = map.copyAndSet("Channel=" + map.get("Channel") + "_Auto");
+						//						Pair<Integer,ByteProcessor> pairSigma = new Pair<>(cellCounter, bpSigma);
+						//						Pair<Integer,ByteProcessor> pairAuto = new Pair<>(cellCounter, bpAuto);
+						//						maskMap.put(mapSigma, pairSigma);
+						//						maskMap.put(mapAuto, pairAuto);
+						//					}
 					}
+					
 				}
 			}
-			
+
 			count = count + 1;
 			percentage = (int) (100 * ((double) (count) / ((double) total)));
 			JEXStatics.statusBar.setProgressPercentage(percentage);
-			
-			if(cellCounter < cellsPerPage - 1 && itr.hasNext())
+
+			if(cellCounter < cellsPerPage - 1 && itr.hasNext() && count <= numCells-1)
 			{
 				cellCounter = cellCounter + 1;
 			}
 			else
 			{
 				DimTable imageTable = new DimTable(imageMap);
-				Pair<FloatProcessor,ROIPlus> imageMapResults;
-				double bgInt = StatisticsUtility.median(bfMedians);
+				FloatProcessor imageMapResults;
+				ByteProcessor maskMapResults;
+				FloatProcessor sigmaFloatMask;
+				ByteProcessor sigmaByteMask;
+				ByteProcessor autoMask = null;
 				for(DimTable pageTable : imageTable.getSubTableIterator("Channel"))
 				{
+					// Check if canceled
+					if(this.isCanceled())
+					{
+						return false;
+					}
+					
+					String channel = pageTable.getDimWithName("Channel").valueAt(0);
+					double med = StatisticsUtility.median(channelBgMedians.get(channel));
+					double mad = StatisticsUtility.median(channelBgMads.get(channel));
+					double edgeMed = StatisticsUtility.median(edgeMedians);
+					double edgeMad = StatisticsUtility.median(edgeMads);
 					DimTable toSave_dt = pageTable.copy();
 					toSave_dt.removeDimWithName("CellCount");
 					toSave_dt.removeDimWithName("Cell");
@@ -303,47 +351,86 @@ public class ImportFlowImages extends JEXPlugin {
 					pageMap.put("Page", ""+pageCounter);
 					if(pageTable.getDimWithName("Channel").valueAt(0).equals("1"))
 					{
-						imageMapResults = getPage(pageTable, imageMap, (int) Math.round(bgInt));
+						// Get the float page with a background equal to the background of the cells
+						imageMapResults = getPage(pageTable, imageMap, (int) Math.round(med));
+						
+						// Create the sigmaMask
+						sigmaFloatMask = copyProcessor(imageMapResults); // copy over the data from the float page
+						sigmaFloatMask.findEdges(); // Perform edge detection
+						FunctionUtility.imThresh(sigmaFloatMask, edgeMed + this.BFSigma * edgeMad, false); // Threshold the float page to the desired sigma threshold
+						sigmaByteMask = getByteProcessor(sigmaFloatMask, false); // Creating black and white image
+						
+						utils.filterMaskRegions(sigmaByteMask, 0, fillSize, true, false, false); // Fill holes in the BF mask
+						
+						// Erode back from the sobel filter.
+						RankFilters rF = new RankFilters();
+						rF.rank(sigmaByteMask, this.bfRadius, RankFilters.MIN);
+						
+						// Adjust the float page background to the desired offset level
+						imageMapResults.add(this.offset - med);
 					}
 					else
 					{
+						// Get the page setting the page background to the desired fluorescence offset
 						imageMapResults = getPage(pageTable, imageMap, this.offset);
+						
+						// Create the sigmaMask
+						sigmaFloatMask = copyProcessor(imageMapResults); // copy over the data from the float page
+						FunctionUtility.imThresh(sigmaFloatMask, this.offset + this.FluorSigma * mad, false); // Threshold the float page to the desired sigma threshold
+						sigmaByteMask = getByteProcessor(sigmaFloatMask, false); // Creating black and white image
+						
+						// If necessary, get the auto mask and possibly merge with the sigma mask
+						if(autoThresh)
+						{
+							maskMapResults = getPage(pageTable, maskMap, 0);
+							autoMask = maskMapResults;
+							if(merge)
+							{
+								sigmaByteMask.copyBits(autoMask, 0, 0, Blitter.AND);
+								autoMask = null;
+							}
+						}
 					}
-					String path = JEXWriter.saveImage(imageMapResults.p1);
-					imagePages.put(pageMap, path);
-				}
-
-				DimTable maskTable = new DimTable(maskMap);
-				Pair<ByteProcessor,ROIPlus> maskMapResults;
-				for(DimTable pageTable : maskTable.getSubTableIterator("Channel"))
-				{
-					DimTable toSave_dt = pageTable.copy();
-					toSave_dt.removeDimWithName("CellCount");
-					toSave_dt.removeDimWithName("Cell");
-					DimensionMap pageMap = toSave_dt.getDimensionMaps().get(0);
-					pageMap.put("Page", ""+pageCounter);
-					maskMapResults = getPage(pageTable, maskMap, 0);
-					String path = JEXWriter.saveImage(maskMapResults.p1);
-					maskPages.put(pageMap, path);
 					
+					// Save roi information if necessary
 					if(haveNucChannel && pageMap.get("Channel").equals(nucChannel))
 					{
 						DimensionMap roiMap = pageMap.copy();
 						roiMap.remove("Channel");
-						cellNumberRoiMap.put(roiMap, maskMapResults.p2);
+						ROIPlus roi = this.getPageBestPoints(sigmaByteMask, pageTable, imageMap);
+						cellNumberRoiMap.put(roiMap, roi);
 					}
 					else if(!haveNucChannel)
 					{
 						// It's ok if it overwrites a few times, the results are the same for each non-nuChannel channel
 						DimensionMap roiMap = pageMap.copy();
 						roiMap.remove("Channel");
-						cellNumberRoiMap.put(roiMap, maskMapResults.p2);
+						ROIPlus roi = this.getPageBestPoints(null, pageTable, imageMap);
+						cellNumberRoiMap.put(roiMap, roi);
 					}
+					
+					// Save the grayscale image
+					ImageProcessor results = JEXWriter.convertToBitDepthIfNecessary(imageMapResults, 16);
+					String path = JEXWriter.saveImage(results);
+					imagePages.put(pageMap, path);
+					
+					// Save the alt mask if necessary
+					if(autoMask != null)
+					{
+						path = JEXWriter.saveImage(autoMask);
+						maskPages.put(pageMap.copyAndSet("Channel=" + pageMap.get("Channel") + "_Auto"), path);
+					}
+					
+					// Save the sigma mask
+					path = JEXWriter.saveImage(sigmaByteMask);
+					maskPages.put(pageMap, path);
 				}
 
 				// Clean up
-				bfMedians.clear();
-				bgInt = 0;
+				channelBgMedians.clear();
+				channelBgMads.clear();
+				edgeMedians.clear();
+				edgeMads.clear();
 				imageMap.clear();
 				maskMap.clear();
 				imageMapResults = null;
@@ -366,7 +453,21 @@ public class ImportFlowImages extends JEXPlugin {
 		return true;
 	}
 
-	/**
+	/**t how wide/tall (square) of an area (pixels) is needed to encompass an image of a cell (estimate large to ensure large enough for all).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="100")
+	@ParameterMarker(uiOrder=4, name="Thumb Size", description="About how wide/tall (square) of an area (pixels) is needed to encompass an image of a cell (estimate large to ensure large enough for all).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="100")
+	int thumbSize;
+
+	@ParameterMarker(uiOrder=4, name="# of Rows", description="How many rows of images should be put into each page of thumbs?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="20")
+	@ParameterMarker(uiOrder=5, name="# of Rows", description="How many rows of images should be put into each page of thumbs?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="20")
+	int nRows;
+
+	@ParameterMarker(uiOrder=5, name="# of Cols", description="How many cols of images should be put into each page of thumbs?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="20")
+	@ParameterMarker(uiOrder=6, name="# of Cols", description="How many cols of images should be put into each page of thumbs?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="20")
+	int nCols;
+
+	@ParameterMarker(uiOrder=6, name="BG Ellipse Definition (pixels)", description="How many pixels in from the corner of the images should a circle be drawn to define 'background' pixels for background subtraction and thresholding?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="10")
+	@ParameterMarker(uiOrder=7, name="BG Ellipse Definition (pixels)", description="How many pixels in from the corner of the images should a circle be drawn to define 'background' pixels for background subtraction and thresholding?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="10")
+	int nBG;
 	 * The point is assumed to be the center of the image.
 	 * @param p
 	 * @return
@@ -382,7 +483,7 @@ public class ImportFlowImages extends JEXPlugin {
 		return circle;
 	}
 
-	private Pair<Double,Double> getMedianAndMad(ROIPlus circle, FloatProcessor ip)
+	private Pair<Double,Double> getMedAndMad(ROIPlus circle, FloatProcessor ip)
 	{
 		float[] tempPixels = null;
 		tempPixels = ROIUtility.getPixelsOutsideRoi(ip, circle);
@@ -404,14 +505,8 @@ public class ImportFlowImages extends JEXPlugin {
 			i++;
 		}
 		double med = StatisticsUtility.median(pixels);
-		//		double mad = StatisticsUtility.mad(pixels);
-		double sd = StatisticsUtility.stdDev(pixels);
-		//		if(mad == 0)
-		//		{
-		//			mad = sd;
-		//		}
-
-		return new Pair<Double,Double>(med, sd);
+		double mad = StatisticsUtility.mad(med, pixels);
+		return new Pair<Double,Double>(med, mad);
 	}
 
 	private TreeMap<DimensionMap,String> getSortedFiles(Collection<File> files)
@@ -537,7 +632,7 @@ public class ImportFlowImages extends JEXPlugin {
 		return (ByteProcessor) im.getProcessor();
 	}
 
-	private <T extends ImageProcessor> Pair<T, ROIPlus> getPage(DimTable pageTable, TreeMap<DimensionMap,Pair<Integer,T>> imageMap, int offsetLevel)
+	private <T extends ImageProcessor> T getPage(DimTable pageTable, TreeMap<DimensionMap,Pair<Integer,T>> imageMap, int offsetLevel)
 	{
 		int pageWidth = nCols*thumbSize;
 		int pageHeight = nRows*thumbSize;
@@ -546,7 +641,6 @@ public class ImportFlowImages extends JEXPlugin {
 		T page = (T) imageMap.firstEntry().getValue().p2.createProcessor(pageWidth, pageHeight);
 		page.set(offsetLevel);
 
-		PointList pl = new PointList();
 		for(DimensionMap map : pageTable.getMapIterator())
 		{
 			// Get the image
@@ -562,18 +656,37 @@ public class ImportFlowImages extends JEXPlugin {
 			int ULx = (int) Math.round((thumbSize*(c + 0.5) - p.x));
 			int ULy = (int) Math.round((thumbSize*(r + 0.5) - p.y));
 			page.copyBits(imp, ULx, ULy, Blitter.COPY);
+		}
+
+		return page;
+	}
+	
+	private <T extends ImageProcessor> ROIPlus getPageBestPoints(ByteProcessor bp, DimTable pageTable, TreeMap<DimensionMap,Pair<Integer,T>> imageMap)
+	{
+		PointList pl = new PointList();
+		for(DimensionMap map : pageTable.getMapIterator())
+		{
+			// Get the image
+			T imp = imageMap.get(map).p2;
+
+			// Get center
+			IdPoint p = new IdPoint(imp.getWidth()/2, imp.getHeight()/2, 0);
+
+			// Get rc position
+			int i = imageMap.get(map).p1;
+			int c = i % nCols; // values for c start at 0
+			int r = i / nCols; // values for r start at 0
+			int ULx = (int) Math.round((thumbSize*(c + 0.5) - p.x));
+			int ULy = (int) Math.round((thumbSize*(r + 0.5) - p.y));
+			Roi roi = new Roi(ULx, ULy, imp.getWidth(), imp.getHeight());
 
 			// Save cell number and image position
-			if(!nucChannel.equals("") && map.get("Channel").equals(nucChannel) && imp instanceof ByteProcessor)
+			if(bp != null)
 			{
-				// Find the largest white spot in the channel and mark it.
-				if(imp instanceof ByteProcessor)
+				Point bestP = getBestPoint((ByteProcessor) bp, roi);
+				if(bestP != null)
 				{
-					Point bestP = getBestPoint((ByteProcessor) imp);
-					if(bestP != null)
-					{
-						pl.add(new IdPoint(ULx + bestP.x, ULy + bestP.y, new Integer(map.get("Cell"))));
-					}
+					pl.add(new IdPoint(ULx + bestP.x, ULy + bestP.y, new Integer(map.get("Cell"))));
 				}
 			}
 			else
@@ -584,20 +697,24 @@ public class ImportFlowImages extends JEXPlugin {
 		}
 
 		ROIPlus roi = new ROIPlus(pl, ROIPlus.ROI_POINT);
-		return new Pair<T,ROIPlus>(page, roi);
+		return roi;
 	}
-	
-	private Point getBestPoint(ByteProcessor bp)
+
+	private Point getBestPoint(ByteProcessor bp, Roi roi)
 	{
+		// Set the roi
+		bp.setRoi(roi);
+		bp = (ByteProcessor) bp.crop();
+		
 		// Get Maxima
 		MaximumFinder mf = new MaximumFinder();
-		ROIPlus maxima = (ROIPlus) mf.findMaxima(bp, 25, 125, MaximumFinder.ROI, true, false, null, false);
-		
+		ROIPlus maxima = (ROIPlus) mf.findMaxima(bp, 25, 125, MaximumFinder.ROI, true, false, roi, false);
+
 		// Get Regions
 		Img<UnsignedByteType> img = ImageJFunctions.wrapByte(new ImagePlus("Duh", bp));
 		ImgLabeling<Integer, IntType> labeling = utils.getLabeling(img, true);
 		LabelRegions<Integer> regions = new LabelRegions<>(labeling);
-			
+
 		LabelRegion<Integer> largest = null;
 		for (LabelRegion<Integer> region : regions)
 		{
@@ -613,7 +730,7 @@ public class ImportFlowImages extends JEXPlugin {
 				}
 			}
 		}
-		
+
 		RandomAccess<BoolType> ra = largest.randomAccess();
 		for (IdPoint p : maxima.pointList)
 		{
@@ -630,6 +747,4 @@ public class ImportFlowImages extends JEXPlugin {
 		}
 		return null;
 	}
-
-
 }

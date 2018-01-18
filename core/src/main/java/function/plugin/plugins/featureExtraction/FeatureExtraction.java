@@ -27,6 +27,7 @@ import function.ops.featuresets.Tamura2DFeatureSet;
 import function.ops.featuresets.ZernikeFeatureSet;
 import function.ops.featuresets.wrappers.WriterWrapper;
 import function.ops.geometry.DefaultSmallestEnclosingCircle;
+import function.ops.geometry.DefaultSymmetryCoefficients;
 import function.plugin.IJ2.IJ2PluginUtility;
 import function.plugin.mechanism.InputMarker;
 import function.plugin.mechanism.JEXPlugin;
@@ -44,6 +45,8 @@ import miscellaneous.Pair;
 import net.imagej.ops.featuresets.NamedFeature;
 import net.imagej.ops.geom.geom2d.Circle;
 import net.imagej.ops.image.cooccurrencematrix.MatrixOrientation2D;
+import net.imagej.ops.special.function.BinaryFunctionOp;
+import net.imagej.ops.special.function.Functions;
 import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
@@ -112,6 +115,9 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	public DefaultSmallestEnclosingCircle opEncircle = null;
 	public Tamura2DFeatureSet<FloatType,DoubleType> opTamura = null;
 	public LBPHistogramFeatureSet<FloatType> opLBP = null;
+	@SuppressWarnings("rawtypes")
+	public BinaryFunctionOp<RandomAccessibleInterval<FloatType>, LabelRegion<?>, TreeMap> symcoOp = null;
+
 
 	public int total = 0, count = 0;
 	public int percentage = 0;
@@ -120,6 +126,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	public TreeMap<DimensionMap, String> maskMap = new TreeMap<DimensionMap, String>();
 	public TreeMap<DimensionMap, ROIPlus> roiMap = new TreeMap<DimensionMap, ROIPlus>();
 	TreeMap<Integer, Integer> idToLabelMap = new TreeMap<Integer, Integer>();
+	DimTable filterTable = new DimTable();
 
 	FeatureUtils utils = new FeatureUtils();
 
@@ -142,7 +149,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
 	@ParameterMarker(uiOrder = 0, name = "Channel dim name", description = "Channel dimension name in mask data.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "Channel")
 	String channelName;
-	
+
 	@ParameterMarker(uiOrder = 1, name = "Channel Offsets <Val1>,<Val2>,...<Valn>", description = "Set a single offset for all channels (e.g., positive 5.0 to subtract off 5.0 before doing calculations) or a different offset for each channel. Must have 1 value for each channel comma separated (e.g., '<Val1>,<Val2>,...<Valn>').", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "0.0")
 	String channelOffsets;
 
@@ -151,38 +158,41 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
 	@ParameterMarker(uiOrder = 3, name = "'Nuclear' mask channel value (optional)", description = "(Optional) If a nuclear mask exists and it is specified, additional nuanced calculations of Zernike features are provided (see comments in code).", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
 	String maskNuclearChannelValue;
-
+	
+	@ParameterMarker(uiOrder = 4, name = "Exclusion Filter DimTable", description = "Filter specific dimension combinations from analysis. (Format: <DimName1>=<a1,a2,...>;<DimName2>=<b1,b2...>)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
+	String filterDimTableString;
+	
 	//	@ParameterMarker(uiOrder = 3, name = "Image intensity offset", description = "Amount the images are offset from zero (will be subtracted before calculation)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "0.0")
 	//	double offset;
 
-	@ParameterMarker(uiOrder = 4, name = "** Compute Stats Features?", description = "Whether to quantify first order statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
+	@ParameterMarker(uiOrder = 5, name = "** Compute Stats Features?", description = "Whether to quantify first order statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
 	boolean stats;
 
-	@ParameterMarker(uiOrder = 5, name = "** Compute 2D Geometric Features?", description = "Whether to quantify geometric statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	@ParameterMarker(uiOrder = 6, name = "** Compute 2D Geometric Features?", description = "Whether to quantify geometric statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean geometric;
 
-	@ParameterMarker(uiOrder = 6, name = "** Compute 2D Haralick Features?", description = "Whether to quantify Haralick texture statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	@ParameterMarker(uiOrder = 7, name = "** Compute 2D Haralick Features?", description = "Whether to quantify Haralick texture statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean haralick2D;
 
-	@ParameterMarker(uiOrder = 7, name = "** Compute Histogram Features?", description = "Whether to quantify histogram statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	@ParameterMarker(uiOrder = 8, name = "** Compute Histogram Features?", description = "Whether to quantify histogram statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean histogram;
 
-	@ParameterMarker(uiOrder = 8, name = "** Compute Moments Features?", description = "Whether to quantify image moment statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	@ParameterMarker(uiOrder = 9, name = "** Compute Moments Features?", description = "Whether to quantify image moment statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean moments;
 
-	@ParameterMarker(uiOrder = 9, name = "** Compute LBP Features?", description = "Whether to quantify linear binary pattern (LBP) statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	@ParameterMarker(uiOrder = 10, name = "** Compute LBP Features?", description = "Whether to quantify linear binary pattern (LBP) statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean lbp;
 
-	@ParameterMarker(uiOrder = 10, name = "** Compute Tamura Features?", description = "Whether to quantify Tamura statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	@ParameterMarker(uiOrder = 11, name = "** Compute Tamura Features?", description = "Whether to quantify Tamura statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean tamura;
 
-	@ParameterMarker(uiOrder = 11, name = "** Compute Zernike Features?", description = "Whether to quantify Zernike shape statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	@ParameterMarker(uiOrder = 12, name = "** Compute Zernike Features?", description = "Whether to quantify Zernike shape statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean zernike;
 
-	@ParameterMarker(uiOrder = 12, name = "** Connectedness Features", description = "The structuring element or number of neighbors to require to be part of the neighborhood.", ui = MarkerConstants.UI_DROPDOWN, choices = {"4 Connected", "8 Connected" }, defaultChoice = 0)
+	@ParameterMarker(uiOrder = 13, name = "** Connectedness Features", description = "The structuring element or number of neighbors to require to be part of the neighborhood.", ui = MarkerConstants.UI_DROPDOWN, choices = {"4 Connected", "8 Connected" }, defaultChoice = 0)
 	String connectedness;
 
-	// Feature set parameters	
+	// Feature set parameters
 
 	@ParameterMarker(uiOrder = 18, name = "Haralick Gray Levels", description = "Number of gray levels for Haralick calculations", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "8")
 	int haralickGrayLevels;
@@ -210,7 +220,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
 	@ParameterMarker(uiOrder = 26, name = "Zernike Avg Nuc Diameter [pixels]", description = "Typical DIAMETER of nucleus. This determines the nuclear padding ratio (fixed dia / nuc dia). Keep this consistent from dataset to dataset.", ui = MarkerConstants.UI_TEXTFIELD, defaultText="15")
 	double zernikeNucDiameter;
-	
+
 	@ParameterMarker(uiOrder = 27, name = "Save ARFF version as well?", description = "Initially, the file is written as a CSV and can be also saved as a .arff file as well. Should the .arff file be saved (it takes longer)?", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
 	boolean saveArff;
 
@@ -235,7 +245,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	public boolean run(JEXEntry optionalEntry) {
 
 		this.wrapWriter = new WriterWrapper();
-		
+
 		if(!checkInputs())
 		{
 			// Something is wrong and need to return false;
@@ -254,6 +264,8 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		Dim maskChannelDim = maskDimTable.getDimWithName(channelName);
 		int subcount = imageDimTable.getSubTable(maskDimTable_NoChannel.getMapIterator().iterator().next()).mapCount();
 		this.total = maskDimTable.mapCount() * subcount;
+		
+		this.filterTable = new DimTable(this.filterDimTableString);
 
 		// For each whole cell mask
 		for(DimensionMap mapMask_NoChannelTemp : maskDimTable_NoChannel.getMapIterator())
@@ -263,6 +275,12 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			this.mapMask_NoChannel = mapMask_NoChannelTemp;
 			DimensionMap mapMask_WholeCell = this.mapMask_NoChannel.copyAndSet(channelName + "=" + maskWholeCellChannelValue);
 
+			// Skip if we can
+			if(this.filterTable.testMapAsExclusionFilter(mapMask_WholeCell))
+			{
+				continue;
+			}
+			
 			this.setWholeCellMask(mapMask_WholeCell);
 			if(this.wholeCellMaskImage == null) { continue; }
 			if (this.isCanceled()) { this.close(); return false; }
@@ -276,6 +294,12 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			boolean firstTimeThrough = true;
 			for(DimensionMap mapMaskTemp: imageSubsetTable.getMapIterator())
 			{
+				// Skip if we can
+				if(this.filterTable.testMapAsExclusionFilter(mapMaskTemp))
+				{
+					continue;
+				}
+				
 				// Set the image
 				this.setImageToMeasure(mapMaskTemp);
 				if(this.image == null)
@@ -321,7 +345,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		this.percentage = (int) (100 * ((double) (count) / ((double) total)));
 		JEXStatics.statusBar.setProgressPercentage(percentage);
 	}
-	
+
 	public void setWholeCellMask(DimensionMap mapMask_WholeCell)
 	{
 		// Initialize structures for storing whole-cell mask information and maxima information.
@@ -358,12 +382,11 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		}
 	}
 
-	public void setMaskToMeasure(DimensionMap mapMask)
+	public void setMaskToMeasure()
 	{
 		Logs.log("Measuring mask: " + this.mapMask, this);
-		this.mapMask = mapMask;
 		this.mask = JEXReader.getSingleImage(maskMap.get(this.mapMask), null);
-		
+
 		// Apply the labels of the whole cells to the mask (e.g., multiple subregions now get the same parent label)
 		this.maskParentLabeling = utils.applyLabeling(this.wholeCellLabeling, this.mask);
 		//		Img<UnsignedShortType> img = utils.makeImgFromLabeling(this.maskParentLabeling);
@@ -423,13 +446,18 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			{
 				this.polygons.add(utils.getPolygonFromBoolean(region));
 			}
-			
+
 		}
 	}
 
 	public boolean quantifyFeatures(String maskChannelName, boolean firstTimeThrough)
 	{
-		this.setMaskToMeasure(this.mapMask_NoChannel.copyAndSet(this.channelName + "=" + maskChannelName));
+		this.mapMask = this.mapMask_NoChannel.copyAndSet(this.channelName + "=" + maskChannelName);
+		if(this.filterTable.testMapAsExclusionFilter(this.mapMask))
+		{
+			return true; // i.e., skip
+		}
+		this.setMaskToMeasure();
 		for(IdPoint p : this.maxima.getPointList())
 		{
 			// Set geometries and quantify
@@ -474,6 +502,41 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
 	}
 
+	public void putSymmetryFeatures(DimensionMap mapM_Intensity, boolean firstTimeThrough)
+	{
+		if(symcoOp == null)
+		{
+			symcoOp = Functions.binary(IJ2PluginUtility.ij().op(), DefaultSymmetryCoefficients.class, TreeMap.class, (RandomAccessibleInterval<FloatType>) this.image, this.combinedSubCellRegion, 4);
+		}
+
+		if(firstTimeThrough)
+		{
+			// Then get info relate to the mask
+			@SuppressWarnings("unchecked")
+			TreeMap<String,Double> maskSymmetryData = (TreeMap<String,Double>) symcoOp.calculate(null, this.combinedSubCellRegion);
+			for(Entry<String,Double> e : maskSymmetryData.entrySet())
+			{
+				DimensionMap newMap = mapM_Intensity.copyAndSet("Measurement=" + e.getKey());
+				newMap.put("Id", "" + this.pId);
+				newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
+				newMap.put("ImageChannel", "None"); // Overwrite mask channel
+				this.write(newMap, e.getValue());
+			}
+		}
+
+
+		// Quantify this combination of mask and image
+		@SuppressWarnings("unchecked")
+		TreeMap<String,Double> imageSymmetryData = (TreeMap<String,Double>) symcoOp.calculate(this.image, this.combinedSubCellRegion);
+		for(Entry<String,Double> e : imageSymmetryData.entrySet())
+		{
+			DimensionMap newMap = mapM_Intensity.copyAndSet("Measurement=" + e.getKey());
+			newMap.put("Id", "" + this.pId);
+			newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
+			this.write(newMap, e.getValue());
+		}
+	}
+
 	public boolean putIntensityFeatures(boolean firstTimeThrough)
 	{
 		DimensionMap mapM_Intensity = this.mapMask_NoChannel.copyAndSet("MaskChannel=" + mapMask.get(channelName));
@@ -486,6 +549,17 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
 		IterableInterval<FloatType> ii = Regions.sample(this.combinedSubCellRegion, this.image); //Views.offsetInterval(this.image, this.wholeCellRegion));
 
+
+		//      -- Symmetry -- 
+		//
+		//
+		this.putSymmetryFeatures(mapM_Intensity, firstTimeThrough);
+		if (this.isCanceled()) { this.close(); return false;}
+
+
+		//      -- Standard Stats, Haralick, Histogram, and Moments --
+		//
+		//
 		this.putStats(mapM_Intensity, ii);
 		if (this.isCanceled()) { this.close(); return false;}
 		this.putHaralick2D(mapM_Intensity, ii);
@@ -530,7 +604,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			if (this.isCanceled()) { this.close(); return false;}
 			this.putZernike(mapM_Intensity, ii, new Circle(this.nuclearInfo.get(this.pId).p2, this.nuclearInfo.get(this.pId).p1 * (this.zernikeFixedDiameter / this.zernikeNucDiameter)), "_NUCwPADDEDNUC", firstTimeThrough);
 			if (this.isCanceled()) { this.close(); return false;}
-			this.putDNZernike(mapM_Intensity, ii, new Circle(this.nuclearInfo.get(this.pId).p2, this.getEquivalentRadius(this.combinedSubCellRegion)), new Circle(this.nuclearInfo.get(pId).p2, this.getEquivalentRadius(this.combinedSubCellRegion)), firstTimeThrough);
+			this.putDNZernike(mapM_Intensity, ii, new Circle(this.nuclearInfo.get(this.pId).p2, this.nuclearInfo.get(this.pId).p1), new Circle(this.nuclearInfo.get(pId).p2, this.getEquivalentRadius(this.combinedSubCellRegion)), firstTimeThrough);
 			if (this.isCanceled()) { this.close(); return false;}
 		}
 
@@ -619,7 +693,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		List<LabelRegion<Integer>> subRegions = this.getSubRegions(region, mask);
 		return subRegions.get(0);
 	}
-	
+
 	/**
 	 * Get a list of LabelRegions for a given mask within the pixels defined by the provided LabelRegion object
 	 * @param region LabelRegion<Integer> within which to analyze the given mask to convert the mask to LabelRegions.
@@ -638,7 +712,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		Collections.sort(ret, new SizeComparator(true));
 		return ret;
 	}
-	
+
 	/**
 	 * Returns region1.size() - region2.size() so > 0 if region1 is bigger than region2
 	 * @author jaywarrick
@@ -647,12 +721,12 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	class SizeComparator implements Comparator<LabelRegion<?>>
 	{
 		boolean reverse = false;
-		
+
 		public SizeComparator(boolean reverse)
 		{
 			this.reverse = reverse;
 		}
-		
+
 		@Override
 		public int compare(LabelRegion<?> region1, LabelRegion<?> region2)
 		{
@@ -663,7 +737,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			if(reverse) return -1*ret;
 			return ret;
 		}
-		
+
 	}
 
 	// @SuppressWarnings("unchecked")
@@ -708,7 +782,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			if (opGeometric == null) {
 				opGeometric = IJ2PluginUtility.ij().op().op(Geometric2DFeatureSet.class, this.polygons.get(0));
 			}
-			
+
 			int i = 1;
 			for(Polygon p : polygons)
 			{
@@ -734,35 +808,35 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 				newMap.put("Id", "" + this.pId);
 				newMap.put("Label", "" + idToLabelMap.get(this.pId));
 				this.write(newMap, (double) this.individualSubCellRegions.get(i-1).size());
-				
+
 				RealPoint wholeCellRelativeCenterOfMass = this.getWholeCellRelativeCenterOfMass();
 				RealLocalizable subCellRegionCenterOfMass = this.individualSubCellRegions.get(i-1).getCenterOfMass();
 				RealPoint subCellRelativeCenterOfMass = this.getOffsetPoint(subCellRegionCenterOfMass, wholeCellRelativeCenterOfMass);
-				
+
 				newMap = mapM_Geometry
 						.copyAndSet("Measurement=" + "net.imagej.ops.Ops$Geometric$X");
 				newMap.put("Id", "" + this.pId);
 				newMap.put("Label", "" + idToLabelMap.get(this.pId));
 				this.write(newMap, (double) subCellRelativeCenterOfMass.getDoublePosition(0));
-				
+
 				newMap = mapM_Geometry
 						.copyAndSet("Measurement=" + "net.imagej.ops.Ops$Geometric$Y");
 				newMap.put("Id", "" + this.pId);
 				newMap.put("Label", "" + idToLabelMap.get(this.pId));
 				this.write(newMap, (double) subCellRelativeCenterOfMass.getDoublePosition(1));
-				
+
 				i = i + 1;
 			}
 		}
 	}
-	
+
 	private RealPoint getWholeCellRelativeCenterOfMass()
 	{
 		RealPoint wholeCellOffset = new RealPoint(new double[]{0.0, 0.0});
 		this.wholeCellRegion.realMin(wholeCellOffset);
 		return this.getOffsetPoint(this.wholeCellRegion.getCenterOfMass(), wholeCellOffset);
 	}
-	
+
 	private RealPoint getOffsetPoint(RealLocalizable p1, RealPoint offset)
 	{
 		if(p1.numDimensions() != offset.numDimensions())
@@ -884,8 +958,8 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			if (opHistogram == null) {
 				opHistogram = IJ2PluginUtility.ij().op().op(HistogramFeatureSet.class, vals, histogramBins);
 			}
-			Map<NamedFeature, LongType> ret = opHistogram.calculate(vals);
-			for (Entry<NamedFeature, LongType> result : ret.entrySet()) {
+			Map<NamedFeature, DoubleType> ret = opHistogram.calculate(vals);
+			for (Entry<NamedFeature, DoubleType> result : ret.entrySet()) {
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
 				newMap.put("Id", "" + this.pId);
 				newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
@@ -972,7 +1046,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		if(zernike && this.nucExists)
 		{
 			if (this.opDNZernike == null) {
-				opDNZernike = IJ2PluginUtility.ij().op().op(DoubleNormalizedZernikeFeatureSet.class, vals, null, zernikeMomentMin, zernikeMomentMax, innerCircle, outerCircleAtEquivalentRadius, 0.3);
+				opDNZernike = IJ2PluginUtility.ij().op().op(DoubleNormalizedZernikeFeatureSet.class, vals, null, zernikeMomentMin, zernikeMomentMax, innerCircle, outerCircleAtEquivalentRadius, 1.0/3.0);
 			}
 
 			Circle outerCircle = new Circle(outerCircleAtEquivalentRadius.getCenter(), 1.5*outerCircleAtEquivalentRadius.getRadius());

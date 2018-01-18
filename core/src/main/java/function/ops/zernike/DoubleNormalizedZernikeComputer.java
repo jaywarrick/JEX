@@ -66,8 +66,8 @@ AbstractUnaryFunctionOp<IterableInterval<T>, ZernikeMoment>
 	@Parameter(label = "The outer circle. Between the inner and outer circle radius will be normalized between the inner circle perimeter value and 1")
 	private Circle outerCircle;
 	
-	@Parameter(required = false, label = "The value of a normalized radius at the perimeter of the inner circle.")
-	private double intermediateNormalizedValue = 0.5;
+	@Parameter(required = false, label = "The desired ratio of the inner circle radius to outer circle radius upon normalization")
+	private double innerRadiusToOuterRadiusRatio = 1.0/3.0;
 
 	private double x1, y1, c;
 	
@@ -113,8 +113,19 @@ AbstractUnaryFunctionOp<IterableInterval<T>, ZernikeMoment>
 
 		// count number of pixel inside the unit circle
 		int count = 0;
+		
+		// To produces expected results, we will treat the outer circle provided as the true
+		// outer circle where the norm radius will be 1. Thus, when we typically use the 
+		// equivalent radius of the whole cell, we should actually pass an outercircle with
+		// a radius slightly larger (e.g., 1.5X) the radius of the whole cell so that the cell
+		// does not extend past the bounds of the unit circle (that often). Thus, more typically,
+		// The norm radius at the boundary of the cell will be about 2/3 (1/1.5). So, we set
+		// the inner radius norm value to be ~1/3 (half the expected radius of the whole cell.
+		double outer = 1;
+		
+		double inner = outer*this.innerRadiusToOuterRadiusRatio;
 
-		// run over itarble interval
+		// run over iterable interval
 		while (cur.hasNext()) {
 			cur.fwd();
 
@@ -125,14 +136,17 @@ AbstractUnaryFunctionOp<IterableInterval<T>, ZernikeMoment>
 			double normRad = -1;
 			if(radii[0] <= r1)
 			{
-				normRad = (1.0/this.intermediateNormalizedValue)*(radii[0]/r1);
+				// then we are within the inner circle
+				normRad = (inner)*(radii[0]/r1);
 			}
-			else if(radii[0] <= 1.5*radii[1])
+			else if(radii[0] <= radii[1])
 			{
-				normRad = (1-(1.0/this.intermediateNormalizedValue))*((radii[0]-r1)/(radii[1]-r1)) + (1.0/this.intermediateNormalizedValue);
+				// we are outside the inner and within the bounds of the outer circle
+				normRad = (outer-inner)*((radii[0]-r1)/(radii[1]-r1)) + (inner);
 			}
 			else
 			{
+				// we are outside the bounds of the outer circle
 				// Skip the pixel and exclude it from the calculation
 				continue;
 			}
@@ -145,7 +159,7 @@ AbstractUnaryFunctionOp<IterableInterval<T>, ZernikeMoment>
 				count++;
 
 				// calculate the desired moment
-				// evaluate radial polynom at position r
+				// evaluate radial polynom at the normalized radial position normRad
 				final double rad = moment.getP().evaluate(normRad);
 
 				// p * rad * exp(-1i * m * theta);
@@ -334,6 +348,7 @@ AbstractUnaryFunctionOp<IterableInterval<T>, ZernikeMoment>
 		double R = 0;
 		if(r > this.innerCircle.getRadius())
 		{
+			// Then calculate the distance to the outer circle, R, from the center of the inner circle as we'll need it later
 			final double b = -2*Math.cos(theta)*this.x1 -2*Math.sin(theta)*this.y1;
 			// Calculate quandratic formula
 			if(b*b > 4*this.c)
@@ -344,7 +359,15 @@ AbstractUnaryFunctionOp<IterableInterval<T>, ZernikeMoment>
 			{
 				R = (-1*b - Math.sqrt(b*b-4.0*this.c))/(2.0);
 			}
+			
+			// In case the inner circle extends past the outer circle in some spots
+			// use the max of the two radii to define the outer radius of the outer circle.
+			// Any points outside R then will be ignored, and in the case where the
+			// inner extends past the outer, points outside the inner will be ignored
+			// as well.
+			R = Math.max(this.innerCircle.getRadius(), R);
 		}
+		// Otherwise, R is never needed subsequently so no need to calculate/change (see calculate)
 		
 		// Return results
 		final double[] ret = new double[3];

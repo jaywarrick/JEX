@@ -1,35 +1,48 @@
 package function.plugin.plugins.test;
 
+import java.awt.geom.Ellipse2D;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Vector;
 
+import function.algorithm.neighborhood.EdgeCursor;
+import function.algorithm.neighborhood.Indexer;
+import function.algorithm.neighborhood.PositionableRunningNeighborhood;
+import function.algorithm.neighborhood.SnakingCursor;
 import function.ops.geometry.DefaultSmallestEnclosingCircle;
+import function.ops.histogram.PolynomialRegression;
 import function.ops.zernike.ZernikeComputer;
 import function.plugin.IJ2.IJ2PluginUtility;
 import function.plugin.plugins.featureExtraction.FeatureUtils;
 import ij.ImagePlus;
+import ij.process.FloatProcessor;
+import ij.process.ImageStatistics;
 import image.roi.PointList;
 import image.roi.PointSample;
 import image.roi.PointSampler;
 import image.roi.PointSamplerII;
 import image.roi.PointSamplerList;
+import jex.utilities.ImageUtility;
+import logs.Logs;
 import miscellaneous.DirectoryManager;
 import miscellaneous.FileUtility;
+import miscellaneous.Pair;
 import net.imagej.ops.Ops;
 import net.imagej.ops.features.zernike.helper.ZernikeMoment;
 import net.imagej.ops.geom.geom2d.Circle;
 import net.imagej.ops.special.function.Functions;
 import net.imagej.ops.special.function.UnaryFunctionOp;
 import net.imglib2.Cursor;
+import net.imglib2.FinalInterval;
 import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealCursor;
 import net.imglib2.RealLocalizable;
 import net.imglib2.img.Img;
+import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.roi.geometric.PointCollection;
 import net.imglib2.roi.geometric.Polygon;
@@ -41,13 +54,242 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.IntType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.real.DoubleType;
+import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.ValuePair;
 import rtools.R;
 
 public class TestStuff {
+	
+	public static FeatureUtils utils = new FeatureUtils();
+	
+	static
+	{
+		//DirectoryManager.setHostDirectory("/Users/jaywarrick/Downloads");
+		DirectoryManager.setHostDirectory("C:/Users/User/Downloads");
+	}
 
 	public static void main (String[] args) throws Exception
 	{
-		tryLabelSubLabelRegion();
+		tryTroubleImageModeFinding2();
+	}	
+	
+	public static void tryTroubleImageModeFinding2()
+	{
+		ImagePlus im = new ImagePlus("C:/Users/User/Desktop/TroubleImage1.tif");
+		ImageUtility.getImageVarianceWeights(im.getProcessor(), 2, true, true, 2);
+		System.out.println("Yo");
+	}
+	
+	public static void tryTroubleImageModeFinding()
+	{
+		ImagePlus im = new ImagePlus("C:/Users/User/Desktop/TroubleImage1.tif");
+		Pair<FloatProcessor[],FloatProcessor> test = ImageUtility.getImageVarianceWeights(im.getProcessor(), 2, true, true, 2);
+		FloatProcessor weights = test.p2;
+		ImageStatistics stats = weights.getStatistics();
+		double min = stats.min;
+		double max = stats.median;
+		min = min + (max-min)/100.0;
+		int nBins = ImageUtility.getReasonableNumberOfBinsForHistogram(weights.getWidth()*weights.getHeight()/2, 10, 250);
+		Pair<double[], int[]> ret = ImageUtility.getHistogram(weights, min, max, nBins, false);
+		double[] values = ret.p1;
+		int[] counts = ret.p2;
+		ImageUtility.getHistogramPlot(values, counts, true, 65.0);
+		
+		int window = (int) Math.max(5, Math.round(0.05*nBins));
+		
+		double minDiff = Double.MAX_VALUE;
+		double diff = 0.0;
+		for(int left = 0; left < values.length - window + 1; left++)
+		{
+			int right = left + window - 1;
+			double[] valuesSubset = ImageUtility.getRange(values, left, right);
+			int[] countsSubset = ImageUtility.getRange(counts, left, right);
+			PolynomialRegression p = new PolynomialRegression(valuesSubset, countsSubset, 2);
+			Double vertex = getVertex(p);
+			diff = Math.abs(vertex - values[(right + left)/2]);
+			Logs.log(values[(left + right)/2] + " - " + vertex + " - " + diff , TestStuff.class);
+			if(p.beta(2) < 1)
+			{
+				if(diff > minDiff)
+				{
+					Logs.log("I think I found it at " + vertex, TestStuff.class);
+				}
+				else
+				{
+					minDiff = diff;
+				}
+			}
+		}
+	}
+	
+	private static Double getVertex(PolynomialRegression p)
+	{
+		if(p.degree() == 2)
+		{
+			return -1*p.beta(1)/(2.0*p.beta(2));
+		}
+		else
+		{
+			return null;
+		}
+	}
+	
+	public static void tryModeFitting()
+	{
+		ImagePlus im = new ImagePlus("C:/Users/User/Desktop/TestVarianceImage3.tif");
+		ImageStatistics stats = im.getProcessor().getStatistics();
+		Pair<double[], int[]> ret = ImageUtility.getHistogram(im.getProcessor(), stats.min, stats.median, -1, false);
+		
+		
+		double[] values = ret.p1;
+		int[] counts = ret.p2;
+		int i = ImageUtility.getHistogramModeIndex(counts);
+		int left = i;
+		while(left > 0 && counts[left] > 0.9 * counts[i])
+		{
+			left = left - 1;
+		}
+		int right = i;
+		while(right < counts.length-1 && counts[right] > 0.9 * counts[i])
+		{
+			right = right + 1;
+		}
+		
+		double[] valuesSubset = ImageUtility.getRange(values, left, right);
+		int[] countsSubset = ImageUtility.getRange(counts, left, right);
+		PolynomialRegression p = new PolynomialRegression(valuesSubset, countsSubset, 2);
+		Logs.log("Degree = " + p.degree(), TestStuff.class);
+		double mode = values[i];
+		if(p.degree() == 2)
+		{
+			mode = -1*p.beta(1)/(2.0*p.beta(2));
+		}
+		for(int j = 0; j < p.degree() + 1; j++)
+		{
+			Logs.log(j + "th Regression Coefficient = " + p.beta(j), TestStuff.class);
+		}
+		
+		ImageUtility.getHistogramPlot(values, counts, true, values[i], mode);
+	}
+	
+	public static void tryHistogram()
+	{
+		ImagePlus im = new ImagePlus("C:/Users/User/Desktop/TestConfluentBFImage.tif");
+		Pair<double[], int[]> ret = ImageUtility.getHistogram(im.getProcessor(), 10000, 25535, 50, true);
+		for(int i = 0; i < ret.p1.length; i ++)
+		{
+			System.out.println(ret.p1[i] + " - " + ret.p2[i]);
+		}
+	}
+	
+	public static void tryGettingVarianceWeightImage()
+	{
+		ImagePlus im = new ImagePlus("C:/Users/User/Desktop/TestConfluentBFImage.tif");
+		Pair<FloatProcessor[],FloatProcessor> ret1 = ImageUtility.getImageVarianceWeights(im.getProcessor(), 2.0, false, true, 2.0);
+		FileUtility.showImg(ret1.p1[0], true);
+	}
+	
+	public static void tryGettingMode()
+	{
+		ImagePlus im = new ImagePlus("C:/Users/User/Desktop/TestVarianceImage.tif");
+		FileUtility.showImg(im, true);
+		FloatProcessor fp = (FloatProcessor) im.getProcessor();
+		fp.resetMinAndMax();
+		double min = fp.getMin();
+		double max = fp.getMax();
+		
+		// Calculate
+		Pair<double[], int[]> hist = ImageUtility.getHistogram(fp, min, max, -1, false);
+		int i = ImageUtility.getHistogramModeIndex(hist.p2);
+		ImageUtility.getHistogramPlot(hist.p1, hist.p2, true, hist.p1[0], hist.p1[i], hist.p1[i] + (hist.p1[i]-hist.p1[0]));
+		Logs.log(hist.p1[0] + " - " + hist.p1[i], TestStuff.class);
+	}
+	
+	public static void tryStringSplitting()
+	{
+		String s = ".";
+		String regS = "\\" + s;
+		String toSplit = ".This is . a fine.row. to Hoe.";
+		String[] ret = toSplit.split(regS);
+		int i = 0;
+		for(String ss : ret)
+		{
+			System.out.println("_" + ss + "-" + i);
+			i = i + 1;
+		}
+		System.out.println(toSplit);
+		System.out.println(toSplit.replace("Hello", "There"));
+		System.out.println("Rep.001".replace("00", ""));
+	}
+	
+	public static void tryMakingSpeckledImg()
+	{
+		Img<UnsignedByteType> img = utils.makeImageFromInterval(new FinalInterval(100, 100), new UnsignedByteType(0));
+		utils.addRandomSpeckles(img, 1000, new UnsignedByteType(255));
+		utils.show(img, false);
+	}
+	
+	public static void trySnakingIndexer()
+	{
+		long[] dims = new long[]{10,10};
+		Indexer snake = new Indexer(dims, true);
+		while(snake.hasNext())
+		{
+			snake.indexPos();
+			long[] cur = snake.getCurrent();
+			System.out.println("X:" + cur[0] + " Y:" + cur[1]);
+		}
+	}
+	
+	public static void tryRunningNeighborhood()
+	{
+		FeatureUtils utils = new FeatureUtils();
+		IJ2PluginUtility.ij().op();
+//		ImagePlus im = new ImagePlus("/Users/jaywarrick/Downloads/Image of 1's.tif");
+		ImagePlus im = new ImagePlus("/Users/jaywarrick/Documents/Miyamoto/Grants/Submitted/2017 R01 - MM TME/Figures/SymmetryTests/Nuclei-01.tif");
+		Img<UnsignedByteType> img = ImageJFunctions.wrapByte(im);
+		PositionableRunningNeighborhood<UnsignedByteType> p = new PositionableRunningNeighborhood<>(new Ellipse2D.Double(0,0,41,11), img, PositionableRunningNeighborhood.BORDER);
+		Cursor<UnsignedByteType> c = new SnakingCursor<UnsignedByteType>(img);
+		ArrayImgFactory<FloatType> f = new ArrayImgFactory<>();
+		long[] dims = new long[img.numDimensions()];
+		img.dimensions(dims);
+		Img<FloatType> img2 = f.create(dims, new FloatType(0));
+		RandomAccess<FloatType> ra2 = img2.randomAccess();
+		float sum = 0;
+		while(c.hasNext())
+		{
+			c.fwd();
+			p.setPosition(c);
+			ValuePair<EdgeCursor<UnsignedByteType>, EdgeCursor<UnsignedByteType>> edges = p.getEdgeCursors();
+			if(edges == null)
+			{
+				sum = 0;
+				while(p.hasNext())
+				{
+					p.fwd();
+					sum = sum + p.get().getRealFloat();
+				}
+			}
+			else
+			{
+				// Add new values
+				while(edges.a.hasNext())
+				{
+					edges.a.fwd();
+					sum = sum + edges.a.get().getRealFloat();
+				}
+				// Subtract old values
+				while(edges.b.hasNext())
+				{
+					edges.b.fwd();
+					sum = sum - edges.b.get().getRealFloat();
+				}
+			}
+			ra2.setPosition(c);
+			ra2.get().set(sum);
+		}
+		utils.show(img, true);
+		utils.show(img2, true);
 	}
 	
 	public static void tryLabelSubLabelRegion()

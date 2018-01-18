@@ -2,11 +2,13 @@ package tables;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 
 import miscellaneous.Copiable;
 import miscellaneous.SSVList;
+import miscellaneous.StringUtility;
 import weka.core.Attribute;
 
 /**
@@ -45,12 +47,14 @@ public class DimTable extends ArrayList<Dim> implements Copiable<DimTable> {
 	/**
 	 * Class constructor 
 	 * Load from a SSV-CSV string
+	 * Smart enough to remove whitespace on ends etc.
 	 * 
 	 * @param csvString a concatenation of csvStrings separated by semicolon
 	 */
 	public DimTable(String csvString)
 	{
 		this();
+		csvString = StringUtility.removeWhiteSpaceOnEnds(csvString);
 		if(csvString != null && !csvString.equals(""))
 		{
 			// get a list of csvStrings 
@@ -59,6 +63,7 @@ public class DimTable extends ArrayList<Dim> implements Copiable<DimTable> {
 			for (String dimStr : ssvDim)
 			{
 				// convert each csvString to a Dim including dimName at pos 0, dimValues at pos 1 to ...
+				// Dim is smart enough to remove whitespace on ends
 				Dim dim = new Dim(dimStr);
 				this.add(dim);
 			}
@@ -278,7 +283,7 @@ public class DimTable extends ArrayList<Dim> implements Copiable<DimTable> {
 
 		
 		// if filter does not match this DimTable then return whole DimTable
-		if(!this.hasDimensionMap(filter)) 
+		if(!this.testUnderdefinedMap(filter)) 
 			return this.copy(); 
 		
 		DimTable ret = new DimTable();
@@ -422,16 +427,63 @@ public class DimTable extends ArrayList<Dim> implements Copiable<DimTable> {
 	}
 	
 	/**
-	 * returned true if the given DimensionMap matches DimTable
+	 * This test is used for exclusion filters. For example
+	 * 
+	 * If there were a dataset that had values for Channel=A,B,C and Time=0,1,2
+	 * AND this DimTable = Channel=C; Time=2
+	 * THEN all testMaps that have Channel=C || Time=2 will test TRUE (i.e., should be excluded using this DimTable as an exclusion filter).
+	 * 
+	 * More formally, this returns whether or not ALL of the Dim objects of the Dim table have DimName-DimValue pairs in the provided DimensionMap.
+	 * 
+	 * see also 'testOverdefinedMap(testMap)' which tests if there is a mapDT in this DimTable where testMap.comparTo(mapDT) == 0.
+	 * see also 'testUnderdefinedMap(testMap)' which tests if there is a mapDT in this DimTable where mapDT.comparTo(testMap) == 0.
 	 * 
 	 * @param map DimensionMap
-	 * @return true if the given DimensionMap matches DimTable
+	 * @return whether or not this map should be excluded when using this DimTable as an exclusion filter (i.e., any map dim-value pair in the testMap is represented in the dimTable at all)
 	 */
-	public boolean hasDimensionMap(DimensionMap map)
+	public boolean testMapAsExclusionFilter(DimensionMap map)
+	{
+		if(this.size() == 0)
+		{
+			return false;
+		}
+		for(Entry<String,String> e : map.entrySet())
+		{
+			Dim d = this.getDimWithName(e.getKey());
+			if(d == null)
+			{
+				continue;
+			}
+			
+			if(d.containsValue(e.getValue()))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * DimensionMap (map) testing is not reversible. In other words map1.compareTo(map2) does not always
+	 * equals map2.compareTo(map1). In a test of A.compareTo(B), A can be overdefined relative to B and return 0.
+	 * Thus, if B is underdefined, B.compareTo(A) != 0.
+	 * 
+	 * Here, we essentially test whether or not any map of the DimTable (mapDT) satisfies mapDT.compareTo(testMap) == 0.
+	 * If testMap is UNDERdefined (or table is OVERdefined), it can still return true as 'matching' this DimTable.
+	 * testUnderfinedMap == testOverdefinedMap if the dimensions of the testMap and DimTable match perfectly.
+	 * 
+	 * see also 'testOverdefinedMap(testMap)' which tests if there is a mapDT where testMap.comparTo(mapDT) == 0.
+	 * see also 'testMapAsExclusionFilter(testMap)' which tests if any of the Dim objects of the Dim table have DimName-DimValue pairs in the provided DimensionMap
+	 * 
+	 *  
+	 * @param testMap DimensionMap
+	 * @return whether or not any map of the DimTable (mapDT), mapDT.compareTo(testMap) == 0.
+	 */
+	public boolean testUnderdefinedMap(DimensionMap testMap)
 	{
 		// WE DO THINGS THIS WAY SO WE DONT HAVE TO SEARCH FOR THE DIM WITH THE MATCHING NAME OF THE DIMENSIONMAP KEY OVER AND OVER
 		// INSTEAD LOOP THROUGH THE DIMS ONLY ONCE AND KEEP TRACK OF THE NUMBER OF MATCHES RETURNING FALSE WHERE THE DIM DOESNT HAVE THE CORRESPONDING DIMENSIONMAP VALUE
-		Set<String> mapKeys = map.keySet();
+		Set<String> mapKeys = testMap.keySet();
 		int n = mapKeys.size(); // DimensionMap size
 		int count = 0;
 		for (Dim d : this)
@@ -440,7 +492,7 @@ public class DimTable extends ArrayList<Dim> implements Copiable<DimTable> {
 			if(mapKeys.contains(d.dimName))
 			{
 				// check if DimValue of DimensionMap is in the DimTable
-				if(d.containsValue(map.get(d.dimName)))
+				if(d.containsValue(testMap.get(d.dimName)))
 				{
 					count = count + 1;
 				}
@@ -453,6 +505,46 @@ public class DimTable extends ArrayList<Dim> implements Copiable<DimTable> {
 		
 		// DimensionMap can be partial DimTable
 		return count == n; // I.E. WE FOUND A DIM THAT CONTAINS THE DIMENSIONMAP VALUE FOR EACH VALUE IN THE DIMENSION MAP
+	}
+	
+	/**
+	 * DimensionMap (map) testing is not reversible. In other words map1.compareTo(map2) does not always
+	 * equals map2.compareTo(map1). In a test of A.compareTo(B), A can be overdefined relative to B and return 0.
+	 * Thus, if B is underdefined, B.compareTo(A) != 0.
+	 * 
+	 * Here, we essentially test whether or not any map of the DimTable (mapDT) satisfies testMap.comparTo(mapDT) == 0.
+	 * Thus, if testMap is OVERdefined (or table is UNDERdefined), it can still return true as 'matching' this DimTable.
+	 * testUnderfinedMap == testOverdefinedMap if the dimensions of the testMap and DimTable match perfectly.
+	 * 
+	 * see also 'testUnderdefinedMap(testMap)' which tests if there is a mapDT where mapDT.compareTo(testMap) == 0.
+	 * see also 'testMapAsExclusionFilter(testMap)' which tests if any of the Dim objects of the Dim table have DimName-DimValue pairs in the provided DimensionMap
+	 * 
+	 * @param testMap DimensionMap
+	 * @return whether or not there is a mapDT where testMap.comparTo(mapDT) == 0.
+	 */
+	public boolean testOverdefinedMap(DimensionMap testMap)
+	{
+		Set<String> mapKeys = testMap.keySet();
+		int count = 0;
+		for (Dim d : this)
+		{
+			// check if DimName in the DimTable is in the DimensionMap
+			if(mapKeys.contains(d.dimName))
+			{
+				// check if DimValue of DimensionMap is in the DimTable
+				if(d.containsValue(testMap.get(d.dimName)))
+				{
+					count = count + 1;
+				}
+				else
+				{
+					return false;
+				}
+			} // OTHERWISE SKIP
+		}
+		
+		// DimensionMap can be partial DimTable
+		return count == this.size(); // I.E. WE FOUND A DIM THAT CONTAINS THE DIMENSIONMAP VALUE FOR EACH VALUE IN THE DIMENSION MAP
 	}
 	
 	///////////////////////////////////////////////////// Methods ///////////////////////////////////////////////////////////

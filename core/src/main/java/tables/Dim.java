@@ -82,14 +82,38 @@ public class Dim implements Copiable<Dim> {
 	/**
 	 * Class constructor specifying csvString
 	 * 
+	 * Either of two formats is ok.
+	 * Format1 <DimName>,<V1>,<V2>,...
+	 * Format2 <DimName>=<V1>,<V2>,...
+	 * 
 	 * @param csvString
 	 */
 	public Dim(String csvString)
 	{
-		CSVList csv = new CSVList(csvString);
-		this.dimName = csv.get(0);
-		this.dimValues = new Vector<String>();
-		this.dimValues.addAll(csv.subList(1, csv.size()));
+		csvString = StringUtility.removeWhiteSpaceOnEnds(csvString);
+		
+		if(csvString.contains("="))
+		{
+			String[] split = csvString.split("=");
+			this.dimName = StringUtility.removeWhiteSpaceOnEnds(split[0]);
+			CSVList csv = new CSVList(StringUtility.removeWhiteSpaceOnEnds(split[1]));
+			this.dimValues = new Vector<String>();
+			for(String s : csv)
+			{
+				this.dimValues.add(StringUtility.removeWhiteSpaceOnEnds(s));
+			}
+		}
+		else
+		{
+			CSVList csv = new CSVList(csvString);
+			for(int i = 0; i < csv.size(); i++)
+			{
+				csv.set(i, StringUtility.removeWhiteSpaceOnEnds(csv.get(i)));
+			}
+			this.dimName = StringUtility.removeWhiteSpaceOnEnds(csv.get(0));
+			this.dimValues = new Vector<String>();
+			this.dimValues.addAll(csv.subList(1, csv.size()));
+		}
 		this.updateDimValueSet();
 	}
 	

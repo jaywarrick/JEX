@@ -1,4 +1,4 @@
-package function.plugin.plugins.Import;
+package function.plugin.plugins.FileIO;
 
 import java.io.File;
 import java.util.List;
@@ -24,7 +24,7 @@ import tables.DimensionMap;
 @Plugin(
 		type = JEXPlugin.class,
 		name="Import Images From File Object (SCIFIO)",
-		menuPath="Import",
+		menuPath="File IO",
 		visible=true,
 		description="Import images of (nearly) any format and (nearly) any dimensionality"
 				+ "(e.g. one or many ND2 files or tif stacks)."
@@ -40,28 +40,28 @@ public class ImportImagesFromFileObject_SCIFIO extends JEXPlugin {
 
 	/////////// Define Parameters ///////////
 	
-	@ParameterMarker(uiOrder=-1, name="Name-Value Pair Separator", description="Charactor that separates dimension name-value pairs in the image name (e.g., '_' in X.002_Y.003.tif). Use blank (i.e., no character) to avoid parsing anything whatsoever.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
+	@ParameterMarker(uiOrder=1, name="Name-Value Pair Separator", description="Charactor that separates dimension name-value pairs in the image name (e.g., '_' in X.002_Y.003.tif). Use blank (i.e., no character) to avoid parsing anything whatsoever.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
 	String dimSeparator;
 	
-	@ParameterMarker(uiOrder=0, name="Name-Value Separator", description="Charactor that separates the name and value of the name-value pair in the image name (e.g., '.' in X.002_Y.003.tif). Use blank (i.e., no character) to split on first numeric character.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
+	@ParameterMarker(uiOrder=2, name="Name-Value Separator", description="Charactor that separates the name and value of the name-value pair in the image name (e.g., '.' in X.002_Y.003.tif). Use blank (i.e., no character) to split on first numeric character.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
 	String valueSeparator;
 
-	@ParameterMarker(uiOrder=1, name="Montage Rows", description="If this image is a montage and is to be split, how many rows are in the image.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
+	@ParameterMarker(uiOrder=3, name="Montage Rows", description="If this image is a montage and is to be split, how many rows are in the image.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
 	int imRows;
 
-	@ParameterMarker(uiOrder=2, name="Montage Cols", description="If this image is a montage and is to be split, how many cols are in the image.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
+	@ParameterMarker(uiOrder=4, name="Montage Cols", description="If this image is a montage and is to be split, how many cols are in the image.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
 	int imCols;
 
-	@ParameterMarker(uiOrder=3, name="Binning", description="Amount to bin the pixels to reduce image size. Value of 1 skips binning. Partial values converted to scale operation (e.g., bin=3.5 is converted to scale=1/3.5)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
+	@ParameterMarker(uiOrder=5, name="Binning", description="Amount to bin the pixels to reduce image size. Value of 1 skips binning. Partial values converted to scale operation (e.g., bin=3.5 is converted to scale=1/3.5)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
 	double binning;
 
-	@ParameterMarker(uiOrder=4, name="Binning Method", description="Method for binning the image.", ui=MarkerConstants.UI_DROPDOWN, choices={"NONE", "NEAREST NEIGHBOR", "BILINEAR", "BICUBIC"}, defaultChoice = 2)
+	@ParameterMarker(uiOrder=6, name="Binning Method", description="Method for binning the image.", ui=MarkerConstants.UI_DROPDOWN, choices={"NONE", "NEAREST NEIGHBOR", "BILINEAR", "BICUBIC"}, defaultChoice = 2)
 	String binMethod;
 
-	@ParameterMarker(uiOrder=5, name="Gather channel names (and other metadata)?", description="Transfer the name of each channel (e.g. DAPI, FITC, etc) if available in the metadata of the image. Otherwise, channels are named by index in the order they were provided by the image. Text from the entire metadata is saved as a file.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	@ParameterMarker(uiOrder=7, name="Gather channel names (and other metadata)?", description="Transfer the name of each channel (e.g. DAPI, FITC, etc) if available in the metadata of the image. Otherwise, channels are named by index in the order they were provided by the image. Text from the entire metadata is saved as a file.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
 	boolean transferNames;
 	
-	@ParameterMarker(uiOrder=6, name="Dimension to separate (optional)", description="Optionally name a dimension of the image set to separate into different image objects.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
+	@ParameterMarker(uiOrder=8, name="Dimension to separate (optional)", description="Optionally name a dimension of the image set to separate into different image objects.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
 	String dimensionToSplit;
 
 

@@ -1,4 +1,4 @@
-package function.plugin.plugins.Import;
+package function.plugin.plugins.FileIO;
 
 import java.awt.Rectangle;
 import java.io.File;
@@ -52,7 +52,7 @@ import tables.DimensionMap;
 @Plugin(
 		type = JEXPlugin.class,
 		name="Import Images (SCIFIO)",
-		menuPath="Import",
+		menuPath="File IO",
 		visible=true,
 		description="Import images of (nearly) any format and (nearly) any dimensionality"
 				+ "(e.g. one (or many) ND2 files or tif stacks)"

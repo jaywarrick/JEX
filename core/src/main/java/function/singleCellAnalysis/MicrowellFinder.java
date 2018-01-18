@@ -1,7 +1,7 @@
 package function.singleCellAnalysis;
 
 import function.imageUtility.MaximumFinder;
-import function.plugin.old.JEX_Filters;
+import function.plugin.old.JEX_ImageFilters;
 import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.io.FileSaver;
@@ -122,7 +122,7 @@ public class MicrowellFinder implements Comparator<IdPoint> {
 		{
 			// Filter the image using the given radius
 			RankFilters rF = new RankFilters();
-			rF.setup(JEX_Filters.MEAN, new ImagePlus("filtered", imp));
+			rF.setup(JEX_ImageFilters.MEAN, new ImagePlus("filtered", imp));
 			rF.makeKernel(radius);
 			rF.run(imp);
 		}

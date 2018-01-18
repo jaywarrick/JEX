@@ -24,7 +24,7 @@ import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.MarkerConstants;
 import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
-import function.plugin.plugins.Import.ImportImages_SCIFIO;
+import function.plugin.plugins.FileIO.ImportImages_SCIFIO;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions

@@ -552,7 +552,7 @@ public class JEXDataPanel implements ActionListener {
 			}
 			
 			// create a form for getting info on the new object
-			String newObjectName = JEXStatics.jexDBManager.getUniqueObjectName(selectedEntries, selectedTN.getType(), selectedTN.getName());
+			String newObjectName = selectedTN.getName(); //JEXStatics.jexDBManager.getUniqueObjectName(selectedEntries, selectedTN.getType(), selectedTN.getName());
 			JEXData data = JEXStatics.jexManager.getExampleOfDataWithTypeNameInEntries(selectedTN, selectedEntries);
 			if(data == null)
 			{

@@ -124,6 +124,10 @@ public class StatsFeatureSet<T, O extends RealType<O>> extends AbstractOpRefFeat
 	@Parameter(required = false, label = "GeometricMean", attrs = { @Attr(name = ATTR_FEATURE),
 			@Attr(name = ATTR_TYPE, value = PKG + "GeometricMean") })
 	private boolean isGeometricMeanActive = true;
+	
+	@Parameter(required = false, label = "RadiusOfGyration", attrs = { @Attr(name = ATTR_FEATURE),
+			@Attr(name = ATTR_TYPE, value = "function.ops.JEXOps$RadiusOfGyration") })
+	private boolean isRadiusOfGyrationActive = true;
 
 	public StatsFeatureSet() {
 		// NB: Empty cofstruction

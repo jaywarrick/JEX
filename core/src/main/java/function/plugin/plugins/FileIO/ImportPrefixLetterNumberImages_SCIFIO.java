@@ -1,4 +1,4 @@
-package function.plugin.plugins.Import;
+package function.plugin.plugins.FileIO;
 
 import java.io.File;
 import java.util.List;
@@ -23,7 +23,7 @@ import miscellaneous.SimpleFileFilter;
 @Plugin(
 		type = JEXPlugin.class,
 		name="Import <Prefix><LetterRow><NumberCol>.<ext> (SCIFIO)",
-		menuPath="Import",
+		menuPath="File IO",
 		visible=true,
 		description="Import a single file that matches the filenaming format provided from (nearly) any format and (nearly) any dimensionality"
 				+ "(e.g. an ND2 file or tif stack)"

@@ -116,7 +116,7 @@ public class ZernikeComputer<T extends RealType<T>> extends
 			// get current pixel value
 			double pixel = cur.get().getRealDouble();
 
-			if (pixel >= 0.0) {
+//			if (pixel >= 0.0) {
 				// increment number of pixel inside the unit circle
 				count++;
 
@@ -129,12 +129,28 @@ public class ZernikeComputer<T extends RealType<T>> extends
 
 				// add together
 				moment.getZm().add(product);
-			}
+//			}
 
 		}
 
 		// normalization
-		normalize(moment.getZm(), moment.getN(), count);
+		try
+		{
+			
+			normalize(moment.getZm(), moment.getN(), count);
+			
+		}
+		catch(NumberFormatException e)
+		{
+			System.out.println(count);
+			System.out.println(moment);
+			System.out.println(moment.getN());
+			System.out.println(moment.getZm());
+			System.out.println(moment.getZm().getRealDouble());
+			System.out.println(moment.getZm().getImaginaryDouble());
+			e.printStackTrace();
+			System.out.println("WTF Number format exception");
+		}
 
 		return moment;
 	}

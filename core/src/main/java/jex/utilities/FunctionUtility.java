@@ -334,47 +334,67 @@ public class FunctionUtility {
 		return bins;
 	}
 	
-	public static void imAdjust(FloatProcessor ip, Double oldMin, Double oldMax, double newMin, double newMax, double gamma)
+	public static void imAdjust(ImageProcessor imp, Double oldMin, Double oldMax, double newMin, double newMax, double gamma)
 	{
-		if(oldMin == null || oldMax == null)
+		ImageProcessor ip;
+		if(imp instanceof FloatProcessor)
 		{
-			ImageStatistics stats = ImageStatistics.getStatistics(ip, ImageStatistics.MIN_MAX, null);
-			if(oldMin == null)
-			{
-				oldMin = new Double(stats.min);
-			}
-			if(oldMax == null)
-			{
-				oldMax = new Double(stats.max);
-			}
+			ip = (FloatProcessor) imp;
 		}
-		float newMinf = (float) newMin;
-		float newMaxf = (float) newMax;
-		double offset = newMin - oldMin;
+		else
+		{
+			ip = imp.convertToFloatProcessor();
+		}
+		
 		double ratio = (newMax - newMin) / (oldMax - oldMin);
-		ip.add(offset);
-		ip.multiply(ratio);
-		int size = ip.getWidth() * ip.getHeight();
+		double offset = newMin - ratio*oldMin;
+		
 		float[] pixels = (float[]) ip.getPixels();
-		float v;
-		if(newMin != oldMin && newMax != oldMax)
+		for(int i = 0; i < pixels.length; i++)
 		{
-			for (int i = 0; i < size; i++)
+			pixels[i] = (float) (pixels[i] * ratio + offset);
+		}
+		//		ip.add(offset);
+		//		ip.multiply(ratio);
+		//		int size = ip.getWidth() * ip.getHeight();
+		//		float[] pixels = (float[]) ip.getPixels();
+		//		
+		//		float v;
+		//		if(newMin != oldMin && newMax != oldMax)
+		//		{
+		//			for (int i = 0; i < size; i++)
+		//			{
+		//				v = pixels[i];
+		//				if(v < newMinf)
+		//				{
+		//					v = newMinf;
+		//				}
+		//				if(v > newMaxf)
+		//				{
+		//					v = newMaxf;
+		//				}
+		//				pixels[i] = v;
+		//			}
+		//		}
+		if(imp instanceof FloatProcessor)
+		{
+			ip.resetMinAndMax();
+			ip.gamma(gamma);
+		}
+		else
+		{
+			if(imp instanceof ByteProcessor)
 			{
-				v = pixels[i];
-				if(v < newMinf)
-				{
-					v = newMinf;
-				}
-				if(v > newMaxf)
-				{
-					v = newMaxf;
-				}
-				pixels[i] = v;
+				ip = ip.convertToByteProcessor(false);
+				imp.setPixels(ip.getPixels());
+			}
+			if(imp instanceof ShortProcessor)
+			{
+				ip = ip.convertToByteProcessor(false);
+				imp.setPixels(ip.getPixels());
 			}
 		}
-		ip.resetMinAndMax();
-		ip.gamma(gamma);
+		imp.gamma(gamma);
 	}
 	
 	public static void imThresh(FloatProcessor ip, double thresh, boolean invert)

@@ -11,7 +11,7 @@ public class JEXOps {
 	 * </p>
 	 *
 	 * <pre>
-	 * @Plugin(type = Ops.Logic.LogicalEqual.class
+	 * @Plugin(type = JEXOps.Logic.LogicalEqual.class
 	 * </pre>
 	 */
 	public interface LogicalEqual extends Op {
@@ -25,7 +25,7 @@ public class JEXOps {
 	 * </p>
 	 *
 	 * <pre>
-	 * @Plugin(type = Ops.Logic.LogicalNotEqual.class
+	 * @Plugin(type = JEXOps.Logic.LogicalNotEqual.class
 	 * </pre>
 	 */
 	public interface LogicalNotEqual extends Op {
@@ -33,17 +33,101 @@ public class JEXOps {
 	}
 
 	/**
-	 * Base interface for "logicalNotEqual" operations.
+	 * Base interface for "spearmansRankCorrelationCoefficient" operations.
 	 * <p>
 	 * Implementing classes should be annotated with:
 	 * </p>
 	 *
 	 * <pre>
-	 * @Plugin(type = Ops.Logic.LogicalNotEqual.class
+	 * @Plugin(type = JEXOps.SpearmansRankCorrelationCoefficient.class
 	 * </pre>
 	 */
 	public interface SpearmansRankCorrelationCoefficient extends Op {
 		String NAME = "stats.spearmansRankCorrelationCoefficient";
+	}
+	
+	/**
+	 * Base interface for "radiusOfGyration" operations.
+	 * <p>
+	 * Implementing classes should be annotated with:
+	 * </p>
+	 *
+	 * <pre>
+	 * @Plugin(type = JEXOps.RadiusOfGyration.class
+	 * </pre>
+	 */
+	public interface RadiusOfGyration extends Op {
+		String NAME = "stats.radiusOfGyration";
+	}
+	
+	/**
+	 * Base interface for "radialLocalization" operations.
+	 * <p>
+	 * Implementing classes should be annotated with:
+	 * </p>
+	 *
+	 * <pre>
+	 * @Plugin(type = JEXOps.RadialLocalization.class
+	 * </pre>
+	 */
+	public interface RadialLocalization extends Op {
+		String NAME = "stats.radiusOfGyration";
+	}
+	
+	/**
+	 * Base interface for "limits" operations.
+	 * <p>
+	 * Implementing classes should be annotated with:
+	 * </p>
+	 *
+	 * <pre>
+	 * @Plugin(type = JEXOps.Limits.class
+	 * </pre>
+	 */
+	public interface Limits extends Op {
+		String NAME = "stats.limits";
+	}
+	
+	/**
+	 * Base interface for "mad" (median absolute deviation) operations.
+	 * <p>
+	 * Implementing classes should be annotated with:
+	 * </p>
+	 *
+	 * <pre>
+	 * @Plugin(type = JEXOps.MAD.class
+	 * </pre>
+	 */
+	public interface MAD extends Op {
+		String NAME = "stats.mad";
+	}
+	
+	/**
+	 * Base interface for "symmetrylineangle" operations.
+	 * <p>
+	 * Implementing classes should be annotated with:
+	 * </p>
+	 *
+	 * <pre>
+	 * @Plugin(type = JEXOps.SymmetryLineAngle.class
+	 * </pre>
+	 */
+	public interface SymmetryLineAngle extends Op {
+		String NAME = "geometry.symmetrylineangle";
+	}
+	
+	/**
+	 * Base interface for "symmetrycoefficients" operations.
+	 * <p>
+	 * Implementing classes should be annotated with:
+	 * </p>
+	 *
+	 * <pre>
+	 * @Plugin(type = JEXOps.SymmetryLineAngle.class
+	 * </pre>
+	 */
+	public interface SymmetryCoefficients extends Op {
+		String NAME = "geometry.symmetrycoefficients";
 	}
 	
 }

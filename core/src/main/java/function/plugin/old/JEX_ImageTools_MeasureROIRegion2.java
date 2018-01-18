@@ -246,6 +246,10 @@ public class JEX_ImageTools_MeasureROIRegion2 extends JEXCrunchable {
 		for(DimensionMap imageMap : imageData.getDimTable().getMapIterator())
 		{
 			String path = paths.get(imageMap);
+			if(path == null)
+			{
+				continue;
+			}
 			im = new ImagePlus(path);
 
 			for(DimensionMap unionMap : unionTable.getMapIterator(imageMap))

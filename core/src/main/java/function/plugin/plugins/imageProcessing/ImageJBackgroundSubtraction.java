@@ -1,4 +1,4 @@
-package function.plugin.old;
+package function.plugin.plugins.imageProcessing;
 
 // Import needed classes here 
 import ij.ImagePlus;

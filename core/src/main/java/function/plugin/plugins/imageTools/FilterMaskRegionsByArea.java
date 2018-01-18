@@ -1,6 +1,5 @@
 package function.plugin.plugins.imageTools;
 
-import java.io.File;
 import java.util.TreeMap;
 
 import org.scijava.plugin.Plugin;
@@ -9,7 +8,6 @@ import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;
 import Database.DataWriter.ImageWriter;
-import Database.SingleUserDatabase.JEXReader;
 import Database.SingleUserDatabase.JEXWriter;
 import function.plugin.mechanism.InputMarker;
 import function.plugin.mechanism.JEXPlugin;
@@ -18,13 +16,7 @@ import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
 import function.plugin.plugins.featureExtraction.FeatureUtils;
 import jex.statics.JEXStatics;
-import net.imglib2.Cursor;
-import net.imglib2.RandomAccess;
 import net.imglib2.img.Img;
-import net.imglib2.roi.labeling.ImgLabeling;
-import net.imglib2.roi.labeling.LabelRegion;
-import net.imglib2.roi.labeling.LabelRegions;
-import net.imglib2.type.numeric.integer.IntType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import tables.DimensionMap;
 
@@ -44,9 +36,9 @@ import tables.DimensionMap;
 		visible=true,
 		description="Remove regions from the black and white mask that are greater or less than (inclusive) than the specified pixel area."
 		)
-public class FilterBlobsByArea extends JEXPlugin {
+public class FilterMaskRegionsByArea extends JEXPlugin {
 
-	public FilterBlobsByArea()
+	public FilterMaskRegionsByArea()
 	{}
 	
 	/////////// Define Inputs ///////////
@@ -56,13 +48,19 @@ public class FilterBlobsByArea extends JEXPlugin {
 	
 	/////////// Define Parameters ///////////
 	
-	@ParameterMarker(uiOrder=1, name="Min Area (pixels, inclusive)", description="The minimum pixel area of a blob to be kept [inclusive].", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0")
+	@ParameterMarker(uiOrder=1, name="Color of Regions to Filter", description="Which color regions should be removed from the black and white image.", ui=MarkerConstants.UI_DROPDOWN, choices={"White","Black"}, defaultChoice=0)
+	String colorToFilter;
+	
+	@ParameterMarker(uiOrder=2, name="Keep or Remove Filtered Regions", description="Should the regions that fit the filter be kept or removed?", ui=MarkerConstants.UI_DROPDOWN, choices={"Remove","Keep"}, defaultChoice=0)
+	String keepOrRemove;
+	
+	@ParameterMarker(uiOrder=3, name="Min Area (pixels, inclusive)", description="The minimum pixel area of a blob to be kept [inclusive].", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0")
 	int minSize;
 	
-	@ParameterMarker(uiOrder=2, name="Max Area (pixels, inclusive)", description="The minimum pixel area of a blob to be kept [inclusive, if(value < 0) then(value = Integer.MAX_VALUE)].", ui=MarkerConstants.UI_TEXTFIELD, defaultText="-1")
+	@ParameterMarker(uiOrder=4, name="Max Area (pixels, inclusive)", description="The minimum pixel area of a blob to be kept [inclusive, if(value <= 0) then(value = Integer.MAX_VALUE)].", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0")
 	int maxSize;
 	
-	@ParameterMarker(uiOrder=3, name="Connectedness", description="Whether to parse 4-connected or 8-connected pixel regions.", ui=MarkerConstants.UI_DROPDOWN, choices={"4-Connected", "8-Connected"})
+	@ParameterMarker(uiOrder=5, name="Connectedness", description="Whether to parse 4-connected or 8-connected pixel regions.", ui=MarkerConstants.UI_DROPDOWN, choices={"4-Connected", "8-Connected"})
 	String connectedness;
 	
 	/////////// Define Outputs ///////////
@@ -81,6 +79,18 @@ public class FilterBlobsByArea extends JEXPlugin {
 	@Override
 	public boolean run(JEXEntry optionalEntry)
 	{
+		boolean filterWhite = true;
+		if(colorToFilter.equals("Black"))
+		{
+			filterWhite = false;
+		}
+		
+		boolean keep = false;
+		if(keepOrRemove.equals("Keep"))
+		{
+			keep = true;
+		}
+		
 		// Validate the input data
 		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
 		{
@@ -89,7 +99,7 @@ public class FilterBlobsByArea extends JEXPlugin {
 		
 		boolean fourConnected = connectedness.equals("4-Connected");
 		
-		if(maxSize < 0)
+		if(maxSize <= 0)
 		{
 			maxSize = Integer.MAX_VALUE;
 		}
@@ -102,10 +112,14 @@ public class FilterBlobsByArea extends JEXPlugin {
 		for (DimensionMap map : imageMap.keySet())
 		{
 			// Call helper method
-			tempPath = saveFilteredMask(imageMap.get(map), (int) minSize, (int) maxSize, fourConnected);
-			if(tempPath != null)
+			Img<UnsignedByteType> tempMask = utils.filterMaskRegions(imageMap.get(map), (int) minSize, (int) maxSize, fourConnected, filterWhite, keep);
+			if(tempMask != null)
 			{
-				outputImageMap.put(map, tempPath);
+				tempPath = JEXWriter.saveImage(tempMask);
+				if(tempPath != null)
+				{
+					outputImageMap.put(map, tempPath);
+				}
 			}
 			count = count + 1;
 			percentage = (int) (100 * ((double) (count) / ((double) imageMap.size())));
@@ -120,45 +134,5 @@ public class FilterBlobsByArea extends JEXPlugin {
 		
 		// Return status
 		return true;
-	}
-	
-	private String saveFilteredMask(String imagePath, int minSize, int maxSize, boolean fourConnected)
-	{
-		// Get image data
-		File f = new File(imagePath);
-		if(!f.exists())
-		{
-			return null;
-		}
-		
-		Img<UnsignedByteType> img = JEXReader.getSingleImage(imagePath, null);
-		ImgLabeling<Integer, IntType> labeling = utils.getLabeling(img, fourConnected);
-		LabelRegions<Integer> regions = new LabelRegions<>(labeling);
-		Img<UnsignedByteType> img2 = img.factory().create(img, new UnsignedByteType(0));
-		for(LabelRegion<Integer> r : regions)
-		{
-			if(r.size() >= minSize && r.size() <= maxSize)
-			{
-				this.setPixelsWhite(img2, r);
-			}
-		}
-		
-		// Save the results
-		String imPath = JEXWriter.saveImage(img2);
-		
-		// return the filepath
-		return imPath;
-	}
-	
-	private void setPixelsWhite(Img<UnsignedByteType> toSet, LabelRegion<Integer> region)
-	{
-		Cursor<Void> c = region.cursor();
-		RandomAccess<UnsignedByteType> ra = toSet.randomAccess();
-		while(c.hasNext())
-		{
-			c.fwd();
-			ra.setPosition(c);
-			ra.get().setInteger(255);
-		}
 	}
 }

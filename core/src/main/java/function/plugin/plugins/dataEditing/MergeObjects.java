@@ -1,4 +1,4 @@
-package function.plugin.plugins.imageTools;
+package function.plugin.plugins.dataEditing;
 
 import java.io.File;
 import java.io.IOException;
@@ -151,6 +151,11 @@ public class MergeObjects extends JEXPlugin {
 			if(toAdd == null)
 			{
 				continue;
+			}
+			
+			if(this.isCanceled())
+			{
+				return false;
 			}
 			
 			if(data1.getTypeName().getType().matches(JEXData.FILE) || data1.getTypeName().getType().matches(JEXData.IMAGE) || data1.getTypeName().getType().matches(JEXData.MOVIE) || data1.getTypeName().getType().matches(JEXData.SOUND))

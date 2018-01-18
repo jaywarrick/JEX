@@ -70,19 +70,19 @@ public class CountPointsInROIToFileObjects extends JEXPlugin {
 			flavor="", description="Points counted", enabled=true)
 	JEXData output1;
 
-	@OutputMarker(uiOrder=2, name="Region Counts", type=MarkerConstants.TYPE_VALUE, 
+	@OutputMarker(uiOrder=2, name="Region Counts", type=MarkerConstants.TYPE_FILE, 
 			flavor="", description="Number of points in each region of Region ROI (if applicable)", enabled=false)
 	JEXData output2;
 
-	@OutputMarker(uiOrder=3, name="Total Region Count", type=MarkerConstants.TYPE_VALUE, 
+	@OutputMarker(uiOrder=3, name="Total Region Count", type=MarkerConstants.TYPE_FILE, 
 			flavor="", description="Total number of points across all regions in Region ROI (if applicable)", enabled=false)
 	JEXData output3;
 
-	@OutputMarker(uiOrder=4, name="Image Counts", type=MarkerConstants.TYPE_VALUE, 
+	@OutputMarker(uiOrder=4, name="Image Counts", type=MarkerConstants.TYPE_FILE, 
 			flavor="", description="Number of points within each image", enabled=false)
 	JEXData output4;
 
-	@OutputMarker(uiOrder=5, name="Total Image Count", type=MarkerConstants.TYPE_VALUE, 
+	@OutputMarker(uiOrder=5, name="Total Image Count", type=MarkerConstants.TYPE_FILE, 
 			flavor="", description="Total number of points across all images", enabled=false)
 	JEXData output5;
 
@@ -168,7 +168,7 @@ public class CountPointsInROIToFileObjects extends JEXPlugin {
 
 			// If no Region ROI was specified, count everything.
 			// -1 is used to indicate value doesn't exist.  I should change this later to something better.
-			if(regionData==null)
+			if(regionData==null || regionROI.get(map) == null)
 			{
 				totalRegionCount = -1;
 				PointList pl = new PointList();
@@ -186,7 +186,7 @@ public class CountPointsInROIToFileObjects extends JEXPlugin {
 			// Otherwise count within each region
 			else
 			{
-				region = regionROI.get(map);	
+				region = regionROI.get(map);
 
 				// Loop through each region in the image
 				Iterator<ROIPlus> itrRoi = region.patternRoiIterator();

@@ -162,7 +162,7 @@ public class JEXWriter {
 	/**
 	 * Save the image in the temporary database folder
 	 */
-	public static <T extends RealType<T>> void showImage(Img<T> img)
+	public static <T extends RealType<T>> void debugImage(Img<T> img)
 	{
 		ImagePlus im = ImageJFunctions.wrap(img, "temp");
 		String path = JEXWriter.saveImage(im);
@@ -171,6 +171,75 @@ public class JEXWriter {
 		} catch (Exception e) {
 			Logs.log("Couldn't save, open, and show the supplied image.", FileUtility.class);
 			e.printStackTrace();
+		}
+	}
+	
+	public static void debugImage(ImageProcessor imp)
+	{
+		imp.resetMinAndMax();
+		try {
+			FileUtility.openFileDefaultApplication(JEXWriter.saveImage(imp));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static void debugImage(ImagePlus imp)
+	{
+		imp.getProcessor().resetMinAndMax();
+		try {
+			FileUtility.openFileDefaultApplication(JEXWriter.saveImage(imp));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static void convertToBitDepthIfNecessary(ImagePlus im, int bitDepth)
+	{
+		if(bitDepth != im.getBitDepth())
+		{
+			if(bitDepth == 8)
+			{
+				im.setProcessor(im.getProcessor().convertToByte(false));
+			}
+			else if(bitDepth == 16)
+			{
+				im.setProcessor(im.getProcessor().convertToShort(false));
+			}
+			else if(bitDepth == 32)
+			{
+				im.setProcessor(im.getProcessor().convertToFloat());
+			}
+		}
+	}
+	
+	/**
+	 * If conversion is necessary, a new object is returned. If not, the same instance is returned.
+	 * 
+	 * @param imp
+	 * @param bitDepth
+	 * @return
+	 */
+	public static ImageProcessor convertToBitDepthIfNecessary(ImageProcessor imp, int bitDepth)
+	{
+		if(bitDepth != imp.getBitDepth())
+		{
+			if(bitDepth == 8)
+			{
+				return imp.convertToByte(false);
+			}
+			else if(bitDepth == 16)
+			{
+				return imp.convertToShort(false);
+			}
+			else
+			{
+				return imp.convertToFloat();
+			}
+		}
+		else
+		{
+			return imp;
 		}
 	}
 	
@@ -209,6 +278,26 @@ public class JEXWriter {
 	public static String saveImage(ImageProcessor imp)
 	{
 		return saveImage(new ImagePlus("", imp));
+	}
+	
+	/**
+	 * Save the image in the temporary database folder
+	 */
+	public static String saveImage(ImageProcessor imp, int bitDepth)
+	{
+		imp = JEXWriter.convertToBitDepthIfNecessary(imp, bitDepth);
+		return saveImage(new ImagePlus("", imp));
+	}
+	
+	/**
+	 * Save the image in the temporary database folder
+	 * 
+	 * WARNING: this converts the ImagePlus to the specified bitDepth internally if necessary.
+	 */
+	public static String saveImage(ImagePlus im, int bitDepth)
+	{
+		JEXWriter.convertToBitDepthIfNecessary(im, bitDepth);
+		return saveImage(im);
 	}
 	
 	/**

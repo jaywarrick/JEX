@@ -1,7 +1,5 @@
 package function.plugin.plugins.imageProcessing;
 
-import java.io.File;
-import java.util.List;
 import java.util.TreeMap;
 
 import org.scijava.plugin.Plugin;
@@ -17,13 +15,11 @@ import function.plugin.mechanism.MarkerConstants;
 import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
 import ij.ImagePlus;
-import ij.process.FloatProcessor;
 import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
-import jex.utilities.FunctionUtility;
-import miscellaneous.CSVList;
+import logs.Logs;
 import miscellaneous.StringUtility;
-import tables.Dim;
+import tables.DimTable;
 import tables.DimensionMap;
 
 /**
@@ -75,6 +71,12 @@ public class AdjustImageMultiChannel extends JEXPlugin {
 	@ParameterMarker(uiOrder=7, name="Output Bit Depth", description="Depth of the outputted image for all channels.", ui=MarkerConstants.UI_DROPDOWN, choices={ "8", "16", "32" }, defaultChoice=1)
 	int bitDepth;
 	
+	@ParameterMarker(uiOrder=8, name="Exclusion Filter DimTable", description="Filter specific dimension combinations from analysis. (Format: <DimName1>=<a1,a2,...>;<DimName2>=<b1,b2...>)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
+	String filterDimTableString;
+	
+	@ParameterMarker(uiOrder=9, name="Keep Excluded Images?", description="Should images excluded by the filter be copied to the new object?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
+	boolean keepExcluded;
+	
 	/////////// Define Outputs ///////////
 	
 	@OutputMarker(uiOrder=1, name="Adjusted Image", type=MarkerConstants.TYPE_IMAGE, flavor="", description="The resultant adjusted image", enabled=true)
@@ -107,29 +109,20 @@ public class AdjustImageMultiChannel extends JEXPlugin {
 			return false;
 		}
 		
-		
-		
-		// Gather the parameters.
-		Dim channelDim = imageData.getDimTable().getDimWithName(channelDimName);
-		CSVList oldMinsList = getCSVList(oldMins, channelDim);
-		CSVList oldMaxsList = getCSVList(oldMaxs, channelDim);
-		CSVList newMinsList = getCSVList(newMins, channelDim);
-		CSVList newMaxsList = getCSVList(newMaxs, channelDim);
-		CSVList gammasList = getCSVList(gammas, channelDim);
-		
-		if(channelDim.size() != oldMinsList.size() || channelDim.size() != oldMaxsList.size() || channelDim.size() != newMinsList.size() || channelDim.size() != newMaxsList.size() || channelDim.size() != gammasList.size())
-		{
-			JEXDialog.messageDialog("The number of intensity values listed for each of the mins and maxs etc must be the same size as the number of channels in the image. Aborting.");
-			return false;
-		}
-		
 		try
 		{
-			TreeMap<String,Double> oldMinsMap = getMap(oldMinsList, channelDim);
-			TreeMap<String,Double> oldMaxsMap = getMap(oldMaxsList, channelDim);
-			TreeMap<String,Double> newMinsMap = getMap(newMinsList, channelDim);
-			TreeMap<String,Double> newMaxsMap = getMap(newMaxsList, channelDim);
-			TreeMap<String,Double> gammasMap = getMap(gammasList, channelDim);
+			TreeMap<DimensionMap,Double> oldMinsMap = StringUtility.getCSVStringAsDoubleTreeMapForDimTable(channelDimName + "=" + oldMins, imageData.getDimTable());
+			TreeMap<DimensionMap,Double> oldMaxsMap = StringUtility.getCSVStringAsDoubleTreeMapForDimTable(channelDimName + "=" + oldMaxs, imageData.getDimTable());
+			TreeMap<DimensionMap,Double> newMinsMap = StringUtility.getCSVStringAsDoubleTreeMapForDimTable(channelDimName + "=" + newMins, imageData.getDimTable());
+			TreeMap<DimensionMap,Double> newMaxsMap = StringUtility.getCSVStringAsDoubleTreeMapForDimTable(channelDimName + "=" + newMaxs, imageData.getDimTable());
+			TreeMap<DimensionMap,Double> gammasMap = StringUtility.getCSVStringAsDoubleTreeMapForDimTable(channelDimName + "=" + gammas, imageData.getDimTable());
+			
+			if(oldMinsMap == null || oldMaxsMap == null || newMinsMap == null || newMaxsMap == null || gammasMap == null)
+			{
+				return false;
+			}
+			
+			DimTable filterTable = new DimTable(this.filterDimTableString);
 			
 			// Run the function
 			TreeMap<DimensionMap,String> imageMap = ImageReader.readObjectToImagePathTable(imageData);
@@ -138,6 +131,30 @@ public class AdjustImageMultiChannel extends JEXPlugin {
 			String tempPath;
 			for (DimensionMap map : imageMap.keySet())
 			{
+				if(filterTable.testMapAsExclusionFilter(map))
+				{
+					if(this.keepExcluded)
+					{
+						Logs.log("Skipping the processing of " + map.toString(), this);
+						ImagePlus out = new ImagePlus(imageMap.get(map));
+						tempPath = JEXWriter.saveImage(out);
+						if(tempPath != null)
+						{
+							outputImageMap.put(map, tempPath);
+						}
+						count = count + 1;
+						percentage = (int) (100 * ((double) (count) / ((double) imageMap.size())));
+						JEXStatics.statusBar.setProgressPercentage(percentage);
+					}
+					else
+					{
+						Logs.log("Skipping the processing and saving of " + map.toString(), this);
+						count = count + 1;
+						percentage = (int) (100 * ((double) (count) / ((double) imageMap.size())));
+						JEXStatics.statusBar.setProgressPercentage(percentage);
+					}
+					continue;
+				}
 				// Check if canceled
 				if(this.isCanceled())
 				{
@@ -145,7 +162,7 @@ public class AdjustImageMultiChannel extends JEXPlugin {
 				}
 				
 				// Call helper method
-				tempPath = saveAdjustedImage(imageMap.get(map), oldMinsMap.get(map.get(channelDimName)), oldMaxsMap.get(map.get(channelDimName)), newMinsMap.get(map.get(channelDimName)), newMaxsMap.get(map.get(channelDimName)), gammasMap.get(map.get(channelDimName)), bitDepth);
+				tempPath = saveAdjustedImage(imageMap.get(map), oldMinsMap.get(map), oldMaxsMap.get(map), newMinsMap.get(map), newMaxsMap.get(map), gammasMap.get(map), bitDepth);
 				if(tempPath != null)
 				{
 					outputImageMap.put(map, tempPath);
@@ -173,60 +190,26 @@ public class AdjustImageMultiChannel extends JEXPlugin {
 		}		
 	}
 	
-	public static String saveAdjustedImage(String imagePath, double oldMin, double oldMax, double newMin, double newMax, double gamma, int bitDepth)
-	{
-		// Get image data
-		File f = new File(imagePath);
-		if(!f.exists())
-		{
-			return null;
-		}
-		ImagePlus im = new ImagePlus(imagePath);
-		FloatProcessor imp = (FloatProcessor) im.getProcessor().convertToFloat(); // should be a float processor
-		
-		// Adjust the image
-		FunctionUtility.imAdjust(imp, oldMin, oldMax, newMin, newMax, gamma);
-		
-		// Save the results
-		ImagePlus toSave = FunctionUtility.makeImageToSave(imp, "false", bitDepth);
-		String imPath = JEXWriter.saveImage(toSave);
-		im.flush();
-		
-		// return the filepath
-		return imPath;
-	}
-	
-	private CSVList getCSVList(String param, Dim channelDim)
-	{
-		CSVList temp = new CSVList(param);
-		CSVList ret = new CSVList();
-		if(temp.size() == 1)
-		{
-			for(int i = 0; i < channelDim.values().size(); i++)
-			{
-				// Repeat the value for as many channels that exist in the channel dimension.
-				ret.add(StringUtility.removeWhiteSpaceOnEnds(temp.get(0)));
-			}
-		}
-		else
-		{
-			for(String p : temp)
-			{
-				// This list may not be the same length as the channel dim but we'll test for that elsewhere.
-				ret.add(StringUtility.removeWhiteSpaceOnEnds(p));
-			}
-		}
-		
-		return ret;
-	}
-	
-	private TreeMap<String,Double> getMap(List<String> values, Dim channelDim) throws NumberFormatException
-	{
-		TreeMap<String,Double> ret = new TreeMap<>();
-		for(String channel : channelDim.values())
-		{
-			ret.put(channel, Double.parseDouble(values.get(channelDim.index(channel))));
-		}
-		return ret;
-	}
+	//	public static String saveAdjustedImage(String imagePath, double oldMin, double oldMax, double newMin, double newMax, double gamma, int bitDepth)
+	//	{
+	//		// Get image data
+	//		File f = new File(imagePath);
+	//		if(!f.exists())
+	//		{
+	//			return null;
+	//		}
+	//		ImagePlus im = new ImagePlus(imagePath);
+	//		FloatProcessor imp = (FloatProcessor) im.getProcessor().convertToFloat(); // should be a float processor
+	//		
+	//		// Adjust the image
+	//		FunctionUtility.imAdjust(imp, oldMin, oldMax, newMin, newMax, gamma);
+	//		
+	//		// Save the results
+	//		ImagePlus toSave = FunctionUtility.makeImageToSave(imp, "false", bitDepth);
+	//		String imPath = JEXWriter.saveImage(toSave);
+	//		im.flush();
+	//		
+	//		// return the filepath
+	//		return imPath;
+	//	}
 }
