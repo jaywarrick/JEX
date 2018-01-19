@@ -16,7 +16,7 @@ import net.imglib2.roi.labeling.LabelRegion;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.util.ValuePair;
 
-@Plugin(type = JEXOps.SymmetryLineAngle.class, priority = Priority.NORMAL_PRIORITY)
+@Plugin(type = JEXOps.SymmetryLineAngle.class, priority = Priority.NORMAL)
 public class DefaultSymmetryLineAngle<T extends RealType<T>> extends AbstractBinaryFunctionOp<LabelRegion<?>, RandomAccessibleInterval<T>, ValuePair<Double,Double>>
 implements JEXOps.SymmetryLineAngle {
 	

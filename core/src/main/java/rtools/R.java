@@ -532,7 +532,7 @@ public class R {
 		{
 			return false;
 		}
-		E temp = data.data.get(0);
+		E temp = data.data.firstEntry().getValue();
 		if(temp instanceof Double)
 		{
 			Vector<Double> vector = new Vector<Double>();

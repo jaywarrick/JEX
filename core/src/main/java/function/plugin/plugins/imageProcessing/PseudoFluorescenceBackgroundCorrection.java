@@ -18,14 +18,12 @@ import function.plugin.plugins.medianFilterHelpers.FastMedian;
 // Import needed classes here 
 import ij.ImagePlus;
 import ij.plugin.filter.BackgroundSubtracter;
-import ij.plugin.filter.RankFilters;
 import ij.process.FloatBlitter;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import logs.Logs;
-import miscellaneous.FileUtility;
 import miscellaneous.StringUtility;
 import tables.DimensionMap;
 

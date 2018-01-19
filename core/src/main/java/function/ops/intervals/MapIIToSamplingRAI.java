@@ -48,7 +48,7 @@ import net.imglib2.RandomAccessibleInterval;
  * @param <EI> element type of inputs
  * @param <EO> element type of outputs
  */
-@Plugin(type = Ops.Map.class, priority = Priority.LOW_PRIORITY - 1)
+@Plugin(type = Ops.Map.class, priority = Priority.LOW - 1)
 public class MapIIToSamplingRAI<EI, EO> extends
 	IIToRAI<EI, EO>
 {
