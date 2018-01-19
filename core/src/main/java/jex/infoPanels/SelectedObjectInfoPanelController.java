@@ -218,7 +218,7 @@ public class SelectedObjectInfoPanelController extends InfoPanelController {
 		
 		private JComponent makeDataComponent(String type, String name, String value)
 		{
-			if(type.equals(JEXData.IMAGE))
+			if(type.equals(JEXData.IMAGE.getType()))
 			{
 				ImageDisplay imagePanel = new ImageDisplay(this, "Viewer");
 				ImagePlus image = new ImagePlus(value);
@@ -230,7 +230,7 @@ public class SelectedObjectInfoPanelController extends InfoPanelController {
 				imagePanel.setAlignmentX(LEFT_ALIGNMENT);
 				return imagePanel;
 			}
-			else if(type.equals(JEXData.FILE))
+			else if(type.equals(JEXData.FILE.getType()))
 			{
 				JLabel newLabelValue = new JLabel(value);
 				newLabelValue.setMaximumSize(new Dimension(100, 15));
@@ -239,7 +239,7 @@ public class SelectedObjectInfoPanelController extends InfoPanelController {
 				newLabelValue.setAlignmentX(LEFT_ALIGNMENT);
 				return newLabelValue;
 			}
-			else if(type.equals(JEXData.MOVIE))
+			else if(type.equals(JEXData.MOVIE.getType()))
 			{
 				JLabel newLabelValue = new JLabel(value);
 				newLabelValue.setMaximumSize(new Dimension(100, 15));
@@ -248,7 +248,7 @@ public class SelectedObjectInfoPanelController extends InfoPanelController {
 				newLabelValue.setAlignmentX(LEFT_ALIGNMENT);
 				return newLabelValue;
 			}
-			else if(type.equals(JEXData.VALUE))
+			else if(type.equals(JEXData.VALUE.getType()))
 			{
 				JLabel newLabelValue = new JLabel("Value:" + value);
 				newLabelValue.setMaximumSize(new Dimension(100, 15));
@@ -258,7 +258,7 @@ public class SelectedObjectInfoPanelController extends InfoPanelController {
 				newLabelValue.setAlignmentX(LEFT_ALIGNMENT);
 				return newLabelValue;
 			}
-			else if(type.equals(JEXData.LABEL))
+			else if(type.equals(JEXData.LABEL.getType()))
 			{
 				JLabel newLabelValue = new JLabel("Value:" + value);
 				newLabelValue.setMaximumSize(new Dimension(100, 15));
@@ -268,7 +268,7 @@ public class SelectedObjectInfoPanelController extends InfoPanelController {
 				newLabelValue.setAlignmentX(LEFT_ALIGNMENT);
 				return newLabelValue;
 			}
-			else if(type.equals(JEXData.FUNCTION_OLD))
+			else if(type.equals(JEXData.FUNCTION_OLD.getType()))
 			{
 				JLabel newLabelValue = new JLabel(value);
 				newLabelValue.setMaximumSize(new Dimension(100, 15));

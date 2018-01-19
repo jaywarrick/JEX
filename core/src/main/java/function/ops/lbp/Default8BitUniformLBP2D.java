@@ -53,7 +53,7 @@ import net.imglib2.type.numeric.integer.LongType;
  * @param <I>
  * @param <O>
  */
-@Plugin(type = Ops.LBP.LBP2D.class, label = "2d Local Binary Pattern", priority=Priority.FIRST_PRIORITY)
+@Plugin(type = Ops.LBP.LBP2D.class, label = "2d Local Binary Pattern", priority=Priority.FIRST)
 public class Default8BitUniformLBP2D<I extends RealType<I>> extends AbstractLBP2DFeature<I> implements LBP2DFeature<I>
 {
 	

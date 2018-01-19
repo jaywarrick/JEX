@@ -588,7 +588,7 @@ public class JEXDBIO {
 			XData xdata = (XData) elem;
 			
 			// if it's a normal object
-			if(!xdata.getTypeField().equals(JEXData.HIERARCHY))
+			if(!xdata.getTypeField().equals(JEXData.HIERARCHY.getType()))
 			{
 				JEXData data = JEXDBIO.XDataToDatabaseObject(xdata, result);
 				if(data == null)

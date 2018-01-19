@@ -18,7 +18,7 @@ import net.imglib2.RealCursor;
 import net.imglib2.RealLocalizable;
 import net.imglib2.RealPoint;
 
-@Plugin(type = Ops.Geometric.SmallestEnclosingCircle.class, priority = Priority.NORMAL_PRIORITY+4)
+@Plugin(type = Ops.Geometric.SmallestEnclosingCircle.class, priority = Priority.NORMAL+4)
 public class DefaultSmallestEnclosingCircleOfRealCursor extends AbstractUnaryFunctionOp<RealCursor<?>, Circle>
 implements Ops.Geometric.SmallestEnclosingCircle {
 

@@ -16,7 +16,7 @@ import net.imagej.ops.special.function.AbstractUnaryFunctionOp;
 import net.imglib2.RealLocalizable;
 import net.imglib2.RealPoint;
 
-@Plugin(type = Ops.Geometric.SmallestEnclosingCircle.class, priority = Priority.NORMAL_PRIORITY)
+@Plugin(type = Ops.Geometric.SmallestEnclosingCircle.class, priority = Priority.NORMAL)
 public class DefaultSmallestEnclosingCircle extends AbstractUnaryFunctionOp<List<? extends RealLocalizable>, Circle>
 implements Ops.Geometric.SmallestEnclosingCircle {
 

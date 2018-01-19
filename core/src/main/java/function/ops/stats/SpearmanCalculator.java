@@ -6,6 +6,8 @@ import java.util.Comparator;
 import net.imglib2.Cursor;
 import net.imglib2.PairIterator;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.real.DoubleType;
+import sc.fiji.coloc.algorithms.SpearmanRankCorrelation;
 
 /*
 * This code has been heavily adapted from Numerical Recipces: The Art of Scientific Computing.
@@ -45,6 +47,8 @@ public class SpearmanCalculator<T extends RealType< T >> {
 	 * @return Spearman's rank correlation coefficient (rho) value
 	 */
 	public <C extends Cursor<T> & PairIterator<T>> double calculateSpearmanRank(C cursor) {
+		
+		SpearmanRankCorrelation<DoubleType> sc = new SpearmanRankCorrelation<>();
 
 		// Step 0: Count the pixels first.
 		int n = 0;
@@ -62,7 +66,7 @@ public class SpearmanCalculator<T extends RealType< T >> {
 			data[i][1] = cursor.getSecond().getRealDouble();
 		}
 
-		return algorithms.SpearmanRankCorrelation.calculateSpearmanRank(data);
+		return sc.calculateSpearmanRank(data);
 	}
 
 	/**

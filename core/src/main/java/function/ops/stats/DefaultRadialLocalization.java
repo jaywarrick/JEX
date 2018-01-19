@@ -12,7 +12,7 @@ import net.imglib2.IterableInterval;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.DoubleType;
 
-@Plugin(type = JEXOps.RadialLocalization.class, priority = Priority.NORMAL_PRIORITY)
+@Plugin(type = JEXOps.RadialLocalization.class, priority = Priority.NORMAL)
 public class DefaultRadialLocalization<I extends RealType<I>> extends AbstractBinaryFunctionOp<IterableInterval<I>, IterableInterval<I>, DoubleType>
 implements JEXOps.RadialLocalization {
 

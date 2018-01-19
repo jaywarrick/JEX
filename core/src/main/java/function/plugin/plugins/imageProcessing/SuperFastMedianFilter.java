@@ -421,8 +421,8 @@ public class SuperFastMedianFilter extends JEXPlugin {
 			final Cursor< T > srcC = source.cursor();
 			RandomAccess< T > srcRA = source.randomAccess();
 			srcRA.setPosition(new int[]{0,0});
-			T testVal = srcRA.get();
-			boolean truncate = !(testVal instanceof FloatType);
+//			T testVal = srcRA.get();
+//			boolean truncate = !(testVal instanceof FloatType);
 			while(srcC.hasNext())
 			{
 				srcC.fwd();
