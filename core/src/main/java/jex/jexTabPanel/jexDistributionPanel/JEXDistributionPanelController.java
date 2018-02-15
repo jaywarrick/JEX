@@ -1,22 +1,24 @@
 package jex.jexTabPanel.jexDistributionPanel;
 
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.Definition.Experiment;
-import Database.Definition.Type;
-import cruncher.ImportThread;
-import guiObject.DialogGlassPane;
-
 import java.awt.Point;
 import java.io.File;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.Vector;
 
 import javax.swing.JPanel;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.Definition.Experiment;
+import Database.Definition.Type;
+import cruncher.ImportThread;
+import function.plugin.plugins.dataEditing.SplitObjectToSeparateEntries;
+import guiObject.DialogGlassPane;
 import jex.JEXManager;
 import jex.jexTabPanel.JEXTabPanelController;
 import jex.statics.JEXDialog;
@@ -28,60 +30,60 @@ import signals.SSCenter;
 import tables.DimensionMap;
 
 public class JEXDistributionPanelController extends JEXTabPanelController {
-	
+
 	// Other controllers
 	public DistributorArray importController;
 	public JEXDistributionRightPanel fileController;
 	public FileListPanel flistpane;
-	
+
 	// Navigation
 	public Experiment curTray = null;
 	public HashMap<Point,Vector<Pair<DimensionMap,String>>> files;
-	
+
 	// Variables
 	public HashMap<Integer,DimensionSelector> dimensions;
 	public int dimension = 0;
-	
+
 	public JEXDistributionPanelController()
 	{
 		this.importController = new DistributorArray(this);
 		this.fileController = new JEXDistributionRightPanel(this);
 		this.files = new HashMap<Point,Vector<Pair<DimensionMap,String>>>();
 		SSCenter.defaultCenter().connect(JEXStatics.jexManager, JEXManager.NAVIGATION, this, "navigationChanged", (Class[]) null);
-		
+
 	}
-	
+
 	// //////////////////
 	// SIGNAL METHODS //
 	// //////////////////
-	
+
 	public void navigationChanged()
 	{
 		// Clear changes
 		this.files.clear();
-		
+
 		// If tray viewed, change array view
 		this.curTray = null;
 		String viewedExp = JEXStatics.jexManager.getViewedExperiment();
-		
+
 		if(viewedExp != null)
 		{
 			TreeMap<String,Experiment> expTree = JEXStatics.jexManager.getExperimentTree();
 			this.curTray = expTree.get(viewedExp);
 		}
-		
+
 		if(this.importController != null)
 		{
 			this.importController.navigationChanged();
 		}
 	}
-	
+
 	public void fileListChanged()
 	{
 		List<File> files = this.flistpane.files2Distribute;
 		this.fileController.setFileList(files);
 	}
-	
+
 	public void addFiles2Distribute(List<File> files2Distribute)
 	{
 		if(this.flistpane == null)
@@ -92,18 +94,18 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 		{
 			this.flistpane.files2Distribute = new java.util.ArrayList<File>();
 		}
-		
+
 		for (File f : files2Distribute)
 		{
 			this.flistpane.files2Distribute.add(f);
 		}
 		this.fileController.setFileList(this.flistpane.files2Distribute);
 	}
-	
+
 	// ///////////////////////
 	// PREPARATION METHODS //
 	// ///////////////////////
-	
+
 	/**
 	 * Open the file selector panel
 	 */
@@ -111,23 +113,31 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 	{
 		DialogGlassPane diagPanel = new DialogGlassPane("Choose files");
 		diagPanel.setSize(350, 500);
-		
+
 		if(this.flistpane == null)
 		{
 			this.flistpane = new FileListPanel(this);
 		}
 		diagPanel.setCentralPanel(this.flistpane);
-		
+
 		JEXStatics.main.displayGlassPane(diagPanel, true);
 	}
-	
+
 	/**
 	 * Deal the files
 	 */
 	public void dealFiles()
 	{
+		TreeMap<DimensionMap,Integer> lut = SplitObjectToSeparateEntries.getLookUpTable(this.fileController.getStartPt(), this.importController.getNumberRows(), this.importController.getNumberColumns(), this.fileController.getFirstMoveHorizontal(), this.fileController.getSnaking());
+		TreeMap<DimensionMap,Integer> lut_ticker = SplitObjectToSeparateEntries.getLookUpTable("UL", this.importController.getNumberRows(), this.importController.getNumberColumns(), true, false);
+		TreeMap<Integer, DimensionMap> tul = new TreeMap<>();
+		for(Entry<DimensionMap,Integer> e : lut.entrySet())
+		{
+			tul.put(e.getValue(), e.getKey());
+		}
+
 		// clear();
-		
+
 		// Set up the vectors for the ticking
 		String[] dimVector = new String[this.dimensions.size()];
 		int[] maxIncr = new int[this.dimensions.size()];
@@ -169,10 +179,10 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 			initial[i] = 0;
 			compteur[i] = 0;
 		}
-		
+
 		// Use this to keep track of how many we have distributed to a location.
 		HashMap<String,Integer> numDistributed = new HashMap<String,Integer>();
-		
+
 		// Test if the counter can perform
 		if(rowLoc < 0 || colLoc < 0)
 		{
@@ -180,7 +190,7 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 			JEXStatics.statusBar.setStatusText("Error: Must select array and row dimensions once and only once");
 			return;
 		}
-		
+
 		// Initialize numDistributed
 		for (int y = 0; y <= maxIncr[rowLoc]; y++)
 		{
@@ -206,7 +216,7 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 		}
 		maxDist = maxDist / (maxIncr[rowLoc] + 1);
 		maxDist = maxDist / (maxIncr[colLoc] + 1);
-		
+
 		// Do the dealing
 		// Check to see if there are any wells selected. If not we risk
 		// an infinite loop below during dealing where we skip non-selected
@@ -216,13 +226,32 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 		{
 			return;
 		}
-		
+
 		this.files = new HashMap<Point,Vector<Pair<DimensionMap,String>>>();
+		Iterator<Entry<Integer,DimensionMap>> itr = tul.entrySet().iterator();
+		Iterator<Entry<DimensionMap,Integer>> itr_ticker = lut_ticker.entrySet().iterator();
 		for (File f : this.flistpane.files2Distribute)
 		{
+			/////////////////////////
+			if(!itr.hasNext())
+			{
+				itr = tul.entrySet().iterator();
+			}
+			if(!itr_ticker.hasNext())
+			{
+				itr_ticker = lut_ticker.entrySet().iterator();
+			}
 			int cellX = compteur[colLoc];
 			int cellY = compteur[rowLoc];
-			
+			Integer wellIndex = lut_ticker.get(new DimensionMap("R=" + cellY + ",C=" + cellX));
+			DimensionMap tulMap = tul.get(wellIndex);
+			cellX = Integer.parseInt(tulMap.get("C"));
+			cellY = Integer.parseInt(tulMap.get("R"));
+			////////////////////////
+
+//			int cellX = compteur[colLoc];
+//			int cellY = compteur[rowLoc];
+
 			// if the cell at location cellX and cellY is not valid skip it and
 			// go to the next valid cell
 			// We know from the test about 10 lines up that there is at least
@@ -238,12 +267,30 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 			{
 				// Go to the next cell in the array
 				Logs.log("Skipped cell at location " + cellX + "-" + cellY, 1, this);
-				
+
+				/////////////////////////
+				if(!itr.hasNext())
+				{
+					itr = tul.entrySet().iterator();
+				}
+				if(!itr_ticker.hasNext())
+				{
+					itr_ticker = lut_ticker.entrySet().iterator();
+				}
 				compteur = ArrayUtility.getNextCompteur(compteur, initial, maxIncr, increments);
 				cellX = compteur[colLoc];
 				cellY = compteur[rowLoc];
+				wellIndex = lut_ticker.get(new DimensionMap("R=" + cellY + ",C=" + cellX));
+				tulMap = tul.get(wellIndex);
+				cellX = Integer.parseInt(tulMap.get("C"));
+				cellY = Integer.parseInt(tulMap.get("R"));
+				////////////////////////
+
+//				compteur = ArrayUtility.getNextCompteur(compteur, initial, maxIncr, increments);
+//				cellX = compteur[colLoc];
+//				cellY = compteur[rowLoc];
 			}
-			
+
 			// Check to see how many files we've distributed to this location.
 			// If it
 			// is greater than maxDist, then stop because there are no more
@@ -254,7 +301,7 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 			{
 				break;
 			}
-			
+
 			// Fill the treemap of files
 			Vector<Pair<DimensionMap,String>> richFileMap = this.files.get(new Point(cellX, cellY));
 			if(richFileMap == null)
@@ -264,18 +311,18 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 			}
 			DimensionMap map = this.makeMap(compteur, dimVector);
 			richFileMap.add(new Pair<DimensionMap,String>(map, f.getAbsolutePath()));
-			
+
 			// Update the number of files that have distributed to this
 			// location.
 			numDistributed.put("" + cellX + "," + cellY, curCount + 1);
 			compteur = ArrayUtility.getNextCompteur(compteur, initial, maxIncr, increments);
 		}
-		
+
 		// Refresh the displayed array
 		this.importController.setFileArray(this.files);
 		Logs.log("Finished dropping files.", 0, this);
 	}
-	
+
 	/**
 	 * Reset the file list
 	 */
@@ -284,7 +331,7 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 		this.files = new HashMap<Point,Vector<Pair<DimensionMap,String>>>();
 		this.importController.setFileArray(this.files);
 	}
-	
+
 	/**
 	 * Return if cell at location x and y accepts drops
 	 * 
@@ -305,7 +352,7 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 			return true;
 		}
 	}
-	
+
 	/**
 	 * Return if cell at any location accepts drops
 	 * 
@@ -325,13 +372,13 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 		}
 		return false;
 	}
-	
+
 	// ////////////////////
 	// CREATION METHODS //
 	// ////////////////////
-	
+
 	/**
-	 * Create the labels that have been droped
+	 * Create the labels that have been dropped
 	 */
 	public void createObjects()
 	{
@@ -341,7 +388,7 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 			JEXStatics.statusBar.setStatusText("Couldn't create objects because no tray is selected.");
 			return;
 		}
-		
+
 		// Do the real distribution
 		String objectName = this.fileController.getObjectName();
 		String objectInfo = this.fileController.getObjectInfo();
@@ -371,7 +418,7 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 		{
 			oType = JEXData.LABEL;
 		}
-		
+
 		TreeMap<JEXEntry,TreeMap<DimensionMap,String>> importObject = new TreeMap<JEXEntry,TreeMap<DimensionMap,String>>();
 		for (int x = 0; x < this.importController.getNumberColumns(); x++)
 		{
@@ -387,9 +434,9 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 				{
 					continue;
 				}
-				
+
 				Vector<Pair<DimensionMap,String>> files2Drop = this.files.get(new Point(y, x));
-				
+
 				if(files2Drop != null)
 				{
 					TreeMap<DimensionMap,String> temp = new TreeMap<DimensionMap,String>();
@@ -404,7 +451,7 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 		ImportThread importThread = new ImportThread(objectName, oType, objectInfo, importObject);
 		JEXStatics.cruncher.runGuiTask(importThread);
 	}
-	
+
 	/**
 	 * Grab a file from a list of args
 	 * 
@@ -414,7 +461,7 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 	private DimensionMap makeMap(int[] compteur, String[] dimVector)
 	{
 		DimensionMap map = new DimensionMap();
-		
+
 		// int index = 1;
 		for (int i = 0, len = compteur.length; i < len; i++)
 		{
@@ -423,41 +470,41 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 			{
 				continue;
 			}
-			
+
 			String dn = dimName;
 			Integer dv = compteur[i];
 			map.put(dn, "" + dv);
-			
+
 			// index++;
 		}
-		
+
 		return map;
 	}
-	
+
 	// ////
-	
+
 	// ////
 	// //// JEXTabPanel interface
 	// ////
-	
+
 	@Override
 	public JPanel getMainPanel()
 	{
 		return this.importController.panel();
 	}
-	
+
 	@Override
 	public JPanel getLeftPanel()
 	{
 		return null;
 	}
-	
+
 	@Override
 	public JPanel getRightPanel()
 	{
 		return this.fileController;
 	}
-	
+
 	@Override
 	public void closeTab()
 	{
@@ -472,19 +519,19 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 		this.importController = null;
 		this.fileController = null;
 	}
-	
+
 	@Override
 	public int getFixedPanelWidth()
 	{
 		return this.fixedPanelWidth;
 	}
-	
+
 	@Override
 	public void setFixedPanelWidth(int width)
 	{
 		this.fixedPanelWidth = width;
 	}
-	
+
 	@Override
 	public double getResizeWeight()
 	{

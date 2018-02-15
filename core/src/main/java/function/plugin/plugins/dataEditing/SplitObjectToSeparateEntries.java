@@ -192,7 +192,7 @@ public class SplitObjectToSeparateEntries extends JEXPlugin {
 		theData = null;
 	}
 
-	public TreeMap<DimensionMap,Integer> getLookUpTable(String startPt, int rows, int cols, boolean horizontal, boolean snaking)
+	public static TreeMap<DimensionMap,Integer> getLookUpTable(String startPt, int rows, int cols, boolean horizontal, boolean snaking)
 	{
 		TreeMap<DimensionMap,Integer> ret = new TreeMap<>();
 		Vector<Integer> myRows = ImageStackStitcher.getIndices(rows, false);

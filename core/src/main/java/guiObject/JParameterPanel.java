@@ -48,7 +48,13 @@ public class JParameterPanel implements DocumentListener, ChangeListener, Action
 	public JParameterPanel(Parameter p)
 	{
 		this.p = p;
-		this.initialize();
+		this.initialize(140);
+	}
+	
+	public JParameterPanel(Parameter p, int rightWidth)
+	{
+		this.p = p;
+		this.initialize(rightWidth);
 	}
 	
 	public JPanel panel()
@@ -59,12 +65,12 @@ public class JParameterPanel implements DocumentListener, ChangeListener, Action
 	/**
 	 * initialize the entry
 	 */
-	private void initialize()
+	private void initialize(int minRightWidth)
 	{
 		// This
 		this.panel = new JPanel();
 		this.panel.setBackground(DisplayStatics.lightBackground);
-		this.panel.setLayout(new MigLayout("flowx, ins 0, hidemode 2", "[0:0,fill,grow][0:0,fill,140]", "[24,center]"));
+		this.panel.setLayout(new MigLayout("flowx, ins 0, hidemode 2", "[0:0,fill,grow][0:0,fill," + minRightWidth + "]", "[24,center]"));
 		
 		// GUI objects
 		this.fileButton = new JButton("...");
