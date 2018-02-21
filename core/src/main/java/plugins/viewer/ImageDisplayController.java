@@ -298,7 +298,10 @@ public class ImageDisplayController implements PaintComponentDelegate, MouseList
 			Point center = this.getDisplayPanelCenter();
 			// JEXStatics.loManager.log("Zooming to imagePt: " + imageCenter.x +
 			// "," + imageCenter.y, 0, this);
-			this.imageDelegate.setZoom(-1 * wheelUnits, this.imageDelegate.displayToImage(this.display, center));
+			if(Math.abs(wheelUnits) > 0)
+			{
+				this.imageDelegate.setZoom(-1 * wheelUnits, this.imageDelegate.displayToImage(this.display, center));
+			}
 		}
 		else if(!isVertical && !alt_option_command_pressed && !this.imageDelegate.getFitsInDestination()) // then
 		// horizontal
@@ -310,7 +313,7 @@ public class ImageDisplayController implements PaintComponentDelegate, MouseList
 			{
 				this.nudgeRight();
 			}
-			else
+			else if(wheelUnits < 0)
 			{
 				this.nudgeLeft();
 			}
@@ -325,7 +328,7 @@ public class ImageDisplayController implements PaintComponentDelegate, MouseList
 			{
 				this.nudgeUp();
 			}
-			else
+			else if(wheelUnits > 0)
 			{
 				this.nudgeDown();
 			}

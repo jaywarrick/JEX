@@ -1258,12 +1258,24 @@ public class ImageBrowser implements PlugInController {
 		inputs.put(stroke, "zoomIn");
 		stroke = KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS, KeyEvent.CTRL_DOWN_MASK, false);
 		inputs.put(stroke, "zoomIn");
+		stroke = KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS, 0, false);
+		inputs.put(stroke, "zoomIn");
+		stroke = KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS, KeyEvent.SHIFT_DOWN_MASK, false);
+		inputs.put(stroke, "zoomIn");
+		stroke = KeyStroke.getKeyStroke(KeyEvent.VK_PERIOD, 0, false);
+		inputs.put(stroke, "zoomIn");
 		actions.put("zoomIn", new ActionZoomIn(this));
 		
 		// Zoom Out action
 		stroke = KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, KeyEvent.META_DOWN_MASK, false);
 		inputs.put(stroke, "zoomOut");
 		stroke = KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, KeyEvent.CTRL_DOWN_MASK, false);
+		inputs.put(stroke, "zoomOut");
+		stroke = KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, 0, false);
+		inputs.put(stroke, "zoomOut");
+		stroke = KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, KeyEvent.SHIFT_DOWN_MASK, false);
+		inputs.put(stroke, "zoomOut");
+		stroke = KeyStroke.getKeyStroke(KeyEvent.VK_COMMA, 0, false);
 		inputs.put(stroke, "zoomOut");
 		actions.put("zoomOut", new ActionZoomOut(this));
 		
@@ -1492,11 +1504,8 @@ public class ImageBrowser implements PlugInController {
 		@Override
 		public void actionPerformed(ActionEvent e)
 		{
-			if(e.getActionCommand().equals("+"))
-			{
-				this.im.display.zoomIn();
-				Logs.log("Zoom In Signal", 0, this);
-			}
+			this.im.display.zoomIn();
+			Logs.log("Zoom In Signal", 0, this);
 		}
 	}
 	
