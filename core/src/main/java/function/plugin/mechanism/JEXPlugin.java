@@ -7,6 +7,7 @@ import Database.DBObjects.JEXEntry;
 import Database.Definition.Type;
 import cruncher.Ticket;
 import function.JEXCrunchable;
+import function.plugin.IJ2.IJ2CrunchablePlugin;
 import jex.statics.JEXStatics;
 import miscellaneous.Cancelable;
 import miscellaneous.Canceler;
@@ -69,5 +70,10 @@ public abstract class JEXPlugin implements SciJavaPlugin, Canceler, Cancelable {
 		//			return false;
 		//		}
 		//		return true;
+	}
+	
+	public static String saveAdjustedImage(String imagePath, double oldMin, double oldMax, double newMin, double newMax, double gamma, int bitDepth)
+	{
+		return IJ2CrunchablePlugin.saveAdjustedImage(imagePath, oldMin, oldMax, newMin, newMax, gamma, bitDepth);
 	}
 }

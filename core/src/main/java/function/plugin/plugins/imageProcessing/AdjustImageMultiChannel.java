@@ -1,6 +1,5 @@
 package function.plugin.plugins.imageProcessing;
 
-import java.io.File;
 import java.util.TreeMap;
 
 import org.scijava.plugin.Plugin;
@@ -16,10 +15,8 @@ import function.plugin.mechanism.MarkerConstants;
 import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
 import ij.ImagePlus;
-import ij.process.FloatProcessor;
 import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
-import jex.utilities.FunctionUtility;
 import logs.Logs;
 import miscellaneous.StringUtility;
 import tables.DimTable;
@@ -193,26 +190,26 @@ public class AdjustImageMultiChannel extends JEXPlugin {
 		}		
 	}
 	
-	public static String saveAdjustedImage(String imagePath, double oldMin, double oldMax, double newMin, double newMax, double gamma, int bitDepth)
-	{
-		// Get image data
-		File f = new File(imagePath);
-		if(!f.exists())
-		{
-			return null;
-		}
-		ImagePlus im = new ImagePlus(imagePath);
-		FloatProcessor imp = (FloatProcessor) im.getProcessor().convertToFloat(); // should be a float processor
-		
-		// Adjust the image
-		FunctionUtility.imAdjust(imp, oldMin, oldMax, newMin, newMax, gamma);
-		
-		// Save the results
-		ImagePlus toSave = FunctionUtility.makeImageToSave(imp, "false", bitDepth);
-		String imPath = JEXWriter.saveImage(toSave);
-		im.flush();
-		
-		// return the filepath
-		return imPath;
-	}
+	//	public static String saveAdjustedImage(String imagePath, double oldMin, double oldMax, double newMin, double newMax, double gamma, int bitDepth)
+	//	{
+	//		// Get image data
+	//		File f = new File(imagePath);
+	//		if(!f.exists())
+	//		{
+	//			return null;
+	//		}
+	//		ImagePlus im = new ImagePlus(imagePath);
+	//		FloatProcessor imp = (FloatProcessor) im.getProcessor().convertToFloat(); // should be a float processor
+	//		
+	//		// Adjust the image
+	//		FunctionUtility.imAdjust(imp, oldMin, oldMax, newMin, newMax, gamma);
+	//		
+	//		// Save the results
+	//		ImagePlus toSave = FunctionUtility.makeImageToSave(imp, "false", bitDepth);
+	//		String imPath = JEXWriter.saveImage(toSave);
+	//		im.flush();
+	//		
+	//		// return the filepath
+	//		return imPath;
+	//	}
 }

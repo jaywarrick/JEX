@@ -293,7 +293,7 @@ public class Exporter {
 			if(data == null)
 				continue;
 			Type datatype = data.getDataObjectType();
-			if(!type.equals("") && !type.equals(datatype))
+			if(!type.getType().equals("") && !type.equals(datatype))
 			{
 				Logs.log("All the types don't match... exiting", 1, this);
 				JEXStatics.statusBar.setStatusText("Export error");

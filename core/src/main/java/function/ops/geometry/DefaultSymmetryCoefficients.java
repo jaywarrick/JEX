@@ -22,7 +22,7 @@ import net.imglib2.roi.labeling.LabelRegion;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.util.ValuePair;
 
-@Plugin(type = JEXOps.SymmetryCoefficients.class, priority = Priority.NORMAL_PRIORITY)
+@Plugin(type = JEXOps.SymmetryCoefficients.class, priority = Priority.NORMAL)
 public class DefaultSymmetryCoefficients<T extends RealType<T>> extends AbstractBinaryFunctionOp<RandomAccessibleInterval<T>, LabelRegion<?>, TreeMap<String,Double>>
 implements JEXOps.SymmetryCoefficients {
 	

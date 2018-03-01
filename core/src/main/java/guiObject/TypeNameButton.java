@@ -26,6 +26,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.Popup;
 import javax.swing.SwingConstants;
 
+import Database.DBObjects.JEXData;
 import Database.Definition.TypeName;
 import jex.statics.JEXStatics;
 import jex.statics.OsVersion;
@@ -191,7 +192,7 @@ public class TypeNameButton extends JButton implements ActionListener, DragGestu
 	 */
 	public boolean isObjectAFunction()
 	{
-		if(this.objectTN.getType().equals("Function"))
+		if(this.objectTN.getType().equals(JEXData.FUNCTION_OLD))
 			return true;
 		return false;
 	}

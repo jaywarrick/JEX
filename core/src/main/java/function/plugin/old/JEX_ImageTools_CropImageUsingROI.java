@@ -14,7 +14,6 @@ import Database.Definition.TypeName;
 import Database.SingleUserDatabase.JEXWriter;
 import function.JEXCrunchable;
 import ij.ImagePlus;
-import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import image.roi.ROIPlus;
 import jex.statics.JEXStatics;
@@ -229,7 +228,7 @@ public class JEX_ImageTools_CropImageUsingROI extends JEXCrunchable {
 				return false;
 			}
 			
-			if(!filterTable.testMapAsExclusionFilter(map))
+			if(filterTable.testMapAsExclusionFilter(map))
 			{
 				count = count + 1;
 				JEXStatics.statusBar.setProgressPercentage(count * 100 / total);
@@ -245,7 +244,8 @@ public class JEX_ImageTools_CropImageUsingROI extends JEXCrunchable {
 				if(isLine)
 					return false;
 				imageP.setRoi(region.getRoi());
-				imageP = (FloatProcessor) imageP.crop().convertToFloat();
+				imageP = imageP.crop();
+				//imageP = (FloatProcessor) imageP.crop().convertToFloat();
 			}
 			actualPath = JEXWriter.saveImage(imageP);
 			outputMap.put(map, actualPath);

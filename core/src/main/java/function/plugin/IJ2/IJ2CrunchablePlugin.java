@@ -340,11 +340,12 @@ public class IJ2CrunchablePlugin extends JEXCrunchable {
 		FloatProcessor imp = (FloatProcessor) im.getProcessor().convertToFloat(); // should be a float processor
 		
 		// Adjust the image
-		FunctionUtility.imAdjust(imp, oldMin, oldMax, newMin, newMax, 1);
+		FunctionUtility.imAdjust(imp, oldMin, oldMax, newMin, newMax, gamma);
 		
 		// Save the results
-		ImagePlus toSave = FunctionUtility.makeImageToSave(imp, "false", bitDepth, gamma);
-		String imPath = JEXWriter.saveImage(toSave);
+		String imPath = JEXWriter.saveImage(imp, bitDepth);
+		//		ImagePlus toSave = FunctionUtility.makeImageToSave(imp, "false", bitDepth, gamma);
+		//		String imPath = JEXWriter.saveImage(toSave);
 		im.flush();
 		
 		// return temp filePath

@@ -40,6 +40,7 @@ public class RoiTrackWriter {
 		for (int trackkey: trackkeys)
 		{
 			// Get the roi
+			@SuppressWarnings("unlikely-arg-type")
 			RoiTrack track = tracks.get(trackkeys);
 			
 			// Get the roiplus list

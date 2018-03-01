@@ -4,11 +4,7 @@ import org.scijava.Priority;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
-import algorithms.MissingPreconditionException;
-import algorithms.PearsonsCorrelation;
-import algorithms.PearsonsCorrelation.Implementation;
 import function.plugin.plugins.featureExtraction.FeatureUtils;
-import gadgets.ThresholdMode;
 import net.imagej.ops.Ops;
 import net.imagej.ops.special.function.AbstractBinaryFunctionOp;
 import net.imglib2.Cursor;
@@ -20,7 +16,7 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.util.Pair;
 
-@Plugin(type = Ops.Stats.PearsonsCorrelationCoefficient.class, priority = Priority.NORMAL_PRIORITY)
+@Plugin(type = Ops.Stats.PearsonsCorrelationCoefficient.class, priority = Priority.NORMAL)
 public class DefaultPearsonsCorrelationCoefficient<I1 extends RealType<I1>> extends AbstractBinaryFunctionOp<Pair<RandomAccessibleInterval<I1>, RandomAccessibleInterval<I1>>, Cursor<Void>, DoubleType>
 implements Ops.Stats.PearsonsCorrelationCoefficient {
 	
@@ -36,7 +32,7 @@ implements Ops.Stats.PearsonsCorrelationCoefficient {
 	{
 		try
 		{
-			PearsonsCorrelation<I1> pc = new PearsonsCorrelation<>(Implementation.Classic);
+			sc.fiji.coloc.algorithms.PearsonsCorrelation<I1> pc = new sc.fiji.coloc.algorithms.PearsonsCorrelation<>(sc.fiji.coloc.algorithms.PearsonsCorrelation.Implementation.Classic);
 			if(imMean1 == null)
 			{
 				imMean1 = ImageStatistics.getImageMean(input1.getA());
@@ -51,10 +47,10 @@ implements Ops.Stats.PearsonsCorrelationCoefficient {
 					input1.getA().randomAccess(),
 					input1.getB().randomAccess(),
 					c);
-			double r = pc.calculatePearsons(cursor, imMean1, imMean2, null, null, ThresholdMode.None);
+			double r = pc.calculatePearsons(cursor, imMean1, imMean2, null, null, sc.fiji.coloc.gadgets.ThresholdMode.None);
 			return new DoubleType(r);
 		} 
-		catch (MissingPreconditionException e)
+		catch (sc.fiji.coloc.algorithms.MissingPreconditionException e)
 		{
 			e.printStackTrace();
 			return new DoubleType(Double.NaN);

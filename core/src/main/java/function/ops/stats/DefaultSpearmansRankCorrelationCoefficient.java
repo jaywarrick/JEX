@@ -14,8 +14,9 @@ import net.imglib2.type.logic.BitType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.util.Pair;
+import sc.fiji.coloc.algorithms.SpearmanRankCorrelation;
 
-@Plugin(type = JEXOps.SpearmansRankCorrelationCoefficient.class, priority = Priority.NORMAL_PRIORITY)
+@Plugin(type = JEXOps.SpearmansRankCorrelationCoefficient.class, priority = Priority.NORMAL)
 public class DefaultSpearmansRankCorrelationCoefficient<I1 extends RealType<I1>> extends AbstractBinaryFunctionOp<Pair<RandomAccessibleInterval<I1>, RandomAccessibleInterval<I1>>, Cursor<Void>, DoubleType>
 implements JEXOps.SpearmansRankCorrelationCoefficient {
 
@@ -68,7 +69,8 @@ implements JEXOps.SpearmansRankCorrelationCoefficient {
 	public static synchronized <T extends RealType<T>, C extends Cursor<T> & PairIterator<T>> double calculateSpearmanRankSynchronized(C c)
 	{
 		double[][] data = getPairedData(c);
-		double r = algorithms.SpearmanRankCorrelation.calculateSpearmanRank(data);
+		SpearmanRankCorrelation<DoubleType> sc = new SpearmanRankCorrelation<>();
+		double r = sc.calculateSpearmanRank(data);
 		return r;
 	}
 

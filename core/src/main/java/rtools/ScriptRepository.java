@@ -8,6 +8,7 @@ import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.Vector;
 
 import org.apache.commons.exec.CommandLine;
@@ -107,7 +108,7 @@ public class ScriptRepository {
 					}
 					else
 					{
-						Logs.log(outputStream.toString(), ScriptRepository.class);
+						Logs.log(outputStream.toString(Charset.defaultCharset()), ScriptRepository.class);
 					}
 				}
 			}
