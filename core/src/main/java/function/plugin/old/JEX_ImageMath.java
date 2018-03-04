@@ -144,8 +144,10 @@ public class JEX_ImageMath extends JEXCrunchable {
 		// String[] {"true"},0);
 		
 		Parameter p1 = new Parameter("Operation", "Choose the type of differential operation to perform", Parameter.DROPDOWN, operations, 0);
-		Parameter p2 = new Parameter("Variable", "Variable of the calculation (e.g. how much to add or multiply by, some don't need this like log and exp)", "0");
+		Parameter p2 = new Parameter("Variable", "Variable of the calculation (e.g. how much to add or multiply by, some don't need this like log and exp)", "1");
 		Parameter p3 = new Parameter("Output Bit Depth", "Choose the type of differential operation to perform", Parameter.DROPDOWN, new String[] { "8", "16", "32" }, 2);
+		Parameter p4 = new Parameter("Add 1 before Log?", "Choose the type of differential operation to perform", Parameter.CHECKBOX, true);
+		Parameter p5 = new Parameter("Post-multiply Log by Variable?", "Choose the type of differential operation to perform", Parameter.CHECKBOX, true);
 		
 		// Make an array of the parameters and return it
 		ParameterSet parameterArray = new ParameterSet();
@@ -153,6 +155,8 @@ public class JEX_ImageMath extends JEXCrunchable {
 		parameterArray.addParameter(p1);
 		parameterArray.addParameter(p2);
 		parameterArray.addParameter(p3);
+		parameterArray.addParameter(p4);
+		parameterArray.addParameter(p5);
 		
 		return parameterArray;
 	}
@@ -197,6 +201,9 @@ public class JEX_ImageMath extends JEXCrunchable {
 		double var = Double.parseDouble(this.parameters.getValueOfParameter("Variable"));
 		String op = this.parameters.getValueOfParameter("Operation");
 		int bitDepth = Integer.parseInt(this.parameters.getValueOfParameter("Output Bit Depth"));
+		boolean add1 = Boolean.parseBoolean(this.parameters.getValueOfParameter("Add 1 before Log?"));
+		boolean postMult = Boolean.parseBoolean(this.parameters.getValueOfParameter("Post-multiply Log by Variable?"));
+		
 		
 		// Run the function
 		TreeMap<DimensionMap,String> imageMap = ImageReader.readObjectToImagePathTable(imageData);
@@ -222,7 +229,15 @@ public class JEX_ImageMath extends JEXCrunchable {
 			}
 			if(op.equals("LOG"))
 			{
+				if(add1)
+				{
+					imp.add(1);
+				}
 				imp.log();
+				if(postMult)
+				{
+					imp.multiply(var);
+				}
 			}
 			if(op.equals("EXP"))
 			{

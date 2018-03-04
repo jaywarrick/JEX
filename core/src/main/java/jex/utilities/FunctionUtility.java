@@ -15,6 +15,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
+import Database.SingleUserDatabase.JEXWriter;
 import miscellaneous.LSVList;
 
 public class FunctionUtility {
@@ -26,7 +27,8 @@ public class FunctionUtility {
 		if(normalize)
 		{
 			ims = ImageStatistics.getStatistics(imp, Measurements.MIN_MAX, null);
-			FunctionUtility.normalizeScaleFloat(imp, Math.pow(2, bitDepth) - 1, ims.min, ims.max);
+			FunctionUtility.imAdjust(imp, ims.min, ims.max, 0, 1, 1);
+//			FunctionUtility.normalizeScaleFloat(imp, Math.pow(2, bitDepth) - 1, ims.min, ims.max);
 			imp.resetMinAndMax();
 		}
 		else if(multiplier != 1.0)
@@ -72,7 +74,8 @@ public class FunctionUtility {
 			if(Norm_Scale.equals("true"))
 			{
 				ims = ImageStatistics.getStatistics(imp, Measurements.MIN_MAX, null);
-				FunctionUtility.normalizeScaleFloat(imp, 1, ims.min, ims.max);
+				FunctionUtility.imAdjust(imp, ims.min, ims.max, 0, 1, gamma);
+				//FunctionUtility.normalizeScaleFloat(imp, 1, ims.min, ims.max);
 				NormScaleB = true;
 			}
 			else if(Norm_Scale.equals("false"))
@@ -104,7 +107,7 @@ public class FunctionUtility {
 			newImp = imp;
 		}
 		
-		newImp.gamma(gamma);
+//		newImp.gamma(gamma);
 		ImagePlus result = new ImagePlus("", newImp);
 		return result;
 	}
@@ -213,29 +216,29 @@ public class FunctionUtility {
 	// imFS.saveAsTiff(fullPath);
 	// }
 	
-	public static void normalizeScaleFloat(FloatProcessor ip, double newMax, double min, double max)
-	{
-		double ratio = newMax / (max - min);
-		int size = ip.getWidth() * ip.getHeight();
-		float[] pixels = (float[]) ip.getPixels();
-		double v;
-		for (int i = 0; i < size; i++)
-		{
-			v = pixels[i] - min;
-			if(v < 0.0)
-			{
-				v = 0.0;
-			}
-			v *= ratio;
-			if(v > newMax)
-			{
-				v = newMax;
-			}
-			pixels[i] = (float) v;
-		}
-		ip.setPixels(pixels);
-		ip.resetMinAndMax();
-	}
+//	public static void normalizeScaleFloat(FloatProcessor ip, double newMax, double min, double max)
+//	{
+//		double ratio = newMax / (max - min);
+//		int size = ip.getWidth() * ip.getHeight();
+//		float[] pixels = (float[]) ip.getPixels();
+//		double v;
+//		for (int i = 0; i < size; i++)
+//		{
+//			v = pixels[i] - min;
+//			if(v < 0.0)
+//			{
+//				v = 0.0;
+//			}
+//			v *= ratio;
+//			if(v > newMax)
+//			{
+//				v = newMax;
+//			}
+//			pixels[i] = (float) v;
+//		}
+//		ip.setPixels(pixels);
+//		ip.resetMinAndMax();
+//	}
 	
 	/**
 	 * Untested at moment
@@ -390,7 +393,7 @@ public class FunctionUtility {
 			}
 			if(imp instanceof ShortProcessor)
 			{
-				ip = ip.convertToByteProcessor(false);
+				ip = ip.convertToShortProcessor(false);
 				imp.setPixels(ip.getPixels());
 			}
 		}

@@ -1,11 +1,20 @@
 package function.plugin.plugins.test;
 
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.awt.geom.Ellipse2D;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Vector;
+
+import javax.swing.JFrame;
+
+import org.apache.commons.math3.complex.Complex;
+import org.jtransforms.dct.DoubleDCT_1D;
+import org.jtransforms.fft.DoubleFFT_1D;
+import org.python.modules.math;
 
 import function.algorithm.neighborhood.EdgeCursor;
 import function.algorithm.neighborhood.Indexer;
@@ -29,6 +38,7 @@ import logs.Logs;
 import miscellaneous.DirectoryManager;
 import miscellaneous.FileUtility;
 import miscellaneous.Pair;
+import miscellaneous.StatisticsUtility;
 import net.imagej.ops.Ops;
 import net.imagej.ops.features.zernike.helper.ZernikeMoment;
 import net.imagej.ops.geom.geom2d.Circle;
@@ -64,14 +74,366 @@ public class TestStuff {
 	
 	static
 	{
-		//DirectoryManager.setHostDirectory("/Users/jaywarrick/Downloads");
-		DirectoryManager.setHostDirectory("C:/Users/User/Downloads");
+		DirectoryManager.setHostDirectory("/Users/jaywarrick/Downloads");
+		//DirectoryManager.setHostDirectory("C:/Users/User/Downloads");
 	}
 
 	public static void main (String[] args) throws Exception
 	{
-		tryTroubleImageModeFinding2();
+		tryScrollStuff();
 	}	
+	
+	public static void tryScrollStuff()
+	{
+        JFrame frame = new JFrame();
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(200,200);
+        frame.addMouseWheelListener(new MouseWheelListener() {
+
+            @Override
+            public void mouseWheelMoved(MouseWheelEvent event) {
+                if (event.isShiftDown()) {
+                    System.err.println("Horizontal " + event.getWheelRotation());
+                } else {
+                    System.err.println("Vertical " + event.getWheelRotation());                    
+                }
+            }
+        });
+        frame.setVisible(true);
+    }
+	
+	public static void tryDCTStuff()
+	{
+		int n = 100;
+		int N = 2*n;
+		double[] x = seq(0, n-1, 1);
+		double[] x2 = seq(0, N-1, 1);
+		
+		double[] y = new double[n];
+		for(int i = 0; i < n; i++)
+		{
+			y[i] = math.cos(x[i]*8*Math.PI/max(x));
+		}
+		
+		double[] y2 = mirror(y);
+		double[] ydct = dct(y, true, false);
+		
+		Complex[] Ak = getAk(n);
+		double[] yfftD = fft(y2, false);
+		Complex[] yfft = convertToComplex2(yfftD);
+		for(int i = 0; i < yfft.length; i++)
+		{
+			yfft[i] = yfft[i].multiply(Ak[i]);
+		}
+		yfftD = new double[n];
+		System.arraycopy(Re(yfft), 0, yfftD, 0, n);
+		double[] y_idct_fft = dct(yfftD, true, true);
+		
+//		for(int i = 0; i < y.length; i++)
+//		{
+//			System.out.println("y: " + y[i] + "\t=\t" + y_idct_fft[i] + " :y_idct_fft");
+//		}
+		double[] err = err(y, y_idct_fft);
+		for(double e : err)
+		{
+			System.out.println(e);
+		}
+		
+		
+		System.out.println("\n\n");
+		
+		System.out.println("dct/fft = " + max(ydct) / max(Re(yfft)));
+		
+		System.out.println("\n\n");
+		
+		err = err(ydct, Re(yfft));
+		for(double e : err)
+		{
+			System.out.println(e);
+		}
+		
+//		// Now calculate gradients via FFT
+//		y.grad <- -8*pi/max(x)*sin(x*8*pi/max(x))
+//		y.grad <- c(y.grad, rev(y.grad))
+		
+		//(max(y.dct) / max(Mod(y.fft))) 
+		
+		//y.idct <- dct(y.dct, inverted=T)
+		
+//		DoubleFFT_1D fft = new DoubleFFT_1D(n);
+//		fft.realForward(f); 
+//		System.out.println("\n\n\n");
+//		for(int i = 0; i < n; i = i + 2)
+//		{
+//			System.out.println(Math.sqrt(f[i]*f[i] + f[i+1]*f[i+1]));
+//		}
+//		System.out.println("\n\n\n");
+//		for(int k = 0; k < n; k++)
+//		{
+//			// 2*pi*j*k/a for k = 0...n-1
+//			double Re = fbar[2*k];
+//			double Im = fbar[2*k + 1];
+//			double factor = 2*Math.PI*k/a;
+//			double newRe = -Im*factor;
+//			double newIm = Re*factor;
+//			fbar[2*k] = newRe;
+//			fbar[2*k + 1] = newIm;
+//		}
+//		fft.realInverse(fbar, true);
+//		for(int i = 0; i < 2*n; i++)
+//		{
+//			System.out.println(fbar[i]);
+//		}
+//		System.out.println("\n\n\n");
+//		for(int i = 0; i < n; i++)
+//		{
+//			System.out.println(f[i]);
+//		}
+//		
+		
+//		FloatProcessor fp = (new ImagePlus("/Users/jaywarrick/Desktop/Test.tif")).getProcessor().convertToFloatProcessor();
+//		FloatProcessor fp2 = new FloatProcessor(2*fp.getWidth(), 2*fp.getHeight());
+//		fp2.copyBits(fp, 0, 0, Blitter.COPY);
+//		fp.flipHorizontal();
+//		fp2.copyBits(fp, fp.getWidth(), 0, Blitter.COPY);
+//		fp.flipVertical();
+//		fp2.copyBits(fp, fp.getWidth(), fp.getHeight(), Blitter.COPY);
+//		fp.flipHorizontal();
+//		fp2.copyBits(fp, 0, fp.getHeight(), Blitter.COPY);
+//		ByteProcessor bp = fp2.convertToByteProcessor(false);
+//		FileUtility.showImg(bp, true);
+//		float[][] pix = fp2.getFloatArray();
+//		int rs = fp2.getHeight();
+//		int cs = fp2.getWidth();
+//		for(int r = 0; r < rs; r++)
+//		{
+//			
+//		}
+//		
+		
+		
+//		FloatFFT_2D fft = new FloatFFT_2D(fp.getHeight(), fp.getWidth());
+//		FloatDCT_2D dct = new FloatDCT_2D(fp.getHeight(), fp.getWidth());
+//		fft.forward(pix, true);
+//		int N = pix.length;
+//		double[] Fbar = new double[2*N];
+//		for(int k = 0; k < N; k++)
+//		{
+//			double temp = 2*Math.PI*k
+//			Fbar[k] = -(2*Math.PI*k)*(2*Math.PI*k)
+//		}
+	}
+	
+	private static double[] err(double[] a, double[] b)
+	{
+		if(a.length != b.length)
+		{
+			return null;
+		}
+		double[] ret = new double[a.length];
+		for(int i = 0; i < a.length; i++)
+		{
+			ret[i] = a[i] - b[i];
+		}
+		return ret;
+	}
+	
+	private static double[] Mod(Complex[] x)
+	{
+		double[] ret = new double[x.length];
+		for(int i = 0; i < x.length; i++)
+		{
+			ret[i] = x[i].abs();
+		}
+		return ret;
+	}
+	
+	private static double[] Re(Complex[] x)
+	{
+		double[] ret = new double[x.length];
+		for(int i = 0; i < x.length; i++)
+		{
+			ret[i] = x[i].getReal();
+		}
+		return ret;
+	}
+	
+	private static double[] Im(Complex[] x)
+	{
+		double[] ret = new double[x.length];
+		for(int i = 0; i < x.length; i++)
+		{
+			ret[i] = x[i].getImaginary();
+		}
+		return ret;
+	}
+	
+	/**
+	 * Take a double array that is [Re, Im, Re, Im ...] and convert to [Complex, Complex] of half the length
+	 * @param x
+	 * @return
+	 */
+	private static Complex[] convertToComplex2(double[] x)
+	{
+		Complex[] ret = new Complex[x.length/2];
+		for(int i = 0; i < x.length; i = i + 2)
+		{
+			ret[i/2] = new Complex(x[i], x[i+1]);
+		}
+		return ret;
+	}
+	
+	private static double[] convertToDouble2(Complex[] x)
+	{
+		double[] ret = new double[2*x.length];
+		for(int i = 0; i < 2*x.length; i = i + 2)
+		{
+			ret[i] = x[i/2].getReal();
+			ret[i+1] = x[i/2].getImaginary();
+		}
+		return ret;
+	}
+	
+	private static Complex[] getAk(int n)
+	{
+		double[] retk = seq(0,n-1,1);
+		Complex[] ret = new Complex[n];
+		for(int i = 0; i < n; i++)
+		{
+			//Complex Ak = (new Complex(0, Math.PI*retk[i]/(2*n))).exp();
+			Complex Ak = new Complex( Math.cos(-1*Math.PI*retk[i]/(2*n)), Math.sin(-1*Math.PI*retk[i]/(2*n)) );
+			ret[i] = Ak.multiply(1 / Math.sqrt(2*n));
+		}
+		ret[0] = ret[0].multiply(Math.sqrt(2)/2);// / (1+ Math.sqrt(n)));
+		return ret;
+	}
+	
+	private static void mult(double[] x, double factor)
+	{
+		for(int i = 0; i < x.length; i++)
+		{
+			x[i] = x[i] * factor;
+		}
+	}
+	
+	private static double[] fft(double[] x, boolean invert)
+	{
+		DoubleFFT_1D fft = new DoubleFFT_1D(x.length);
+		double[] xfft = new double[x.length];
+		System.arraycopy(x, 0, xfft, 0, x.length);
+		if(invert)
+		{
+			fft.realInverse(xfft, false);
+		}
+		else
+		{
+			fft.realForward(xfft, 0);
+		}
+		return xfft;
+	}
+	
+	private static double[] dct(double[] x, boolean scale, boolean invert)
+	{
+		DoubleDCT_1D dct = new DoubleDCT_1D(x.length);
+		double[] xdct = new double[x.length];
+		System.arraycopy(x, 0, xdct, 0, x.length);
+		if(invert)
+		{
+			dct.inverse(xdct, scale);
+		}
+		else
+		{
+			dct.forward(xdct, scale);
+		}
+		return xdct;
+	}
+	
+	private static double[] seq(double start, double end, double by)
+	{
+		int N = (int) (end-start/by) + 1;
+		double[] ret = new double[N];
+		double x = start;
+		for(int i = 0; i < N; i++)
+		{
+			ret[i] = x;
+			x = x + by;
+		}
+		return ret;
+	}
+	
+	private static double[] seq(int start, int end, int by)
+	{
+		int N = (int) (end-start/by) + 1;
+		double[] ret = new double[N];
+		double x = start;
+		for(int i = 0; i < N; i++)
+		{
+			ret[i] = x;
+			x = x + by;
+		}
+		return ret;
+	}
+	
+	private static Complex[] mirror(Complex[] x)
+	{
+		Complex[] ret = new Complex[2*x.length];
+		for(int i = 0; i < x.length; i++)
+		{
+			ret[i] = x[i];
+			ret[(ret.length-1)-i] = ret[i].multiply(-1.0);
+		}
+		return ret;
+	}
+	
+	private static double[] mirror(double[] x)
+	{
+		double[] ret = new double[2*x.length];
+		for(int i = 0; i < x.length; i++)
+		{
+			ret[i] = x[i];
+			ret[(ret.length-1)-i] = ret[i];
+		}
+		return ret;
+	}
+	
+	private static double max(double[] x)
+	{
+		return StatisticsUtility.max(x);
+	}
+	
+	private static float[] getCol(int c, float[][] data)
+	{
+		return data[c];
+	}
+	
+	private static float[] getRow(int r, float[][] data)
+	{
+		float[] ret = new float[data.length];
+		for(int i = 0; i < data.length; i++)
+		{
+			ret[i] = data[i][r];
+		}
+		return ret;
+	}
+	
+	public static void tryForLoops()
+	{
+		int sum = 0;
+		for(int u = 0; u < 2048; u++)
+		{
+			for(int v = 0; v < 2048; v++)
+			{
+				for(int x = 0; x < 2048; x++)
+				{
+					for(int y = 0; y < 2048; y++)
+					{
+						sum = sum + 1;
+					}
+				}
+			}
+		}
+		System.out.println(sum);
+	}
 	
 	public static void tryTroubleImageModeFinding2()
 	{

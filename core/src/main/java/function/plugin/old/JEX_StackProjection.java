@@ -216,6 +216,7 @@ public class JEX_StackProjection extends JEXCrunchable {
 		int slidingWindowSize = Integer.parseInt(parameters.getValueOfParameter("N"));
 		String exclusionFilterString = parameters.getValueOfParameter("Exclusion Filter DimTable");
 		DimTable filterTable = new DimTable(exclusionFilterString);
+		boolean floating = Boolean.parseBoolean("32-bit Output?");
 
 		// Run the function
 		Dim dimToProject = originalDimTable.getDimWithName(dimName);
@@ -245,6 +246,10 @@ public class JEX_StackProjection extends JEXCrunchable {
 					}
 					
 					List<DimensionMap> stackMaps = this.getSomeStackMaps(map, dimToProject, slidingWindowSize, i, filterTable);
+					if(stackMaps.size() == 0)
+					{
+						continue;
+					}
 
 					ImageProcessor finalImp = null;
 					if(mathOperation.equals(METHOD_DIFF))
@@ -323,22 +328,31 @@ public class JEX_StackProjection extends JEXCrunchable {
 		String pathToGet = ImageReader.readImagePath(image.getData(stack.get(0)));
 		ImageProcessor initial = (new ImagePlus(pathToGet)).getProcessor();
 		int bitDepth = initial.getBitDepth();
+		initial = initial.convertToFloatProcessor();		
 		pathToGet = ImageReader.readImagePath(image.getData(stack.get(stack.size()-1)));
 		ImageProcessor ret = (new ImagePlus(pathToGet)).getProcessor();
-		Blitter b = null;
-		if(bitDepth == 8)
-		{
-			b = new ByteBlitter((ByteProcessor) ret);
-		}
-		else if(bitDepth == 16)
-		{
-			b = new ShortBlitter((ShortProcessor) ret);
-		}
-		else if(bitDepth == 32)
-		{
-			b = new FloatBlitter((FloatProcessor) ret);
-		}
+		ret = ret.convertToFloatProcessor();
+		Blitter b = new FloatBlitter((FloatProcessor) ret);
+//		Blitter b = null;
+//		if(bitDepth == 8)
+//		{
+//			b = new ByteBlitter((ByteProcessor) ret);
+//		}
+//		else if(bitDepth == 16)
+//		{
+//			b = new ShortBlitter((ShortProcessor) ret);
+//		}
+//		else if(bitDepth == 32)
+//		{
+//			b = new FloatBlitter((FloatProcessor) ret);
+//		}
 		b.copyBits(initial, 0, 0, Blitter.SUBTRACT);
+		ret.resetMinAndMax();
+		if(ret.getMin() < 0)
+		{
+			return ret;
+		}
+		ret = JEXWriter.convertToBitDepthIfNecessary(ret, bitDepth);
 		return ret;
 	}
 
