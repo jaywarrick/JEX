@@ -44,6 +44,12 @@ public class JEXReader {
 		return ret;
 	}
 
+	/**
+	 * Read in and image and convert it to float and wrap in Img<FloatType>
+	 * @param path
+	 * @param offset
+	 * @return
+	 */
 	public synchronized static Img<FloatType> getSingleFloatImage(String path, Double offset)
 	{
 		Logs.log("Opening image - " + path, JEXReader.class);
