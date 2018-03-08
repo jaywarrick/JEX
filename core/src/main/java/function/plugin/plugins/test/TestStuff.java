@@ -25,6 +25,7 @@ import function.ops.histogram.PolynomialRegression;
 import function.ops.zernike.ZernikeComputer;
 import function.plugin.IJ2.IJ2PluginUtility;
 import function.plugin.plugins.featureExtraction.FeatureUtils;
+import function.plugin.plugins.imageProcessing.TIECalculator;
 import ij.ImagePlus;
 import ij.process.FloatProcessor;
 import ij.process.ImageStatistics;
@@ -74,14 +75,31 @@ public class TestStuff {
 	
 	static
 	{
-		DirectoryManager.setHostDirectory("/Users/jaywarrick/Downloads");
+		DirectoryManager.setHostDirectory("/Users/jwarrick/Downloads");
 		//DirectoryManager.setHostDirectory("C:/Users/User/Downloads");
 	}
 
 	public static void main (String[] args) throws Exception
 	{
-		tryScrollStuff();
+		tryTIEStuff();
 	}	
+	
+	public static void tryTIEStuff()
+	{
+		String pathI = "/Users/jwarrick/Documents/Miyamoto/Projects/QPI/JEX Output/Phase Recovery/Image - Image (BG)/x0_y0_Channel1_Z5.tif";
+		String pathLo = "/Users/jwarrick/Documents/Miyamoto/Projects/QPI/JEX Output/Phase Recovery/Image - Image (BG)/x0_y0_Channel1_Z3.tif";
+		String pathHi = "/Users/jwarrick/Documents/Miyamoto/Projects/QPI/JEX Output/Phase Recovery/Image - Image (BG)/x0_y0_Channel1_Z7.tif";
+		FloatProcessor fpI = (new ImagePlus(pathI)).getProcessor().convertToFloatProcessor();
+		FloatProcessor fpLo = (new ImagePlus(pathLo)).getProcessor().convertToFloatProcessor();
+		FloatProcessor fpHi = (new ImagePlus(pathHi)).getProcessor().convertToFloatProcessor();
+		
+		// TIECalculator(int imWidth, int imHeight, float regularization, float threshold, float magnification, float pixelSizeInMicrons, float dzInMicrons, float wavelengthInNanometers)
+		TIECalculator tie = new TIECalculator(fpI.getWidth(), fpI.getHeight(), 0.4f, 0.001f, 20f, 6.450f, 4f, 600f, true);
+		
+		FloatProcessor ret = tie.calculatePhase(fpI, fpLo, fpHi);
+		FileUtility.showImg(ret, true);
+		
+	}
 	
 	public static void tryScrollStuff()
 	{
