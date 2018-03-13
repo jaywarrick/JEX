@@ -59,22 +59,22 @@ public class FindAndReplaceInFileNames extends JEXPlugin {
 	@ParameterMarker(uiOrder=2, name="File extension", description="Changes only those with a matching file extension (excluding '.' character)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="tif")
 	String extension;
 
-	@ParameterMarker(uiOrder=3, name="Split String", description="What string of characters should be used to split up the filename first? (leave blank to skip)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
+	@ParameterMarker(uiOrder=3, name="Split String", description="What string of characters should be used to split up the filename first? (leave blank to skip). Set to blank to add prefix or suffix.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
 	String splitString;
 
 	@ParameterMarker(uiOrder=4, name="Split Index", description="If split, which split should be searched to perform find/replace? (0 is the index of the first split, then 1, ...)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0")
 	int splitIndex;
 
-	@ParameterMarker(uiOrder=5, name="Skip/Keep first N characters (prefix)", description="The number of characters to skip/keep at beginning of name during find/replace. Use '*' to skip/keep all. This takes precedence over skipping all end characters.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="*")
+	@ParameterMarker(uiOrder=5, name="Skip/Keep first N characters (prefix)", description="The number of characters to skip/keep at beginning of name during find/replace. Use '*' to skip/keep all. This takes precedence over skipping all end characters. Set to 0 to add prefix. Set to * to add suffix.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="*")
 	String N;
 
-	@ParameterMarker(uiOrder=6, name="Skip/Keep last M characters (suffix)", description="The number of characters to skip/keep at beginning of name(or portion of the split file name) during find/replace. Use '*' to skip/keep all end characters unless '*' is specified for the skip/keep parameter for the beginnning of the String.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="*")
+	@ParameterMarker(uiOrder=6, name="Skip/Keep last M characters (suffix)", description="The number of characters to skip/keep at end of name(or portion of the split file name) during find/replace. Use '*' to skip/keep all end characters unless '*' is specified for the skip/keep parameter for the beginnning of the String. Set to * to add prefix. Set to 0 to add suffix.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="*")
 	String M;
 
-	@ParameterMarker(uiOrder=7, name="Old String", description="What string of characters should be found? Use '*' to replace all characters between the specified beginning and ending characters.", ui=MarkerConstants.UI_FILECHOOSER, defaultText="_")
+	@ParameterMarker(uiOrder=7, name="Old String", description="What string of characters should be found? Set to * to add prefix or suffix. Use '*' to replace all characters between the specified beginning and ending characters.", ui=MarkerConstants.UI_FILECHOOSER, defaultText="_")
 	String oldMiddle;
 
-	@ParameterMarker(uiOrder=8, name="New String", description="If found, what string of characters should be used to replace the old string of characters?", ui=MarkerConstants.UI_FILECHOOSER, defaultText=".")
+	@ParameterMarker(uiOrder=8, name="New String", description="If found, what string of characters should be used to replace the old string of characters? (Also used for adding prefix or suffix)", ui=MarkerConstants.UI_FILECHOOSER, defaultText=".")
 	String newMiddle;
 
 	/////////// Define Outputs ///////////
