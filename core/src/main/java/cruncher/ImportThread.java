@@ -17,6 +17,8 @@ public class ImportThread implements Callable<Object> {
 	Type objectType; 
 	TreeMap<JEXEntry,TreeMap<DimensionMap,String>> dataArray;
 	TreeMap<JEXEntry,JEXData> toAdd = new TreeMap<JEXEntry,JEXData>();
+	Double overlap = 0.0d;
+	int rows = 1, cols = 1;
 	
 	public ImportThread(String objectName, Type objectType, String objectInfo, TreeMap<JEXEntry,TreeMap<DimensionMap,String>> dataArray)
 	{
@@ -33,6 +35,13 @@ public class ImportThread implements Callable<Object> {
 		this.objectInfo = objectInfo;
 		this.dataArray = new TreeMap<JEXEntry,TreeMap<DimensionMap,String>>();
 		this.dataArray.put(entry, dataArray);
+	}
+	
+	public void setTileParameters(double overlap, int rows, int cols)
+	{
+		this.overlap = new Double(overlap);
+		this.rows = rows;
+		this.cols = cols;
 	}
 	
 	public ImportThread call() throws Exception
@@ -53,7 +62,15 @@ public class ImportThread implements Callable<Object> {
 			
 			if(objectType.equals(JEXData.IMAGE))
 			{
-				JEXData data = ImageWriter.makeImageStackFromPaths(objectName, files2Drop2);
+				JEXData data = null;
+				if(this.overlap <= 0.0d)
+				{
+					data = ImageWriter.makeImageStackFromPaths(objectName, files2Drop2);
+				}
+				else
+				{
+					data = ImageWriter.makeImageTilesFromPaths(objectName, files2Drop2, this.overlap, this.rows, this.cols);
+				}
 				data.setDataObjectInfo(objectInfo);
 				toAdd.put(entry, data);
 			}

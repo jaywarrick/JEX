@@ -60,6 +60,10 @@ public class JEXDistributionRightPanel extends JPanel implements ActionListener 
 	private JParameterPanel firstMove = new JParameterPanel(new Parameter("First Indexing Direction", "Choose which way to 'move' first when indexing to the next array location.", Parameter.DROPDOWN, new String[]{"Horizontal","Vertical"}), 100);
 	private JParameterPanel snaking = new JParameterPanel(new Parameter("Snaking?", "Choose if indexing should be done in a snaking pattern.", Parameter.CHECKBOX, false), 20);
 
+	private JParameterPanel overlap = new JParameterPanel(new Parameter("Tile Percent Overlap", "If set to > 0 & Type == Image, then the image will be broken into tiles assuming the provided percent overlap.", Parameter.TEXTFIELD, "0.0"), 100);
+	private JParameterPanel rows = new JParameterPanel(new Parameter("Tile Rows", "How many rows of tiles are there per image.", Parameter.TEXTFIELD, "1"), 100);
+	private JParameterPanel cols = new JParameterPanel(new Parameter("Tile Cols", "How many cols of tiles are there per image.", Parameter.TEXTFIELD, "1"), 100);
+
 	JEXDistributionRightPanel(JEXDistributionPanelController parentController)
 	{
 		this.parentController = parentController;
@@ -134,6 +138,14 @@ public class JEXDistributionRightPanel extends JPanel implements ActionListener 
 		this.add(this.firstMove.panel(), "growx");
 		this.snaking.panel().setMinimumSize(new Dimension(10, minHeight));
 		this.add(this.snaking.panel(), "growx");
+
+		// Make the distribution direction buttons.
+		this.overlap.panel().setMinimumSize(new Dimension(10, minHeight));
+		this.add(this.overlap.panel(), "growx");
+		this.rows.panel().setMinimumSize(new Dimension(10, minHeight));
+		this.add(this.rows.panel(), "growx");
+		this.cols.panel().setMinimumSize(new Dimension(10, minHeight));
+		this.add(this.cols.panel(), "growx");
 
 		// Make the deal button
 		viewResultButton.addActionListener(this);
@@ -220,6 +232,14 @@ public class JEXDistributionRightPanel extends JPanel implements ActionListener 
 		this.snaking.panel().setMinimumSize(new Dimension(10, minHeight));
 		this.add(this.snaking.panel(), "growx");
 
+		// Make the distribution direction buttons.
+		this.overlap.panel().setMinimumSize(new Dimension(10, minHeight));
+		this.add(this.overlap.panel(), "growx");
+		this.rows.panel().setMinimumSize(new Dimension(10, minHeight));
+		this.add(this.rows.panel(), "growx");
+		this.cols.panel().setMinimumSize(new Dimension(10, minHeight));
+		this.add(this.cols.panel(), "growx");
+
 		// Make the deal button
 		this.add(viewResultButton, "growx");
 
@@ -292,6 +312,21 @@ public class JEXDistributionRightPanel extends JPanel implements ActionListener 
 		return this.startPt.getValue();
 	}
 
+	public double getOverlap()
+	{
+		return Double.parseDouble(this.overlap.getValue());
+	}
+	
+	public int getRows()
+	{
+		return Integer.parseInt(this.rows.getValue());
+	}
+	
+	public int getCols()
+	{
+		return Integer.parseInt(this.cols.getValue());
+	}
+	
 	public String getManualDimensionName()
 	{
 		return dimNameField.getText();

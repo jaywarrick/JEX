@@ -1,14 +1,17 @@
 package Database.DataWriter;
 
+import java.util.Map;
+import java.util.TreeMap;
+
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXDataSingle;
 import Database.SingleUserDatabase.JEXWriter;
+import function.plugin.plugins.imageTools.SeparateImageTiles;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ImageProcessor;
-
-import java.util.Map;
-
+import image.roi.ROIPlus;
+import jex.statics.JEXStatics;
 import tables.DimensionMap;
 
 public class ImageWriter {
@@ -166,6 +169,61 @@ public class ImageWriter {
 			return null;
 		}
 		return data;
+	}
+	
+	public static JEXData makeImageTilesFromPaths(String objectName, Map<DimensionMap,String> imageMap, double overlap, int rows, int cols)
+	{
+		JEXData data = new JEXData(JEXData.IMAGE, objectName);
+		
+		imageMap = separateTiles(imageMap, overlap, rows, cols);
+		
+		for (DimensionMap map : imageMap.keySet())
+		{
+			String path = imageMap.get(map);
+			JEXDataSingle ds = FileWriter.saveFileDataSingle(path);
+			if(ds == null)
+			{
+				continue;
+			}
+			DimensionMap newmap = map.copy();
+			data.addData(newmap, ds);
+		}
+		
+		if(data.getDataMap().size() == 0)
+		{
+			return null;
+		}
+		return data;
+	}
+	
+	public static Map<DimensionMap,String> separateTiles(Map<DimensionMap, String> images, double overlap, int rows, int cols)
+	{
+		SeparateImageTiles splitter = new SeparateImageTiles();
+		overlap = overlap/100.0; // Turn percent into fraction.
+		
+		// Run the function
+		TreeMap<DimensionMap,String> outputMap = new TreeMap<DimensionMap,String>();
+		
+		int count = 0;
+		TreeMap<DimensionMap,ROIPlus> cropRois = null;
+		for (DimensionMap map : images.keySet())
+		{
+			String path = images.get(map);
+			// File f = new File(path);
+			
+			// get the image
+			ImagePlus im = new ImagePlus(path);
+			
+			cropRois = splitter.getCropRois(im.getWidth(), im.getHeight(), rows, cols);
+			TreeMap<DimensionMap,String> toSave = splitter.getCropImages(cropRois, map, im.getProcessor());
+			outputMap.putAll(toSave);
+			
+			// Status bar
+			int percentage = (int) (100 * ((double) count / (double) images.size()));
+			JEXStatics.statusBar.setProgressPercentage(percentage);
+		}
+		
+		return outputMap;
 	}
 	
 	/**
