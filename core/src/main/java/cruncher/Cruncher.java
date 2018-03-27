@@ -16,9 +16,15 @@ import java.util.concurrent.Future;
 
 import jex.statics.JEXStatics;
 import logs.Logs;
+import miscellaneous.Canceler;
 import miscellaneous.Pair;
 
-public class Cruncher {
+/**
+ * Note that Canceler only refers to GUI Tasks for now.
+ * @author jay_warrick
+ *
+ */
+public class Cruncher implements Canceler {
 	
 	public volatile boolean stopCrunch = false;
 	public volatile boolean stopGuiTask = false;
@@ -131,8 +137,8 @@ public class Cruncher {
 	public Future<Object> runGuiTask(Callable<Object> guiTask)
 	{
 		this.stopGuiTask = false;
-		Logs.log("Added GUI task to running queue ", 1, this);
-		JEXStatics.statusBar.setStatusText("Added GUI task to running queue ");
+		Logs.log("Added GUI task to running queue. Use Ctrl(CMD)+G to cancel the current task. ", 1, this);
+		JEXStatics.statusBar.setStatusText("Added GUI task to running queue. Use Ctrl(CMD)+G to cancel the current task. ");
 		return this.guiTicketQueue.submit(guiTask);
 	}
 	
@@ -176,6 +182,11 @@ public class Cruncher {
 			return;
 		}
 		JEXStatics.statusBar.setStatusText("Objects exported successfully");
+	}
+
+	@Override
+	public boolean isCanceled() {
+		return this.stopGuiTask;
 	}
 	
 }

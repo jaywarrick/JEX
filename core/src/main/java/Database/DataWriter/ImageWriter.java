@@ -12,9 +12,14 @@ import ij.ImageStack;
 import ij.process.ImageProcessor;
 import image.roi.ROIPlus;
 import jex.statics.JEXStatics;
+import logs.Logs;
+import miscellaneous.Cancelable;
+import miscellaneous.Canceler;
 import tables.DimensionMap;
 
-public class ImageWriter {
+public class ImageWriter implements Cancelable {
+	
+	Canceler c = null;
 	
 	public static JEXData makeImageObject(String objectName, ImagePlus image)
 	{
@@ -28,6 +33,11 @@ public class ImageWriter {
 	
 	public static JEXData makeImageStack(String objectName, ImagePlus image, String dimensionName)
 	{
+		return makeImageStack(objectName, image, dimensionName, null);
+	}
+	
+	public static JEXData makeImageStack(String objectName, ImagePlus image, String dimensionName, Canceler canceler)
+	{
 		JEXData data = new JEXData(JEXData.IMAGE, objectName);
 		
 		ImageStack stack = image.getStack();
@@ -35,6 +45,10 @@ public class ImageWriter {
 		
 		for (int i = 0; i < length; i++)
 		{
+			if(canceler != null && canceler.isCanceled())
+			{
+				continue;
+			}
 			ImageProcessor slice = stack.getProcessor(i + 1);
 			String path = JEXWriter.saveImage(new ImagePlus("", slice));
 			JEXDataSingle ds = FileWriter.saveFileDataSingle(path);
@@ -54,7 +68,7 @@ public class ImageWriter {
 		
 		return data;
 	}
-	
+
 	/**
 	 * Make an image data object with a single image inside
 	 * 
@@ -85,10 +99,28 @@ public class ImageWriter {
 	 */
 	public static JEXData makeImageStack(String objectName, String[] filePaths, String[] indexes, String dimensionName)
 	{
+		return makeImageStack(objectName, filePaths, indexes, dimensionName, null);
+	}
+	
+	/**
+	 * Make an image stack containing an image list, each image is at an index defined by an index from the list INDEXES, a file path from FILEPATHS and a dimension name
+	 * 
+	 * @param objectName
+	 * @param filePaths
+	 * @param indexes
+	 * @param dimensionName
+	 * @return data
+	 */
+	public static JEXData makeImageStack(String objectName, String[] filePaths, String[] indexes, String dimensionName, Canceler canceler)
+	{
 		JEXData data = new JEXData(JEXData.IMAGE, objectName);
 		
 		for (int index = 0; index < indexes.length; index++)
 		{
+			if(canceler != null && canceler.isCanceled())
+			{
+				continue;
+			}
 			String indexStr = indexes[index];
 			String filePath = filePaths[index];
 			JEXDataSingle ds = FileWriter.saveFileDataSingle(filePath);
@@ -118,10 +150,27 @@ public class ImageWriter {
 	 */
 	public static JEXData makeImageStack(String objectName, String[] filePaths, String dimensionName)
 	{
+		return makeImageStack(objectName, filePaths, dimensionName, null);
+	}
+	
+	/**
+	 * Return an image stack object from filepaths and a dimensionname (ie T, Time, Z, etc...)
+	 * 
+	 * @param objectName
+	 * @param filePaths
+	 * @param dimensionName
+	 * @return data
+	 */
+	public static JEXData makeImageStack(String objectName, String[] filePaths, String dimensionName, Canceler canceler)
+	{
 		JEXData data = new JEXData(JEXData.IMAGE, objectName);
 		
 		for (int index = 0; index < filePaths.length; index++)
 		{
+			if(canceler != null && canceler.isCanceled())
+			{
+				continue;
+			}
 			String indexStr = "" + index;
 			String filePath = filePaths[index];
 			JEXDataSingle ds = FileWriter.saveFileDataSingle(filePath);
@@ -150,10 +199,26 @@ public class ImageWriter {
 	 */
 	public static JEXData makeImageStackFromPaths(String objectName, Map<DimensionMap,String> imageMap)
 	{
+		return makeImageStackFromPaths(objectName, imageMap, null);
+	}
+	
+	/**
+	 * Return an image stack object from filepaths and a dimensionname (ie T, Time, Z, etc...)
+	 * 
+	 * @param objectName
+	 * @param imageMap
+	 * @return
+	 */
+	public static JEXData makeImageStackFromPaths(String objectName, Map<DimensionMap,String> imageMap, Canceler canceler)
+	{
 		JEXData data = new JEXData(JEXData.IMAGE, objectName);
 		
 		for (DimensionMap map : imageMap.keySet())
 		{
+			if(canceler != null && canceler.isCanceled())
+			{
+				continue;
+			}
 			String path = imageMap.get(map);
 			JEXDataSingle ds = FileWriter.saveFileDataSingle(path);
 			if(ds == null)
@@ -173,12 +238,21 @@ public class ImageWriter {
 	
 	public static JEXData makeImageTilesFromPaths(String objectName, Map<DimensionMap,String> imageMap, double overlap, int rows, int cols)
 	{
+		return makeImageTilesFromPaths(objectName, imageMap, overlap, rows, cols, null);
+	}
+	
+	public static JEXData makeImageTilesFromPaths(String objectName, Map<DimensionMap,String> imageMap, double overlap, int rows, int cols, Canceler canceler)
+	{
 		JEXData data = new JEXData(JEXData.IMAGE, objectName);
 		
-		imageMap = separateTiles(imageMap, overlap, rows, cols);
+		imageMap = separateTiles(imageMap, overlap, rows, cols, canceler);
 		
 		for (DimensionMap map : imageMap.keySet())
 		{
+			//			if(canceler != null && canceler.isCanceled())
+			//			{
+			//				continue;
+			//			}
 			String path = imageMap.get(map);
 			JEXDataSingle ds = FileWriter.saveFileDataSingle(path);
 			if(ds == null)
@@ -198,6 +272,11 @@ public class ImageWriter {
 	
 	public static Map<DimensionMap,String> separateTiles(Map<DimensionMap, String> images, double overlap, int rows, int cols)
 	{
+		return separateTiles(images, overlap, rows, cols, null);
+	}
+	
+	public static Map<DimensionMap,String> separateTiles(Map<DimensionMap, String> images, double overlap, int rows, int cols, Canceler canceler)
+	{
 		SeparateImageTiles splitter = new SeparateImageTiles();
 		overlap = overlap/100.0; // Turn percent into fraction.
 		
@@ -208,10 +287,16 @@ public class ImageWriter {
 		TreeMap<DimensionMap,ROIPlus> cropRois = null;
 		for (DimensionMap map : images.keySet())
 		{
+			if(canceler != null && canceler.isCanceled())
+			{
+				continue;
+			}
 			String path = images.get(map);
 			// File f = new File(path);
 			
 			// get the image
+			
+			Logs.log("Getting image at " + path, ImageWriter.class);
 			ImagePlus im = new ImagePlus(path);
 			
 			cropRois = splitter.getCropRois(im.getWidth(), im.getHeight(), rows, cols);
@@ -235,10 +320,26 @@ public class ImageWriter {
 	 */
 	public static JEXData makeImageStackFromImagePluses(String objectName, Map<DimensionMap,ImagePlus> imageMap)
 	{
+		return makeImageStackFromImagePluses(objectName, imageMap, null);
+	}
+	
+	/**
+	 * Return an image stack object from filepaths and a dimensionname (ie T, Time, Z, etc...)
+	 * 
+	 * @param objectName
+	 * @param imageMap
+	 * @return
+	 */
+	public static JEXData makeImageStackFromImagePluses(String objectName, Map<DimensionMap,ImagePlus> imageMap, Canceler canceler)
+	{
 		JEXData data = new JEXData(JEXData.IMAGE, objectName);
 		
 		for (DimensionMap map : imageMap.keySet())
 		{
+			if(canceler != null && canceler.isCanceled())
+			{
+				continue;
+			}
 			ImagePlus image = imageMap.get(map);
 			String path = JEXWriter.saveImage(image);
 			JEXDataSingle ds = FileWriter.saveFileDataSingle(path);
@@ -255,6 +356,16 @@ public class ImageWriter {
 			return null;
 		}
 		return data;
+	}
+
+	@Override
+	public void setCanceler(Canceler canceler) {
+		this.c = canceler;
+	}
+
+	@Override
+	public Canceler getCanceler() {
+		return c;
 	}
 	
 }

@@ -31,9 +31,9 @@ import net.miginfocom.swing.MigLayout;
 import signals.SSCenter;
 
 public class FileListPanel extends DialogGlassCenterPanel implements ActionListener {
-	
+
 	private static final long serialVersionUID = 1L;
-	
+
 	private JList<File> displayListOfFiles;
 	private JButton loadButton = new JButton("OK");
 	private JButton refreshButton = new JButton("Re-filter");
@@ -45,22 +45,23 @@ public class FileListPanel extends DialogGlassCenterPanel implements ActionListe
 	private JTickedComponent takeOnlyFilesWithExtension;
 	private JTickedComponent takeOnlyFilesWithPrefix;
 	private JTickedComponent takeOnlyFilesWithSuffix;
+	private JTickedComponent takeOnlyFilesContaining;
 	private JTickedComponent fileEndsWithNumber;
-	
+
 	File[] listOfFiles = null;
 	File[] viewedFiles = null;
 	public List<File> files2Distribute;
 	private static String folderVisited = null;
 	private JEXDistributionPanelController controller;
-	
+
 	public FileListPanel(JEXDistributionPanelController controller)
 	{
 		this.controller = controller;
-		
+
 		// initialize
 		initialize();
 	}
-	
+
 	/**
 	 * Initialize
 	 */
@@ -69,12 +70,12 @@ public class FileListPanel extends DialogGlassCenterPanel implements ActionListe
 		this.setLayout(new MigLayout("flowy, ins 10, gapy 0", "[fill,grow]", "[]3[]0[fill,grow]0[]"));
 		this.setBackground(DisplayStatics.lightBackground);
 		files2Distribute = new ArrayList<File>();
-		
+
 		displayListOfFiles = new JList<File>();
 		displayListOfFiles.setBackground(DisplayStatics.lightBackground);
 		displayListOfFiles.setFont(FontUtility.defaultFonts);
 		displayListOfFiles.setCellRenderer(new FileListCellRenderer());
-		
+
 		DefaultListModel<File> newModel = new DefaultListModel<File>();
 		if(files2Distribute == null)
 			files2Distribute = new Vector<File>();
@@ -83,15 +84,15 @@ public class FileListPanel extends DialogGlassCenterPanel implements ActionListe
 			newModel.addElement(f);
 		}
 		displayListOfFiles.setModel(newModel);
-		
+
 		JScrollPane fileListScroll = new JScrollPane(displayListOfFiles);
 		fileListScroll.setBackground(DisplayStatics.lightBackground);
 		fileListScroll.setBorder(BorderFactory.createLineBorder(DisplayStatics.dividerColor));
-		
+
 		loadButton.setText("Load");
 		loadButton.addActionListener(this);
 		refreshButton.addActionListener(this);
-		
+
 		foldersOrFilesView = new JTickedComponent("Folder/Files View (ON = Files)", new JLabel(""));
 		foldersOrFilesView.setSelected(true);
 		reverseFileOrder = new JTickedComponent("Reverse file order", new JLabel(""));
@@ -101,6 +102,7 @@ public class FileListPanel extends DialogGlassCenterPanel implements ActionListe
 		takeOnlyFilesWithExtension = new JTickedComponent("Keep files with extension ", new JTextField("tif"));
 		takeOnlyFilesWithPrefix = new JTickedComponent("Keep files with prefix ", new JTextField("Image"));
 		takeOnlyFilesWithSuffix = new JTickedComponent("Keep files with suffix ", new JTextField("_BF"));
+		takeOnlyFilesContaining = new JTickedComponent("Keep files containing ", new JTextField("xy001"));
 		fileEndsWithNumber = new JTickedComponent("Reorder using number at end of file name ", new JLabel(""));
 		foldersOrFilesView.setBackground(DisplayStatics.lightBackground);
 		reverseFileOrder.setBackground(DisplayStatics.lightBackground);
@@ -110,8 +112,9 @@ public class FileListPanel extends DialogGlassCenterPanel implements ActionListe
 		takeOnlyFilesWithExtension.setBackground(DisplayStatics.lightBackground);
 		takeOnlyFilesWithPrefix.setBackground(DisplayStatics.lightBackground);
 		takeOnlyFilesWithSuffix.setBackground(DisplayStatics.lightBackground);
+		takeOnlyFilesContaining.setBackground(DisplayStatics.lightBackground);
 		fileEndsWithNumber.setBackground(DisplayStatics.lightBackground);
-		
+
 		this.add(foldersOrFilesView, "left");
 		this.add(loadButton, "growx");
 		this.add(fileListScroll, "grow");
@@ -122,13 +125,14 @@ public class FileListPanel extends DialogGlassCenterPanel implements ActionListe
 		this.add(takeOnlyFilesWithExtension, "growx");
 		this.add(takeOnlyFilesWithPrefix, "growx");
 		this.add(takeOnlyFilesWithSuffix, "growx");
+		this.add(takeOnlyFilesContaining, "growx");
 		this.add(fileEndsWithNumber, "growx");
 		this.add(refreshButton, "growx");
 		this.setMaximumSize(new Dimension(300, 600));
-		
+
 		SSCenter.defaultCenter().connect(foldersOrFilesView, JTickedComponent.SIG_SelectionChanged_NULL, this, "fileViewToggled", (Class[]) null);
 	}
-	
+
 	/**
 	 * Called when clicked yes on the dialog panel
 	 */
@@ -137,16 +141,16 @@ public class FileListPanel extends DialogGlassCenterPanel implements ActionListe
 		Logs.log("File list selected", 1, this);
 		controller.fileListChanged();
 	}
-	
+
 	/**
 	 * Called when clicked cancel on the dialog panel
 	 */
 	public void cancel()
 	{
 		Logs.log("Repository creation canceled", 1, this);
-		
+
 	}
-	
+
 	/**
 	 * Reorder the loaded file list
 	 */
@@ -157,9 +161,10 @@ public class FileListPanel extends DialogGlassCenterPanel implements ActionListe
 		boolean boolTakeOnlyFilesWithExtension = takeOnlyFilesWithExtension.isTicked();
 		boolean boolTakeOnlyFilesWithPrefix = takeOnlyFilesWithPrefix.isTicked();
 		boolean boolTakeOnlyFilesWithSuffix = takeOnlyFilesWithSuffix.isTicked();
+		boolean boolTakeOnlyFilesContaining = takeOnlyFilesContaining.isTicked();
 		boolean boolFileEndsWithNumber = fileEndsWithNumber.isTicked();
 		boolean boolGrabSequence = grabSequence.isTicked();
-		
+
 		List<File> newList;
 		// Shall we reverse the file list?
 		if(boolReverseFileOrder)
@@ -171,7 +176,7 @@ public class FileListPanel extends DialogGlassCenterPanel implements ActionListe
 			}
 			files2Distribute = newList;
 		}
-		
+
 		// Shall we skip one every several files?
 		if(boolSkipFiles)
 		{
@@ -185,7 +190,7 @@ public class FileListPanel extends DialogGlassCenterPanel implements ActionListe
 			}
 			files2Distribute = newList;
 		}
-		
+
 		if(boolGrabSequence)
 		{
 			CSVList sequence = new CSVList(grabSequence.getValue());
@@ -210,7 +215,7 @@ public class FileListPanel extends DialogGlassCenterPanel implements ActionListe
 				files2Distribute = newList;
 			}
 		}
-		
+
 		// Shall we filter files based on their extension?
 		if(boolTakeOnlyFilesWithExtension)
 		{
@@ -226,7 +231,7 @@ public class FileListPanel extends DialogGlassCenterPanel implements ActionListe
 			}
 			files2Distribute = newList;
 		}
-		
+
 		// Select only the files with a given prefix
 		if(boolTakeOnlyFilesWithPrefix)
 		{
@@ -245,7 +250,7 @@ public class FileListPanel extends DialogGlassCenterPanel implements ActionListe
 			}
 			files2Distribute = newList;
 		}
-		
+
 		// Select only the files with a given suffix
 		if(boolTakeOnlyFilesWithSuffix)
 		{
@@ -260,7 +265,23 @@ public class FileListPanel extends DialogGlassCenterPanel implements ActionListe
 			}
 			files2Distribute = newList;
 		}
-		
+
+		// Select only the files with a given suffix
+		if(boolTakeOnlyFilesContaining)
+		{
+			String part = takeOnlyFilesContaining.getValue();
+			newList = new Vector<File>();
+			for (File f : files2Distribute)
+			{
+				if(FileUtility.getFileNameWithoutExtension(f.getName()).contains(part))
+				{
+					newList.add(f);
+				}
+			}
+			files2Distribute = newList;
+		}
+
+
 		if(boolFileEndsWithNumber)
 		{
 			TreeSet<File> files = new TreeSet<File>();
@@ -276,7 +297,7 @@ public class FileListPanel extends DialogGlassCenterPanel implements ActionListe
 			}
 			files2Distribute = newList;
 		}
-		
+
 		// Update the JList
 		DefaultListModel<File> newModel = new DefaultListModel<File>();
 		for (File f : files2Distribute)
@@ -286,32 +307,32 @@ public class FileListPanel extends DialogGlassCenterPanel implements ActionListe
 		displayListOfFiles.setModel(newModel);
 		displayListOfFiles.repaint();
 	}
-	
+
 	private File reNameFile(File f, int size)
 	{
 		String fpath = f.getParent();
 		String fileName = f.getName().substring(0, f.getName().length() - 4);
-		
+
 		int index = fileName.length() - 1;
 		while (Character.isDigit(fileName.charAt(index)) && index >= 0)
 		{
 			index = index - 1;
 		}
-		
+
 		if(index >= fileName.length() - 1)
 			return f;
 		String fPrefix = fileName.substring(0, index + 1);
 		String fIndex = StringUtility.fillLeft(fileName.substring(index + 1), size, "0");
 		String fExtension = f.getName().substring(f.getName().length() - 4);
-		
+
 		String newName = fpath + File.separator + fPrefix + fIndex + fExtension;
 		File dest = new File(newName);
 		f.renameTo(dest);
-		
+
 		Logs.log("Moved file " + f.getPath() + " to new path " + dest.getPath(), 1, this);
 		return dest;
 	}
-	
+
 	/**
 	 * Add files to the list of files selected
 	 * 
@@ -348,19 +369,19 @@ public class FileListPanel extends DialogGlassCenterPanel implements ActionListe
 			Logs.log("File opening cancelled / not possible...", 1, this);
 		}
 	}
-	
+
 	public void fileViewToggled()
 	{
 		this.setFiles2Distribute();
 	}
-	
+
 	private void setFiles2Distribute()
 	{
 		if(listOfFiles == null || listOfFiles.length == 0)
 			return;
 		List<File> filteredList = new ArrayList<File>(0);
 		if(foldersOrFilesView.isTicked()) // get selected files and files in
-		// selected folders
+			// selected folders
 		{
 			for (File f : listOfFiles)
 			{
@@ -402,11 +423,11 @@ public class FileListPanel extends DialogGlassCenterPanel implements ActionListe
 		displayListOfFiles.setModel(newModel);
 		displayListOfFiles.repaint();
 	}
-	
+
 	// ----------------------------------------------------
 	// --------- EVENT HANDLING FUNCTIONS -----------------
 	// ----------------------------------------------------
-	
+
 	public void actionPerformed(ActionEvent e)
 	{
 		if(e.getSource() == loadButton)
