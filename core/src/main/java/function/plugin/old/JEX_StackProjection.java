@@ -17,13 +17,9 @@ import function.JEXCrunchable;
 import ij.ImagePlus;
 import ij.plugin.ZProjector;
 import ij.process.Blitter;
-import ij.process.ByteBlitter;
-import ij.process.ByteProcessor;
 import ij.process.FloatBlitter;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
-import ij.process.ShortBlitter;
-import ij.process.ShortProcessor;
 import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import tables.Dim;
@@ -42,7 +38,7 @@ import tables.DimensionMap;
  */
 public class JEX_StackProjection extends JEXCrunchable {
 
-	public static final String METHOD_MEAN = "mean", METHOD_MIN = "min", METHOD_MAX = "max", METHOD_MEDIAN = "median", METHOD_SUM = "sum", METHOD_STDEV = "std. dev.", METHOD_DIFF = "diff (final-initial)";
+	public static final String METHOD_MEAN = "mean", METHOD_MIN = "min", METHOD_MAX = "max", METHOD_MEDIAN = "median", METHOD_SUM = "sum", METHOD_STDEV = "std. dev.", METHOD_DIFF = "diff (final-initial)", METHOD_ABSDIFF = "absolute diff [abs(final-initial)]";
 
 	public JEX_StackProjection()
 	{}
@@ -152,7 +148,7 @@ public class JEX_StackProjection extends JEXCrunchable {
 	public ParameterSet requiredParameters()
 	{
 		Parameter p0 = new Parameter("Dimension", "Name of dimension to perform the operation (case and whitespace sensitive).", "Z");
-		Parameter p1 = new Parameter("Math Operation", "Type of math operation to perform.", Parameter.DROPDOWN, new String[] { METHOD_MEAN, METHOD_MAX, METHOD_MIN, METHOD_SUM, METHOD_STDEV, METHOD_MEDIAN, METHOD_DIFF }, 5);
+		Parameter p1 = new Parameter("Math Operation", "Type of math operation to perform.", Parameter.DROPDOWN, new String[] { METHOD_MEAN, METHOD_MAX, METHOD_MIN, METHOD_SUM, METHOD_STDEV, METHOD_MEDIAN, METHOD_DIFF, METHOD_ABSDIFF }, 5);
 		Parameter p2 = new Parameter("Sliding Window Projection", "Perform the projection for the whole stack or for N number of images at a time, shifting by 1 each time.", Parameter.DROPDOWN, new String[] { "true", "false" }, 1);
 		Parameter p3 = new Parameter("N", "Number of images in sliding window (ignored if not sliding window).", "2");
 		Parameter p4 = getNumThreadsParameter(10, 6);
@@ -216,7 +212,6 @@ public class JEX_StackProjection extends JEXCrunchable {
 		int slidingWindowSize = Integer.parseInt(parameters.getValueOfParameter("N"));
 		String exclusionFilterString = parameters.getValueOfParameter("Exclusion Filter DimTable");
 		DimTable filterTable = new DimTable(exclusionFilterString);
-		boolean floating = Boolean.parseBoolean("32-bit Output?");
 
 		// Run the function
 		Dim dimToProject = originalDimTable.getDimWithName(dimName);
@@ -254,7 +249,11 @@ public class JEX_StackProjection extends JEXCrunchable {
 					ImageProcessor finalImp = null;
 					if(mathOperation.equals(METHOD_DIFF))
 					{
-						finalImp = evaluate(stackMaps, imageData);
+						finalImp = evaluate(stackMaps, imageData, false);
+					}
+					if(mathOperation.equals(METHOD_ABSDIFF))
+					{
+						finalImp = evaluate(stackMaps, imageData, true);
 					}
 					else
 					{
@@ -283,7 +282,11 @@ public class JEX_StackProjection extends JEXCrunchable {
 				ImageProcessor finalImp = null;
 				if(mathOperation.equals(METHOD_DIFF))
 				{
-					finalImp = evaluate(stackMaps, imageData);
+					finalImp = evaluate(stackMaps, imageData, false);
+				}
+				else if(mathOperation.equals(METHOD_ABSDIFF))
+				{
+					finalImp = evaluate(stackMaps, imageData, true);
 				}
 				else
 				{
@@ -322,7 +325,7 @@ public class JEX_StackProjection extends JEXCrunchable {
 		return true;
 	}
 
-	public static ImageProcessor evaluate(List<DimensionMap> stack, JEXData image)
+	public static ImageProcessor evaluate(List<DimensionMap> stack, JEXData image, boolean abs)
 	{
 
 		String pathToGet = ImageReader.readImagePath(image.getData(stack.get(0)));
@@ -348,6 +351,10 @@ public class JEX_StackProjection extends JEXCrunchable {
 //		}
 		b.copyBits(initial, 0, 0, Blitter.SUBTRACT);
 		ret.resetMinAndMax();
+		if(abs)
+		{
+			((FloatProcessor) ret).abs();
+		}
 		if(ret.getMin() < 0)
 		{
 			return ret;
