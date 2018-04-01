@@ -39,6 +39,7 @@ public class FFT_Filter implements Measurements {
 	public boolean saturateDia = true;
 	public boolean displayFilter;
 	public boolean processStack;
+	public boolean filterDC = true;
 
 	
 	/**
@@ -372,7 +373,13 @@ public class FFT_Filter implements Measurements {
 					filter[backrow+maxN/2] *= (1 - rowFactLarge*colFactLarge) * rowFactSmall*colFactSmall * (1 - factStripes);	
 			}
 		}
-		if (displayFilter) {
+		
+		if(this.filterDC)
+		{
+			fht[0] = 0;
+			filter[0] = 0;
+		}
+		if (this.displayFilter) {
 			FHT f = new FHT(new FloatProcessor(maxN, maxN, filter, null));
 			f.swapQuadrants();
 			return new ImagePlus("Filter", f);

@@ -51,11 +51,14 @@ public class FFTBandPassFilter extends JEXPlugin {
 
 	/////////// Define Parameters ///////////
 
-	@ParameterMarker(uiOrder=1, name="Filter: Max Size", description="The largest features to keep [pixels].", ui=MarkerConstants.UI_TEXTFIELD, defaultText="50.0")
+	@ParameterMarker(uiOrder=0, name="Filter: Max Size", description="The largest features to keep [pixels].", ui=MarkerConstants.UI_TEXTFIELD, defaultText="50.0")
 	double filterLargeDia;
 
-	@ParameterMarker(uiOrder=2, name="Filter: Min Size", description="The smallest features to keep [pixels].", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
+	@ParameterMarker(uiOrder=1, name="Filter: Min Size", description="The smallest features to keep [pixels].", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
 	double filterSmallDia;
+	
+	@ParameterMarker(uiOrder=2, name="Filter: DC Component?", description="Should the 'DC component' or constant background be subtracted?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
+	boolean filterDC;
 
 	@ParameterMarker(uiOrder=3, name="Suppress Stripes", description="Should stripes be suppressed and, if so, which direction should be suppressed.", ui=MarkerConstants.UI_DROPDOWN, choices={"None","Horizontal","Vertical"}, defaultChoice=0)
 	String choiceDia;
@@ -74,14 +77,20 @@ public class FFTBandPassFilter extends JEXPlugin {
 
 	@ParameterMarker(uiOrder=8, name="Output Bit Depth", description="Depth of the outputted image for all channels.", ui=MarkerConstants.UI_DROPDOWN, choices={ "8", "16", "32" }, defaultChoice=1)
 	int bitDepth;
+	
+	@ParameterMarker(uiOrder=9, name="Post-Multiplier", description="After background subtraction, what to multiply the result by.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
+	double postMult;
+	
+	@ParameterMarker(uiOrder=10, name="Post-post Addition", description="After background subtraction and multiplication, what to add to the result", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0")
+	double postAdd;
 
 	//	@ParameterMarker(uiOrder=9, name="Exclusion Filter DimTable", description="Filter specific dimension combinations from analysis. (Format: <DimName1>=<a1,a2,...>;<DimName2>=<b1,b2...>)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
 	//	String filterDimTableString;
 
-	@ParameterMarker(uiOrder=10, name="Exclusion Filter DimTable", description="Filter specific dimension combinations from analysis. (Format: <DimName1>=<a1,a2,...>;<DimName2>=<b1,b2...>)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
+	@ParameterMarker(uiOrder=11, name="Exclusion Filter DimTable", description="Filter specific dimension combinations from analysis. (Format: <DimName1>=<a1,a2,...>;<DimName2>=<b1,b2...>)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
 	String filterDimTableString;
 
-	@ParameterMarker(uiOrder=11, name="Keep Excluded Images?", description="Should images excluded by the filter be copied to the new object?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
+	@ParameterMarker(uiOrder=12, name="Keep Excluded Images?", description="Should images excluded by the filter be copied to the new object?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
 	boolean keepExcluded;
 
 	/////////// Define Outputs ///////////
@@ -126,6 +135,7 @@ public class FFTBandPassFilter extends JEXPlugin {
 		fft.filterSmallDia = this.filterSmallDia;
 		fft.saturateDia = false;
 		fft.toleranceDia = this.toleranceDia;
+		fft.filterDC = this.filterDC;
 
 		// Run the function
 		TreeMap<DimensionMap,String> imageMap = ImageReader.readObjectToImagePathTable(imageData);
@@ -165,7 +175,7 @@ public class FFTBandPassFilter extends JEXPlugin {
 				return false;
 			}
 
-			ImageProcessor out = (new ImagePlus(imageMap.get(map))).getProcessor();
+			ImageProcessor out = (new ImagePlus(imageMap.get(map))).getProcessor().convertToFloatProcessor();
 			ImagePlus filter = fft.filter(out);
 			if (this.doScalingDia) {
 				
@@ -175,6 +185,14 @@ public class FFTBandPassFilter extends JEXPlugin {
 				out = imp2.getProcessor();
 			}
 			
+			if(this.postMult != 1)
+			{
+				out.multiply(this.postMult);
+			}
+			if(this.postAdd != 0)
+			{
+				out.add(this.postAdd);
+			}
 			out = JEXWriter.convertToBitDepthIfNecessary(out, this.bitDepth);
 			tempPath = JEXWriter.saveImage(out);
 			if(tempPath != null)
