@@ -278,9 +278,9 @@ public class ImageReader {
 	{
 		if(maps.size() == 0)
 			return null;
-		ImagePlus im = ImageReader.readObjectToImagePlus(imageData);
 		TreeMap<DimensionMap,String> paths = ImageReader.readObjectToImagePathTable(imageData);
 		File temp = new File(paths.get(maps.get(0)));
+		ImagePlus im = new ImagePlus(paths.get(maps.get(0)));
 		VirtualStack stack = new VirtualStack(im.getWidth(), im.getHeight(), im.getProcessor().getColorModel(), temp.getParent());
 		for (DimensionMap map : maps)
 		{
