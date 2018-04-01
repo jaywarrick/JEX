@@ -1169,6 +1169,7 @@ public class JEXperiment extends JFrame implements ActionListener, WindowListene
 		{
 			JEXStatics.cruncher.stopGuiTask = true;
 			Logs.log("Aborting Gui Task!", 0, this);
+			JEXStatics.statusBar.setStatusText("Aborting Gui Task!");
 		}
 	}
 	

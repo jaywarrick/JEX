@@ -430,12 +430,12 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 					continue;
 				}
 				JEXEntry e = columnEntries.get(x);
-				if(e == null)
+				if(e == null || !this.isValidCell(y, x)) // Switched x and y somewhere, so have to switch here.
 				{
 					continue;
 				}
 
-				Vector<Pair<DimensionMap,String>> files2Drop = this.files.get(new Point(y, x));
+				Vector<Pair<DimensionMap,String>> files2Drop = this.files.get(new Point(y, x));  // Also have to switch x and y here too
 
 				if(files2Drop != null)
 				{
