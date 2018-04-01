@@ -2,7 +2,6 @@ package function.plugin.plugins.quantification;
 
 import java.awt.Shape;
 import java.text.DecimalFormat;
-import java.util.Collection;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.Vector;
@@ -71,7 +70,8 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 
 	/////////// Define Parameters ///////////
 
-	@ParameterMarker(uiOrder=1, name="Measurement", description="The type(s) of measurement(s) to be performed.", ui=MarkerConstants.UI_DROPDOWN, choices={ "Mean", "Median", "Max", "Min" }, defaultChoice=0)
+	public static final String[] measurements = new String[]{ "Mean", "Median", "Max", "Min", "Mode", "St.Dev", "Skewness", "Kurtosis"};
+	@ParameterMarker(uiOrder=1, name="Measurement", description="The type(s) of measurement(s) to be performed.", ui=MarkerConstants.UI_DROPDOWN, choices={ "All", "Mean", "Median", "Max", "Min", "Mode", "StDev", "Skewness", "Kurtosis"}, defaultChoice=0)
 	String measurementType;
 
 	@ParameterMarker(uiOrder=2, name="Type", description="The type of roi around each maxima to be created to quantify intensity information.", ui=MarkerConstants.UI_DROPDOWN, choices={ "Rectangle", "Ellipse", "Line", "Point" }, defaultChoice=0)
@@ -96,7 +96,7 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 
 	@OutputMarker(uiOrder=1, name="Data Table", type=MarkerConstants.TYPE_FILE, flavor="", description="The resultant data table", enabled=true)
 	JEXData fileOutput;
-	
+
 	@OutputMarker(uiOrder=2, name="Measured Maxima", type=MarkerConstants.TYPE_ROI, flavor="", description="The maxima that were actually measured.", enabled=true)
 	JEXData roiOutput;
 
@@ -138,7 +138,7 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 		{
 			roiType = ROIPlus.ROI_POINT;
 		}
-		
+
 		// Catch bad scenarios
 		if(!this.colorDimName.equals("") && this.imageData.getDimTable().getDimWithName(this.colorDimName) == null)
 		{
@@ -149,21 +149,27 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 		// Create useful Dim's and DimTable's
 		DimTable imageTable = imageData.getDimTable();
 		DimTable dataTable = imageTable.copy();
-		dataTable.removeDimWithName(this.colorDimName);
+		// dataTable.removeDimWithName(this.colorDimName);
 		// dataTable.add(trackDim.copy());
-		Dim colorDim = imageTable.getDimWithName(colorDimName);
 		Vector<String> measurementNames = new Vector<>();
-		if(colorDim == null)
+//		if(colorDim == null)
+//		{
+//			measurementNames.add(this.normalizeName(this.measurementType));
+//		}
+//		else
+//		{
+//			measurementNames.addAll(this.normalizeNames(colorDim.dimValues));
+//		}
+		measurementNames.add(SingleCellUtility.x);
+		measurementNames.add(SingleCellUtility.y);
+		if(this.measurementType.equals("All"))
 		{
-			measurementNames.add(this.normalizeName(this.measurementType));
+			this.measurementDim = new Dim("Measurement", measurements);
 		}
 		else
 		{
-			measurementNames.addAll(this.normalizeNames(colorDim.dimValues));
+			this.measurementDim = new Dim("Measurement", this.measurementType);
 		}
-		measurementNames.add(SingleCellUtility.x);
-		measurementNames.add(SingleCellUtility.y);
-		this.measurementDim = new Dim("Measurement", measurementNames);
 		dataTable.add(this.measurementDim.copy());
 
 		// Get the input data
@@ -244,7 +250,7 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 					return false;
 				}
 				im = new ImagePlus(paths.get(imMap));
-				
+
 
 				// In case the maxima roi has a color dim, cycle through the color dimension to grab the 
 				// first available maxima roi. Do the same for the region roi. This maxima roi and region
@@ -297,7 +303,7 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 						if(region.getPointList().size() > 0)
 						{
 							int regionId = regionIterator.currentPatternPoint().id;
-							
+
 							// subselect the points of maximaRoi and quantify
 							Shape shape = region.getShape();
 							PointList subset = new PointList();
@@ -347,7 +353,7 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 			return false;
 		}
 	}
-	
+
 	private void quantifyPoints(ImagePlus im, ROIPlus maximaRoi, ROIPlus templateRoi, DecimalFormat formatD, DimensionMap imMap, JEXTableWriter writer, int regionId)
 	{
 		// Create a copy of the templateRoi and move it to the correct location for measurement.
@@ -363,7 +369,7 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 			pointToMeasure = p.copy();
 
 			im.setRoi(roip.getRoi());
-			ImageStatistics stats = im.getStatistics(Measurements.MEAN + Measurements.MEDIAN + Measurements.MIN_MAX);
+			ImageStatistics stats = im.getStatistics(Measurements.MEAN + Measurements.MEDIAN + Measurements.MIN_MAX + Measurements.MODE + Measurements.STD_DEV + Measurements.SKEWNESS + Measurements.KURTOSIS);
 			if(stats != null)
 			{
 				String dataString = formatD.format(stats.mean);
@@ -386,75 +392,87 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 			}
 		}
 	}
-	
+
 	private String normalizeName(String name)
 	{
 		name = name.replaceAll("\\s+","");
 		name = name.replace('.','_');
 		return(name);
 	}
-	
-	private Collection<String> normalizeNames(Collection<String> names)
-	{
-		Vector<String> newNames = new Vector<>();
-		for(String name : names)
-		{
-			newNames.add(this.normalizeName(name));
-		}
-		return(newNames);
-	}
 
 	private void writeData(JEXTableWriter writer, DimensionMap mapToSave, ImageStatistics stats, IdPoint p, double nominal, String measurementType)
 	{
 		// DimensionMap mapToSave = map.copy();
 		String color = mapToSave.remove(this.colorDimName);
-		
+
 		// Normalize the string for good behavior in tables and data analysis software.
 		if(color != null)
 		{
 			color = this.normalizeName(color);
 		}
-		
-		double measurement = stats.mean;
-		if(measurementType.equals("Median"))
-		{
-			measurement = stats.median;
-		}
-		else if(measurementType.equals("Max"))
-		{
-			measurement = stats.max;
-		}
-		else if(measurementType.equals("Min"))
-		{
-			measurement = stats.min;
-		}
 
 		// Write the data to the ongoing file
-		if(color == null)
+		if(color == null || color.equals(this.measurementDim.dimValues.get(0)))
 		{
 			mapToSave.put("Measurement", SingleCellUtility.x);
 			writer.writeData(mapToSave, new Double(p.x));
 			mapToSave.put("Measurement", SingleCellUtility.y);
 			writer.writeData(mapToSave, new Double(p.y));
-			mapToSave.put("Measurement", this.measurementType);
+		}
+
+		double measurement = 0;
+		if(color == null)
+		{
+			color = "NULL";
+		}
+		mapToSave.put("Channel", color);
+		if(measurementType.equals("All") || measurementType.equals("Median"))
+		{
+			measurement = stats.median;
+			mapToSave.put("Measurement", "Median");
 			writer.writeData(mapToSave, new Double(measurement - nominal));
 		}
-		else
+		if(measurementType.equals("All") || measurementType.equals("Max"))
 		{
-			if(color.equals(this.measurementDim.dimValues.get(0)))
-			{
-				mapToSave.put("Measurement", SingleCellUtility.x);
-				writer.writeData(mapToSave, new Double(p.x));
-				mapToSave.put("Measurement", SingleCellUtility.y);
-				writer.writeData(mapToSave, new Double(p.y));
-				mapToSave.put("Measurement", color);
-				writer.writeData(mapToSave, new Double(measurement - nominal));
-			}
-			else
-			{
-				mapToSave.put("Measurement", color);
-				writer.writeData(mapToSave, new Double(measurement - nominal));
-			}
+			measurement = stats.max;
+			mapToSave.put("Measurement", "Max");
+			writer.writeData(mapToSave, new Double(measurement - nominal));
+		}
+		if(measurementType.equals("All") || measurementType.equals("Min"))
+		{
+			measurement = stats.min;
+			mapToSave.put("Measurement", "Min");
+			writer.writeData(mapToSave, new Double(measurement - nominal));
+		}
+		if(measurementType.equals("All") || measurementType.equals("Mean"))
+		{
+			measurement = stats.mean;
+			mapToSave.put("Measurement", "Mean");
+			writer.writeData(mapToSave, new Double(measurement - nominal));
+		}
+		if(measurementType.equals("All") || measurementType.equals("Mode"))
+		{
+			measurement = stats.mode;
+			mapToSave.put("Measurement", "Mode");
+			writer.writeData(mapToSave, new Double(measurement - nominal));
+		}
+		if(measurementType.equals("All") || measurementType.equals("StDev"))
+		{
+			measurement = stats.stdDev;
+			mapToSave.put("Measurement", "StDev");
+			writer.writeData(mapToSave, new Double(measurement));  // Don't need to subtract offset in this case
+		}
+		if(measurementType.equals("All") || measurementType.equals("Skewness"))
+		{
+			measurement = stats.skewness;
+			mapToSave.put("Measurement", "Skewness");
+			writer.writeData(mapToSave, new Double(measurement)); // Don't need to subtract offset in this case
+		}
+		if(measurementType.equals("All") || measurementType.equals("Kurtosis"))
+		{
+			measurement = stats.kurtosis;
+			mapToSave.put("Measurement", "Kurtosis");
+			writer.writeData(mapToSave, new Double(measurement)); // Don't need to subtract offset in this case
 		}
 	}
 }
