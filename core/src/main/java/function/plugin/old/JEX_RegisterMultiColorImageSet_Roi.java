@@ -149,9 +149,11 @@ public class JEX_RegisterMultiColorImageSet_Roi extends JEXCrunchable {
 		Parameter pa4 = new Parameter("Time Dim Name", "Name of the time dimension.", "Time");
 		Parameter pa3 = new Parameter("Other Dim Name to Split (optional)", "Name of another dimension to split results on.", "");
 		Parameter pa5 = new Parameter("Align To First Timepoint?", "Each image timepoint will be aligned to the first if set to true. Otherwise, time t aligns to t-1.", Parameter.CHECKBOX, true);
-
+		Parameter p4 = getNumThreadsParameter(10, 6);
+		
 		// Make an array of the parameters and return it
 		ParameterSet parameterArray = new ParameterSet();
+		parameterArray.addParameter(p4);
 		parameterArray.addParameter(pa1);
 		parameterArray.addParameter(pa2);
 		parameterArray.addParameter(pa4);
