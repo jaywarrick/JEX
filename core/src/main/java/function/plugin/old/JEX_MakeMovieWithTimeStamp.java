@@ -1,5 +1,13 @@
 package function.plugin.old;
 
+import java.awt.Color;
+import java.util.HashMap;
+import java.util.TreeMap;
+
+import org.monte.media.Format;
+import org.monte.media.VideoFormatKeys;
+import org.monte.media.quicktime.QuickTimeWriter;
+
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataWriter.MovieWriter;
@@ -7,15 +15,8 @@ import Database.Definition.Parameter;
 import Database.Definition.ParameterSet;
 import Database.Definition.TypeName;
 import function.JEXCrunchable;
-
-import java.awt.Color;
-import java.util.HashMap;
-
 import logs.Logs;
-
-import org.monte.media.Format;
-import org.monte.media.VideoFormatKeys;
-import org.monte.media.quicktime.QuickTimeWriter;
+import tables.DimensionMap;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions
@@ -145,10 +146,12 @@ public class JEX_MakeMovieWithTimeStamp extends JEXCrunchable {
 		Parameter p8 = new Parameter("Font Size", "I have no idea what a good number is yet.", "55");
 		Parameter p9 = new Parameter("Font Color", "The color of the time stamp text", Parameter.DROPDOWN, new String[] { "Black","White","Gray"}, 1);
 		Parameter p10 = new Parameter("Inset", "Number of pixels to inset the text from the lower left", "10");
-		Parameter p11 = new Parameter("Time Units", "String to put after time to indicate units", "[hpi]");
+		Parameter p11 = new Parameter("Time Units", "String to put after time to indicate units", "[h]");
+		Parameter p12 = new Parameter("Time Dim Name", "the name of the 'time' dimension.", "T");
 		
 		// Make an array of the parameters and return it
 		ParameterSet parameterArray = new ParameterSet();
+		parameterArray.addParameter(p12);
 		parameterArray.addParameter(p1);
 		parameterArray.addParameter(p2);
 		parameterArray.addParameter(p4);
@@ -202,6 +205,7 @@ public class JEX_MakeMovieWithTimeStamp extends JEXCrunchable {
 		int binning = Integer.parseInt(this.parameters.getValueOfParameter("Image Binning"));
 		int fps = Integer.parseInt(this.parameters.getValueOfParameter("Images Per Second"));
 		String formatString = this.parameters.getValueOfParameter("Format");
+		String timeDimName = this.parameters.getValueOfParameter("Time Dim Name");
 		
 		Format format = null;
 		String encoding = VideoFormatKeys.ENCODING_AVI_MJPG;
@@ -245,19 +249,19 @@ public class JEX_MakeMovieWithTimeStamp extends JEXCrunchable {
 		// Run the function
 		Logs.log("Running the function", 1, this);
 		MovieWriter writer = new MovieWriter();
-		String vhPath = null;
+		TreeMap<DimensionMap,String> vhPaths = null;
 		if(format == null)
 		{
-			vhPath = writer.makeAVIMovie(data, roiData, binning, encoding, fps, startTime, interval, units, digits, fontSize, inset, textColor, this);
-			if(vhPath == null)
+			vhPaths = writer.makeAVIMovie(data, roiData, binning, encoding, fps, timeDimName, startTime, interval, units, digits, fontSize, inset, textColor, this);
+			if(vhPaths == null)
 			{
 				return false;
 			}
 		}
 		else
 		{
-			vhPath = writer.makeQuickTimeMovie(data, roiData, binning, format, fps, startTime, interval, units, digits, fontSize, inset, textColor, this);
-			if(vhPath == null)
+			vhPaths = writer.makeQuickTimeMovie(data, roiData, binning, format, fps, timeDimName, startTime, interval, units, digits, fontSize, inset, textColor, this);
+			if(vhPaths == null)
 			{
 				return false;
 			}
@@ -265,7 +269,7 @@ public class JEX_MakeMovieWithTimeStamp extends JEXCrunchable {
 		
 		// Collect the outputs
 		Logs.log("Collecting outputs", 1, this);
-		JEXData movie = MovieWriter.makeMovieObject(this.outputNames[0].getName(), vhPath);
+		JEXData movie = MovieWriter.makeMovieObject(this.outputNames[0].getName(), vhPaths);
 		this.realOutputs.add(movie);
 		
 		// Return status

@@ -1,5 +1,13 @@
 package function.plugin.old;
 
+import java.awt.Color;
+import java.util.HashMap;
+import java.util.TreeMap;
+
+import org.monte.media.Format;
+import org.monte.media.VideoFormatKeys;
+import org.monte.media.quicktime.QuickTimeWriter;
+
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataWriter.MovieWriter;
@@ -7,15 +15,8 @@ import Database.Definition.Parameter;
 import Database.Definition.ParameterSet;
 import Database.Definition.TypeName;
 import function.JEXCrunchable;
-
-import java.awt.Color;
-import java.util.HashMap;
-
 import logs.Logs;
-
-import org.monte.media.Format;
-import org.monte.media.VideoFormatKeys;
-import org.monte.media.quicktime.QuickTimeWriter;
+import tables.DimensionMap;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions
@@ -212,19 +213,19 @@ public class JEX_MakeMovie extends JEXCrunchable {
 		// Run the function
 		Logs.log("Running the function", 1, this);
 		MovieWriter writer = new MovieWriter();
-		String vhPath = null;
+		TreeMap<DimensionMap,String> vhPaths = null;
 		if(format == null)
 		{
-			vhPath = writer.makeAVIMovie(data, null, binning, encoding, fps, Color.WHITE, this);
-			if(vhPath == null)
+			vhPaths = writer.makeAVIMovie(data, null, binning, encoding, fps, null, Color.WHITE, this);
+			if(vhPaths == null)
 			{
 				return false;
 			}
 		}
 		else
 		{
-			vhPath = writer.makeQuickTimeMovie(data, null, binning, format, fps, Color.WHITE, this);
-			if(vhPath == null)
+			vhPaths = writer.makeQuickTimeMovie(data, null, binning, format, fps, null, Color.WHITE, this);
+			if(vhPaths == null)
 			{
 				return false;
 			}
@@ -232,7 +233,7 @@ public class JEX_MakeMovie extends JEXCrunchable {
 		
 		// Collect the outputs
 		Logs.log("Collecting outputs", 1, this);
-		JEXData movie = MovieWriter.makeMovieObject(this.outputNames[0].getName(), vhPath);
+		JEXData movie = MovieWriter.makeMovieObject(this.outputNames[0].getName(), vhPaths);
 		this.realOutputs.add(movie);
 		
 		// Return status

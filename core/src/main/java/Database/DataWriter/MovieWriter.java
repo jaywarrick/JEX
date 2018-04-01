@@ -1,17 +1,5 @@
 package Database.DataWriter;
 
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXDataSingle;
-import Database.DataReader.ImageReader;
-import Database.DataReader.RoiReader;
-import Database.SingleUserDatabase.JEXWriter;
-import function.JEXCrunchable;
-import ij.ImagePlus;
-import ij.gui.Roi;
-import ij.process.ColorProcessor;
-import ij.process.ImageProcessor;
-import image.roi.ROIPlus;
-
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
@@ -23,15 +11,27 @@ import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.TreeMap;
 
-import logs.Logs;
-import miscellaneous.FileUtility;
-
 import org.monte.media.Format;
 import org.monte.media.VideoFormatKeys;
 import org.monte.media.avi.AVIWriter;
 import org.monte.media.math.Rational;
 import org.monte.media.quicktime.QuickTimeWriter;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXDataSingle;
+import Database.DataReader.ImageReader;
+import Database.DataReader.RoiReader;
+import Database.Definition.Type;
+import Database.SingleUserDatabase.JEXWriter;
+import function.JEXCrunchable;
+import ij.ImagePlus;
+import ij.gui.Roi;
+import ij.process.ColorProcessor;
+import ij.process.ImageProcessor;
+import image.roi.ROIPlus;
+import logs.Logs;
+import miscellaneous.FileUtility;
+import tables.DimTable;
 import tables.DimensionMap;
 
 public class MovieWriter implements ImageObserver {
@@ -62,15 +62,11 @@ public class MovieWriter implements ImageObserver {
 		return data;
 	}
 	
-	/**
-	 * Returns the path where this movie object is saved. Compression method is either MovieWriter.QT_JPEG, QT_PNG, QT_RAW, or QT_ANIMATION. The 'compression' parameter is only used for JPEG format.
-	 * 
-	 * @param images
-	 * @return
-	 */
-	public String makeQuickTimeMovie(JEXData images, JEXData cropROI, int imageBinning, Format format, int imagesPerSecond, Color textColor, JEXCrunchable optionalCruncherForCanceling)
+	public static JEXData makeMovieObject(String objectName, TreeMap<DimensionMap,?> movies)
 	{
-		return this.makeQuickTimeMovie(images, cropROI, imageBinning, format, imagesPerSecond, 0, 0, null, 0, 0, 0, textColor, optionalCruncherForCanceling);
+		JEXData f = FileWriter.makeFileObject(objectName, null, movies);
+		f.setDataObjectType(new Type(JEXData.MOVIE, null));
+		return f;
 	}
 	
 	/**
@@ -79,7 +75,18 @@ public class MovieWriter implements ImageObserver {
 	 * @param images
 	 * @return
 	 */
-	public String makeQuickTimeMovie(JEXData images, JEXData cropROI, int imageBinning, Format format, int imagesPerSecond, double startTime, double interval, String units, int digits, int fontSize, int inset, Color textColor, JEXCrunchable optionalCruncherForCanceling)
+	public TreeMap<DimensionMap,String> makeQuickTimeMovie(JEXData images, JEXData cropROI, int imageBinning, Format format, int imagesPerSecond, String timeDimName, Color textColor, JEXCrunchable optionalCruncherForCanceling)
+	{
+		return this.makeQuickTimeMovie(images, cropROI, imageBinning, format, imagesPerSecond, timeDimName, 0, 0, null, 0, 0, 0, textColor, optionalCruncherForCanceling);
+	}
+	
+	/**
+	 * Returns the path where this movie object is saved. Compression method is either MovieWriter.QT_JPEG, QT_PNG, QT_RAW, or QT_ANIMATION. The 'compression' parameter is only used for JPEG format.
+	 * 
+	 * @param images
+	 * @return
+	 */
+	public TreeMap<DimensionMap,String> makeQuickTimeMovie(JEXData images, JEXData cropROI, int imageBinning, Format format, int imagesPerSecond, String timeDimName, double startTime, double interval, String units, int digits, int fontSize, int inset, Color textColor, JEXCrunchable optionalCruncherForCanceling)
 	{
 		if(images == null || !images.getTypeName().getType().equals(JEXData.IMAGE))
 		{
@@ -105,118 +112,135 @@ public class MovieWriter implements ImageObserver {
 			}
 		}
 		
-		String newMoviePath = JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getUniqueRelativeTempPath("mov");
-		
 		try
 		{
-			QuickTimeWriter writer = new QuickTimeWriter(new File(newMoviePath));
 			
-			// main loop
-			// add each image one by one
-			int len = imset.size();
-			
-			double time = 0;
-			DecimalFormat formatter = null;
-			Font font = null;
-			if(interval > 0)
-			{
-				time = startTime;
-				String formatString = "0";
-				for (int i = 0; i < digits; i++)
-				{
-					if(i == 0 && digits > 0)
-					{
-						formatString = formatString + ".";
-					}
-					formatString = formatString + "0";
-				}
-				formatter = new DecimalFormat(formatString);
-				font = new Font("Times", Font.PLAIN, fontSize);
-			}
-			
+			TreeMap<DimensionMap,String> output = new TreeMap<>();
+			int j = 0;
 			int k = 0;
-			for (DimensionMap map : imset.keySet())
+			for (DimensionMap outerMap : images.getDimTable().getSubTable(timeDimName).getMapIterator())
 			{
-				if(optionalCruncherForCanceling != null && optionalCruncherForCanceling.isCanceled())
-				{
-					return null;
-				}
-				ImagePlus imk = new ImagePlus(imset.get(map));
-				ColorProcessor imp = (ColorProcessor) imk.getProcessor().convertToRGB();
+				System.out.println("");
+				Logs.log("Making movie for DimensionMap = " + outerMap.toString(), this);
+				String newMoviePath = JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getUniqueRelativeTempPath("mov");
+				QuickTimeWriter writer = new QuickTimeWriter(new File(newMoviePath));
+				// main loop
+				// add each image one by one
+				DimTable nextMovie = images.getDimTable().getSubTable(outerMap);
+				int len = nextMovie.mapCount();
 				
-				if(roiSupplied)
-				{
-					if(singletonRoi)
-					{
-						imp.setRoi(crop);
-					}
-					else
-					{
-						ROIPlus temp = roiset.get(map);
-						crop = temp.getRoi();
-						imp.setRoi(crop);
-					}
-				}
-				
-				if(imageBinning != 1)
-				{
-					imp = (ColorProcessor) imp.resize((imp.getWidth() / imageBinning));
-				}
-				
+				double time = 0;
+				DecimalFormat formatter = null;
+				Font font = null;
 				if(interval > 0)
 				{
-					String timeStamp = "" + formatter.format(time) + " " + units;
-					imp.setFont(font);
-					imp.setColor(textColor);
-					imp.drawString(timeStamp, inset, imp.getHeight() - inset);
-				}
-				
-				if(k == 0)
-				{
-					ImagePlus sample = new ImagePlus("Sample Frame", imp);
-					try
+					time = startTime;
+					String formatString = "0";
+					for (int i = 0; i < digits; i++)
 					{
-						FileUtility.openFileDefaultApplication(JEXWriter.saveImage(sample));
-						sample.flush();
-						sample = null;
-					}
-					catch (Exception e)
-					{
-						e.printStackTrace();
-						if(sample != null)
+						if(i == 0 && digits > 0)
 						{
+							formatString = formatString + ".";
+						}
+						formatString = formatString + "0";
+					}
+					formatter = new DecimalFormat(formatString);
+					font = new Font("Times", Font.PLAIN, fontSize);
+				}
+			
+				int tempWidth = 0;
+				int tempHeight = 0;
+				for (DimensionMap map : nextMovie.getMapIterator())
+				{
+					if(optionalCruncherForCanceling != null && optionalCruncherForCanceling.isCanceled())
+					{
+						return null;
+					}
+					ImagePlus imk = new ImagePlus(imset.get(map));
+					ColorProcessor imp = (ColorProcessor) imk.getProcessor().convertToRGB();
+					
+					if(roiSupplied)
+					{
+						if(singletonRoi)
+						{
+							imp.setRoi(crop);
+						}
+						else
+						{
+							ROIPlus temp = roiset.get(map);
+							crop = temp.getRoi();
+							imp.setRoi(crop);
+						}
+					}
+					
+					if(imageBinning != 1)
+					{
+						imp = (ColorProcessor) imp.resize((imp.getWidth() / imageBinning));
+					}
+					
+					if(interval > 0)
+					{
+						String timeStamp = "" + formatter.format(time) + " " + units;
+						imp.setFont(font);
+						imp.setColor(textColor);
+						imp.drawString(timeStamp, inset, imp.getHeight() - inset);
+					}
+					
+					if(j == 0 && k == 0)
+					{
+						ImagePlus sample = new ImagePlus("Sample Frame", imp);
+						try
+						{
+							FileUtility.openFileDefaultApplication(JEXWriter.saveImage(sample));
 							sample.flush();
 							sample = null;
 						}
+						catch (Exception e)
+						{
+							e.printStackTrace();
+							if(sample != null)
+							{
+								sample.flush();
+								sample = null;
+							}
+						}
 					}
+					
+					BufferedImage bimage = this.getAndWaitForBufferedImage(imp);
+					if(k == 0)
+					{
+						format = format.prepend(new Format(//
+						VideoFormatKeys.DepthKey, 24, //
+						VideoFormatKeys.QualityKey, 1f, //
+						VideoFormatKeys.FrameRateKey, new Rational(imagesPerSecond, 1), //
+						VideoFormatKeys.WidthKey, bimage.getWidth(), //
+						VideoFormatKeys.HeightKey, bimage.getHeight()));
+						writer.addTrack(format);// .addVideoTrack(format,
+						tempWidth = bimage.getWidth();
+						tempHeight = bimage.getHeight();
+						// imagesPerSecond,
+						// bimage.getWidth(),
+						// bimage.getHeight());
+					}
+					
+					Logs.log("Writing movie frame " + k + " of " + len + " - Width = " + tempWidth + " = " + bimage.getWidth() + " - Height = " + tempHeight + " = " + bimage.getHeight(), 0, MovieWriter.class.getSimpleName());
+					if(tempWidth != bimage.getWidth() || tempHeight != bimage.getHeight())
+					{
+						Logs.log("What!!!", this);
+					}
+					writer.write(0, bimage, 1);
+					imp = null;
+					imk.flush();
+					imk = null;
+					time = time + interval;
+					k = k + 1;
 				}
-				
-				BufferedImage bimage = this.getAndWaitForBufferedImage(imp);
-				if(k == 0)
-				{
-					format = format.append(new Format(//
-					VideoFormatKeys.DepthKey, 24, //
-					VideoFormatKeys.QualityKey, 1f, //
-					VideoFormatKeys.FrameRateKey, new Rational(imagesPerSecond, 1), //
-					VideoFormatKeys.WidthKey, imp.getWidth(), //
-					VideoFormatKeys.HeightKey, imp.getHeight()));
-					writer.addTrack(format);// .addVideoTrack(format,
-					// imagesPerSecond,
-					// bimage.getWidth(),
-					// bimage.getHeight());
-				}
-				
-				Logs.log("Writing movie frame " + k + " of " + len, 0, MovieWriter.class.getSimpleName());
-				writer.write(0, bimage, 1);
-				imp = null;
-				imk.flush();
-				imk = null;
-				time = time + interval;
-				k = k + 1;
+				k = 0;
+				j = j + 1;
+				writer.close();
+				output.put(outerMap, newMoviePath);
 			}
-			
-			writer.close();
-			return newMoviePath;
+			return output;
 		}
 		catch (IOException e)
 		{
@@ -274,9 +298,9 @@ public class MovieWriter implements ImageObserver {
 	 * @param images
 	 * @return
 	 */
-	public String makeAVIMovie(JEXData images, JEXData cropROI, int imageBinning, String encoding, int imagesPerSecond, Color textColor, JEXCrunchable optionalCruncherForCanceling)
+	public TreeMap<DimensionMap,String> makeAVIMovie(JEXData images, JEXData cropROI, int imageBinning, String encoding, int imagesPerSecond, String timeDimName, Color textColor, JEXCrunchable optionalCruncherForCanceling)
 	{
-		return this.makeAVIMovie(images, cropROI, imageBinning, encoding, imagesPerSecond, 0, 0, null, 0, 0, 0, textColor, optionalCruncherForCanceling);
+		return this.makeAVIMovie(images, cropROI, imageBinning, encoding, imagesPerSecond, timeDimName, 0, 0, null, 0, 0, 0, textColor, optionalCruncherForCanceling);
 	}
 	
 	/**
@@ -285,7 +309,7 @@ public class MovieWriter implements ImageObserver {
 	 * @param images
 	 * @return
 	 */
-	public String makeAVIMovie(JEXData images, JEXData cropROI, int imageBinning, String encoding, int imagesPerSecond, double startTime, double interval, String units, int digits, int fontSize, int inset, Color textColor, JEXCrunchable optionalCruncherForCanceling)
+	public TreeMap<DimensionMap,String> makeAVIMovie(JEXData images, JEXData cropROI, int imageBinning, String encoding, int imagesPerSecond, String timeDimName, double startTime, double interval, String units, int digits, int fontSize, int inset, Color textColor, JEXCrunchable optionalCruncherForCanceling)
 	{
 		if(images == null || !images.getTypeName().getType().equals(JEXData.IMAGE))
 		{
@@ -311,111 +335,125 @@ public class MovieWriter implements ImageObserver {
 			}
 		}
 		
-		String newMoviePath = JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getUniqueRelativeTempPath("avi");
-		
 		try
 		{
-			int len = imset.size();
-			AVIWriter writer = new AVIWriter(new File(newMoviePath));
-			
-			double time = 0;
-			DecimalFormat formatter = null;
-			Font font = null;
-			if(interval > 0)
-			{
-				time = startTime;
-				String formatString = "0";
-				for (int i = 0; i < digits; i++)
-				{
-					if(i == 0 && digits > 0)
-					{
-						formatString = formatString + ".";
-					}
-					formatString = formatString + "0";
-				}
-				formatter = new DecimalFormat(formatString);
-				font = new Font("Times", Font.PLAIN, fontSize);
-			}
-			
 			// main loop
 			// add each image one by one
-			int k = 0;
-			for (DimensionMap map : imset.keySet())
+			int j = 0;
+			TreeMap<DimensionMap,String> output = new TreeMap<>();
+			for (DimensionMap outerMap : images.getDimTable().getSubTable(timeDimName).getMapIterator())
 			{
-				if(optionalCruncherForCanceling != null && optionalCruncherForCanceling.isCanceled())
-				{
-					return null;
-				}
-				ImagePlus imk = new ImagePlus(imset.get(map));
-				ImageProcessor imp = imk.getProcessor().convertToRGB();
+				System.out.println("");
+				Logs.log("Making movie for DimensionMap = " + outerMap.toString(), this);
+				String newMoviePath = JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getUniqueRelativeTempPath("avi");
+				AVIWriter writer = new AVIWriter(new File(newMoviePath));
+				// main loop
+				// add each image one by one
+				DimTable nextMovie = images.getDimTable().getSubTable(outerMap);
+				int len = nextMovie.mapCount();
 				
-				if(roiSupplied)
-				{
-					if(singletonRoi)
-					{
-						imp.setRoi(crop);
-					}
-					else
-					{
-						ROIPlus temp = roiset.get(map);
-						crop = temp.getRoi();
-						imp.setRoi(crop);
-					}
-				}
-				
-				if(imageBinning != 1)
-				{
-					imp = imp.resize((imk.getWidth() / imageBinning));
-				}
-				
+				double time = 0;
+				DecimalFormat formatter = null;
+				Font font = null;
 				if(interval > 0)
 				{
-					String timeStamp = "" + formatter.format(time) + " " + units;
-					imp.setFont(font);
-					imp.setColor(textColor);
-					imp.drawString(timeStamp, inset, imp.getHeight() - inset);
+					time = startTime;
+					String formatString = "0";
+					for (int i = 0; i < digits; i++)
+					{
+						if(i == 0 && digits > 0)
+						{
+							formatString = formatString + ".";
+						}
+						formatString = formatString + "0";
+					}
+					formatter = new DecimalFormat(formatString);
+					font = new Font("Times", Font.PLAIN, fontSize);
 				}
 				
-				if(k == 0)
+				int k = 0;
+				for (DimensionMap map : nextMovie.getMapIterator())
 				{
-					ImagePlus sample = new ImagePlus("Sample Frame", imp);
-					try
+					if(optionalCruncherForCanceling != null && optionalCruncherForCanceling.isCanceled())
 					{
-						FileUtility.openFileDefaultApplication(JEXWriter.saveImage(sample));
-						sample.flush();
-						sample = null;
+						return null;
 					}
-					catch (Exception e)
+					ImagePlus imk = new ImagePlus(imset.get(map));
+					ImageProcessor imp = imk.getProcessor().convertToRGB();
+					
+					if(roiSupplied)
 					{
-						e.printStackTrace();
-						if(sample != null)
+						if(singletonRoi)
 						{
+							imp.setRoi(crop);
+						}
+						else
+						{
+							ROIPlus temp = roiset.get(map);
+							crop = temp.getRoi();
+							imp.setRoi(crop);
+						}
+					}
+					
+					if(imageBinning != 1)
+					{
+						imp = imp.resize((imk.getWidth() / imageBinning));
+					}
+					
+					if(interval > 0)
+					{
+						String timeStamp = "" + formatter.format(time) + " " + units;
+						imp.setFont(font);
+						imp.setColor(textColor);
+						imp.drawString(timeStamp, inset, imp.getHeight() - inset);
+					}
+					
+					if(j == 0 && k == 0)
+					{
+						ImagePlus sample = new ImagePlus("Sample Frame", imp);
+						try
+						{
+							FileUtility.openFileDefaultApplication(JEXWriter.saveImage(sample));
 							sample.flush();
 							sample = null;
 						}
+						catch (Exception e)
+						{
+							e.printStackTrace();
+							if(sample != null)
+							{
+								sample.flush();
+								sample = null;
+							}
+						}
 					}
+					
+					BufferedImage bimage = imp.getBufferedImage();
+					if(k == 0)
+					{
+						Format format = new Format(VideoFormatKeys.EncodingKey, encoding, VideoFormatKeys.DepthKey, 24, //
+						VideoFormatKeys.QualityKey, 0.1f, VideoFormatKeys.MediaTypeKey, VideoFormatKeys.MediaType.VIDEO, //
+						VideoFormatKeys.FrameRateKey, new Rational(imagesPerSecond, 1), VideoFormatKeys.WidthKey, bimage.getWidth(), VideoFormatKeys.HeightKey, bimage.getHeight());
+						writer.addTrack(format);
+					}
+					
+					Logs.log("Writing movie frame " + k + " of " + len, 0, MovieWriter.class.getSimpleName());
+					writer.write(0, bimage, 1);
+					imp = null;
+					imk.flush();
+					imk = null;
+					time = time + interval;
+					k = k + 1;
 				}
+				k = 0;
+				writer.close();
 				
-				BufferedImage bimage = imp.getBufferedImage();
-				if(k == 0)
-				{
-					Format format = new Format(VideoFormatKeys.EncodingKey, encoding, VideoFormatKeys.DepthKey, 24, //
-					VideoFormatKeys.QualityKey, 0.1f, VideoFormatKeys.MediaTypeKey, VideoFormatKeys.MediaType.VIDEO, //
-					VideoFormatKeys.FrameRateKey, new Rational(imagesPerSecond, 1), VideoFormatKeys.WidthKey, bimage.getWidth(), VideoFormatKeys.HeightKey, bimage.getHeight());
-					writer.addTrack(format);
-				}
+				output.put(outerMap, newMoviePath);
 				
-				Logs.log("Writing movie frame " + k + " of " + len, 0, MovieWriter.class.getSimpleName());
-				writer.write(0, bimage, 1);
-				imp = null;
-				imk.flush();
-				imk = null;
-				time = time + interval;
-				k = k + 1;
+				j = j + 1;
+				
 			}
-			
-			writer.close();
-			return newMoviePath;
+			return output;
 		}
 		catch (IOException e)
 		{
