@@ -18,15 +18,17 @@ import Database.Definition.TypeName;
 import Database.SingleUserDatabase.JEXWriter;
 import function.JEXCrunchable;
 import function.imageUtility.MaximumFinder;
+import function.plugin.plugins.imageProcessing.RankFilters2;
 import ij.ImagePlus;
 import ij.gui.Roi;
-import ij.plugin.filter.RankFilters;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import image.roi.IdPoint;
 import image.roi.PointList;
 import image.roi.ROIPlus;
+import inra.ijpb.binary.BinaryImages;
+import inra.ijpb.watershed.Watershed;
 import jex.statics.JEXStatics;
 import logs.Logs;
 import miscellaneous.JEXCSVWriter;
@@ -178,7 +180,11 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 		Parameter p3b = new Parameter("Exclude Segments on Edges?", "Exclude segements on the edge of the image? (helpful so that half-nuclei aren't counted with the maxima found while excluding maxima on edges)", Parameter.CHECKBOX, false);
 		Parameter p4 = new Parameter("Is EDM?", "Is the image being analyzed already a Euclidean Distance Measurement?", Parameter.CHECKBOX, false);
 		Parameter p5 = new Parameter("Particles Are White?", "Are the particles displayed as white on a black background?", Parameter.CHECKBOX, true);
-		Parameter p6 = new Parameter("Output Maxima Only?", "Output the maxima only (checked TRUE) or also segmented image, point count, and XY List of points (unchecked FALSE)?", Parameter.CHECKBOX, true);
+		Parameter p6 = new Parameter("Create Segmented Image?", "Should a segmented image, point count, and XY List of points be created?", Parameter.CHECKBOX, false);
+		Parameter p7 = new Parameter("Use New Watershed Segmentation?", "Use the old ImageJ watershed or new MorphLibJ implementation?.", Parameter.CHECKBOX, true);
+		Parameter p8 = new Parameter("If New: 4 or 8 Connected?", "Use the old ImageJ watershed or new MorphLibJ implementation?.", Parameter.DROPDOWN, new String[] {"4","8"}, 0);
+		Parameter p9 = new Parameter("Segmentation Pre-Despeckle Radius", "The radius of the median filter used on the channel to be used for segmentation prior to watershedding.", Parameter.TEXTFIELD, "0");
+		Parameter p10 = new Parameter("Segmentation Pre-Smoothing Radius", "The radius of the mean filter used on the channel to be used for segmentation prior to watershedding.", Parameter.TEXTFIELD, "0");
 		
 		// Make an array of the parameters and return it
 		ParameterSet parameterArray = new ParameterSet();
@@ -195,6 +201,10 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 		parameterArray.addParameter(p4);
 		parameterArray.addParameter(p5);
 		parameterArray.addParameter(p6);
+		parameterArray.addParameter(p7);
+		parameterArray.addParameter(p8);
+		parameterArray.addParameter(p9);
+		parameterArray.addParameter(p10);
 		return parameterArray;
 	}
 	
@@ -255,7 +265,11 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 			boolean excludeSegsOnEdges = Boolean.parseBoolean(this.parameters.getValueOfParameter("Exclude Segments on Edges?"));
 			boolean isEDM = Boolean.parseBoolean(this.parameters.getValueOfParameter("Is EDM?"));
 			boolean lightBackground = !Boolean.parseBoolean(this.parameters.getValueOfParameter("Particles Are White?"));
-			boolean maximaOnly = Boolean.parseBoolean(this.parameters.getValueOfParameter("Output Maxima Only?"));
+			boolean maximaOnly = !Boolean.parseBoolean(this.parameters.getValueOfParameter("Create Segmented Image?"));
+			boolean newWatershed = Boolean.parseBoolean(this.parameters.getValueOfParameter("Use New Watershed Segmentation?"));
+			int connectedness = Integer.parseInt(this.parameters.getValueOfParameter("If New: 4 or 8 Connected?"));
+			double waterDespeckleR = Double.parseDouble(this.parameters.getValueOfParameter("Segmentation Pre-Despeckle Radius"));
+			double waterSmoothR = Double.parseDouble(this.parameters.getValueOfParameter("Segmentation Pre-Smoothing Radius"));
 			
 			if(!nuclearDimValue.equals("") && segDimValue.equals(""))
 			{
@@ -337,8 +351,8 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 				if(despeckleR > 0)
 				{
 					// Smooth the image
-					RankFilters rF = new RankFilters();
-					rF.rank(ip, despeckleR, RankFilters.MEDIAN);
+					RankFilters2 rF = new RankFilters2();
+					rF.rank(ip, despeckleR, RankFilters2.MEDIAN);
 				}
 				if(this.isCanceled())
 				{
@@ -353,8 +367,8 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 				if(smoothR > 0)
 				{
 					// Smooth the image
-					RankFilters rF = new RankFilters();
-					rF.rank(ip, smoothR, RankFilters.MEAN);
+					RankFilters2 rF = new RankFilters2();
+					rF.rank(ip, smoothR, RankFilters2.MEAN);
 				}
 				if(this.isCanceled())
 				{
@@ -422,7 +436,7 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 					DimensionMap segMap = map.copy();
 					segMap.put(colorDimName, segDimValue);
 					ImageProcessor toSeg = ip;
-					if(!segDimValue.equals(nuclearDimValue))
+					if(!segDimValue.equals(nuclearDimValue) || (smoothR != waterSmoothR) || (despeckleR != waterDespeckleR))
 					{
 						if(this.isCanceled())
 						{
@@ -435,14 +449,11 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 						counter = counter + 1;
 						
 						toSeg = new ImagePlus(imageMap.get(segMap)).getProcessor();
-						ImagePlus imToSeg = new ImagePlus("toSeg", toSeg);
-						if(despeckleR > 0)
+						if(waterDespeckleR > 0)
 						{
 							// Smooth the image
-							RankFilters rF = new RankFilters();
-							rF.setup(JEX_ImageFilters.MEDIAN, imToSeg);
-							rF.rank(toSeg, despeckleR, RankFilters.MEDIAN);
-							rF.run(toSeg);
+							RankFilters2 rF = new RankFilters2();
+							rF.rank(toSeg, despeckleR, RankFilters2.MEDIAN);
 						}
 						if(this.isCanceled())
 						{
@@ -454,12 +465,11 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 						JEXStatics.statusBar.setProgressPercentage(percentage);
 						counter = counter + 1;
 						
-						if(smoothR > 0)
+						if(waterSmoothR > 0)
 						{
 							// Smooth the image
-							RankFilters rF = new RankFilters();
-							rF.setup(JEX_ImageFilters.MEAN, imToSeg);
-							rF.rank(toSeg, smoothR, RankFilters.MEAN);
+							RankFilters2 rF = new RankFilters2();
+							rF.rank(toSeg, smoothR, RankFilters2.MEAN);
 						}
 						if(this.isCanceled())
 						{
@@ -477,13 +487,38 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 					if(excludeSegsOnEdges != excludePtsOnEdges)
 					{
 						// // Find the Maxima again with the correct exclusion criteria
-						points = (ROIPlus) mf.findMaxima(im.getProcessor(), tolerance, threshold, MaximumFinder.ROI, excludeSegsOnEdges, isEDM, roi, lightBackground);
-						segmentedImage = mf.segmentImageUsingMaxima(toSeg, excludeSegsOnEdges);
+						if(newWatershed)
+						{
+							ImageProcessor markerPoints = (ByteProcessor) mf.findMaxima(im.getProcessor(), tolerance, threshold, MaximumFinder.SINGLE_POINTS, excludeSegsOnEdges, isEDM, roi, lightBackground);
+							toSeg.invert();
+							markerPoints = BinaryImages.componentsLabeling(markerPoints, 4, 32);
+							ImageProcessor seg = Watershed.computeWatershed(toSeg, markerPoints, connectedness, true);
+							seg.multiply(255);
+							// FileUtility.openFileDefaultApplication(JEXWriter.saveImage(seg));
+							segmentedImage = seg.convertToByteProcessor(false);
+						}
+						else
+						{
+							points = (ROIPlus) mf.findMaxima(im.getProcessor(), tolerance, threshold, MaximumFinder.ROI, excludeSegsOnEdges, isEDM, roi, lightBackground);
+							segmentedImage = mf.segmentImageUsingMaxima(toSeg, excludeSegsOnEdges);
+						}
 					}
 					else
 					{
 						// Just use the points we already found
-						segmentedImage = mf.segmentImageUsingMaxima(toSeg, excludeSegsOnEdges);
+						if(newWatershed)
+						{
+							toSeg.invert();
+							ImageProcessor markerPoints = BinaryImages.componentsLabeling(mf.getMarkerPoints(), 4, 32);
+							ImageProcessor seg = Watershed.computeWatershed(toSeg, markerPoints, connectedness, true);
+							seg.multiply(255);
+							// FileUtility.openFileDefaultApplication(JEXWriter.saveImage(seg));
+							segmentedImage = seg.convertToByteProcessor(false);
+						}
+						else
+						{
+							segmentedImage = mf.segmentImageUsingMaxima(toSeg, excludeSegsOnEdges);
+						}						
 					}
 					if(this.isCanceled())
 					{

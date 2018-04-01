@@ -1,5 +1,9 @@
 package function.imageUtility;
 
+import java.awt.Rectangle;
+import java.util.Arrays;
+import java.util.Vector;
+
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.gui.Wand;
@@ -9,11 +13,6 @@ import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import image.roi.PointList;
 import image.roi.ROIPlus;
-
-import java.awt.Rectangle;
-import java.util.Arrays;
-import java.util.Vector;
-
 import jex.utilities.ImageUtility;
 import logs.Logs;
 
@@ -294,6 +293,11 @@ public class MaximumFinder {
 		}
 		
 		return outIp;
+	}
+	
+	public ByteProcessor getMarkerPoints()
+	{
+		return (ByteProcessor) this.savedTypeP;
 	}
 	
 	/**
