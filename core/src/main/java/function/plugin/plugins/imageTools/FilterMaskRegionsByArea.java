@@ -111,6 +111,10 @@ public class FilterMaskRegionsByArea extends JEXPlugin {
 		String tempPath;
 		for (DimensionMap map : imageMap.keySet())
 		{
+			if(this.isCanceled())
+			{
+				return false;
+			}
 			// Call helper method
 			Img<UnsignedByteType> tempMask = utils.filterMaskRegions(imageMap.get(map), (int) minSize, (int) maxSize, fourConnected, filterWhite, keep);
 			if(tempMask != null)
