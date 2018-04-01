@@ -71,9 +71,9 @@ public class TIECalculator {
 		this.simple = simple;
 		this.N = 2*imHeight;
 		this.M = 2*imWidth;
-		this.pixelSize = pixelSizeInMicrons / 1000000;
-		this.dz = dzInMicrons / 1000000;
-		this.wavelength = wavelengthInNanometers / 1000000000;
+		this.pixelSize = pixelSizeInMicrons / 1000000f;
+		this.dz = dzInMicrons / 1000000f;
+		this.wavelength = wavelengthInNanometers / 1000000000f;
 		this.thresh = threshold;
 
 
@@ -92,7 +92,7 @@ public class TIECalculator {
 		//		v=v([(floor(N/2)+1):N,1:floor(N/2)])
 		//		[uu,vv] = meshgrid(u,v); 
 		Pair<FloatProcessor,FloatProcessor> UUVV = getUUVV(simple);
-		// viewImage(UUVV.p1);
+		// viewImage(UUVV.p1); 
 		// viewImage(UUVV.p2);
 
 
@@ -138,7 +138,6 @@ public class TIECalculator {
 	 */
 	public FloatProcessor calculatePhase(FloatProcessor I, FloatProcessor lo, FloatProcessor hi)
 	{
-
 		//		if(this.simple)
 		//		{
 		//			FloatProcessor kdIdz = getkdIdz(lo, hi, this.dz, this.wavelength);
@@ -158,11 +157,11 @@ public class TIECalculator {
 		//		dIdz_double=[dIdz,fliplr(dIdz)];
 		//		dIdz_double=[dIdz_double',(flipud(dIdz_double))']';
 		//		kdIdz_double=-k*dIdz_double;
-		FloatProcessor kdIdz = getkdIdz(lo, hi, this.dz, this.wavelength);
+		FloatProcessor kdIdz = getkdIdz(lo, hi);
+		//viewImage(kdIdz);
+		
 		kdIdz = replicate(kdIdz);
-		// viewImage(kdIdz);
-
-
+		
 		//		Fleft=fft2(kdIdz_double);
 		float[][] Fleft_c = fft(kdIdz);
 		// viewImage(kdIdz);	
@@ -178,22 +177,19 @@ public class TIECalculator {
 		//		bigphi=real(ifft2((Fphi)));
 		float[][] bigphi_r = ifft_array(Fphi_c, true);
 		//viewArray(bigphi_r);
-
+		
 		if(simple)
 		{
-			//			phi=phi(1:end/2,1:end/2);
+			//	phi=phi(1:end/2,1:end/2);
 			FloatProcessor ret = getULAsFloatProcessor(bigphi_r);
 			ret.resetMinAndMax();
-			ret.subtract(ret.getMin());
-			ret.add(1);
-			ret.resetMinAndMax();
 			return ret;
-		}
+		} // else do long calculation
 
 		//		Fbigphi=fft2(bigphi);
 		float[][] Fbigphi_c = fft_real(bigphi_r);
 
-
+		
 		//		Fphi=(Fbigphi).*(2*1i*pi*(uu));
 		Fphi_c = multComplexByComplex(Fbigphi_c, this.uu);
 		//viewMag(Fphi_c);
@@ -265,33 +261,19 @@ public class TIECalculator {
 		//		phi=phi(1:end/2,1:end/2);
 		FloatProcessor ret = getULAsFloatProcessor(phi);
 		ret.resetMinAndMax();
-		ret.subtract(ret.getMin());
-		ret.add(1);
-		ret.resetMinAndMax();
 		return ret;
-
 	}
 
-	/** 
-	 * Keep track of 'origin'. Matlab origin is lower left while ImageJ origin in upper left (Y-y-1) or something
-	 * @param lo
-	 * @param hi
-	 * @param dz
-	 * @param lambdaNM
-	 * @return
-	 */
-	public FloatProcessor getkdIdz(FloatProcessor lo, FloatProcessor hi, float dz, float wavelength)
+	public FloatProcessor getkdIdz(FloatProcessor lo, FloatProcessor hi)
 	{
 		FloatProcessor ret = (FloatProcessor) hi.duplicate();
 		FloatBlitter b = new FloatBlitter(ret);
 		b.copyBits(lo, 0, 0, Blitter.SUBTRACT);
-		double factor = (2*Math.PI/(wavelength))*0.5/(dz);
-		//		double factor = (2*Math.PI/(wavelengthInNanoMeters*0.001))*0.5/(dzInMicrons*1);
+		double factor = (2*Math.PI/(wavelength))*(1/(2*this.dz)); 
 		ret.multiply(factor);
-		ret.resetMinAndMax();
 		return ret;
 	}
-
+	
 	public void viewArray(float[][] a)
 	{
 		int R = a.length;

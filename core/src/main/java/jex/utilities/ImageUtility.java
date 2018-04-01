@@ -14,16 +14,20 @@ import java.util.List;
 import java.util.TreeMap;
 import java.util.Vector;
 
+import Database.SingleUserDatabase.JEXWriter;
 import function.ops.histogram.PolynomialRegression;
 import function.plugin.plugins.imageProcessing.RankFilters2;
 import function.singleCellAnalysis.SingleCellUtility;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.process.Blitter;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
+import ij.process.FloatBlitter;
 import ij.process.FloatProcessor;
 import ij.process.FloatStatistics;
 import ij.process.ImageProcessor;
+import ij.process.ImageStatistics;
 import logs.Logs;
 import miscellaneous.FileUtility;
 import miscellaneous.Pair;
@@ -255,6 +259,42 @@ public class ImageUtility {
 		}
 		return new ByteProcessor(data.getWidth(), data.getHeight(), ret);
 	}
+	
+	/**
+	 * 
+	 * @param localSigma
+	 * @param data
+	 * @param nSigma
+	 * @return
+	 */
+	public static ByteProcessor getThresholdedImage(FloatProcessor data, float threshold, boolean above)
+	{
+		float[] dataPixels = (float[]) data.getPixels();
+
+		byte[] ret = new byte[dataPixels.length];
+		if(above)
+		{
+			for(int i = 0; i < dataPixels.length; i++)
+			{
+				if(dataPixels[i] >= threshold)
+				{
+					ret[i] = (byte) 255;
+				}
+			}
+		}
+		else
+		{
+			for(int i = 0; i < dataPixels.length; i++)
+			{
+				if(dataPixels[i] <= threshold)
+				{
+					ret[i] = (byte) 255;
+				}
+			}
+		}
+		
+		return new ByteProcessor(data.getWidth(), data.getHeight(), ret);
+	}
 
 	/**
 	 * Filter the image with a standard deviation filter. Then find the deviation from the mode.
@@ -373,6 +413,141 @@ public class ImageUtility {
 
 		}
 		return(weightImages);
+	}
+	
+	public static Pair<FloatProcessor, String> getWeightedMeanFilterImage(ImagePlus im, boolean doThreshold, boolean doSubtraction, boolean doBackgroundOnly, boolean doDivision, double meanRadius, double varRadius, double subScale, double threshScale, String operation, Double nominal, Double sigma, double darkfield)
+	{
+		Pair<FloatProcessor, String> ret = new Pair<>((FloatProcessor) null, (String) null);
+		FloatProcessor original = im.getProcessor().convertToFloatProcessor();
+		FloatProcessor copyOfOriginal = null, subLocalMean = null, threshLocalMean = null;
+		if(doThreshold & sigma >= 0 || doSubtraction || doDivision)
+		{
+			copyOfOriginal = (FloatProcessor) original.duplicate(); // We need this 'original' image regardless of whether we are only doing subtraction, thresholding, or both.
+		}
+
+		// Get the Variance weighted image
+		Pair<FloatProcessor[], FloatProcessor> w = ImageUtility.getImageVarianceWeights(original, varRadius, doThreshold, false, subScale, threshScale);
+		FloatProcessor subWeights = w.p1[0];
+		FloatProcessor threshWeights = w.p1[1];
+		FloatProcessor localSD = w.p2; // only needed if doing threshold
+
+		// Debug
+		//FileUtility.showImg(w, true);
+
+		// Save a thresholded version of the weights image if desired.
+		if(doThreshold && sigma < 0)
+		{
+			// Then threshold the weights image instead of the actual image (e.g., BF images are better done this way)
+			ByteProcessor bp = ImageUtility.getThresholdedWeightsImage(threshWeights, sigma.floatValue(), threshScale);
+			String myPath = JEXWriter.saveImage(bp);
+			//FileUtility.showImg(bp, true);
+			ret.p2 = myPath;
+		}
+
+		RankFilters2 rF = new RankFilters2();
+
+
+		// If necessary, continue calculating the localSD by multiplying by weights and summing
+		if(doThreshold && sigma >= 0)
+		{
+			//FileUtility.showImg(localSD, true);
+			localSD.copyBits(threshWeights, 0, 0, Blitter.MULTIPLY);		// localSD (Multiplied)
+			//FileUtility.showImg(localSD, true);
+			rF.rank(localSD, meanRadius, RankFilters2.SUM);     		// localSD (Multiplied, Summed)
+			//FileUtility.showImg(localSD, true);
+		}
+
+		// Perform the final division with the summed weights to get weighted means for each pixel (i.e., sum(w*ret)/sum(w)).
+		if(doBackgroundOnly || doSubtraction || doDivision)
+		{
+			subLocalMean = original;
+			if(doThreshold)
+			{
+				// Then, we need to make a copy to leave one for doing threshold stuff.
+				subLocalMean = (FloatProcessor) original.duplicate();
+			}
+
+			// Multiply the original image by the weights and sum
+			subLocalMean.copyBits(subWeights, 0, 0, Blitter.MULTIPLY); 		// subLocalMean (Multiplied)
+			rF.rank(subLocalMean, meanRadius, RankFilters2.SUM);  		// subLocalMean (Multiplied, Summed)
+			rF.rank(subWeights, meanRadius, RankFilters2.SUM);    		// subWeights   (Summed)
+			subLocalMean.copyBits(subWeights, 0, 0, Blitter.DIVIDE);   		// subLocalMean (Multiplied, Summed, Divided)
+		}
+		if(doThreshold)
+		{
+			// We can use localMean directly since we made a copy, if necessary, for subtraction calcs.
+			threshLocalMean = original;										// threshLocalMean == original
+			threshLocalMean.copyBits(threshWeights, 0, 0, Blitter.MULTIPLY);// threshLocalMean (Multiplied)
+			rF.rank(threshLocalMean, meanRadius, RankFilters2.SUM);  	// threshLocalMean (Multiplied, Summed)
+			//FileUtility.showImg(threshWeights, true);
+			rF.rank(threshWeights, meanRadius, RankFilters2.SUM);    	// threshWeights   (Summed)
+			//FileUtility.showImg(threshWeights, true);
+			threshLocalMean.copyBits(threshWeights, 0, 0, Blitter.DIVIDE);  // threshLocalMean (Multiplied, Summed, Divided)
+		}
+
+		// Calculate the localSD if necessary 
+		if(doThreshold && sigma >= 0)
+		{
+			localSD.copyBits(threshWeights, 0, 0, Blitter.DIVIDE); 			// localSD (Multiplied, Summed, Divided)
+			//FileUtility.showImg(localSD, true);
+		}
+
+		// Calculate and save a locally thresholded image if desired
+		if(doThreshold && sigma >= 0)
+		{
+			FloatBlitter tempfb = new FloatBlitter(threshLocalMean);
+			tempfb.copyBits(copyOfOriginal, 0, 0, Blitter.SUBTRACT);
+			tempfb.copyBits(localSD, 0, 0, Blitter.DIVIDE);
+			String myPath = null;
+			if(sigma == 0)
+			{
+				threshLocalMean.multiply(-1.0);
+				myPath = JEXWriter.saveImage(threshLocalMean.convertToByteProcessor(false));
+			}
+			else
+			{
+				ByteProcessor mask = ImageUtility.getThresholdedImage(threshLocalMean, -1f*sigma.floatValue(), false);
+				myPath = JEXWriter.saveImage(mask);
+			}
+			ret.p2 = myPath;
+		}
+
+		// Save the subtracted or filtered image
+		if(doSubtraction)
+		{
+			//				FileUtility.showImg(copyOfOriginal, true);
+			//				FileUtility.showImg(subLocalMean, true);
+			copyOfOriginal.copyBits(subLocalMean, 0, 0, Blitter.SUBTRACT);	// copyOfOriginal (Subtracted)
+			//				FileUtility.showImg(copyOfOriginal, true);
+			if(nominal != 0)
+			{
+				copyOfOriginal.add(nominal);								// copyOfOriginal (Subtracted, Offset)
+			}
+		}
+		else if(doDivision)
+		{
+			ImageStatistics stats = subLocalMean.getStats();
+			double meanI = stats.mean - darkfield;
+			copyOfOriginal.subtract(darkfield);
+			subLocalMean.subtract(darkfield);
+			copyOfOriginal.copyBits(subLocalMean, 0, 0, Blitter.DIVIDE);	// copyOfOriginal (Divided)
+			copyOfOriginal.multiply(meanI);
+			copyOfOriginal.subtract(meanI);									// copyOfOriginal (Divided, Scaled)
+			if(nominal != 0)
+			{
+				copyOfOriginal.add(nominal);								// copyOfOriginal (Divided, Scaled Offset)
+			}
+		}
+		else
+		{
+			copyOfOriginal = subLocalMean;
+		}
+		if(doBackgroundOnly || doSubtraction || doDivision)
+		{
+			ret.p1 = copyOfOriginal;
+		}
+		
+		return ret;
 	}
 
 	/**
@@ -509,11 +684,21 @@ public class ImageUtility {
 
 	public synchronized static String getHistogramPlot(double[] binCenters, int[] counts, boolean show, Double...vLines)
 	{
+		return getHistogramPlot(binCenters, counts, show, "pdf", vLines);
+	}
+	
+	public synchronized static String getHistogramPlot(double[] binCenters, int[] counts, boolean show, String extension, Double...vLines)
+	{
+		if(extension == null)
+		{
+			extension = "tif";
+		}
 		// Draw the histogram
 		R.eval("duh <- 1");
 		R.makeVector("binCenters", binCenters);
 		R.makeVector("binCounts", counts);
-		String path = R.startPlot("pdf", 4, 3, 300, 10, null, null);
+		String path = R.startPlot(extension, 4, 3, 300, 10, null, null);
+		
 		R.eval("plot(binCenters,binCounts,cex=0.4)");
 		for(Double d : vLines)
 		{

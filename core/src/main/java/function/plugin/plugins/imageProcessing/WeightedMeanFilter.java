@@ -15,16 +15,12 @@ import function.plugin.mechanism.MarkerConstants;
 import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
 import ij.ImagePlus;
-import ij.process.Blitter;
-import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
-import ij.process.ImageStatistics;
 import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import jex.utilities.ImageUtility;
 import logs.Logs;
 import miscellaneous.CSVList;
-import miscellaneous.FileUtility;
 import miscellaneous.Pair;
 import tables.Dim;
 import tables.DimTable;
@@ -76,7 +72,7 @@ public class WeightedMeanFilter extends JEXPlugin {
 	@ParameterMarker(uiOrder=6, name="Nominal Value to Add/Mult Back", description="Nominal value to add (or multiply by if doing division with background) to all pixels after background subtraction/division. (Use following notation to specify different parameters for differen dimension values, '<Dim Name>'=<val1>,<val2>,<val3>' e.g., 'Channel=0,100,100'. The values will be applied in that order for the ordered dim values.) ", ui=MarkerConstants.UI_TEXTFIELD, defaultText="100")
 	String nominalsString;
 
-	@ParameterMarker(uiOrder=7, name="Threshold Sigmas", description="Sigma (i.e., Std. Dev. values to use for thresholding after background subtraction etc. (Use following notation to specify different parameters for differen dimension values, '<Dim Name>'=<val1>,<val2>,<val3>' e.g., 'Channel=0,100,100'. The values will be applied in that order for the ordered dim values.) ", ui=MarkerConstants.UI_TEXTFIELD, defaultText="3")
+	@ParameterMarker(uiOrder=7, name="Threshold Sigmas", description="Sigma (i.e., Std. Dev.) for thresholding after background subtraction etc. 0 outputs signal-to-noise ratio instead of thresholded image (Use following notation to specify different parameters for differen dimension values, '<Dim Name>'=<val1>,<val2>,<val3>' e.g., 'Channel=0,100,100'. The values will be applied in that order for the ordered dim values.) ", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0")
 	String sigmasString;
 
 	double nominalVal;
@@ -89,9 +85,6 @@ public class WeightedMeanFilter extends JEXPlugin {
 
 	@ParameterMarker(uiOrder=10, name="Keep Excluded Images?", description="Should images excluded by the filter be copied to the new object?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
 	boolean keepExcluded;
-
-	@ParameterMarker(uiOrder=11, name="Output Weight Images?", description="Should the weights images be output?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
-	boolean outputWeights;
 
 	@ParameterMarker(uiOrder=12, name="Dark Field Intensity", description="What is the intensity of an image without any illumination (i.e., the dark field). This is subtracted prior to division for division options.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="100.0")
 	double darkfield;
@@ -106,9 +99,6 @@ public class WeightedMeanFilter extends JEXPlugin {
 
 	@OutputMarker(uiOrder=2, name="Mask", type=MarkerConstants.TYPE_IMAGE, flavor="", description="The resultant thresholded mask image", enabled=true)
 	JEXData maskOutput;
-
-	@OutputMarker(uiOrder=3, name="Weights", type=MarkerConstants.TYPE_IMAGE, flavor="", description="The resultant weighting image used for bg subtraction and thresholding", enabled=true)
-	JEXData weightOutput;
 
 	//	@OutputMarker(uiOrder=4, name="Local Std. Dev.", type=MarkerConstants.TYPE_IMAGE, flavor="", description="The resultant weighting image used for bg subtraction and thresholding", enabled=true)
 	//	JEXData stdevOutput;
@@ -164,12 +154,11 @@ public class WeightedMeanFilter extends JEXPlugin {
 		{
 			doDivision = true;
 		}
-
+		
 		// Run the function
 		TreeMap<DimensionMap,String> imageMap = ImageReader.readObjectToImagePathTable(imageData);
 		TreeMap<DimensionMap,String> outputImageMap = new TreeMap<DimensionMap,String>();
 		TreeMap<DimensionMap,String> outputMaskMap = new TreeMap<DimensionMap,String>();
-		TreeMap<DimensionMap,String> outputWeightMap = new TreeMap<DimensionMap,String>();
 		//TreeMap<DimensionMap,String> outputStDevMap = new TreeMap<DimensionMap,String>();
 		int count = 0, percentage = 0;
 		String tempPath;
@@ -217,135 +206,16 @@ public class WeightedMeanFilter extends JEXPlugin {
 
 			// Get images and parameters
 			Double sigma = sigmas.get(map);
-			double nominal = nominals.get(map);
-			FloatProcessor original = im.getProcessor().convertToFloatProcessor();
-			FloatProcessor copyOfOriginal = null, subLocalMean = null, threshLocalMean = null;
-			if(doThreshold & sigma > 0 || doSubtraction || doDivision)
+			Double nominal = nominals.get(map);
+			
+			Pair<FloatProcessor, String> images = ImageUtility.getWeightedMeanFilterImage(im, doThreshold, doSubtraction, doBackgroundOnly, doDivision, this.meanRadius, this.varRadius, this.subScale, this.threshScale, this.operation, nominal, sigma, this.darkfield);
+			
+			if(images.p1 != null)
 			{
-				copyOfOriginal = (FloatProcessor) original.duplicate(); // We need this 'original' image regardless of whether we are only doing subtraction, thresholding, or both.
+				String filteredImagePath = JEXWriter.saveImage(images.p1, this.outputBitDepth);
+				outputImageMap.put(map.copy(), filteredImagePath);
 			}
-
-			// Get the Variance weighted image
-			Pair<FloatProcessor[], FloatProcessor> w = ImageUtility.getImageVarianceWeights(original, this.varRadius, doThreshold, false, this.subScale, this.threshScale);
-			FloatProcessor subWeights = w.p1[0];
-			FloatProcessor threshWeights = w.p1[1];
-			FloatProcessor localSD = w.p2; // only needed if doing threshold
-
-			// Debug
-			//FileUtility.showImg(w, true);
-
-			// Save the weighting image to see how filter radii affect weighting.
-			if(this.outputWeights)
-			{
-				String tempWeightPath = JEXWriter.saveImage(subWeights, 32);
-				outputWeightMap.put(map.copyAndSet("Op=Subtraction"), tempWeightPath);
-				tempWeightPath = JEXWriter.saveImage(threshWeights, 32);
-				outputWeightMap.put(map.copyAndSet("Op=Threshold"), tempWeightPath);
-			}
-
-			// Save a thresholded version of the weights image if desired.
-			if(doThreshold && sigma < 0)
-			{
-				// Then threshold the weights image instead of the actual image (e.g., BF images are better done this way)
-				ByteProcessor bp = ImageUtility.getThresholdedWeightsImage(threshWeights, sigma.floatValue(), this.threshScale);
-				String myPath = JEXWriter.saveImage(bp);
-				//FileUtility.showImg(bp, true);
-				outputMaskMap.put(map, myPath);
-			}
-
-			RankFilters2 rF = new RankFilters2();
-
-
-			// If necessary, continue calculating the localSD by multiplying by weights and summing
-			if(doThreshold && sigma > 0)
-			{
-				//FileUtility.showImg(localSD, true);
-				localSD.copyBits(threshWeights, 0, 0, Blitter.MULTIPLY);		// localSD (Multiplied)
-				//FileUtility.showImg(localSD, true);
-				rF.rank(localSD, this.meanRadius, RankFilters2.SUM);     		// localSD (Multiplied, Summed)
-				//FileUtility.showImg(localSD, true);
-			}
-
-			// Perform the final division with the summed weights to get weighted means for each pixel (i.e., sum(w*ret)/sum(w)).
-			if(doBackgroundOnly || doSubtraction || doDivision)
-			{
-				subLocalMean = original;
-				if(doThreshold)
-				{
-					// Then, we need to make a copy to leave one for doing threshold stuff.
-					subLocalMean = (FloatProcessor) original.duplicate();
-				}
-
-				// Multiply the original image by the weights and sum
-				subLocalMean.copyBits(subWeights, 0, 0, Blitter.MULTIPLY); 		// subLocalMean (Multiplied)
-				rF.rank(subLocalMean, this.meanRadius, RankFilters2.SUM);  		// subLocalMean (Multiplied, Summed)
-				rF.rank(subWeights, this.meanRadius, RankFilters2.SUM);    		// subWeights   (Summed)
-				subLocalMean.copyBits(subWeights, 0, 0, Blitter.DIVIDE);   		// subLocalMean (Multiplied, Summed, Divided)
-			}
-			if(doThreshold)
-			{
-				// We can use localMean directly since we made a copy, if necessary, for subtraction calcs.
-				threshLocalMean = original;										// threshLocalMean == original
-				threshLocalMean.copyBits(threshWeights, 0, 0, Blitter.MULTIPLY);// threshLocalMean (Multiplied)
-				rF.rank(threshLocalMean, this.meanRadius, RankFilters2.SUM);  	// threshLocalMean (Multiplied, Summed)
-				//FileUtility.showImg(threshWeights, true);
-				rF.rank(threshWeights, this.meanRadius, RankFilters2.SUM);    	// threshWeights   (Summed)
-				//FileUtility.showImg(threshWeights, true);
-				threshLocalMean.copyBits(threshWeights, 0, 0, Blitter.DIVIDE);  // threshLocalMean (Multiplied, Summed, Divided)
-			}
-
-			// Calculate the localSD if necessary 
-			if(doThreshold && sigma > 0)
-			{
-				localSD.copyBits(threshWeights, 0, 0, Blitter.DIVIDE); 			// localSD (Multiplied, Summed, Divided)
-				//FileUtility.showImg(localSD, true);
-			}
-
-			// Calculate and save a locally thresholded image if desired
-			if(doThreshold && sigma > 0)
-			{
-				ByteProcessor mask = ImageUtility.getLocalThresholdedImage(threshLocalMean, localSD, copyOfOriginal, sigma.floatValue());
-				String myPath = JEXWriter.saveImage(mask);						// mask (original-localMean > nSigma*localSD)
-				outputMaskMap.put(map, myPath);
-			}
-
-			// Save the subtracted or filtered image
-			if(doSubtraction)
-			{
-				//				FileUtility.showImg(copyOfOriginal, true);
-				//				FileUtility.showImg(subLocalMean, true);
-				copyOfOriginal.copyBits(subLocalMean, 0, 0, Blitter.SUBTRACT);	// copyOfOriginal (Subtracted)
-				//				FileUtility.showImg(copyOfOriginal, true);
-				if(nominal != 0)
-				{
-					copyOfOriginal.add(nominal);								// copyOfOriginal (Subtracted, Offset)
-				}
-			}
-			else if(doDivision)
-			{
-				ImageStatistics stats = subLocalMean.getStats();
-				double meanI = stats.mean - this.darkfield;
-				copyOfOriginal.subtract(this.darkfield);
-				subLocalMean.subtract(this.darkfield);
-				copyOfOriginal.copyBits(subLocalMean, 0, 0, Blitter.DIVIDE);	// copyOfOriginal (Divided)
-				if(nominal == 0)
-				{
-					copyOfOriginal.multiply(meanI);							// copyOfOriginal (Divided, Offset)
-				}
-				if(nominal != 0)
-				{
-					copyOfOriginal.multiply(nominal);						// copyOfOriginal (Divided, Offset)
-				}
-			}
-			else
-			{
-				copyOfOriginal = subLocalMean;
-			}
-			if(doBackgroundOnly || doSubtraction || doDivision)
-			{
-				tempPath = JEXWriter.saveImage(copyOfOriginal, outputBitDepth);
-				outputImageMap.put(map, tempPath);
-			}
+			outputMaskMap.put(map.copy(), images.p2);
 
 			// Update the progress bar.
 			count = count + 1;
@@ -363,12 +233,6 @@ public class WeightedMeanFilter extends JEXPlugin {
 		if(outputMaskMap.size() > 0)
 		{
 			this.maskOutput = ImageWriter.makeImageStackFromPaths("temp", outputMaskMap);
-		}
-
-		// Save a weights image if necessary
-		if(outputWeightMap.size() > 0)
-		{
-			this.weightOutput = ImageWriter.makeImageStackFromPaths("temp", outputWeightMap);
 		}
 
 		// Return status

@@ -72,6 +72,9 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 
 	@ParameterMarker(uiOrder=4, name="Number of Pixels Sample", description="How many pixels should be sampled? Typically after more than 300, the result doesn't change much. Use 0 or less to sample all", ui=MarkerConstants.UI_TEXTFIELD, defaultText="300")
 	int numToSample;
+	
+	@ParameterMarker(uiOrder=4, name="R: Plot Sample Histogram?", description="Requires R. Should the samples be plotted in a histogram and saved for viewing?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	boolean histogram;
 
 	@ParameterMarker(uiOrder=5, name="Refinement Algorithm?", description="Should the background level be refined by the 'Adaptive' algorithm (iteratively weighting the pixels by their proximity to the current median value) or the 'Variance Weighted' algorithm (use a variance filtered version of image to weight pixels to determin median)?", ui=MarkerConstants.UI_DROPDOWN, choices={"None","Adaptive","Variance Weighted","Mode Weighted"}, defaultChoice=0)
 	String algorithm;
@@ -105,11 +108,14 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 
 	@OutputMarker(uiOrder=4, name="Thresholds", type=MarkerConstants.TYPE_IMAGE, flavor="", description="The resultant adjusted image", enabled=true)
 	JEXData outputThresholdData;
+	
+	@OutputMarker(uiOrder=4, name="Histograms (R)", type=MarkerConstants.TYPE_IMAGE, flavor="", description="The resultant adjusted image", enabled=true)
+	JEXData histograms;
 
 	int bitDepth = 8;
 	List<Double> nSigmas = null;
 
-	Dim filterDim = null;
+	DimTable filterTable = null;
 
 	// Define threading capability here (set to 1 if using non-final static variables shared between function instances).
 	@Override
@@ -138,12 +144,7 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 			return false;
 		}
 
-		filterDim = null;
-		if(toExclude != null && !toExclude.equals(""))
-		{
-			String[] filterArray = toExclude.split("=");
-			filterDim = new Dim(filterArray[0], new CSVList(filterArray[1]));
-		}
+		this.filterTable = new DimTable(toExclude);
 
 		TreeMap<String,Object> output = null;
 		if(threshPerColor)
@@ -165,7 +166,11 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 		outputStatsData = FileWriter.makeFileObject("Stats", null, valuePath2);
 		String valuePath3 = JEXTableWriter.writeTable("Thresholds", (TreeMap<DimensionMap,Double>) output.get("outputThreshMap"));
 		outputThresholdData = FileWriter.makeFileObject("Thresholds", null, valuePath3);
-
+		if(output.get("histMap") != null)
+		{
+			this.histograms = ImageWriter.makeImageStackFromPaths("Histograms", (TreeMap<DimensionMap,String>) output.get("histMap"));
+		}
+		
 		// Return status
 		return true;
 	}
@@ -220,7 +225,7 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 				FloatProcessor ip = (FloatProcessor) im.getProcessor().convertToFloat();
 
 				String path = null;
-				if(this.threshold && (filterDim == null || !filterDim.containsValue(map.get(filterDim.dimName))))
+				if(this.threshold && !filterTable.testMapAsExclusionFilter(map))
 				{
 					FunctionUtility.imThresh(ip, thresh, false);
 					if(this.isCanceled())
@@ -230,7 +235,7 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 					}
 					path = JEXWriter.saveImage(FunctionUtility.makeImageToSave(ip, "false", 8)); // Creating black and white image
 				}
-				else if(filterDim == null || !filterDim.containsValue(map.get(filterDim.dimName)))
+				else if(!filterTable.testMapAsExclusionFilter(map))
 				{
 					ip.add(offset);
 					ip.subtract(thresh);
@@ -256,7 +261,7 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 			outputThreshMap.put(new DimensionMap(colorSubDim.dimName + "=" + colorSubDim.valueAt(0)), thresh);
 		}
 
-		return this.makeTreeMap("Success,outputMap,statsMap,outputThreshMap", success, outputMap, statsMap, outputThreshMap);
+		return this.makeTreeMap("Success,outputMap,statsMap,outputThreshMap,histMap", success, outputMap, statsMap, outputThreshMap, temp.get("histMap"));
 	}
 
 	public TreeMap<String,Object> calcIndividual()
@@ -275,6 +280,7 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 		TreeMap<DimensionMap,String> outputMap = new TreeMap<DimensionMap,String>();
 		TreeMap<DimensionMap,Double> statsMap = new TreeMap<DimensionMap,Double>();
 		TreeMap<DimensionMap,Double> outputThreshMap = new TreeMap<DimensionMap,Double>();
+		TreeMap<DimensionMap,String> histMap = new TreeMap<DimensionMap,String>();
 		boolean success = true;
 		for (DimensionMap map : dimsToProcess.getMapIterator())
 		{
@@ -296,7 +302,7 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 				ImagePlus im = new ImagePlus(imageMap.get(map));
 				bitDepth = im.getBitDepth();
 
-				if(filterDim != null && filterDim.containsValue(map.get(filterDim.dimName)))
+				if(filterTable.testMapAsExclusionFilter(map))
 				{
 					if(keepUnprocessed)
 					{
@@ -320,7 +326,6 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 						// THEN 'VARIANCE WEIGHTED' ALGORITHM
 						
 						// Get the 'weights' version of the image.
-						// This would be for 'Mode Weighted'
 						FloatProcessor weights = null;
 						if(this.algorithm.equals("Variance Weighted"))
 						{
@@ -354,9 +359,12 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 						
 						//double med2 = StatisticsUtility.median(samples.p1);
 						//double mad2 = StatisticsUtility.mad(med, samples.p1);
-						Pair<double[], int[]> hist2 = ImageUtility.getHistogram(samples.p1, Math.max(0.1,med-3*mad), med+3*mad, -1, false);
-						ImageUtility.getHistogramPlot(hist2.p1, hist2.p2, true, med);
-						
+						Pair<double[], int[]> hist2 = ImageUtility.getHistogram(samples.p1, StatisticsUtility.min(samples.p1), StatisticsUtility.max(samples.p1), -1, true);
+						if(this.histogram)
+						{
+							String histPath = ImageUtility.getHistogramPlot(hist2.p1, hist2.p2, false, "tif", 0d, med + sigma*mad);
+							histMap.put(map, histPath);
+						}
 					}
 					else
 					{
@@ -388,8 +396,12 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 						n = (double) samples.size();
 						
 						// Debug code.
-						//Pair<double[], int[]> hist2 = ImageUtility.getHistogram(samples, med-3*mad, med+3*mad, -1, false);
-						//ImageUtility.getHistogramPlot(hist2.p1, hist2.p2, true, med-mad, med, med+mad);
+						Pair<double[], int[]> hist2 = ImageUtility.getHistogram(samples, StatisticsUtility.min(samples), StatisticsUtility.max(samples), -1, true);
+						if(this.histogram)
+						{
+							String histPath = ImageUtility.getHistogramPlot(hist2.p1, hist2.p2, false, "tif", med, med+sigma*mad);
+							histMap.put(map, histPath);
+						}
 					}
 					
 					// USE THIS OPPURTUNITY
@@ -480,7 +492,7 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 			}
 		}
 
-		TreeMap<String,Object> ret = this.makeTreeMap("Success,outputMap,statsMap,outputThreshMap", success, outputMap, statsMap, outputThreshMap);
+		TreeMap<String,Object> ret = this.makeTreeMap("Success,outputMap,statsMap,outputThreshMap,histMap", success, outputMap, statsMap, outputThreshMap, histMap);
 		return ret;
 	}
 
