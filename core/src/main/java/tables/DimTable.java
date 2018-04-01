@@ -306,7 +306,7 @@ public class DimTable extends ArrayList<Dim> implements Copiable<DimTable> {
 	 * Return a subTable of DimTable that excludes the Dim with the name dimName. 
 	 * For example, if the table has X, Y, and Z dimensions, a dimName of "X"
 	 * will produce a single subtable with only the Y and Z Dims. If Dim with
-	 * the name dimName dim does not exist, then return whole DimTable.
+	 * the name dimName dim does not exist or dimName is null, then return whole DimTable.
 	 * 
 	 * @param filter DimensionMap the filter being used
 	 * @return A subTable of DimTable by a given DimensionMap filter
@@ -315,7 +315,7 @@ public class DimTable extends ArrayList<Dim> implements Copiable<DimTable> {
 	{
 		
 		// if filter does not match this DimTable then return whole DimTable
-		if(this.getDimWithName(dimName) == null) 
+		if(dimName == null || this.getDimWithName(dimName) == null) 
 			return this.copy(); 
 		
 		DimTable ret = new DimTable();
