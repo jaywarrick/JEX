@@ -316,6 +316,18 @@ public class JEX_StackProjection extends JEXCrunchable {
 			newDim = new Dim(dimToProject.name(), new String[] { dimToProject.valueAt(0) });
 		}
 		subDimTable.add(originalDimIndex, newDim);
+		// Remove dim values that are filtered out.
+		for(Dim d : filterTable)
+		{
+			Dim d2 = subDimTable.getDimWithName(d.dimName);
+			if(d2 != null)
+			{
+				for(String v : d.dimValues)
+				{
+					d2.dimValues.remove(d2.index(v));
+				}
+			}
+		}
 		output1.setDimTable(subDimTable);
 
 		// Set the outputs
