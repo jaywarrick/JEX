@@ -27,6 +27,7 @@ import logs.Logs;
 import miscellaneous.ArrayUtility;
 import miscellaneous.Pair;
 import signals.SSCenter;
+import tables.DimTable;
 import tables.DimensionMap;
 
 public class JEXDistributionPanelController extends JEXTabPanelController {
@@ -131,6 +132,7 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 		TreeMap<DimensionMap,Integer> lut = SplitObjectToSeparateEntries.getLookUpTable(this.fileController.getStartPt(), this.importController.getNumberRows(), this.importController.getNumberColumns(), this.fileController.getFirstMoveHorizontal(), this.fileController.getSnaking());
 		TreeMap<DimensionMap,Integer> lut_ticker = SplitObjectToSeparateEntries.getLookUpTable("UL", this.importController.getNumberRows(), this.importController.getNumberColumns(), true, false);
 		TreeMap<Integer, DimensionMap> tul = new TreeMap<>();
+		DimTable filter = this.fileController.getFilterTable();
 		for(Entry<DimensionMap,Integer> e : lut.entrySet())
 		{
 			tul.put(e.getValue(), e.getKey());
@@ -310,7 +312,11 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 				this.files.put(new Point(cellX, cellY), richFileMap);
 			}
 			DimensionMap map = this.makeMap(compteur, dimVector);
-			richFileMap.add(new Pair<DimensionMap,String>(map, f.getAbsolutePath()));
+			
+			if(!filter.testMapAsExclusionFilter(map))
+			{
+				richFileMap.add(new Pair<DimensionMap,String>(map, f.getAbsolutePath()));
+			}
 
 			// Update the number of files that have distributed to this
 			// location.
@@ -448,7 +454,7 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 				}
 			}
 		}
-		ImportThread importThread = new ImportThread(objectName, oType, objectInfo, importObject, this.fileController.getFilterTable());
+		ImportThread importThread = new ImportThread(objectName, oType, objectInfo, importObject, null);
 		importThread.setTileParameters(this.fileController.getOverlap(), this.fileController.getRows(), this.fileController.getCols());
 		JEXStatics.cruncher.runGuiTask(importThread);
 	}

@@ -497,7 +497,7 @@ public class ImageBrowser implements PlugInController {
 				}
 			}
 			
-			ImportThread exportToDB = new ImportThread(e, newName, JEXData.IMAGE, "Exported from " + this.imageTN.getName(), newFileTable);
+			ImportThread exportToDB = new ImportThread(e, newName, JEXData.IMAGE, "Exported from " + this.imageTN.getName(), newFileTable, null);
 			JEXStatics.cruncher.runGuiTask(exportToDB);			
 		}
 	}
