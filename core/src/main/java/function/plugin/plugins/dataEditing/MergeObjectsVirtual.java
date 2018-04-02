@@ -140,7 +140,7 @@ public class MergeObjectsVirtual extends JEXPlugin {
 				if(d.getData(map) != null)
 				{
 					toAdd = d.getData(map).copy();
-					break;
+					break; // This way, the first object with something at this dimension map takes precedent
 				}
 			}
 			if(toAdd == null)
