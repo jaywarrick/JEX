@@ -11,33 +11,45 @@ import Database.Definition.Type;
 import jex.statics.JEXStatics;
 import logs.Logs;
 import miscellaneous.Canceler;
+import tables.DimTable;
 import tables.DimensionMap;
 
 public class ImportThread implements Callable<Object>, Canceler {
 	
 	String objectName, objectInfo;
 	Type objectType; 
+	DimTable filter;
 	TreeMap<JEXEntry,TreeMap<DimensionMap,String>> dataArray;
 	TreeMap<JEXEntry,JEXData> toAdd = new TreeMap<JEXEntry,JEXData>();
 	Double overlap = 0.0d;
 	int rows = 1, cols = 1;
 	Canceler c = JEXStatics.cruncher;
 	
-	public ImportThread(String objectName, Type objectType, String objectInfo, TreeMap<JEXEntry,TreeMap<DimensionMap,String>> dataArray)
+	public ImportThread(String objectName, Type objectType, String objectInfo, TreeMap<JEXEntry,TreeMap<DimensionMap,String>> dataArray, DimTable exclusionFilterTable)
 	{
 		this.objectName = objectName;
 		this.objectType = objectType;
 		this.objectInfo = objectInfo;
 		this.dataArray = dataArray;
+		this.filter = exclusionFilterTable;
+		if(this.filter == null)
+		{
+			this.filter = new DimTable();
+		}
 	}
 	
-	public ImportThread(JEXEntry entry, String objectName, Type objectType, String objectInfo, TreeMap<DimensionMap,String> dataArray)
+	public ImportThread(JEXEntry entry, String objectName, Type objectType, String objectInfo, TreeMap<DimensionMap,String> dataArray, DimTable exclusionFilterTable)
 	{
 		this.objectName = objectName;
 		this.objectType = objectType;
 		this.objectInfo = objectInfo;
 		this.dataArray = new TreeMap<JEXEntry,TreeMap<DimensionMap,String>>();
 		this.dataArray.put(entry, dataArray);
+		this.filter = exclusionFilterTable;
+		if(this.filter == null)
+		{
+			this.filter = new DimTable();
+		}
 	}
 	
 	public void setTileParameters(double overlap, int rows, int cols)
@@ -64,6 +76,19 @@ public class ImportThread implements Callable<Object>, Canceler {
 				return null;
 			}
 			TreeMap<DimensionMap,String> files2Drop2 = this.dataArray.get(entry);
+			
+			TreeMap<DimensionMap,String> files2Drop3 = new TreeMap<>();
+			
+			// filter the files
+			for(DimensionMap map : files2Drop2.keySet())
+			{
+				if(!this.filter.testMapAsExclusionFilter(map))
+				{
+					files2Drop3.put(map, files2Drop2.get(map));
+				}
+			}
+			files2Drop2 = files2Drop3;
+			
 			Logs.log("Importing items into Entry " + entry.getEntryID() + " at X:Y " + entry.getTrayX() + ":" + entry.getTrayY() , this);
 			if(objectType.equals(JEXData.IMAGE))
 			{

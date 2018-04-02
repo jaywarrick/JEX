@@ -31,6 +31,7 @@ import logs.Logs;
 import miscellaneous.FontUtility;
 import net.miginfocom.swing.MigLayout;
 import signals.SSCenter;
+import tables.DimTable;
 
 public class JEXDistributionRightPanel extends JPanel implements ActionListener {
 
@@ -63,6 +64,8 @@ public class JEXDistributionRightPanel extends JPanel implements ActionListener 
 	private JParameterPanel overlap = new JParameterPanel(new Parameter("Tile Percent Overlap", "If set to > 0 & Type == Image, then the image will be broken into tiles assuming the provided percent overlap.", Parameter.TEXTFIELD, "0.0"), 100);
 	private JParameterPanel rows = new JParameterPanel(new Parameter("Tile Rows", "How many rows of tiles are there per image.", Parameter.TEXTFIELD, "1"), 100);
 	private JParameterPanel cols = new JParameterPanel(new Parameter("Tile Cols", "How many cols of tiles are there per image.", Parameter.TEXTFIELD, "1"), 100);
+	
+	private JParameterPanel filter = new JParameterPanel(new Parameter("Exclusion Filter Table", "Which dimension values should be excluded upon import? Format is <DimName1>=<Val1>,<Val2>,...,<Valn>;<DimName2>=...", Parameter.TEXTFIELD, ""), 100);
 
 	JEXDistributionRightPanel(JEXDistributionPanelController parentController)
 	{
@@ -146,6 +149,9 @@ public class JEXDistributionRightPanel extends JPanel implements ActionListener 
 		this.add(this.rows.panel(), "growx");
 		this.cols.panel().setMinimumSize(new Dimension(10, minHeight));
 		this.add(this.cols.panel(), "growx");
+		
+		this.filter.panel().setMinimumSize(new Dimension(10, minHeight));
+		this.add(this.filter.panel(), "growx");
 
 		// Make the deal button
 		viewResultButton.addActionListener(this);
@@ -239,6 +245,10 @@ public class JEXDistributionRightPanel extends JPanel implements ActionListener 
 		this.add(this.rows.panel(), "growx");
 		this.cols.panel().setMinimumSize(new Dimension(10, minHeight));
 		this.add(this.cols.panel(), "growx");
+		
+		// Make the filter text box
+		this.filter.panel().setMinimumSize(new Dimension(10, minHeight));
+		this.add(this.filter.panel(), "growx");
 
 		// Make the deal button
 		this.add(viewResultButton, "growx");
@@ -325,6 +335,11 @@ public class JEXDistributionRightPanel extends JPanel implements ActionListener 
 	public int getCols()
 	{
 		return Integer.parseInt(this.cols.getValue());
+	}
+	
+	public DimTable getFilterTable()
+	{
+		return new DimTable(this.filter.getValue());
 	}
 	
 	public String getManualDimensionName()

@@ -448,7 +448,7 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 				}
 			}
 		}
-		ImportThread importThread = new ImportThread(objectName, oType, objectInfo, importObject);
+		ImportThread importThread = new ImportThread(objectName, oType, objectInfo, importObject, this.fileController.getFilterTable());
 		importThread.setTileParameters(this.fileController.getOverlap(), this.fileController.getRows(), this.fileController.getCols());
 		JEXStatics.cruncher.runGuiTask(importThread);
 	}
