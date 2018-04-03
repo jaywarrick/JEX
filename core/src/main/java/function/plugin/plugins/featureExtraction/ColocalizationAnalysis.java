@@ -73,7 +73,7 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 	private LabelRegions<Integer> wholeCellRegions;
 	private LabelRegions<Integer> maskParentRegions;
 	private ROIPlus maxima;
-//	private LabelRegion<Integer> wholeCellRegion;
+	//	private LabelRegion<Integer> wholeCellRegion;
 	private LabelRegion<Integer> combinedSubCellRegion;
 	// private LabelRegion<Integer> majorSubCellRegion; UNUSED IN COLOC
 	private DimensionMap mapMask, mapImage1, mapImage2, mapMask_NoChannel;
@@ -113,34 +113,37 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 
 	// ///////// Define Parameters here ///////////
 
-	@ParameterMarker(uiOrder = 0, name = "Mask and Image channel dim name", description = "Channel dimension name in mask data.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "Channel")
+	@ParameterMarker(uiOrder = 0, name = "Mask and Image Channel Dim Name", description = "Channel dimension name.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "Channel")
 	String channelName;
 
 	@ParameterMarker(uiOrder = 1, name = "Channel Offsets <Val1>,<Val2>,...<Valn>", description = "Set a single offset for all channels (e.g., positive 5.0 to subtract off 5.0 before doing calculations) or a different offset for each channel. Must have 1 value for each channel comma separated (e.g., '<Val1>,<Val2>,...<Valn>').", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "0.0")
 	String channelOffsets;
-	
+
 	@ParameterMarker(uiOrder = 2, name = "'Whole Cell' mask channel value", description = "Which channel value of the mask image represents the whole cell that has a 1-to-1 mapping with the maxima points.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "WholeCell")
 	String maskWholeCellChannelValue;
 
 	@ParameterMarker(uiOrder = 3, name = "** Connectedness Features", description = "The structuring element or number of neighbors to require to be part of the neighborhood.", ui = MarkerConstants.UI_DROPDOWN, choices = {"4 Connected", "8 Connected" }, defaultChoice = 0)
 	String connectedness;
-	
+
 	@ParameterMarker(uiOrder = 4, name = "Transform Data to 'Similarity'", description = "This takes the correlation metrics and transoforms them using Similarity=ln((1+R)/(1-R)). Recommended.", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
 	boolean transform;
-	
+
 	@ParameterMarker(uiOrder = 5, name = "Save ARFF version as well?", description = "Initially, the file is written as a CSV and can be also saved as a .arff file as well. Should the .arff file be saved (it takes longer)?", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean saveArff;
 
-	@ParameterMarker(uiOrder = 6, name = "Image Channels to Exclude (optional)", description = "Which channels of the images to be measured should be excluded (this can dramatically reduce the number of combinations to be quantified).", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
-	String excludeString;
-	
-	@ParameterMarker(uiOrder = 7, name = "Calc. Pearson's Corr. Coef.?", description = "Should the Pearsons's Correlation Coefficient be calculated?", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
+	@ParameterMarker(uiOrder = 6, name = "Image Channels to Exclude (optional)", description = "Which channels of the intensity images to be measured should be excluded (this can dramatically reduce the number of combinations to be quantified).", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
+	String imageExcludeString;
+
+	@ParameterMarker(uiOrder = 7, name = "Mask Channels to Exclude (optional)", description = "Which channels of the mask images to be applied should be excluded (this can dramatically reduce the number of combinations to be quantified).", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
+	String maskExcludeString;
+
+	@ParameterMarker(uiOrder = 8, name = "Calc. Pearson's Corr. Coef.?", description = "Should the Pearsons's Correlation Coefficient be calculated?", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
 	boolean doPearsons;
-	
-	@ParameterMarker(uiOrder = 8, name = "Calc. Spearman's Corr. Coef.?", description = "Should the Spearman's Correlation Coefficient be calculated?", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+
+	@ParameterMarker(uiOrder = 9, name = "Calc. Spearman's Corr. Coef.?", description = "Should the Spearman's Correlation Coefficient be calculated?", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean doSpearmans;
-	
-	@ParameterMarker(uiOrder = 9, name = "Calc. Radial Localization?", description = "Should the Radial Localization metric be calculated?", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
+
+	@ParameterMarker(uiOrder = 10, name = "Calc. Radial Localization?", description = "Should the Radial Localization metric be calculated?", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
 	boolean doRadial;
 
 	/////////// Define Outputs here ///////////
@@ -166,7 +169,7 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 			// Something is wrong and need to return false;
 			return false;
 		}
-		
+
 		// Initialize: imageMap, maskMap, roiMap, total, count, percentage, nucExists
 		if(!this.initializeVariables())
 		{
@@ -192,6 +195,19 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 			return false;
 		}
 
+		// Determine 
+		Dim maskThingsToExclude = null;
+		if(!maskExcludeString.equals(""))
+		{
+			maskThingsToExclude = new Dim(channelName,new CSVList(imageExcludeString));
+			maskThingsToExclude = Dim.intersect(maskThingsToExclude, maskChannelDim);
+			if(maskThingsToExclude == null || maskThingsToExclude.size() == 0)
+			{
+				JEXDialog.messageDialog("None of the channel dimensions provided exist in the image. Aborting.", this);
+				return false;
+			}
+		}
+
 		// For each whole cell mask
 		for(DimensionMap mapMask_NoChannelTemp : maskDimTable_NoChannel.getMapIterator())
 		{
@@ -215,6 +231,8 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 			// Get the subDimTable corresponding to the images for this whole cell mask (i.e., corresponding image but all channels)
 			DimTable imageSubsetTable = imageDimTable.getSubTable(this.mapMask_NoChannel);
 
+			
+
 			// Loop over the image channel combinations to measure
 			// and if doRadial, then store info about the masks as well
 			// Use the TreeMap to accumulate mask info and eliminate duplicate info
@@ -229,9 +247,12 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 				for(String maskChannelValue : maskChannelDim.dimValues)
 				{
 					if(this.isCanceled()) return false;
-					if(!this.quantifyColocalizations(maskChannelValue))
-						return false;
-					this.updateStatus();
+					if(!maskThingsToExclude.containsValue(maskChannelValue))
+					{
+						if(!this.quantifyColocalizations(maskChannelValue))
+							return false;
+						this.updateStatus();
+					}
 				}
 			}
 			// Then write the unique mask info to the file.
@@ -281,7 +302,7 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 		this.image2 = JEXReader.getSingleFloatImage(imageMap.get(this.mapImage2), this.channelOffsetValues.get(this.mapImage2));
 		this.imMean1 = ImageStatistics.getImageMean(this.image1);
 		this.imMean2 = ImageStatistics.getImageMean(this.image2);
-		
+
 	}
 
 	//	public void setMaskToMeasure(DimensionMap mapMask)
@@ -461,7 +482,7 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 			// We already used the cursor once so we have to reset it.
 			maskCursor.reset();
 			DoubleType result_Rho = opRho.calculate(new Pair<RandomAccessibleInterval<FloatType>, RandomAccessibleInterval<FloatType>>(subImage1, subImage2), maskCursor);
-				
+
 			measurement = "Measurement=net.imagej.ops.Ops$Stats$SpearmansRankCorrelationCoefficient";
 			if(transform)
 			{
@@ -482,10 +503,10 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 		if(doRadial)
 		{
 			// We don't need a cursor, so we don't have to reset it.
-			
+
 			IterableInterval<FloatType> ii1 = Regions.sample(this.combinedSubCellRegion, this.image1);
 			IterableInterval<FloatType> ii2 = Regions.sample(this.combinedSubCellRegion, this.image2);
-			
+
 			DoubleType result_Radial = opRadial.calculate(ii1, ii2);
 			Double result_AreaRadius = Math.sqrt(((double) this.combinedSubCellRegion.size())/Math.PI) - 0.5; // Subtract 0.5 to go to the center of the pixel instead of the edge
 			measurement = "Measurement=function.ops.JEXOps$RadialLocalization";
@@ -588,7 +609,7 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 		}
 		maskMap = ImageReader.readObjectToImagePathTable(maskData);
 		roiMap = RoiReader.readObjectToRoiMap(roiData);
-		
+
 
 		this.count = 0;
 		this.percentage = 0;
@@ -596,30 +617,30 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 		// Calculate expected number of iterations
 		// Assume at least calculating mask features
 		this.total = maskData.getDimTable().mapCount();
-		
+
 		return true;
 	}
 
 	private Vector<Pair<String,String>> getChannelPermutations(Dim channelDim)
 	{
-		
+
 		Dim thingsToExclude = null;
-		if(!excludeString.equals(""))
+		if(!imageExcludeString.equals(""))
 		{
-			thingsToExclude = new Dim(channelName,new CSVList(excludeString));
+			thingsToExclude = new Dim(channelName,new CSVList(imageExcludeString));
 			Dim imageChannelDim = imageData.getDimTable().getDimWithName(channelName);
 			thingsToExclude = Dim.intersect(thingsToExclude, imageChannelDim);
 			if(thingsToExclude == null || thingsToExclude.size() == 0)
 			{
-				JEXDialog.messageDialog("None of the channel dimensions provided exist in the image. Aborting.", this);
+				JEXDialog.messageDialog("None of the exclusion channel dimensions provided exist in the image. Aborting.", this);
 				return null;
 			}
 		}
-		
+
 		Vector<Pair<String,String>> ret = new Vector<>();
 		if(channelDim.size() < 2)
 		{
-			JEXDialog.messageDialog("There must be at least to image channels to perform colocalization. Aborting.", this);
+			JEXDialog.messageDialog("There must be at least two image channels to perform colocalization. Aborting.", this);
 			return null;
 		}
 		for(int i = 0; i < channelDim.size()-1; i++)

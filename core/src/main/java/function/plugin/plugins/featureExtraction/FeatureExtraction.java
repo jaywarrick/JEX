@@ -159,7 +159,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	@ParameterMarker(uiOrder = 3, name = "'Nuclear' mask channel value (optional)", description = "(Optional) If a nuclear mask exists and it is specified, additional nuanced calculations of Zernike features are provided (see comments in code).", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
 	String maskNuclearChannelValue;
 	
-	@ParameterMarker(uiOrder = 4, name = "Exclusion Filter DimTable", description = "Filter specific dimension combinations from analysis. (Format: <DimName1>=<a1,a2,...>;<DimName2>=<b1,b2...>)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
+	@ParameterMarker(uiOrder = 4, name = "Mask Exclusion Filter DimTable", description = "Filter specific dimension combinations from analysis. (Format: <DimName1>=<a1,a2,...>;<DimName2>=<b1,b2...>)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
 	String filterDimTableString;
 	
 	//	@ParameterMarker(uiOrder = 3, name = "Image intensity offset", description = "Amount the images are offset from zero (will be subtracted before calculation)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "0.0")
@@ -295,7 +295,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			for(DimensionMap mapMaskTemp: imageSubsetTable.getMapIterator())
 			{
 				// Skip if we can
-				if(this.filterTable.testMapAsExclusionFilter(mapMaskTemp))
+				if(this.filterTable.getSubTable(this.channelName).testMapAsExclusionFilter(mapMaskTemp))
 				{
 					continue;
 				}
@@ -308,7 +308,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 				}
 
 				// Quantify nuclear region first if possible
-				if(this.nucExists)
+				if(this.nucExists && !this.filterTable.getDimWithName(this.channelName).containsValue(this.maskNuclearChannelValue))
 				{
 					if(!this.quantifyFeatures(this.maskNuclearChannelValue, firstTimeThrough))
 						return false;
@@ -323,7 +323,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 				// Then quantify other masks
 				for(String maskChannelValue : maskChannelDim.dimValues)
 				{
-					if(!maskChannelValue.equals(this.maskNuclearChannelValue) && !maskChannelValue.equals(this.maskWholeCellChannelValue))
+					if(!maskChannelValue.equals(this.maskNuclearChannelValue) && !maskChannelValue.equals(this.maskWholeCellChannelValue) && !this.filterTable.testMapAsExclusionFilter(new DimensionMap(this.channelName + "=" + maskChannelValue)))
 					{
 						if(!this.quantifyFeatures(maskChannelValue, firstTimeThrough))
 							return false;
@@ -369,7 +369,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
 	public void setImageToMeasure(DimensionMap mapImage)
 	{
-		Logs.log("Measuring image: " + this.mapImage, this);
+		Logs.log("Measuring image: " + mapImage, this);
 		this.mapImage = mapImage;
 		String pathToGet = imageMap.get(this.mapImage);
 		if(pathToGet == null)
