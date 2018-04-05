@@ -113,7 +113,7 @@ public class JEX_RegisterMultiColorImageSet_Roi extends JEXCrunchable {
 	{
 		TypeName[] inputNames = new TypeName[2];
 		inputNames[0] = new TypeName(IMAGE, "Multicolor Image Set");
-		inputNames[1] = new TypeName(ROI, "Alignment Region ROI (rect, optional)");
+		inputNames[1] = new TypeName(ROI, "Alignment Region ROI (optional, rect or point)");
 		return inputNames;
 	}
 
@@ -149,8 +149,9 @@ public class JEX_RegisterMultiColorImageSet_Roi extends JEXCrunchable {
 		Parameter pa4 = new Parameter("Time Dim Name", "Name of the time dimension.", "Time");
 		Parameter pa3 = new Parameter("Other Dim Name to Split (optional)", "Name of another dimension to split results on.", "");
 		Parameter pa5 = new Parameter("Align To First Timepoint?", "Each image timepoint will be aligned to the first if set to true. Otherwise, time t aligns to t-1.", Parameter.CHECKBOX, true);
+		Parameter pa6 = new Parameter("Just Convert Point Roi?", "If a point roi is provided for the roi input, use the positions in the point roi to determine the output crop roi?", Parameter.CHECKBOX, false);
 		Parameter p4 = getNumThreadsParameter(10, 6);
-		
+
 		// Make an array of the parameters and return it
 		ParameterSet parameterArray = new ParameterSet();
 		parameterArray.addParameter(p4);
@@ -159,6 +160,7 @@ public class JEX_RegisterMultiColorImageSet_Roi extends JEXCrunchable {
 		parameterArray.addParameter(pa4);
 		parameterArray.addParameter(pa3);
 		parameterArray.addParameter(pa5);
+		parameterArray.addParameter(pa6);
 		return parameterArray;
 	}
 
@@ -195,18 +197,26 @@ public class JEX_RegisterMultiColorImageSet_Roi extends JEXCrunchable {
 		{
 			return false;
 		}
+		// Run the function
+		TreeMap<DimensionMap,String> images = ImageReader.readObjectToImagePathTable(data);
 
-		JEXData roiData = inputs.get("Alignment Region ROI (rect, optional)");
+		JEXData roiData = inputs.get("Alignment Region ROI (optional, rect or point)");
 		TreeMap<DimensionMap,ROIPlus> roiMap = new TreeMap<DimensionMap,ROIPlus>();
+		boolean havePointRoi = false;
 		if(roiData != null && roiData.getDataObjectType().equals(JEXData.ROI))
 		{
 			roiMap = RoiReader.readObjectToRoiMap(roiData);
+			if(roiMap.firstEntry().getValue().type == ROIPlus.ROI_POINT)
+			{
+				havePointRoi = true;
+			}
 		}
 
 		// //// Get params
 		String colorDimName = this.parameters.getValueOfParameter("Color Dim Name");
 		String timeDimName = this.parameters.getValueOfParameter("Time Dim Name");
 		String splitDimName = this.parameters.getValueOfParameter("Other Dim Name to Split (optional)");
+		boolean convertPoints = Boolean.parseBoolean(this.parameters.getValueOfParameter("Just Convert Point Roi?"));
 
 		String referenceColor = this.parameters.getValueOfParameter("Reference Color");
 		boolean firstTimer = Boolean.parseBoolean(this.parameters.getValueOfParameter("Align To First Timepoint?"));
@@ -231,9 +241,6 @@ public class JEX_RegisterMultiColorImageSet_Roi extends JEXCrunchable {
 			timeDimSize = timeDim.size();
 		}
 		imageLocationDimTable = imageLocationDimTable.getSubTable(new DimensionMap(timeDimName + "=" + timeDim.dimValues.get(0)));
-
-		// Run the function
-		TreeMap<DimensionMap,String> images = ImageReader.readObjectToImagePathTable(data);
 
 		// //// Create a TurboReg reference and important variables
 		TurboReg_ reg = new TurboReg_();
@@ -278,6 +285,21 @@ public class JEX_RegisterMultiColorImageSet_Roi extends JEXCrunchable {
 				{
 					// Initialize the target image information
 					target = new ImagePlus(images.get(map));
+
+					// Convert the roiMap to regions if necessary fir the first time through
+
+					if(havePointRoi)
+					{
+						roiMap = convertPointsToRegions(roiMap, images, timeDimName, (double) target.getWidth(), (double) target.getHeight());
+						if(convertPoints)
+						{
+							// Set the outputs
+							JEXData outputCropRoi = RoiWriter.makeRoiObject(this.outputNames[0].getName(), roiMap);
+							this.realOutputs.add(outputCropRoi);
+							return true;
+						}
+					}
+
 					roi = roiMap.get(map);
 					if(roi == null)
 					{
@@ -330,7 +352,7 @@ public class JEX_RegisterMultiColorImageSet_Roi extends JEXCrunchable {
 
 				// Align the selected region of the source image with the target image
 				reg.alignImages(sourceCropImage, sCrop, targetCropImage, tCrop, TurboReg_.TRANSLATION, false);
-				
+
 				// Don't save the image yet. We need to crop it after finding all the necessary translations
 				ptsMap = newMap.copy();
 				ptsMap.remove(colorDimName); // Now ptsMap has time and location dims but no color dim
@@ -382,6 +404,52 @@ public class JEX_RegisterMultiColorImageSet_Roi extends JEXCrunchable {
 
 		// Return status
 		return true;
+	}
+
+	public TreeMap<DimensionMap,ROIPlus> convertPointsToRegions(TreeMap<DimensionMap,ROIPlus> points, TreeMap<DimensionMap,String> imageMap, String timeDimName, Double width, Double height)
+	{
+		DimTable dt = new DimTable(imageMap);
+
+		TreeMap<DimensionMap,ROIPlus> ret = new TreeMap<>();
+		DimTable dt2 = dt.getSubTable(timeDimName);
+		for(DimensionMap filter : dt2.getMapIterator())
+		{
+			double minx = Double.MAX_VALUE;
+			double maxx = Double.MIN_VALUE;
+			double miny = Double.MAX_VALUE;
+			double maxy = Double.MIN_VALUE;
+			double x = 0, y = 0;
+			for(DimensionMap map2 : dt.getSubTable(filter).getMapIterator())
+			{
+				ROIPlus r = points.get(map2);
+				if(r != null)
+				{
+					x = x + r.getPointList().get(0).x;
+					y = y + r.getPointList().get(0).y;
+					minx = Math.min(minx, x);
+					miny = Math.min(miny, y);
+					maxx = Math.max(maxx, x);
+					maxy = Math.max(maxy, y);
+				}
+			}
+			x = 0;
+			y = 0;
+			for(DimensionMap map2 : dt.getSubTable(filter).getMapIterator())
+			{
+				ROIPlus r = points.get(map2);
+				if(r != null)
+				{
+					x = x + r.getPointList().get(0).x;
+					y = y + r.getPointList().get(0).y;
+					Rectangle roi = new Rectangle((int) Math.round(0-minx), (int) Math.round(0-miny), (int) Math.round(width-maxx+minx), (int) Math.round(height-maxy+miny));
+					ROIPlus region = new ROIPlus(roi);
+					region.pointList.translate(x, y);
+					ret.put(map2.copy(), region);
+				}
+			}
+		}
+		
+		return ret;
 	}
 
 	public Point getDisplacement(Rectangle roi1, Rectangle roi2)

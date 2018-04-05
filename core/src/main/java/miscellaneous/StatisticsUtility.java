@@ -20,6 +20,7 @@ import org.apache.commons.math3.stat.descriptive.rank.Percentile;
 
 import image.roi.IdPoint;
 import image.roi.PointList;
+import image.roi.ROIPlus;
 import logs.Logs;
 import net.imglib2.Interval;
 import net.imglib2.IterableRealInterval;
@@ -28,6 +29,9 @@ import net.imglib2.Point;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessible;
 import net.imglib2.type.numeric.RealType;
+import tables.Dim;
+import tables.DimTable;
+import tables.DimensionMap;
 
 /*************************************************************************
  *  Compilation:  javac StdRandom.java
@@ -1857,6 +1861,91 @@ public class StatisticsUtility {
 		}
 
 		return ret;
+	}
+	
+	public static TreeMap<DimensionMap,Vector<Pair<Double,Double>>> getDiffVectors(TreeMap<DimensionMap,ROIPlus> maximaRois, String timeDimName)
+	{
+		DimTable dt = new DimTable(maximaRois);
+		Dim d = dt.getDimWithName(timeDimName);
+		Vector<String> vals = d.dimValues;
+		TreeMap<Double, String> vals2 = new TreeMap<>();
+		for(String val : vals)
+		{
+			vals2.put(Double.parseDouble(val), val);
+		}
+		
+		TreeMap<Double,DimensionMap> timeOrderedMaps = new TreeMap<>();
+		TreeMap<DimensionMap,Vector<Pair<Double,Double>>> ret = new TreeMap<>();
+		for(DimensionMap filter : dt.getSubTable(timeDimName).getMapIterator())
+		{
+			// Use this map to grab all times for a particular dimension location
+			DimTable timeTable = dt.getSubTable(filter); // Time is the only non-singleton dim here
+			for(DimensionMap map : timeTable.getMapIterator())
+			{
+				timeOrderedMaps.put(Double.parseDouble(map.get(timeDimName)), map);
+			}
+			
+			// Loop through time-ordered maps to calculate deltas for each point at each time (i.e., points in roi2 vs points in roi1)
+			ROIPlus roi1 = null, roi2 = null;
+			for(Entry<Double,DimensionMap> e : timeOrderedMaps.entrySet())
+			{
+				if(maximaRois.get(e.getValue()) == null)
+				{
+					continue;
+				}
+				if(roi2 == null)
+				{
+					roi2 = maximaRois.get(e.getValue());
+					Vector<Pair<Double,Double>> toSave = new Vector<>();
+					for (int i = 0; i < roi2.pointList.size(); i++) {
+						toSave.add(new Pair<Double,Double>(0d,0d));
+					}
+					ret.put(e.getValue().copy(), toSave);
+					continue;
+				}
+				
+				roi1 = roi2;
+				roi2 = maximaRois.get(e.getValue());
+				
+				// 1st iterate over points in roi2 to load them into a TreeMap for searching
+				TreeMap<Integer, IdPoint> orderedPointList = new TreeMap<>();
+				for(IdPoint p : roi2.pointList)
+				{
+					orderedPointList.put(p.id, p);
+				}
+				
+				// For each point in roi1, get the corresponding point in roi2
+				Vector<Pair<Double,Double>> toSave = new Vector<>();
+				for(IdPoint p1 : roi1.pointList)
+				{
+					IdPoint p2 = orderedPointList.get(p1.id);
+					if(p2!= null)
+					{
+						double dx = p2.x - p1.x;
+						double dy = p2.y - p1.y;
+						// then save the deltas
+						toSave.add(new Pair<Double,Double>(dx, dy));
+					}
+				}
+				// put the deltas into the output object
+				ret.put(e.getValue().copy(), toSave);
+			}
+		}
+		return ret;
+	}
+	
+	public static Pair<Double,Double> getMedianDiff(Vector<Pair<Double,Double>> diffs)
+	{
+		Vector<Double> dxs = new Vector<>(diffs.size());
+		Vector<Double> dys = new Vector<>(diffs.size());
+		for(Pair<Double,Double> diff : diffs)
+		{
+			dxs.add(diff.p1);
+			dys.add(diff.p2);
+		}
+		double dx = StatisticsUtility.median(dxs);
+		double dy = StatisticsUtility.median(dys);
+		return new Pair<Double,Double>(dx, dy);
 	}
 	
 	public static boolean isEven(int n)

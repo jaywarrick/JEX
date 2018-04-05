@@ -24,9 +24,6 @@ import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_MERGING_FEATURE_PEN
 import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_MERGING_MAX_DISTANCE;
 import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_SPLITTING_FEATURE_PENALTIES;
 import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_SPLITTING_MAX_DISTANCE;
-import image.roi.IdPoint;
-import image.roi.PointList;
-import image.roi.ROIPlus;
 
 import java.util.HashMap;
 import java.util.List;
@@ -38,22 +35,31 @@ import java.util.Vector;
 
 import org.scijava.plugin.Plugin;
 
-import tables.Dim;
-import tables.DimTable;
-import tables.DimensionMap;
-import weka.core.converters.JEXTableReader;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.RoiReader;
+import Database.DataWriter.FileWriter;
 import Database.DataWriter.RoiWriter;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.tracking.oldlap.LAPTracker;
+import fiji.plugin.trackmate.tracking.oldlap.FastLAPTracker;
 import function.plugin.mechanism.InputMarker;
 import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.MarkerConstants;
 import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
+import image.roi.IdPoint;
+import image.roi.PointList;
+import image.roi.ROIPlus;
+import jex.statics.JEXStatics;
+import logs.Logs;
+import miscellaneous.JEXCSVWriter;
+import miscellaneous.Pair;
+import miscellaneous.StatisticsUtility;
+import tables.Dim;
+import tables.DimTable;
+import tables.DimensionMap;
+import weka.core.converters.JEXTableReader;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions
@@ -108,6 +114,12 @@ public class TrackPoints extends JEXPlugin {
 	@OutputMarker(uiOrder=2, name="Tracks", type=MarkerConstants.TYPE_ROI, flavor="", description="Inidividual point rois for each track with ids matching the maxima (tracked) output.", enabled=true)
 	JEXData trackRoiData;
 	
+	@OutputMarker(uiOrder=3, name="Position Table", type=MarkerConstants.TYPE_FILE, flavor="", description="A csv table of positions of all cells at all times.", enabled=true)
+	JEXData positionData;
+	
+	@OutputMarker(uiOrder=4, name="Median Deltas ROI", type=MarkerConstants.TYPE_ROI, flavor="", description="Point ROI that represents the median overall motion of the cells, stored as a point roi for use with other functions such as image registration.", enabled=true)
+	JEXData deltasRoiData;
+	
 	@Override
 	public int getMaxThreads()
 	{
@@ -132,9 +144,13 @@ public class TrackPoints extends JEXPlugin {
 		// Store them in the finalTrackRois object
 		TreeMap<DimensionMap,ROIPlus> finalTrackRois = new TreeMap<DimensionMap,ROIPlus>();
 		TreeMap<DimensionMap,ROIPlus> finalMaximaRois = new TreeMap<DimensionMap,ROIPlus>();
+		TreeMap<DimensionMap, Double> positionTable = new TreeMap<>();
+		TreeMap<DimensionMap, ROIPlus> diffRois = new TreeMap<>();
+		
+		int count = 0, percentage = 0;
 		for(Entry<DimensionMap,SpotCollection> e : spotCollections.entrySet())
 		{
-			DimensionMap segmentMap = e.getKey();
+			DimensionMap segmentMap = e.getKey(); // This map doesn't have a time dim. Time info is in the SpotCollections
 			
 			if(this.isCanceled())
 			{
@@ -142,22 +158,51 @@ public class TrackPoints extends JEXPlugin {
 			}
 			
 			// Track the spots to create segments
-			LAPTracker tracker = new LAPTracker(e.getValue(), this.getSimpleTrackerSettings(maxLinkDistance, maxGapDistance, maxGapFrames));
+			FastLAPTracker tracker = new FastLAPTracker(e.getValue(), this.getSimpleTrackerSettings(maxLinkDistance, maxGapDistance, maxGapFrames));
 			tracker.process();
+			Logs.log("Tracking points for " + e.getKey(), this);
 			List<SortedSet<Spot>> segments = tracker.getTrackSegments();
 			
-			// Convert to trackRois
+			// Convert to trackRois and maximaRois (these maps have timeDims in them)
 			TreeMap<DimensionMap, ROIPlus> trackRois = this.getTrackRois(segments, segmentMap);
 			TreeMap<DimensionMap, ROIPlus> maximaRois = this.getMaximaRois(segments, segmentMap, roiData.getDimTable().getDimWithName(timeDimName));
+			
+			// Get the positions csv table
+			for(Entry<DimensionMap, ROIPlus> e3 : maximaRois.entrySet())
+			{
+				for(IdPoint p : e3.getValue().pointList)
+				{
+					positionTable.put(e3.getKey().copyAndSet("Id=" + p.id + ",Measurement=x"), (double) p.x);
+					positionTable.put(e3.getKey().copyAndSet("Id=" + p.id + ",Measurement=y"), (double) p.y);
+				}
+			}
+			
+			// Get diffs... the dimension maps returned have a time dim.
+			TreeMap<DimensionMap,Vector<Pair<Double,Double>>> diffs = StatisticsUtility.getDiffVectors(maximaRois, timeDimName);
+			
+			for(Entry<DimensionMap,Vector<Pair<Double,Double>>> e2 : diffs.entrySet())
+			{
+				Pair<Double,Double> diff = StatisticsUtility.getMedianDiff(e2.getValue());
+				PointList p = new PointList();
+				p.add(new IdPoint((int) Math.round(diff.p1), (int) Math.round(diff.p2), 0));
+				diffRois.put(e2.getKey().copy(), new ROIPlus(p, ROIPlus.ROI_POINT));
+			}
 			
 			// Store them in the finalTrackRois map
 			finalTrackRois.putAll(trackRois);
 			finalMaximaRois.putAll(maximaRois);
+			
+			count = count + 1;
+			percentage = (int) (100 * ((double) (count) / ((double) spotCollections.size())));
+			JEXStatics.statusBar.setProgressPercentage(percentage);
 		}
 
 		// Create the JEXData and assign the outputs
 		this.trackRoiData = RoiWriter.makeRoiObject("temp", finalTrackRois);
 		this.trackedMaximaData = RoiWriter.makeRoiObject("temp", finalMaximaRois);
+		String tablePath = JEXCSVWriter.writeDoubleTable(positionTable);
+		this.positionData = FileWriter.makeFileObject("position data", null, tablePath);
+		this.deltasRoiData = RoiWriter.makeRoiObject("diffs", diffRois);
 		
 		// Return status
 		return true;
@@ -256,11 +301,14 @@ public class TrackPoints extends JEXPlugin {
 				fullMap.put(timeDimName, time);
 				
 				ROIPlus roi = rois.get(fullMap);
-				for(IdPoint p : roi.getPointList())
+				if(roi != null)
 				{
-					Spot theSpot = this.getSpot(p, time);
-					//Logs.log(""+theSpot.getFeatures(), this);
-					spots.add(theSpot, Integer.parseInt(time));
+					for(IdPoint p : roi.getPointList())
+					{
+						Spot theSpot = this.getSpot(p, time);
+						//Logs.log(""+theSpot.getFeatures(), this);
+						spots.add(theSpot, Integer.parseInt(time));
+					}
 				}
 			}
 			DimensionMap newMap = map.copy();
