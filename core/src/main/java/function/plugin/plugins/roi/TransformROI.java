@@ -44,7 +44,7 @@ public class TransformROI extends JEXPlugin {
 	
 	/////////// Define Inputs ///////////
 	
-	@InputMarker(uiOrder=1, name="Roi", type=MarkerConstants.TYPE_IMAGE, description="Image to be adjusted.", optional=false)
+	@InputMarker(uiOrder=1, name="Roi", type=MarkerConstants.TYPE_ROI, description="ROI to be transformed.", optional=false)
 	JEXData roiData;
 	
 	/////////// Define Parameters ///////////
