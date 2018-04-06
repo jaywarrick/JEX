@@ -86,12 +86,12 @@ public class DistributorArray implements ActionListener {
 	
 	public int getNumberColumns()
 	{
-		return cols;
+		return rows;
 	}
 	
 	public int getNumberRows()
 	{
-		return rows;
+		return cols;
 	}
 	
 	public HashMap<Point,Boolean> getSelectionArray()

@@ -155,7 +155,7 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 			maxIncr[i] = selector.getDimensionSize() - 1;
 			if(dimVector[i].equals("Array Column"))
 			{
-				maxIncr[i] = this.importController.getNumberRows() - 1;
+				maxIncr[i] = this.importController.getNumberColumns() - 1;
 				if(colLoc != -1)
 				{
 					colLoc = -2;
@@ -167,7 +167,7 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 			}
 			if(dimVector[i].equals("Array Row"))
 			{
-				maxIncr[i] = this.importController.getNumberColumns() - 1;
+				maxIncr[i] = this.importController.getNumberRows() - 1;
 				if(rowLoc != -1)
 				{
 					rowLoc = -2;
@@ -430,18 +430,18 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 		{
 			for (int y = 0; y < this.importController.getNumberRows(); y++)
 			{
-				TreeMap<Integer,JEXEntry> columnEntries = this.curTray.get(y);
+				TreeMap<Integer,JEXEntry> columnEntries = this.curTray.get(x);
 				if(columnEntries == null)
 				{
 					continue;
 				}
-				JEXEntry e = columnEntries.get(x);
-				if(e == null || !this.isValidCell(y, x)) // Switched x and y somewhere, so have to switch here.
+				JEXEntry e = columnEntries.get(y);
+				if(e == null || !this.isValidCell(x, y)) // Switched x and y somewhere, so have to switch here.
 				{
 					continue;
 				}
 
-				Vector<Pair<DimensionMap,String>> files2Drop = this.files.get(new Point(y, x));  // Also have to switch x and y here too
+				Vector<Pair<DimensionMap,String>> files2Drop = this.files.get(new Point(x, y));  // Also have to switch x and y here too
 
 				if(files2Drop != null)
 				{
