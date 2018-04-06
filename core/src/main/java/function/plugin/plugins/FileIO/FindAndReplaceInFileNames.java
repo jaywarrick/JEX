@@ -189,11 +189,23 @@ public class FindAndReplaceInFileNames extends JEXPlugin {
 			else
 			{
 				String tempMiddle = middle + "_";
-				while(!tempMiddle.equals(middle))
+				if(N.equals("0") && M.equals("0"))
 				{
-					tempMiddle = middle;
-					// Search and replace within the middle
+					// Then replacing the whole thing.
 					middle = middle.replace(this.oldMiddle, this.newMiddle);
+				}
+				else
+				{
+					while(!tempMiddle.equals(middle))
+					{
+						if(this.isCanceled())
+						{
+							return false;
+						}
+						tempMiddle = middle;
+						// Search and replace within the middle
+						middle = middle.replace(this.oldMiddle, this.newMiddle);
+					}
 				}
 			}
 
