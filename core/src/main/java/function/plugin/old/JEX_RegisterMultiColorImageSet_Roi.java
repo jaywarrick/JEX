@@ -290,7 +290,7 @@ public class JEX_RegisterMultiColorImageSet_Roi extends JEXCrunchable {
 
 					if(havePointRoi)
 					{
-						roiMap = convertPointsToRegions(roiMap, images, timeDimName, (double) target.getWidth(), (double) target.getHeight());
+						roiMap = convertPointsToRegions(roiMap, images, timeDimName, colorDimName, (double) target.getWidth(), (double) target.getHeight());
 						if(convertPoints)
 						{
 							// Set the outputs
@@ -406,7 +406,7 @@ public class JEX_RegisterMultiColorImageSet_Roi extends JEXCrunchable {
 		return true;
 	}
 
-	public TreeMap<DimensionMap,ROIPlus> convertPointsToRegions(TreeMap<DimensionMap,ROIPlus> points, TreeMap<DimensionMap,String> imageMap, String timeDimName, Double width, Double height)
+	public TreeMap<DimensionMap,ROIPlus> convertPointsToRegions(TreeMap<DimensionMap,ROIPlus> points, TreeMap<DimensionMap,String> imageMap, String timeDimName, String colorDimName, Double width, Double height)
 	{
 		DimTable dt = new DimTable(imageMap);
 
@@ -444,7 +444,9 @@ public class JEX_RegisterMultiColorImageSet_Roi extends JEXCrunchable {
 					Rectangle roi = new Rectangle((int) Math.round(0-minx), (int) Math.round(0-miny), (int) Math.round(width-maxx+minx), (int) Math.round(height-maxy+miny));
 					ROIPlus region = new ROIPlus(roi);
 					region.pointList.translate(x, y);
-					ret.put(map2.copy(), region);
+					DimensionMap temp = map2.copy();
+					temp.remove(colorDimName);
+					ret.put(temp, region);
 				}
 			}
 		}
