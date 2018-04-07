@@ -53,11 +53,14 @@ public class SplitObjectVirtual extends JEXPlugin {
 	
 	@ParameterMarker(uiOrder=1, name="Dimension to Split", description="Name of the dimension to split.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
 	String dimToSplit;
+	
+	@ParameterMarker(uiOrder=2, name="Keep Singleton Dimensions?", description="The resulting objects will have one value for the split dimension. Should this dimension be kept (checked) or discarded (uncheck).", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
+	boolean keepSingleton;
 
-	@ParameterMarker(uiOrder=2, name="Keep or Exclude Data", description="Should the specified filter be used to keep or exclude data from the object?", ui=MarkerConstants.UI_DROPDOWN, choices={"Keep","Exclude"}, defaultChoice=1)
+	@ParameterMarker(uiOrder=3, name="Keep or Exclude Data", description="Should the specified filter be used to keep or exclude data from the object?", ui=MarkerConstants.UI_DROPDOWN, choices={"Keep","Exclude"}, defaultChoice=1)
 	String operation;
 
-	@ParameterMarker(uiOrder=3, name="Filter DimTable", description="Include or Exclude combinatoins of Dimension Names and values. (Use following notation '<DimName1>=<a1,a2,...>;<DimName2>=<b1,b2,...>' e.g., 'Channel=0,100,100; Time=1,2,3,4,5' (spaces are ok).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
+	@ParameterMarker(uiOrder=4, name="Filter DimTable", description="Include or Exclude combinatoins of Dimension Names and values. (Use following notation '<DimName1>=<a1,a2,...>;<DimName2>=<b1,b2,...>' e.g., 'Channel=0,100,100; Time=1,2,3,4,5' (spaces are ok).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
 	String filterString;
 
 	/////////// Define Outputs here ///////////
@@ -94,7 +97,7 @@ public class SplitObjectVirtual extends JEXPlugin {
 		int count = 0;
 		int percentage = 0;
 		boolean success = false;
-		if(t.matches(JEXData.FILE) || t.matches(JEXData.IMAGE) || t.matches(JEXData.MOVIE) || t.matches(JEXData.SOUND))
+		if(t.matches(JEXData.FILE) || t.matches(JEXData.IMAGE) || t.matches(JEXData.MOVIE) || t.matches(JEXData.SOUND) || t.matches(JEXData.ROI))
 		{
 			DimTable dt = inputData.getDimTable();
 			for(DimTable subDT : dt.getSubTableIterator(this.dimToSplit))
@@ -118,7 +121,7 @@ public class SplitObjectVirtual extends JEXPlugin {
 					if(!keeping)
 					{
 						// Then we are trying to exclude data using the filter
-						if(!filter.testMapAsExclusionFilter(map))
+						if(!filter.testMapAsExclusionFilter(map) && !t.matches(JEXData.ROI))
 						{
 							// Then the data doesn't fit the exclusion filter and should be added to the new object
 							success = this.copyData(toAdd);
@@ -131,7 +134,7 @@ public class SplitObjectVirtual extends JEXPlugin {
 					else
 					{
 						// Then we are trying to keep the data using the filter
-						if(filter.testOverdefinedMap(map))
+						if(filter.testOverdefinedMap(map) && !t.matches(JEXData.ROI))
 						{
 							// The data fits the 'keep' filter and should be added to the new object
 							success = this.copyData(toAdd);
@@ -142,9 +145,18 @@ public class SplitObjectVirtual extends JEXPlugin {
 						}
 					}
 
-					if(success)
+					if(success || t.matches(JEXData.ROI))
 					{
-						retMap.put(map.copy(), toAdd);
+						if(keepSingleton)
+						{
+							retMap.put(map.copy(), toAdd);
+						}
+						else
+						{
+							DimensionMap temp = map.copy();
+							temp.remove(this.dimToSplit);
+							retMap.put(temp, toAdd);
+						}
 					}
 					
 					// Status bar
@@ -159,7 +171,7 @@ public class SplitObjectVirtual extends JEXPlugin {
 		}
 		else
 		{
-			JEXDialog.messageDialog("The data provided isn't currently one of the supported data types that can be used with this fuction (FILE, IMAGE, MOVIE, SOUND).", this);
+			JEXDialog.messageDialog("The data provided isn't currently one of the supported data types that can be used with this fuction (FILE, IMAGE, MOVIE, SOUND, ROI).", this);
 			return false;
 		}
 
