@@ -107,7 +107,7 @@ public class RegisterPointRoi extends JEXPlugin {
 		TreeMap<DimensionMap,ROIPlus> adjusted = new TreeMap<DimensionMap,ROIPlus>();
 		int count = 0, percentage = 0;
 		PointList toSave = null;
-		for (DimensionMap map : cropMap.keySet())
+		for (DimensionMap map : original.keySet())
 		{
 			toSave = new PointList();
 			ROIPlus roi = original.get(map).copy();

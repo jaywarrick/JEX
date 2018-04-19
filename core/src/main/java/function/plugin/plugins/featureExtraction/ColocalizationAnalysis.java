@@ -196,7 +196,7 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 		}
 
 		// Determine 
-		Dim maskThingsToExclude = null;
+		Dim maskThingsToExclude = new Dim(channelName);
 		if(!maskExcludeString.equals(""))
 		{
 			maskThingsToExclude = new Dim(channelName,new CSVList(imageExcludeString));
@@ -624,7 +624,7 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 	private Vector<Pair<String,String>> getChannelPermutations(Dim channelDim)
 	{
 
-		Dim thingsToExclude = null;
+		Dim thingsToExclude = new Dim(channelName);
 		if(!imageExcludeString.equals(""))
 		{
 			thingsToExclude = new Dim(channelName,new CSVList(imageExcludeString));
