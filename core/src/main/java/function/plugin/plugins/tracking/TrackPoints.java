@@ -26,13 +26,13 @@ import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_SPLITTING_FEATURE_P
 import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_SPLITTING_MAX_DISTANCE;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.Vector;
 
+import org.jgrapht.graph.DefaultWeightedEdge;
+import org.jgrapht.graph.SimpleWeightedGraph;
 import org.scijava.plugin.Plugin;
 
 import Database.DBObjects.JEXData;
@@ -43,6 +43,7 @@ import Database.DataWriter.RoiWriter;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.tracking.oldlap.FastLAPTracker;
+import fiji.plugin.trackmate.tracking.oldlap.LAPTracker;
 import function.plugin.mechanism.InputMarker;
 import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.MarkerConstants;
@@ -158,17 +159,27 @@ public class TrackPoints extends JEXPlugin {
 			}
 			
 			// Track the spots to create segments
+			Logs.log("Tracking points for " + e.getKey(), this);
 			FastLAPTracker tracker = new FastLAPTracker(e.getValue(), this.getSimpleTrackerSettings(maxLinkDistance, maxGapDistance, maxGapFrames));
 			tracker.process();
-			Logs.log("Tracking points for " + e.getKey(), this);
-			List<SortedSet<Spot>> segments = tracker.getTrackSegments();
+			SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = tracker.getResult();
+			for(Spot s : graph.vertexSet())
+			{
+				int counter = 1;
+				for(DefaultWeightedEdge ed : graph.edgesOf(s))
+				{
+					Spot src = graph.getEdgeSource(ed);
+					Spot tgt = graph.getEdgeTarget(ed);
+					Logs.log("VERTEX: " + this.getSpot(s) + "\tEDGE: " + count + "\tSOURCE: " + this.getSpot(src) + "\tTARGET: " + this.getSpot(tgt), this);
+					counter = counter + 1;
+				}
+			}
 			
 			// Convert to trackRois and maximaRois (these maps have timeDims in them)
-			TreeMap<DimensionMap, ROIPlus> trackRois = this.getTrackRois(segments, segmentMap);
-			TreeMap<DimensionMap, ROIPlus> maximaRois = this.getMaximaRois(segments, segmentMap, roiData.getDimTable().getDimWithName(timeDimName));
+			Pair<TreeMap<DimensionMap, ROIPlus>,TreeMap<DimensionMap, ROIPlus>> rois = this.getMaximaRois(tracker, segmentMap, roiData.getDimTable().getDimWithName(timeDimName));
 			
 			// Get the positions csv table
-			for(Entry<DimensionMap, ROIPlus> e3 : maximaRois.entrySet())
+			for(Entry<DimensionMap, ROIPlus> e3 : rois.p2.entrySet())
 			{
 				for(IdPoint p : e3.getValue().pointList)
 				{
@@ -178,7 +189,7 @@ public class TrackPoints extends JEXPlugin {
 			}
 			
 			// Get diffs... the dimension maps returned have a time dim.
-			TreeMap<DimensionMap,Vector<Pair<Double,Double>>> diffs = StatisticsUtility.getDiffVectors(maximaRois, timeDimName);
+			TreeMap<DimensionMap,Vector<Pair<Double,Double>>> diffs = StatisticsUtility.getDiffVectors(rois.p2, timeDimName);
 			
 			for(Entry<DimensionMap,Vector<Pair<Double,Double>>> e2 : diffs.entrySet())
 			{
@@ -189,8 +200,8 @@ public class TrackPoints extends JEXPlugin {
 			}
 			
 			// Store them in the finalTrackRois map
-			finalTrackRois.putAll(trackRois);
-			finalMaximaRois.putAll(maximaRois);
+			finalTrackRois.putAll(rois.p1);
+			finalMaximaRois.putAll(rois.p2);
 			
 			count = count + 1;
 			percentage = (int) (100 * ((double) (count) / ((double) spotCollections.size())));
@@ -208,25 +219,65 @@ public class TrackPoints extends JEXPlugin {
 		return true;
 	}
 	
-	public TreeMap<DimensionMap,ROIPlus> getMaximaRois(List<SortedSet<Spot>> segments, DimensionMap segmentMap, Dim timeDim)
+	public String getSpot(Spot s)
 	{
-		Vector<PointList> tracks = new Vector<PointList>();
-		for(SortedSet<Spot> segment : segments)
+		return s.getName() + "," + s.getFeature(Spot.FRAME);
+	}
+	
+	public Pair<TreeMap<DimensionMap,ROIPlus>,TreeMap<DimensionMap,ROIPlus>> getMaximaRois(LAPTracker tracker, DimensionMap segmentMap, Dim timeDim)
+	{
+		SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = tracker.getResult();
+		
+		TreeMap<DimensionMap,PointList> tracks = new TreeMap<DimensionMap,PointList>();
+		for(Spot s : graph.vertexSet())
 		{
-			PointList pl = new PointList();
-			for(Spot s : segment)
+			// Get the incoming and outgoing edges			
+			Spot incoming = null;
+			Spot outgoing = null;
+			for(DefaultWeightedEdge edge : graph.edgesOf(s))
 			{
-				pl.add(this.getIdPoint(s));
+				Spot temp = graph.getEdgeTarget(edge);
+				if(temp.getFeature(Spot.FRAME) == s.getFeature(Spot.FRAME))
+				{
+					incoming = temp;
+				}
+				else
+				{
+					outgoing = temp;
+				}
 			}
-			tracks.add(pl);
+			
+			// If no incoming edge, then create new track.
+			if(incoming == null)
+			{
+				DimensionMap toSave = new DimensionMap("Id=" + s.getName() + ",LastFrame=" + s.getFeature(Spot.FRAME));
+				PointList pToSave = new PointList();
+				pToSave.add(this.getIdPoint(s));
+				if(outgoing != null)
+				{
+					toSave = new DimensionMap("Id=" + outgoing.getName() + ",LastFrame=" + outgoing.getFeature(Spot.FRAME));
+					pToSave.add(this.getIdPoint(outgoing));
+				}
+				tracks.put(toSave, pToSave);
+			}
+			else if(outgoing != null)
+			{
+				// remove track by last point, add point, put track back with new last point
+				PointList toExtend = tracks.remove(new DimensionMap("Id=" + incoming.getName() + ",LastFrame=" + incoming.getFeature(Spot.FRAME)));
+				toExtend.add(this.getIdPoint(outgoing));
+				tracks.put(new DimensionMap("Id=" + outgoing.getName() + ",LastFrame=" + outgoing.getFeature(Spot.FRAME)), toExtend);
+			}
 		}
 		
+		TreeMap<DimensionMap,ROIPlus> trackRois = new TreeMap<DimensionMap,ROIPlus>();
 		TreeMap<DimensionMap,IdPoint> allPoints = new TreeMap<DimensionMap,IdPoint>();
 		int idCounter = 0;
-		for(PointList pl : tracks)
+		for(PointList pl : tracks.values())
 		{
 			DimensionMap newMap = segmentMap.copy();
 			newMap.put(trackDimName, ""+idCounter);
+			ROIPlus track = this.getTrackRoi(pl);
+			trackRois.put(newMap.copy(), track);
 			for(IdPoint p : pl)
 			{
 				newMap.put(timeDimName, ""+p.id);
@@ -236,7 +287,7 @@ public class TrackPoints extends JEXPlugin {
 		}
 		
 		// Make new maxima rois with id's that actually match for different times
-		TreeMap<DimensionMap,ROIPlus> ret = new TreeMap<DimensionMap,ROIPlus>();
+		TreeMap<DimensionMap,ROIPlus> maximaRois = new TreeMap<DimensionMap,ROIPlus>();
 		for (String time : timeDim.values())
 		{
 			// for each time			
@@ -252,36 +303,36 @@ public class TrackPoints extends JEXPlugin {
 				temp.add(p);
 			}
 			ROIPlus newMaximaRoi = new ROIPlus(temp, ROIPlus.ROI_POINT);
-			ret.put(newMap, newMaximaRoi);
+			maximaRois.put(newMap, newMaximaRoi);
 		}
-		return ret;
+		return new Pair<>(trackRois, maximaRois);
 	}
 	
-	public TreeMap<DimensionMap,ROIPlus> getTrackRois(List<SortedSet<Spot>> segments, DimensionMap segmentMap)
-	{
-		Vector<PointList> tracks = new Vector<PointList>();
-		for(SortedSet<Spot> segment : segments)
-		{
-			PointList pl = new PointList();
-			for(Spot s : segment)
-			{
-				pl.add(this.getIdPoint(s));
-			}
-			tracks.add(pl);
-		}
-		
-		TreeMap<DimensionMap,ROIPlus> trackRois = new TreeMap<DimensionMap,ROIPlus>();
-		int idCounter = 0;
-		for(PointList pl : tracks)
-		{
-			DimensionMap newMap = segmentMap.copy();
-			newMap.put(trackDimName, ""+idCounter);
-			ROIPlus track = this.getTrackRoi(pl);
-			trackRois.put(newMap, track);
-			idCounter = idCounter + 1;
-		}
-		return trackRois;
-	}
+	//	public TreeMap<DimensionMap,ROIPlus> getTrackRois(List<SortedSet<Spot>> segments, DimensionMap segmentMap)
+	//	{
+	//		Vector<PointList> tracks = new Vector<PointList>();
+	//		for(SortedSet<Spot> segment : segments)
+	//		{
+	//			PointList pl = new PointList();
+	//			for(Spot s : segment)
+	//			{
+	//				pl.add(this.getIdPoint(s));
+	//			}
+	//			tracks.add(pl);
+	//		}
+	//		
+	//		TreeMap<DimensionMap,ROIPlus> trackRois = new TreeMap<DimensionMap,ROIPlus>();
+	//		int idCounter = 0;
+	//		for(PointList pl : tracks)
+	//		{
+	//			DimensionMap newMap = segmentMap.copy();
+	//			newMap.put(trackDimName, ""+idCounter);
+	//			ROIPlus track = this.getTrackRoi(pl);
+	//			trackRois.put(newMap, track);
+	//			idCounter = idCounter + 1;
+	//		}
+	//		return trackRois;
+	//	}
 	
 	public TreeMap<DimensionMap,SpotCollection> getSpotCollections()
 	{
