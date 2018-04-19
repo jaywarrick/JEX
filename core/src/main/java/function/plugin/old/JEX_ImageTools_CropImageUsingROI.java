@@ -140,6 +140,7 @@ public class JEX_ImageTools_CropImageUsingROI extends JEXCrunchable {
 	@Override
 	public ParameterSet requiredParameters()
 	{
+		Parameter p00 = getNumThreadsParameter(10, 1);
 		Parameter p0 = new Parameter("Exclusion Filter DimTable", "Exclude combinatoins of Dimension Names and values. (Use following notation '<DimName1>=<a1,a2,...>;<DimName2>=<b1,b2,...>' e.g., 'Channel=0,100,100; Time=1,2,3,4,5' (spaces are ok).", Parameter.TEXTFIELD, "");
 
 		// Parameter p1 = new
@@ -159,6 +160,7 @@ public class JEX_ImageTools_CropImageUsingROI extends JEXCrunchable {
 		
 		// Make an array of the parameters and return it
 		ParameterSet parameterArray = new ParameterSet();
+		parameterArray.addParameter(p00);
 		parameterArray.addParameter(p0);
 		// parameterArray.addParameter(p1);
 		// parameterArray.addParameter(p2);
