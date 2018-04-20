@@ -216,7 +216,8 @@ public class TrackPoints extends JEXPlugin {
 	{
 		SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = tracker.getResult();
 		
-		TreeMap<DimensionMap,PointList> tracks = new TreeMap<DimensionMap,PointList>();
+		TreeMap<DimensionMap,PointList> tracksByLastFrame = new TreeMap<DimensionMap,PointList>();
+		TreeMap<DimensionMap,PointList> tracksByFirstFrame = new TreeMap<DimensionMap,PointList>();
 		for(Spot s : graph.vertexSet())
 		{
 			// Get the incoming and outgoing edges			
@@ -238,29 +239,31 @@ public class TrackPoints extends JEXPlugin {
 			// If no incoming edge, then create new track.
 			if(incoming == null)
 			{
-				DimensionMap toSave = new DimensionMap("Id=" + s.getName() + ",LastFrame=" + s.getFeature(Spot.FRAME));
+				DimensionMap toSave = new DimensionMap("Id=" + s.getName() + ",AFrame=" + s.getFeature(Spot.FRAME));
 				PointList pToSave = new PointList();
 				pToSave.add(this.getIdPoint(s));
+				tracksByFirstFrame.put(toSave.copy(), pToSave);
 				if(outgoing != null)
 				{
-					toSave = new DimensionMap("Id=" + outgoing.getName() + ",LastFrame=" + outgoing.getFeature(Spot.FRAME));
+					toSave = new DimensionMap("Id=" + outgoing.getName() + ",AFrame=" + outgoing.getFeature(Spot.FRAME));
 					pToSave.add(this.getIdPoint(outgoing));
 				}
-				tracks.put(toSave, pToSave);
+				tracksByLastFrame.put(toSave, pToSave);
+				
 			}
 			else if(outgoing != null)
 			{
 				// remove track by last point, add point, put track back with new last point
-				PointList toExtend = tracks.remove(new DimensionMap("Id=" + incoming.getName() + ",LastFrame=" + incoming.getFeature(Spot.FRAME)));
+				PointList toExtend = tracksByLastFrame.remove(new DimensionMap("Id=" + incoming.getName() + ",AFrame=" + incoming.getFeature(Spot.FRAME)));
 				toExtend.add(this.getIdPoint(outgoing));
-				tracks.put(new DimensionMap("Id=" + outgoing.getName() + ",LastFrame=" + outgoing.getFeature(Spot.FRAME)), toExtend);
+				tracksByLastFrame.put(new DimensionMap("Id=" + outgoing.getName() + ",AFrame=" + outgoing.getFeature(Spot.FRAME)), toExtend);
 			}
 		}
 		
 		TreeMap<DimensionMap,ROIPlus> trackRois = new TreeMap<DimensionMap,ROIPlus>();
 		TreeMap<DimensionMap,IdPoint> allPoints = new TreeMap<DimensionMap,IdPoint>();
 		int idCounter = 0;
-		for(PointList pl : tracks.values())
+		for(PointList pl : tracksByFirstFrame.values())
 		{
 			DimensionMap newMap = segmentMap.copy();
 			newMap.put(trackDimName, ""+idCounter);
