@@ -162,18 +162,6 @@ public class TrackPoints extends JEXPlugin {
 			Logs.log("Tracking points for " + e.getKey(), this);
 			FastLAPTracker tracker = new FastLAPTracker(e.getValue(), this.getSimpleTrackerSettings(maxLinkDistance, maxGapDistance, maxGapFrames));
 			tracker.process();
-			SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = tracker.getResult();
-			for(Spot s : graph.vertexSet())
-			{
-				int counter = 1;
-				for(DefaultWeightedEdge ed : graph.edgesOf(s))
-				{
-					Spot src = graph.getEdgeSource(ed);
-					Spot tgt = graph.getEdgeTarget(ed);
-					Logs.log("VERTEX: " + this.getSpot(s) + "\tEDGE: " + count + "\tSOURCE: " + this.getSpot(src) + "\tTARGET: " + this.getSpot(tgt), this);
-					counter = counter + 1;
-				}
-			}
 			
 			// Convert to trackRois and maximaRois (these maps have timeDims in them)
 			Pair<TreeMap<DimensionMap, ROIPlus>,TreeMap<DimensionMap, ROIPlus>> rois = this.getMaximaRois(tracker, segmentMap, roiData.getDimTable().getDimWithName(timeDimName));
