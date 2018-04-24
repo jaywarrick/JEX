@@ -199,7 +199,7 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 		Dim maskThingsToExclude = new Dim(channelName);
 		if(!maskExcludeString.equals(""))
 		{
-			maskThingsToExclude = new Dim(channelName,new CSVList(imageExcludeString));
+			maskThingsToExclude = new Dim(channelName,new CSVList(maskExcludeString));
 			maskThingsToExclude = Dim.intersect(maskThingsToExclude, maskChannelDim);
 			if(maskThingsToExclude == null || maskThingsToExclude.size() == 0)
 			{
