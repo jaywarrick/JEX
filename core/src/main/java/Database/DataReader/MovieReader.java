@@ -1,7 +1,10 @@
 package Database.DataReader;
 
+import java.util.TreeMap;
+
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXDataSingle;
+import tables.DimensionMap;
 
 public class MovieReader {
 	
@@ -25,4 +28,20 @@ public class MovieReader {
 		return result;
 	}
 	
+	public static TreeMap<DimensionMap,String> readMovieObjects(JEXData data)
+	{
+		if(!data.getDataObjectType().equals(JEXData.MOVIE))
+			return null;
+		TreeMap<DimensionMap,String> result = new TreeMap<DimensionMap,String>();
+		JEXDataSingle ds = data.getFirstSingle();
+		String dataFolder = FileReader.readToFile(ds).getParent(); // DO THIS
+		// ONE TIME OUTSIDE LOOP OTHERWISE YOU WILL CHECK IF THIS DIRECTORY EXISTS FOR EACH DATASINGLE IN THE JEXDATA! (MAJORLY SLOW)
+		for (DimensionMap map : data.getDataMap().keySet())
+		{
+			ds = data.getData(map);
+			String path = FileReader.readToPath(dataFolder, ds);
+			result.put(map, path);
+		}
+		return result;
+	}
 }

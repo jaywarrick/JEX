@@ -157,10 +157,8 @@ public class JEXDataPanelController {
 		
 		JEXMovieView()
 		{
-			String path = MovieReader.readMovieObject(JEXDataPanelController.this.data);
-			Vector<String> fileList = new Vector<String>();
-			fileList.add(path);
-			JEXDataPanelController.addFileListScrollPane(this, fileList);
+			TreeMap<DimensionMap,String> fileList = MovieReader.readMovieObjects(JEXDataPanelController.this.data);
+			JEXDataPanelController.addFileListScrollPane(this, fileList.values());
 		}
 	}
 	

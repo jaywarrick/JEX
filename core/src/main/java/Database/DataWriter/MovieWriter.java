@@ -232,7 +232,7 @@ public class MovieWriter implements ImageObserver {
 					imp = null;
 					imk.flush();
 					imk = null;
-					time = time + interval;
+					time = startTime + (Double.parseDouble(map.get(timeDimName))+1)*interval;
 					k = k + 1;
 				}
 				k = 0;

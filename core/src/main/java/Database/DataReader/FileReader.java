@@ -21,7 +21,7 @@ public class FileReader {
 		return ret;
 	}
 	
-	private static String readToPath(String dataFolder, JEXDataSingle ds)
+	public static String readToPath(String dataFolder, JEXDataSingle ds)
 	{
 		String fileName = FileUtility.getFileNameWithExtension(ds.get(JEXDataSingle.RELATIVEPATH));
 		String result = dataFolder + File.separator + fileName;
