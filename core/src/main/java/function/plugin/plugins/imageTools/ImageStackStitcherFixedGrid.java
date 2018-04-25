@@ -13,14 +13,17 @@ import Database.DBObjects.JEXEntry;
 import Database.DataReader.LabelReader;
 import Database.DataWriter.ImageWriter;
 import Database.Definition.TypeName;
+import Database.SingleUserDatabase.JEXWriter;
 import function.plugin.mechanism.InputMarker;
 import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.MarkerConstants;
 import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
+import ij.ImagePlus;
 import image.roi.PointList;
 import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
+import logs.Logs;
 import tables.Dim;
 import tables.DimTable;
 import tables.DimensionMap;
@@ -91,6 +94,9 @@ public class ImageStackStitcherFixedGrid extends JEXPlugin {
 
 	@ParameterMarker(uiOrder=13, name="Normalize Intensities Fit Bit Depth", description="Scale intensities to go from 0 to max value determined by new bit depth (\'true\' overrides intensity multiplier).", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
 	boolean normalize;
+	
+	@ParameterMarker(uiOrder=14, name="Exclusion Filter DimTable", description="Filter specific dimension combinations from analysis. (Format: <DimName1>=<a1,a2,...>;<DimName2>=<b1,b2...>)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
+	String filterDimTableString;
 
 
 	////////// Define Outputs ///////////
@@ -148,6 +154,8 @@ public class ImageStackStitcherFixedGrid extends JEXPlugin {
 			return false;
 		}
 		DimTable table = imageData.getDimTable();
+		
+		DimTable filterTable = new DimTable(this.filterDimTableString);
 
 		// Get the number of columns
 		Integer cols = -1;
@@ -189,8 +197,18 @@ public class ImageStackStitcherFixedGrid extends JEXPlugin {
 		// and stitch.
 		table.remove(locDim);
 		Map<DimensionMap,String> stitchedImageFilePaths = new HashMap<DimensionMap,String>();
+		int count = 0, percentage = 0;
 		for (DimensionMap partialMap : table.getDimensionMaps())
 		{
+			if(filterTable.testMapAsExclusionFilter(partialMap))
+			{
+				Logs.log("Skipping the processing and saving of " + partialMap.toString(), this);
+				count = count + 1;
+				percentage = (int) (100 * ((double) (count) / ((double) table.mapCount())));
+				JEXStatics.statusBar.setProgressPercentage(percentage);
+				continue;
+			}
+			
 			if(this.isCanceled())
 			{
 				return false;
