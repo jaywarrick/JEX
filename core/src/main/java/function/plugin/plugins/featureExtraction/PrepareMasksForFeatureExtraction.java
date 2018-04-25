@@ -228,6 +228,23 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 			if(segMap != null)
 			{
 				Img<UnsignedByteType> segImage = JEXReader.getSingleImage(segMap.get(subMap), null);
+				long[] dimsSeg = new long[segImage.numDimensions()];
+				long[] dimsUnion = new long[union.numDimensions()];
+				segImage.dimensions(dimsSeg);
+				union.dimensions(dimsUnion);
+				if(dimsSeg.length != dimsUnion.length)
+				{
+					JEXDialog.messageDialog("The number of pixel dimensions of the segmentation image and mask images do not match. Aborting.", this);
+					return false;
+				}
+				for(int i = 0; i < dimsSeg.length; i++)
+				{
+					if(dimsSeg[i] != dimsUnion[i])
+					{
+						JEXDialog.messageDialog("The pixel dimensions of the segmentation image and mask images do not match. Aborting.", this);
+						return false;
+					}
+				}
 				IJ2PluginUtility.ij().op().run(MapIIToSamplingRAI.class, union, segImage, andOp);
 			}
 			
