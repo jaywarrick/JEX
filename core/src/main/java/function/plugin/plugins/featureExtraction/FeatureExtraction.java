@@ -466,6 +466,37 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			{
 				if(!this.putFeatures(firstTimeThrough))
 					return false;
+				
+				// Save the center of mass location for the WholeCell mask region
+				if(maskChannelName.equals(this.maskWholeCellChannelValue))
+				{
+					// Save the whole Cell location
+					DimensionMap mapM_Geometry = this.mapMask_NoChannel.copyAndSet("MaskChannel=" + this.maskWholeCellChannelValue + ".p0");
+					mapM_Geometry.put("ImageChannel", "None");
+					DimensionMap newMap = mapM_Geometry
+							.copyAndSet("Measurement=" + "net.imagej.ops.Ops$Geometric$COMX");
+					newMap.put("Id", "" + this.pId);
+					newMap.put("Label", "" + idToLabelMap.get(this.pId));
+					this.write(newMap, (double) this.wholeCellRegion.getCenterOfMass().getDoublePosition(0));
+
+					newMap = mapM_Geometry
+							.copyAndSet("Measurement=" + "net.imagej.ops.Ops$Geometric$COMY");
+					newMap.put("Id", "" + this.pId);
+					newMap.put("Label", "" + idToLabelMap.get(this.pId));
+					this.write(newMap, (double) this.wholeCellRegion.getCenterOfMass().getDoublePosition(1));
+					
+					newMap = mapM_Geometry
+							.copyAndSet("Measurement=" + "net.imagej.ops.Ops$Geometric$MaximaX");
+					newMap.put("Id", "" + this.pId);
+					newMap.put("Label", "" + idToLabelMap.get(this.pId));
+					this.write(newMap, (double) p.x);
+
+					newMap = mapM_Geometry
+							.copyAndSet("Measurement=" + "net.imagej.ops.Ops$Geometric$MaximaY");
+					newMap.put("Id", "" + this.pId);
+					newMap.put("Label", "" + idToLabelMap.get(this.pId));
+					this.write(newMap, (double) p.y);
+				}
 			}
 
 		}
@@ -782,7 +813,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			if (opGeometric == null) {
 				opGeometric = IJ2PluginUtility.ij().op().op(Geometric2DFeatureSet.class, this.polygons.get(0));
 			}
-
+			
 			int i = 1;
 			for(Polygon p : polygons)
 			{
