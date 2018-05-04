@@ -3,6 +3,7 @@ package function.plugin.plugins.imageProcessing;
 import org.jtransforms.dct.FloatDCT_2D;
 import org.jtransforms.fft.FloatFFT_2D;
 
+import edu.emory.mathcs.utils.ConcurrencyUtils;
 import ij.process.Blitter;
 import ij.process.FloatBlitter;
 import ij.process.FloatProcessor;
@@ -43,7 +44,12 @@ public class TIECalculator {
 	private boolean simple;
 
 	private FloatFFT_2D fft;
-	private FloatDCT_2D dct;
+	private FloatDCT_2D dct = null;
+	static {
+		// This is to keep the FFT library from swallowing all the threads
+		// and creating delay issues that mess up other programs running on the computer (e.g., the microscope software)
+		ConcurrencyUtils.setNumberOfThreads(1);
+	}
 
 	/**
 	 * Transport of Intensity Equation Calculator
@@ -116,7 +122,7 @@ public class TIECalculator {
 
 		// create transforms for using later
 		this.fft = new FloatFFT_2D(this.N, this.M);
-		this.dct = new FloatDCT_2D(this.N/2, this.M/2);
+		//this.dct = new FloatDCT_2D(this.N/2, this.M/2);
 
 		// Now we are set for calculating a bunch of TIE's
 	}
@@ -556,6 +562,10 @@ public class TIECalculator {
 	 */
 	public float[][] dct(FloatProcessor fp, boolean scale)
 	{
+		if(this.dct == null)
+		{
+			this.dct = new FloatDCT_2D(this.N/2, this.M/2);
+		}
 		float[][] fpa = getFloatArray(fp);
 		dct.forward(fpa, scale);
 		return fpa;
@@ -568,6 +578,10 @@ public class TIECalculator {
 	 */
 	public void idct(float[][] fpa, boolean scale)
 	{
+		if(this.dct == null)
+		{
+			this.dct = new FloatDCT_2D(this.N/2, this.M/2);
+		}
 		dct.inverse(fpa, scale);
 	}
 
