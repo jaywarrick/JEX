@@ -20,6 +20,7 @@ import function.plugin.plugins.imageProcessing.RankFilters2;
 import function.singleCellAnalysis.SingleCellUtility;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.plugin.filter.GaussianBlur;
 import ij.process.Blitter;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
@@ -325,7 +326,7 @@ public class ImageUtility {
 		int nBins = getReasonableNumberOfBinsForHistogram(ip1.getWidth()*ip1.getHeight()/2, HIST_MIN_BINS, 250); // divide by 2 because we are only binning pixels below the median
 		Pair<double[], int[]> hist = ImageUtility.getHistogram(ip1, min, max, nBins, false);
 		double wMed = ImageUtility.getHistogramMode(hist.p1, hist.p2, true, true, showHist);
-		double wMad = (wMed - hist.p1[0])/3.0;
+		double wMad = (wMed - hist.p1[0])/1.0;
 		if(showHist)
 		{
 			ImageUtility.getHistogramPlot(hist.p1, hist.p2, showHist, wMed-wMad, wMed, wMed+wMad);
@@ -444,7 +445,8 @@ public class ImageUtility {
 			ret.p2 = myPath;
 		}
 
-		RankFilters2 rF = new RankFilters2();
+		//RankFilters2 rF = new RankFilters2();
+		GaussianBlur gb = new GaussianBlur();
 
 
 		// If necessary, continue calculating the localSD by multiplying by weights and summing
@@ -453,7 +455,8 @@ public class ImageUtility {
 			//FileUtility.showImg(localSD, true);
 			localSD.copyBits(threshWeights, 0, 0, Blitter.MULTIPLY);		// localSD (Multiplied)
 			//FileUtility.showImg(localSD, true);
-			rF.rank(localSD, meanRadius, RankFilters2.SUM);     		// localSD (Multiplied, Summed)
+			gb.blurGaussian(localSD, 0.4*meanRadius, 0.4*meanRadius, 0.0002);
+			//rF.rank(localSD, meanRadius, RankFilters2.SUM);     		// localSD (Multiplied, Summed)
 			//FileUtility.showImg(localSD, true);
 		}
 
@@ -469,8 +472,10 @@ public class ImageUtility {
 
 			// Multiply the original image by the weights and sum
 			subLocalMean.copyBits(subWeights, 0, 0, Blitter.MULTIPLY); 		// subLocalMean (Multiplied)
-			rF.rank(subLocalMean, meanRadius, RankFilters2.SUM);  		// subLocalMean (Multiplied, Summed)
-			rF.rank(subWeights, meanRadius, RankFilters2.SUM);    		// subWeights   (Summed)
+			gb.blurGaussian(subLocalMean, 0.4*meanRadius, 0.4*meanRadius, 0.0002);
+			//rF.rank(subLocalMean, meanRadius, RankFilters2.SUM);  		// subLocalMean (Multiplied, Summed)
+			gb.blurGaussian(subWeights, 0.4*meanRadius, 0.4*meanRadius, 0.0002);
+			//rF.rank(subWeights, meanRadius, RankFilters2.SUM);    		// subWeights   (Summed)
 			subLocalMean.copyBits(subWeights, 0, 0, Blitter.DIVIDE);   		// subLocalMean (Multiplied, Summed, Divided)
 		}
 		if(doThreshold)
@@ -478,9 +483,11 @@ public class ImageUtility {
 			// We can use localMean directly since we made a copy, if necessary, for subtraction calcs.
 			threshLocalMean = original;										// threshLocalMean == original
 			threshLocalMean.copyBits(threshWeights, 0, 0, Blitter.MULTIPLY);// threshLocalMean (Multiplied)
-			rF.rank(threshLocalMean, meanRadius, RankFilters2.SUM);  	// threshLocalMean (Multiplied, Summed)
+			gb.blurGaussian(threshLocalMean, 0.4*meanRadius, 0.4*meanRadius, 0.0002);
+			//rF.rank(threshLocalMean, meanRadius, RankFilters2.SUM);  	// threshLocalMean (Multiplied, Summed)
 			//FileUtility.showImg(threshWeights, true);
-			rF.rank(threshWeights, meanRadius, RankFilters2.SUM);    	// threshWeights   (Summed)
+			gb.blurGaussian(threshWeights, 0.4*meanRadius, 0.4*meanRadius, 0.0002);
+			//rF.rank(threshWeights, meanRadius, RankFilters2.SUM);    	// threshWeights   (Summed)
 			//FileUtility.showImg(threshWeights, true);
 			threshLocalMean.copyBits(threshWeights, 0, 0, Blitter.DIVIDE);  // threshLocalMean (Multiplied, Summed, Divided)
 		}
