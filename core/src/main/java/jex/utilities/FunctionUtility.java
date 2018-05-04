@@ -17,7 +17,7 @@ import ij.process.ShortProcessor;
 import miscellaneous.LSVList;
 
 public class FunctionUtility {
-	
+
 	public static ImagePlus makeImageToSave(FloatProcessor imp, boolean normalize, double multiplier, int bitDepth, boolean invert)
 	{
 		imp.resetMinAndMax();
@@ -26,7 +26,7 @@ public class FunctionUtility {
 		{
 			ims = ImageStatistics.getStatistics(imp, Measurements.MIN_MAX, null);
 			FunctionUtility.imAdjust(imp, ims.min, ims.max, 0, 1, 1);
-//			FunctionUtility.normalizeScaleFloat(imp, Math.pow(2, bitDepth) - 1, ims.min, ims.max);
+			//			FunctionUtility.normalizeScaleFloat(imp, Math.pow(2, bitDepth) - 1, ims.min, ims.max);
 			imp.resetMinAndMax();
 		}
 		else if(multiplier != 1.0)
@@ -34,7 +34,7 @@ public class FunctionUtility {
 			imp.multiply(multiplier);
 			imp.resetMinAndMax();
 		}
-		
+
 		ImageProcessor newImp;
 		if(bitDepth == 8)
 		{
@@ -55,12 +55,12 @@ public class FunctionUtility {
 		ImagePlus result = new ImagePlus("", newImp);
 		return result;
 	}
-	
+
 	public static ImagePlus makeImageToSave(FloatProcessor imp, String normalize, int bitDepth)
 	{
 		return makeImageToSave(imp, normalize, bitDepth, 1);
 	}
-	
+
 	public static ImagePlus makeImageToSave(FloatProcessor imp, String normalize, int bitDepth, double gamma)
 	{
 		imp.resetMinAndMax();
@@ -78,7 +78,7 @@ public class FunctionUtility {
 			}
 			else if(Norm_Scale.equals("false"))
 			{   
-				
+
 			}
 			else
 			{
@@ -86,7 +86,7 @@ public class FunctionUtility {
 				imp.multiply(d);
 			}
 		}
-		
+
 		if(bitDepth == 0)
 		{
 			bitDepth = 8;
@@ -104,12 +104,12 @@ public class FunctionUtility {
 		{
 			newImp = imp;
 		}
-		
-//		newImp.gamma(gamma);
+
+		//		newImp.gamma(gamma);
 		ImagePlus result = new ImagePlus("", newImp);
 		return result;
 	}
-	
+
 	// public static void imSave(FloatProcessor imp, boolean normalize, double
 	// multiplier, int bitDepth, String fullPath)
 	// {
@@ -213,31 +213,31 @@ public class FunctionUtility {
 	// FileSaver imFS = new FileSaver(im);
 	// imFS.saveAsTiff(fullPath);
 	// }
-	
-//	public static void normalizeScaleFloat(FloatProcessor ip, double newMax, double min, double max)
-//	{
-//		double ratio = newMax / (max - min);
-//		int size = ip.getWidth() * ip.getHeight();
-//		float[] pixels = (float[]) ip.getPixels();
-//		double v;
-//		for (int i = 0; i < size; i++)
-//		{
-//			v = pixels[i] - min;
-//			if(v < 0.0)
-//			{
-//				v = 0.0;
-//			}
-//			v *= ratio;
-//			if(v > newMax)
-//			{
-//				v = newMax;
-//			}
-//			pixels[i] = (float) v;
-//		}
-//		ip.setPixels(pixels);
-//		ip.resetMinAndMax();
-//	}
-	
+
+	//	public static void normalizeScaleFloat(FloatProcessor ip, double newMax, double min, double max)
+	//	{
+	//		double ratio = newMax / (max - min);
+	//		int size = ip.getWidth() * ip.getHeight();
+	//		float[] pixels = (float[]) ip.getPixels();
+	//		double v;
+	//		for (int i = 0; i < size; i++)
+	//		{
+	//			v = pixels[i] - min;
+	//			if(v < 0.0)
+	//			{
+	//				v = 0.0;
+	//			}
+	//			v *= ratio;
+	//			if(v > newMax)
+	//			{
+	//				v = newMax;
+	//			}
+	//			pixels[i] = (float) v;
+	//		}
+	//		ip.setPixels(pixels);
+	//		ip.resetMinAndMax();
+	//	}
+
 	/**
 	 * Untested at moment
 	 * @param ip
@@ -268,7 +268,7 @@ public class FunctionUtility {
 		ip.setPixels(pixels);
 		ip.resetMinAndMax();
 	}
-	
+
 	/**
 	 * Untested at moment
 	 * @param ip
@@ -298,7 +298,7 @@ public class FunctionUtility {
 		}
 		ip.setPixels(pixels);
 	}
-	
+
 	public static void scaleFloat(FloatProcessor ip, double scale)
 	{
 		int size = ip.getWidth() * ip.getHeight();
@@ -309,7 +309,7 @@ public class FunctionUtility {
 		}
 		ip.setPixels(pixels);
 	}
-	
+
 	public static void powerFloat(FloatProcessor ip, double power)
 	{
 		int size = ip.getWidth() * ip.getHeight();
@@ -320,7 +320,7 @@ public class FunctionUtility {
 		}
 		ip.setPixels(pixels);
 	}
-	
+
 	public static double[] getBins(FloatProcessor imp)
 	{
 		int n;
@@ -334,7 +334,7 @@ public class FunctionUtility {
 		}
 		return bins;
 	}
-	
+
 	public static void imAdjust(ImageProcessor imp, Double oldMin, Double oldMax, double newMin, double newMax, double gamma)
 	{
 		ImageProcessor ip;
@@ -346,10 +346,10 @@ public class FunctionUtility {
 		{
 			ip = imp.convertToFloatProcessor();
 		}
-		
+
 		double ratio = (newMax - newMin) / (oldMax - oldMin);
 		double offset = newMin - ratio*oldMin;
-		
+
 		float[] pixels = (float[]) ip.getPixels();
 		for(int i = 0; i < pixels.length; i++)
 		{
@@ -377,10 +377,19 @@ public class FunctionUtility {
 		//				pixels[i] = v;
 		//			}
 		//		}
-		if(imp instanceof FloatProcessor)
+		if(gamma != 1 && imp instanceof FloatProcessor)
 		{
-			ip.resetMinAndMax();
-			ip.gamma(gamma);
+			// Temporarily put image on scale of 0-1 for gamma adjustment for predictable behavior
+			//			imp.resetMinAndMax();
+			//			Logs.log("ActualMinMax:" + imp.getMin() + "," + imp.getMax(), FunctionUtility.class);
+			imp.multiply(1.0/newMax);
+			imp.resetMinAndMax();
+			imp.gamma(gamma);
+			//			imp.resetMinAndMax();
+			//			Logs.log("ActualMinMax:" + imp.getMin() + "," + imp.getMax(), FunctionUtility.class);
+			imp.multiply(newMax);
+			imp.resetMinAndMax();
+			//			Logs.log("ActualMinMax:" + imp.getMin() + "," + imp.getMax(), FunctionUtility.class);
 		}
 		else
 		{
@@ -395,9 +404,9 @@ public class FunctionUtility {
 				imp.setPixels(ip.getPixels());
 			}
 		}
-		imp.gamma(gamma);
+
 	}
-	
+
 	public static void imThresh(FloatProcessor ip, double thresh, boolean invert)
 	{
 		int size = ip.getWidth() * ip.getHeight();
@@ -423,7 +432,7 @@ public class FunctionUtility {
 		}
 		ip.resetMinAndMax();
 	}
-	
+
 	public static void imSubstract(FloatProcessor ip, double thresh)
 	{
 		int size = ip.getWidth() * ip.getHeight();
@@ -439,7 +448,7 @@ public class FunctionUtility {
 		ip.setPixels(pixels);
 		ip.resetMinAndMax();
 	}
-	
+
 	public static String write(String string, String path, boolean append)
 	{
 		try
@@ -455,22 +464,22 @@ public class FunctionUtility {
 		}
 		return null;
 	}
-	
+
 	public static LSVList read(File f) throws IOException
 	{
 		LSVList ret = new LSVList();
 		BufferedReader bufRdr = new BufferedReader(new FileReader(f));
 		String line = null;
-		
+
 		// read each line of text file
 		while ((line = bufRdr.readLine()) != null)
 		{
 			ret.add(line);
 		}
-		
+
 		// close the file
 		bufRdr.close();
 		return ret;
 	}
-	
+
 }

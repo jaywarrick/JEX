@@ -468,10 +468,10 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 					return false;
 				
 				// Save the center of mass location for the WholeCell mask region
-				if(maskChannelName.equals(this.maskWholeCellChannelValue))
+				if(firstTimeThrough && maskChannelName.equals(this.maskWholeCellChannelValue))
 				{
 					// Save the whole Cell location
-					DimensionMap mapM_Geometry = this.mapMask_NoChannel.copyAndSet("MaskChannel=" + this.maskWholeCellChannelValue + ".p0");
+					DimensionMap mapM_Geometry = this.mapMask_NoChannel.copyAndSet("MaskChannel=" + this.maskWholeCellChannelValue);
 					mapM_Geometry.put("ImageChannel", "None");
 					DimensionMap newMap = mapM_Geometry
 							.copyAndSet("Measurement=" + "net.imagej.ops.Ops$Geometric$COMX");
