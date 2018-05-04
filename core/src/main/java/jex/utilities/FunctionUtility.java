@@ -1,13 +1,5 @@
 package jex.utilities;
 
-import ij.ImagePlus;
-import ij.measure.Measurements;
-import ij.process.ByteProcessor;
-import ij.process.FloatProcessor;
-import ij.process.ImageProcessor;
-import ij.process.ImageStatistics;
-import ij.process.ShortProcessor;
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -15,7 +7,13 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
-import Database.SingleUserDatabase.JEXWriter;
+import ij.ImagePlus;
+import ij.measure.Measurements;
+import ij.process.ByteProcessor;
+import ij.process.FloatProcessor;
+import ij.process.ImageProcessor;
+import ij.process.ImageStatistics;
+import ij.process.ShortProcessor;
 import miscellaneous.LSVList;
 
 public class FunctionUtility {
