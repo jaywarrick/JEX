@@ -38,7 +38,7 @@ import tables.DimensionMap;
  */
 public class JEX_OverlayStack extends JEXCrunchable {
 	
-	public static final String LOG = "Log", LINEAR = "Linear";
+	public static final String LOG = "Log", LINEAR = "Linear", GAMMA = "Gamma";
 	
 	// ----------------------------------------------------
 	// --------- INFORMATION ABOUT THE FUNCTION -----------
@@ -156,11 +156,13 @@ public class JEX_OverlayStack extends JEXCrunchable {
 		Parameter p8 = new Parameter("BLUE Dim Value", "Value of dim containing the RED image.", "");
 		Parameter p9 = new Parameter("BLUE Min", "Value in the BLUE image to map to 0 intensity.", "0");
 		Parameter p10 = new Parameter("BLUE Max", "Value in the BLUE image to map to 255 intensity.", "65535");
-		Parameter p11 = new Parameter("RGB Scale", "Linear or log scaling of R, G, and B channels", Parameter.DROPDOWN, new String[] { "Linear", "Log" }, 1);
-		Parameter p12 = new Parameter("BF Dim Value", "Value of dim containing the RED image.", "");
-		Parameter p13 = new Parameter("BF Min", "Value in the BF image to map to 0 intensity.", "0");
-		Parameter p14 = new Parameter("BF Max", "Value in the BF image to map to 255 intensity.", "65535");
-		Parameter p15 = new Parameter("BF Scale", "Linear or log scaling of bf channel", Parameter.DROPDOWN, new String[] { "Linear", "Log" }, 0);
+		Parameter p11 = new Parameter("BF Dim Value", "Value of dim containing the RED image.", "");
+		Parameter p12 = new Parameter("BF Min", "Value in the BF image to map to 0 intensity.", "0");
+		Parameter p13 = new Parameter("BF Max", "Value in the BF image to map to 255 intensity.", "65535");
+		Parameter p14 = new Parameter("RGB Scale", "Linear or log scaling of R, G, and B channels", Parameter.DROPDOWN, new String[] { "Linear", "Log", "Gamma"}, 0);
+		Parameter p15 = new Parameter("RGB Gamma", "Gamma correction value for RGB portion of image. Only used if RGB Scale set to 'Gamma'.", "1.0");
+		Parameter p16 = new Parameter("BF Scale", "Linear or log scaling of bf channel", Parameter.DROPDOWN, new String[] { "Linear", "Log", "Gamma" }, 0);
+		Parameter p17 = new Parameter("BF Gamma", "Gamma correction value for BF portion of image. Only used if BF Scale set to 'Gamma'.", "1.0");
 		
 		// Make an array of the parameters and return it
 		ParameterSet parameterArray = new ParameterSet();
@@ -179,6 +181,8 @@ public class JEX_OverlayStack extends JEXCrunchable {
 		parameterArray.addParameter(p13);
 		parameterArray.addParameter(p14);
 		parameterArray.addParameter(p15);
+		parameterArray.addParameter(p16);
+		parameterArray.addParameter(p17);
 		return parameterArray;
 	}
 	
@@ -232,10 +236,12 @@ public class JEX_OverlayStack extends JEXCrunchable {
 		double bMax = Double.parseDouble(this.parameters.getValueOfParameter("BLUE Max"));
 		String bfScale = this.parameters.getValueOfParameter("BF Scale");
 		String rgbScale = this.parameters.getValueOfParameter("RGB Scale");
+		double bfGamma = Double.parseDouble(this.parameters.getValueOfParameter("BF Gamma"));
+		double rgbGamma = Double.parseDouble(this.parameters.getValueOfParameter("RGB Gamma"));
 		
 		// Run the function
 		TreeMap<DimensionMap,String> images1 = ImageReader.readObjectToImagePathTable(data1);
-		TreeMap<DimensionMap,String> outputMap = overlayStack(images1, dimName, rDim, gDim, bDim, bfDim, rMin, rMax, gMin, gMax, bMin, bMax, bfMin, bfMax, rgbScale, bfScale, this);
+		TreeMap<DimensionMap,String> outputMap = overlayStack(images1, dimName, rDim, gDim, bDim, bfDim, rMin, rMax, gMin, gMax, bMin, bMax, bfMin, bfMax, rgbScale, bfScale, rgbGamma, bfGamma, this);
 		
 		// Set the outputs
 		JEXData output = ImageWriter.makeImageStackFromPaths(this.outputNames[0].getName(), outputMap);
@@ -255,7 +261,7 @@ public class JEX_OverlayStack extends JEXCrunchable {
 		}
 	}
 	
-	public static ByteProcessor fixImage(String rgbScale, FloatProcessor imp, FloatProcessor bfImp, FloatBlitter blitter)
+	public static ByteProcessor fixImage(String rgbScale, Double rgbGamma, FloatProcessor imp, FloatProcessor bfImp, FloatBlitter blitter)
 	{
 		if(imp == null)
 		{
@@ -272,8 +278,14 @@ public class JEX_OverlayStack extends JEXCrunchable {
 		ImagePlus im = null;
 		if(rgbScale.equals(LOG))
 		{
+			imp.gamma(0.7);
 			imp.log();
 			imp.multiply(255 / Math.log(255));
+		}
+		if(rgbScale.equals(GAMMA))
+		{
+			imp.gamma(rgbGamma);
+			imp.multiply(255 / Math.pow(255, rgbGamma));
 		}
 		if(bfImp != null)
 		{
@@ -289,7 +301,7 @@ public class JEX_OverlayStack extends JEXCrunchable {
 		return ret;
 	}
 	
-	public static TreeMap<DimensionMap,String> overlayStack(TreeMap<DimensionMap,String> images1, String dimName, String rDim, String gDim, String bDim, String bfDim, Double rMin, Double rMax, Double gMin, Double gMax, Double bMin, Double bMax, Double bfMin, Double bfMax, String rgbScale, String bfScale, Canceler canceler)
+	public static TreeMap<DimensionMap,String> overlayStack(TreeMap<DimensionMap,String> images1, String dimName, String rDim, String gDim, String bDim, String bfDim, Double rMin, Double rMax, Double gMin, Double gMax, Double bMin, Double bMax, Double bfMin, Double bfMax, String rgbScale, String bfScale, Double rgbGamma, Double bfGamma, Canceler canceler)
 	{
 		TreeMap<DimensionMap,String> outputMap = new TreeMap<DimensionMap,String>();
 		
@@ -366,6 +378,11 @@ public class JEX_OverlayStack extends JEXCrunchable {
 					bfImp.log();
 					bfImp.multiply(255 / Math.log(255));
 				}
+				if(bfScale.equals(GAMMA))
+				{
+					bfImp.gamma(bfGamma);
+					bfImp.multiply(255 / Math.pow(255, bfGamma));
+				}
 				w = bfImp.getWidth();
 				h = bfImp.getHeight();
 			}
@@ -382,7 +399,7 @@ public class JEX_OverlayStack extends JEXCrunchable {
 				im.flush();
 				im = null;
 			}
-			rImp = fixImage(rgbScale, imp, bfImp, blitter);
+			rImp = fixImage(rgbScale, rgbGamma, imp, bfImp, blitter);
 			imp = null;
 			blitter = null;
 			
@@ -397,7 +414,7 @@ public class JEX_OverlayStack extends JEXCrunchable {
 				im.flush();
 				im = null;
 			}
-			gImp = fixImage(rgbScale, imp, bfImp, blitter);
+			gImp = fixImage(rgbScale, rgbGamma, imp, bfImp, blitter);
 			imp = null;
 			blitter = null;
 			
@@ -412,7 +429,7 @@ public class JEX_OverlayStack extends JEXCrunchable {
 				im.flush();
 				im = null;
 			}
-			bImp = fixImage(rgbScale, imp, bfImp, blitter);
+			bImp = fixImage(rgbScale, rgbGamma, imp, bfImp, blitter);
 			imp = null;
 			blitter = null;
 			
