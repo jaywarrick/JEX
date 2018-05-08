@@ -376,7 +376,7 @@ public class JEX_SingleCell_SegmentedMaskOverlay extends JEXCrunchable {
 			overlayers.put(newMap, path);
 		}
 		
-		TreeMap<DimensionMap,String> outputMap = JEX_OverlayStack.overlayStack(overlayers, dimName, rDim, gDim, bDim, "MASK", rMin, rMax, gMin, gMax, bMin, bMax, new Double(0), new Double(255), rgbScale, JEX_OverlayStack.LINEAR, this);
+		TreeMap<DimensionMap,String> outputMap = JEX_OverlayStack.overlayStack(overlayers, dimName, rDim, gDim, bDim, "MASK", rMin, rMax, gMin, gMax, bMin, bMax, new Double(0), new Double(255), rgbScale, JEX_OverlayStack.LINEAR, 1.0, 1.0, this);
 		
 		// Set the outputs
 		JEXData output = ImageWriter.makeImageStackFromPaths(this.outputNames[0].getName(), outputMap);

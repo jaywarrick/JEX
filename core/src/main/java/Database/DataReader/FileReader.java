@@ -14,15 +14,28 @@ public class FileReader {
 	
 	public static String readToPath(JEXDataSingle ds)
 	{
+		return readToPath(ds, false);
+	}
+	
+	public static String readToPath(JEXDataSingle ds, boolean virtual)
+	{
 		if (ds == null) return null;
 		
 		String relativePath = FileUtility.makeOSCompatible(ds.get(JEXDataSingle.RELATIVEPATH));
-		String ret = JEXWriter.getDatabaseFolder() + File.separator + relativePath;
-		return ret;
+		if(virtual)
+		{
+			return relativePath;
+		}
+		else
+		{
+			String ret = JEXWriter.getDatabaseFolder() + File.separator + relativePath;
+			return ret;
+		}
 	}
 	
 	public static String readToPath(String dataFolder, JEXDataSingle ds)
 	{
+		// This works for both real and virtual objects.
 		String fileName = FileUtility.getFileNameWithExtension(ds.get(JEXDataSingle.RELATIVEPATH));
 		String result = dataFolder + File.separator + fileName;
 		return result;
@@ -30,7 +43,12 @@ public class FileReader {
 	
 	public static File readToFile(JEXDataSingle ds)
 	{
-		return new File(FileReader.readToPath(ds));
+		return readToFile(ds, false);
+	}
+	
+	public static File readToFile(JEXDataSingle ds, boolean virtual)
+	{
+		return new File(FileReader.readToPath(ds, virtual));
 	}
 	
 	/**
@@ -41,10 +59,10 @@ public class FileReader {
 	 */
 	public static String readFileObject(JEXData data)
 	{
-		if(!data.getDataObjectType().equals(JEXData.FILE))
+		if(!data.getDataObjectType().matches(JEXData.FILE))
 			return null;
 		JEXDataSingle ds = data.getFirstSingle();
-		String ret = readToPath(ds);
+		String ret = readToPath(ds, data.getDataObjectType().getFlavor().equals(JEXData.FLAVOR_VIRTUAL));
 		
 		return ret;
 	}
@@ -57,10 +75,10 @@ public class FileReader {
 	 */
 	public static File readFileObjectToFile(JEXData data)
 	{
-		if(!data.getDataObjectType().equals(JEXData.FILE))
+		if(!data.getDataObjectType().matches(JEXData.FILE))
 			return null;
 		JEXDataSingle ds = data.getFirstSingle();
-		String result = readToPath(ds);
+		String result = readToPath(ds, data.getDataObjectType().getFlavor().equals(JEXData.FLAVOR_VIRTUAL));
 		File file = new File(result);
 		return file;
 	}
@@ -73,11 +91,11 @@ public class FileReader {
 	 */
 	public static TreeMap<DimensionMap,String> readObjectToFilePathTable(JEXData data)
 	{
-		if(!data.getDataObjectType().equals(JEXData.FILE))
+		if(!data.getDataObjectType().matches(JEXData.FILE))
 			return null;
 		TreeMap<DimensionMap,String> result = new TreeMap<DimensionMap,String>();
 		JEXDataSingle ds = data.getFirstSingle();
-		String dataFolder = FileReader.readToFile(ds).getParent(); // DO THIS
+		String dataFolder = FileReader.readToFile(ds, data.getDataObjectType().getFlavor().equals(JEXData.FLAVOR_VIRTUAL)).getParent(); // DO THIS
 		// ONE TIME
 		// OUTSIDE
 		// LOOP

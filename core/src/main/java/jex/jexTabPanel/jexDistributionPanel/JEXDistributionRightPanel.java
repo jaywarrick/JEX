@@ -27,6 +27,7 @@ import guiObject.JLabeledComboBox;
 import guiObject.JLabeledTextField;
 import guiObject.JParameterPanel;
 import jex.statics.DisplayStatics;
+import jex.statics.JEXDialog;
 import logs.Logs;
 import miscellaneous.FontUtility;
 import net.miginfocom.swing.MigLayout;
@@ -61,11 +62,13 @@ public class JEXDistributionRightPanel extends JPanel implements ActionListener 
 	private JParameterPanel firstMove = new JParameterPanel(new Parameter("First Indexing Direction", "Choose which way to 'move' first when indexing to the next array location.", Parameter.DROPDOWN, new String[]{"Horizontal","Vertical"}), 100);
 	private JParameterPanel snaking = new JParameterPanel(new Parameter("Snaking?", "Choose if indexing should be done in a snaking pattern.", Parameter.CHECKBOX, false), 20);
 
-	private JParameterPanel overlap = new JParameterPanel(new Parameter("Tile Percent Overlap", "If set to > 0 & Type == Image, then the image will be broken into tiles assuming the provided percent overlap.", Parameter.TEXTFIELD, "0.0"), 100);
-	private JParameterPanel rows = new JParameterPanel(new Parameter("Tile Rows", "How many rows of tiles are there per image.", Parameter.TEXTFIELD, "1"), 100);
-	private JParameterPanel cols = new JParameterPanel(new Parameter("Tile Cols", "How many cols of tiles are there per image.", Parameter.TEXTFIELD, "1"), 100);
-	
+	private JParameterPanel rows = new JParameterPanel(new Parameter("Tile Rows", "How many rows of tiles are there per image (must be >= 1). If rows and cols are both <=1, no tiles are created.", Parameter.TEXTFIELD, "1"), 100);
+	private JParameterPanel cols = new JParameterPanel(new Parameter("Tile Cols", "How many cols of tiles are there per image (must be >= 1). If rows and cols are both <=1, no tiles are created.", Parameter.TEXTFIELD, "1"), 100);
+	private JParameterPanel overlap = new JParameterPanel(new Parameter("Tile Percent Overlap", "What is the percent overlap between the tiles.", Parameter.TEXTFIELD, "1.0"), 100);
+
 	private JParameterPanel filter = new JParameterPanel(new Parameter("Exclusion Filter Table", "Which dimension values should be excluded upon import? Format is <DimName1>=<Val1>,<Val2>,...,<Valn>;<DimName2>=...", Parameter.TEXTFIELD, ""), 100);
+
+	private JParameterPanel virtual = new JParameterPanel(new Parameter("Create Virtual Object?", "If no tiles are being created, should the object just refer to the original files (virtual, warning:experimental), or actually copy the files as usual to create 'real' objects.", Parameter.CHECKBOX, false), 20);
 
 	JEXDistributionRightPanel(JEXDistributionPanelController parentController)
 	{
@@ -149,9 +152,12 @@ public class JEXDistributionRightPanel extends JPanel implements ActionListener 
 		this.add(this.rows.panel(), "growx");
 		this.cols.panel().setMinimumSize(new Dimension(10, minHeight));
 		this.add(this.cols.panel(), "growx");
-		
+
 		this.filter.panel().setMinimumSize(new Dimension(10, minHeight));
 		this.add(this.filter.panel(), "growx");
+
+		this.virtual.panel().setMinimumSize(new Dimension(10, minHeight));
+		this.add(this.virtual.panel(), "growx");
 
 		// Make the deal button
 		viewResultButton.addActionListener(this);
@@ -245,10 +251,14 @@ public class JEXDistributionRightPanel extends JPanel implements ActionListener 
 		this.add(this.rows.panel(), "growx");
 		this.cols.panel().setMinimumSize(new Dimension(10, minHeight));
 		this.add(this.cols.panel(), "growx");
-		
+
 		// Make the filter text box
 		this.filter.panel().setMinimumSize(new Dimension(10, minHeight));
 		this.add(this.filter.panel(), "growx");
+
+		// Make the virtual checkbox
+		this.virtual.panel().setMinimumSize(new Dimension(10, minHeight));
+		this.add(this.virtual.panel(), "growx");
 
 		// Make the deal button
 		this.add(viewResultButton, "growx");
@@ -326,22 +336,39 @@ public class JEXDistributionRightPanel extends JPanel implements ActionListener 
 	{
 		return Double.parseDouble(this.overlap.getValue());
 	}
-	
+
 	public int getRows()
 	{
-		return Integer.parseInt(this.rows.getValue());
+		Integer rows = Integer.parseInt(this.rows.getValue());
+		if(rows < 1)
+		{
+			JEXDialog.messageDialog("The number of tile rows must be >= 1. Changing value to 1.", this);
+			return 1;
+		}
+		return rows;
 	}
-	
+
 	public int getCols()
 	{
-		return Integer.parseInt(this.cols.getValue());
+		Integer cols = Integer.parseInt(this.cols.getValue());
+		if(cols < 1)
+		{
+			JEXDialog.messageDialog("The number of tile cols must be >= 1. Changing value to 1.", this);
+			return 1;
+		}
+		return cols;
 	}
-	
+
 	public DimTable getFilterTable()
 	{
 		return new DimTable(this.filter.getValue());
 	}
 	
+	public Boolean getVirtual()
+	{
+		return Boolean.parseBoolean(this.virtual.getValue());
+	}
+
 	public String getManualDimensionName()
 	{
 		return dimNameField.getText();

@@ -102,7 +102,7 @@ public class FileWriter {
 		// Return the JEXData
 		return data;
 	}
-
+	
 	/**
 	 * Make a JEXDataSingle from a filepath
 	 * 
@@ -111,6 +111,18 @@ public class FileWriter {
 	 * @throws IOException 
 	 */
 	public static JEXDataSingle saveFileDataSingle(Object fileObject)
+	{
+		return saveFileDataSingle(fileObject, false);
+	}
+
+	/**
+	 * Make a JEXDataSingle from a filepath
+	 * 
+	 * @param filePath
+	 * @return
+	 * @throws IOException 
+	 */
+	public static JEXDataSingle saveFileDataSingle(Object fileObject, boolean virtual)
 	{
 		// test the fileObject
 		if (fileObject == null) return null;
@@ -140,25 +152,32 @@ public class FileWriter {
 			return null;
 		}
 
-		// Get a new file name in the temp folder
-		String extension = FileUtility.getFileNameExtension(file.getName());
-		String relativePath = JEXWriter.getUniqueRelativeTempPath(extension);
-		File tempFile = new File(JEXWriter.getDatabaseFolder() + File.separator + relativePath);
-		
-		// Copy the file to the database temp folder
-		try
-		{
-			JEXWriter.copy(file, tempFile); // Doesn't actually copy if trying to copy to the same directory to be more efficient
-		}
-		catch(IOException e)
-		{
-			e.printStackTrace();
-			return null;
-		}
-
-		// Make a new JEXDataSingle using the relative path from the database folder to the file.
 		JEXDataSingle ds = new JEXDataSingle();
-		ds.put(JEXDataSingle.RELATIVEPATH, relativePath);
+		if(virtual)
+		{
+			ds.put(JEXDataSingle.RELATIVEPATH,  file.getAbsolutePath());
+		}
+		else
+		{
+			// Get a new file name in the temp folder
+			String extension = FileUtility.getFileNameExtension(file.getName());
+			String relativePath = JEXWriter.getUniqueRelativeTempPath(extension);
+			File tempFile = new File(JEXWriter.getDatabaseFolder() + File.separator + relativePath);
+			
+			// Copy the file to the database temp folder
+			try
+			{
+				JEXWriter.copy(file, tempFile); // Doesn't actually copy if trying to copy to the same directory to be more efficient
+			}
+			catch(IOException e)
+			{
+				e.printStackTrace();
+				return null;
+			}
+			
+			// Make a new JEXDataSingle using the relative path from the database folder to the file.
+			ds.put(JEXDataSingle.RELATIVEPATH, relativePath);
+		}
 
 		// Return the datasingle
 		return ds;

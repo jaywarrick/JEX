@@ -176,4 +176,22 @@ public class SeparateImageTiles extends JEXPlugin {
 		}
 		return ret;
 	}
+	
+	public TreeMap<DimensionMap,ImageProcessor> getCropImageProcessors(TreeMap<DimensionMap,ROIPlus> cropRois, DimensionMap imageMap, ImageProcessor ip)
+	{
+		TreeMap<DimensionMap,ImageProcessor> ret = new TreeMap<>();
+		if(imageMap == null)
+		{
+			imageMap = new DimensionMap();
+		}
+		for(Entry<DimensionMap,ROIPlus> e : cropRois.entrySet())
+		{
+			DimensionMap toSave = imageMap.copy();
+			toSave.putAll(e.getKey());
+			ip.setRoi(e.getValue().getRoi());
+			ImageProcessor cropped = ip.crop();
+			ret.put(toSave, cropped);
+		}
+		return ret;
+	}
 }

@@ -60,24 +60,24 @@ public class JEXDataPanelController {
 	
 	public JPanel panel()
 	{
-		if(this.data != null && this.data.getTypeName().getType().equals(JEXData.IMAGE))
+		if(this.data != null && this.data.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return new JEXAlternateImageView();
 			// return new JEXImageView();
 		}
-		else if(this.data != null && this.data.getTypeName().getType().equals(JEXData.FILE))
+		else if(this.data != null && this.data.getTypeName().getType().matches(JEXData.FILE))
 		{
 			return new JEXFileView();
 		}
-		else if(this.data != null && this.data.getTypeName().getType().equals(JEXData.MOVIE))
+		else if(this.data != null && this.data.getTypeName().getType().matches(JEXData.MOVIE))
 		{
 			return new JEXMovieView();
 		}
-		else if(this.data != null && this.data.getTypeName().getType().equals(JEXData.VALUE))
+		else if(this.data != null && this.data.getTypeName().getType().matches(JEXData.VALUE))
 		{
 			return new JEXValueView();
 		}
-		else if(this.data != null && this.data.getTypeName().getType().equals(JEXData.LABEL))
+		else if(this.data != null && this.data.getTypeName().getType().matches(JEXData.LABEL))
 		{
 			return new JEXLabelView();
 		}

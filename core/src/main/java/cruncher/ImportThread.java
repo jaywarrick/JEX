@@ -23,6 +23,7 @@ public class ImportThread implements Callable<Object>, Canceler {
 	TreeMap<JEXEntry,JEXData> toAdd = new TreeMap<JEXEntry,JEXData>();
 	Double overlap = 0.0d;
 	int rows = 1, cols = 1;
+	boolean virtual = false;
 	Canceler c = JEXStatics.cruncher;
 	
 	public ImportThread(String objectName, Type objectType, String objectInfo, TreeMap<JEXEntry,TreeMap<DimensionMap,String>> dataArray, DimTable exclusionFilterTable)
@@ -59,6 +60,11 @@ public class ImportThread implements Callable<Object>, Canceler {
 		this.cols = cols;
 	}
 	
+	public void setVirtualParameter(boolean virtual)
+	{
+		this.virtual = virtual;
+	}
+	
 	public ImportThread call() throws Exception
 	{
 		JEXStatics.statusBar.setStatusText("Importing new object named: " + objectName + ". Use Ctrl(CMD) + G to cancel the import task.");
@@ -90,12 +96,12 @@ public class ImportThread implements Callable<Object>, Canceler {
 			files2Drop2 = files2Drop3;
 			
 			Logs.log("Importing items into Entry " + entry.getEntryID() + " at X:Y " + entry.getTrayX() + ":" + entry.getTrayY() , this);
-			if(objectType.equals(JEXData.IMAGE))
+			if(objectType.matches(JEXData.IMAGE))
 			{
 				JEXData data = null;
-				if(this.overlap <= 0.0d)
+				if(this.rows <= 1 && this.cols <= 1)
 				{
-					data = ImageWriter.makeImageStackFromPaths(objectName, files2Drop2, this);
+					data = ImageWriter.makeImageStackFromPaths(objectName, files2Drop2, this.virtual, this);
 				}
 				else
 				{
@@ -104,13 +110,21 @@ public class ImportThread implements Callable<Object>, Canceler {
 				if(data != null)
 				{
 					data.setDataObjectInfo(objectInfo);
+					if(this.virtual)
+					{
+						data.setDataObjectFlavor(JEXData.FLAVOR_VIRTUAL);
+					}
 					toAdd.put(entry, data);
-				}
+				}				
 			}
-			else if(objectType.equals(JEXData.FILE))
+			else if(objectType.matches(JEXData.FILE))
 			{
 				JEXData data = FileWriter.makeFileObject(objectName, null, files2Drop2);
 				data.setDataObjectInfo(objectInfo);
+				if(this.virtual)
+				{
+					data.setDataObjectFlavor(JEXData.FLAVOR_VIRTUAL);
+				}
 				toAdd.put(entry, data);
 			}
 			count = count + 1;

@@ -106,8 +106,7 @@ public class JEXDBIO {
 		cleanDirectory(fileManagerFolder, new TreeSet<File>(), false);
 		
 		// Temporarily move changed files to the temp folder to avoid moving
-		// files in
-		// the wrong order and deleting something that we should be keeping.
+		// files in the wrong order and deleting something that we should be keeping.
 		try
 		{
 			JEXStatics.statusBar.setStatusText("Creating the file manager for saving.");
@@ -131,18 +130,7 @@ public class JEXDBIO {
 			File archiveDBFile = new File(folder.getPath() + File.separator + dbFileName);
 			if(JEXStatics.fileManager.session().fileExists(archiveDBFile))
 			{
-				JEXStatics.fileManager.session().deleteFile(archiveDBFile); // Make
-				// room
-				// to
-				// copy
-				// file
-				// if
-				// necessary,
-				// but
-				// should
-				// never
-				// be
-				// needed.
+				JEXStatics.fileManager.session().deleteFile(archiveDBFile); // Make room to copy file if necessary, but should never be needed.
 			}
 			if(dbFile.exists())
 			{
@@ -151,8 +139,7 @@ public class JEXDBIO {
 			
 			JEXStatics.statusBar.setStatusText("Updating: copying changes to temp folder.");
 			Logs.log("Updating: copying changes to temp folder.", 0, JEXDBIO.class.getSimpleName());
-			// Perform all the updates gathered during compiling of the XML
-			// database structure.
+			// Perform all the updates gathered during compiling of the XML database structure.
 			for (Update update : updates)
 			{
 				update.startUpdate();

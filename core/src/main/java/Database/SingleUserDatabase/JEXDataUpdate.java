@@ -64,6 +64,11 @@ public class JEXDataUpdate implements Update {
 			TreeMap<DimensionMap,JEXDataSingle> datamap = updatedData.getDataMap();
 			for (DimensionMap map : datamap.keySet())
 			{
+				if(type.getFlavor().equals(JEXData.FLAVOR_VIRTUAL))
+				{
+					// Then purposely skip as we want to reference a file outside the database.
+					continue;
+				}
 				// For each JEXDataSingle, move the referenced file to the temp
 				// folder if needed (i.e. if JEXData DataFolder changes)
 				JEXDataSingle ds = datamap.get(map);
@@ -71,22 +76,8 @@ public class JEXDataUpdate implements Update {
 				String dst = dbFolder + File.separator + dstRelativePath;
 				File src = new File(FileReader.readToPath(ds));
 				// Keep track through looping if we encounter a ds that needs to be copied.
-				this.hasReferencedFilesToCopy = this.hasReferencedFilesToCopy || session.fileExists(src) && !src.getPath().equals(dst); // Then
-				// we
-				// for
-				// sure
-				// have
-				// something
-				// to
-				// copy
-				// over
-				if(this.hasReferencedFilesToCopy && !src.getParent().equals(dbFolder + File.separator + JEXWriter.getTempFolderName())) // Don't
-				// uselessy
-				// recopy
-				// to
-				// the
-				// temp
-				// folder
+				this.hasReferencedFilesToCopy = this.hasReferencedFilesToCopy || session.fileExists(src) && !src.getPath().equals(dst); // Then we for sure have something to copy over
+				if(this.hasReferencedFilesToCopy && !src.getParent().equals(dbFolder + File.separator + JEXWriter.getTempFolderName())) // Don't uselessy recopy to the temp folder
 				{
 					String tempRelativePath = JEXWriter.getUniqueRelativeTempPath(FileUtility.getFileNameExtension(src.getPath()));
 					String temp = dbFolder + File.separator + tempRelativePath;
@@ -127,6 +118,11 @@ public class JEXDataUpdate implements Update {
 			TreeMap<DimensionMap,JEXDataSingle> datamap = updatedData.getDataMap();
 			for (DimensionMap map : datamap.keySet())
 			{
+				if(data.getTypeName().getType().getFlavor().equals(JEXData.FLAVOR_VIRTUAL))
+				{
+					// Then purposely skip as we want to reference a file outside the database.
+					continue;
+				}
 				// For each JEXDataSingle, move the referenced file to the temp
 				// folder if needed (i.e. if JEXData DataFolder changes)
 				JEXDataSingle ds = datamap.get(map);

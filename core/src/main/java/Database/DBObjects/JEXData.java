@@ -32,6 +32,9 @@ public class JEXData {
 	public static final Type TRACK        = new Type("Track");
 	public static final Type ROI_TRACK    = new Type("ROI Track");
 	
+	// Special JEXData flavors
+	public static final String FLAVOR_VIRTUAL = "Virtual";
+	
 	// JEXData fields
 	public static final String NAME = "Name";
 	public static final String TYPE = "Type";
@@ -208,6 +211,16 @@ public class JEXData {
 	public void setDataObjectType(Type type)
 	{
 		this.type = type;
+	}
+	
+	/**
+	 * Set the dataobject flavor
+	 * 
+	 * @param flavor
+	 */
+	public void setDataObjectFlavor(String flavor)
+	{
+		this.type = new Type(this.type, flavor);
 	}
 	
 	/**

@@ -296,11 +296,7 @@ public class IconRepository {
 	{
 		String result = "";
 		Type type = tn.getType();
-		if(type.matches(JEXData.IMAGE) && tn.getDimension() == 1)
-		{
-			result = "XImageStack.png";
-		}
-		else if(type.matches(JEXData.IMAGE))
+		if(type.matches(JEXData.IMAGE))
 		{
 			result = "XImage.png";
 		}

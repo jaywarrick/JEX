@@ -146,6 +146,7 @@ public class JEX_OverlayStack extends JEXCrunchable {
 	@Override
 	public ParameterSet requiredParameters()
 	{
+		Parameter p00 = getNumThreadsParameter(10, 1);
 		Parameter p1 = new Parameter("Dim Name", "Name of dim that contains the images to overlay.", "Color");
 		Parameter p2 = new Parameter("RED Dim Value", "Value of dim containing the RED image.", "");
 		Parameter p3 = new Parameter("RED Min", "Value in the RED image to map to 0 intensity.", "0");
@@ -166,6 +167,7 @@ public class JEX_OverlayStack extends JEXCrunchable {
 		
 		// Make an array of the parameters and return it
 		ParameterSet parameterArray = new ParameterSet();
+		parameterArray.addParameter(p00);
 		parameterArray.addParameter(p1);
 		parameterArray.addParameter(p2);
 		parameterArray.addParameter(p3);

@@ -24,7 +24,7 @@ public class Type implements Comparable<Type> {
 		{
 			this.type = type;
 		}
-		if(flavor != null)
+		if(flavor != null && !flavor.equals(""))
 		{
 			this.flavor = flavor;
 		}
@@ -35,7 +35,7 @@ public class Type implements Comparable<Type> {
 		super();
 		if(type != null)
 		{
-			String[] typeInfo = type.split("\\:");
+			String[] typeInfo = type.split("\\-");
 			if(typeInfo != null)
 			{
 				if(typeInfo.length == 1)
@@ -45,7 +45,10 @@ public class Type implements Comparable<Type> {
 				else if(typeInfo.length > 1)
 				{
 					this.type = typeInfo[0];
-					this.flavor = typeInfo[1];
+					if(!typeInfo[1].equals(""))
+					{
+						this.flavor = typeInfo[1];
+					}
 				}
 			}
 		}
@@ -64,7 +67,7 @@ public class Type implements Comparable<Type> {
 		}
 		else
 		{
-			return this.getType() + ":" + this.getFlavor();
+			return this.getType() + "-" + this.getFlavor();
 		}
 	}
 	
@@ -73,10 +76,10 @@ public class Type implements Comparable<Type> {
 		return this.type;
 	}
 	
-	public void setType(String type)
-	{
-		this.type = type;
-	}
+	//	public void setType(String type)
+	//	{
+	//		this.type = type;
+	//	}
 	
 	/**
 	 * Checks to see if the type variable of the two Type objects are equal.
@@ -97,13 +100,24 @@ public class Type implements Comparable<Type> {
 	
 	public String getFlavor()
 	{
+		if(this.flavor == null)
+		{
+			return "";
+		}
 		return this.flavor;
 	}
 	
-	public void setFlavor(String flavor)
-	{
-		this.flavor = flavor;
-	}
+	//	public void setFlavor(String flavor)
+	//	{
+	//		if(flavor != null && !flavor.equals(""))
+	//		{
+	//			this.flavor = flavor;
+	//		}
+	//		else
+	//		{
+	//			this.flavor = null;
+	//		}
+	//	}
 
 	@Override
 	public int compareTo(Type o)

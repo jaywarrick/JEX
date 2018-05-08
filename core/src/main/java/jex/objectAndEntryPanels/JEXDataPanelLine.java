@@ -155,7 +155,7 @@ public class JEXDataPanelLine extends JPanel implements ActionListener, MouseLis
 		{
 			if(this.objectTN == null)
 				return;
-			else if(this.objectTN.getType().equals(JEXData.IMAGE))
+			else if(this.objectTN.getType().matches(JEXData.IMAGE))
 			{
 				TreeSet<JEXEntry> entries = JEXStatics.jexManager.getSelectedEntries();
 				if(entries.size() > 0)
@@ -163,7 +163,7 @@ public class JEXDataPanelLine extends JPanel implements ActionListener, MouseLis
 					new ImageBrowser(entries, this.objectTN);
 				}
 			}
-			else if(this.objectTN.getType().equals(JEXData.VALUE))
+			else if(this.objectTN.getType().matches(JEXData.VALUE))
 			{
 				TreeSet<JEXEntry> entries = JEXStatics.jexManager.getSelectedEntries();
 				if(entries.size() > 0)
@@ -172,7 +172,7 @@ public class JEXDataPanelLine extends JPanel implements ActionListener, MouseLis
 					new ValueBrowserController(entries, this.objectTN);
 				}
 			}
-			else if(this.objectTN.getType().equals(JEXData.FILE))
+			else if(this.objectTN.getType().matches(JEXData.FILE))
 			{
 				JEXEntry viewedEntry = JEXStatics.jexManager.getViewedEntry();
 				if(viewedEntry != null)
@@ -188,7 +188,7 @@ public class JEXDataPanelLine extends JPanel implements ActionListener, MouseLis
 					}
 				}
 			}
-			else if(this.objectTN.getType().equals(JEXData.MOVIE))
+			else if(this.objectTN.getType().matches(JEXData.MOVIE))
 			{
 				JEXEntry viewedEntry = JEXStatics.jexManager.getViewedEntry();
 				if(viewedEntry != null)
@@ -224,7 +224,7 @@ public class JEXDataPanelLine extends JPanel implements ActionListener, MouseLis
 					}
 				}
 			}
-			else if(this.objectTN.getType().equals(JEXData.WORKFLOW))// Load the
+			else if(this.objectTN.getType().matches(JEXData.WORKFLOW))// Load the
 				// workflow
 			{
 				TreeSet<JEXEntry> entries = JEXStatics.jexManager.getSelectedEntries();

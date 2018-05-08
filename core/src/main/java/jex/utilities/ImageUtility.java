@@ -416,10 +416,10 @@ public class ImageUtility {
 		return(weightImages);
 	}
 	
-	public static Pair<FloatProcessor, String> getWeightedMeanFilterImage(ImagePlus im, boolean doThreshold, boolean doSubtraction, boolean doBackgroundOnly, boolean doDivision, double meanRadius, double varRadius, double subScale, double threshScale, String operation, Double nominal, Double sigma, double darkfield)
+	public static Pair<FloatProcessor, String> getWeightedMeanFilterImage(FloatProcessor original, boolean doThreshold, boolean doSubtraction, boolean doBackgroundOnly, boolean doDivision, double meanRadius, double varRadius, double subScale, double threshScale, String operation, Double nominal, Double sigma, double darkfield)
 	{
 		Pair<FloatProcessor, String> ret = new Pair<>((FloatProcessor) null, (String) null);
-		FloatProcessor original = im.getProcessor().convertToFloatProcessor();
+		//	FloatProcessor original = im.getProcessor().convertToFloatProcessor();
 		FloatProcessor copyOfOriginal = null, subLocalMean = null, threshLocalMean = null;
 		if(doThreshold & sigma >= 0 || doSubtraction || doDivision)
 		{

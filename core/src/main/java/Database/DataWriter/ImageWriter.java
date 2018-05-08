@@ -99,7 +99,7 @@ public class ImageWriter implements Cancelable {
 	 */
 	public static JEXData makeImageStack(String objectName, String[] filePaths, String[] indexes, String dimensionName)
 	{
-		return makeImageStack(objectName, filePaths, indexes, dimensionName, null);
+		return makeImageStack(objectName, filePaths, indexes, dimensionName, false, null);
 	}
 	
 	/**
@@ -111,7 +111,7 @@ public class ImageWriter implements Cancelable {
 	 * @param dimensionName
 	 * @return data
 	 */
-	public static JEXData makeImageStack(String objectName, String[] filePaths, String[] indexes, String dimensionName, Canceler canceler)
+	public static JEXData makeImageStack(String objectName, String[] filePaths, String[] indexes, String dimensionName, boolean virtual, Canceler canceler)
 	{
 		JEXData data = new JEXData(JEXData.IMAGE, objectName);
 		
@@ -123,7 +123,7 @@ public class ImageWriter implements Cancelable {
 			}
 			String indexStr = indexes[index];
 			String filePath = filePaths[index];
-			JEXDataSingle ds = FileWriter.saveFileDataSingle(filePath);
+			JEXDataSingle ds = FileWriter.saveFileDataSingle(filePath, virtual);
 			if(ds == null)
 			{
 				continue;
@@ -211,6 +211,18 @@ public class ImageWriter implements Cancelable {
 	 */
 	public static JEXData makeImageStackFromPaths(String objectName, Map<DimensionMap,String> imageMap, Canceler canceler)
 	{
+		return makeImageStackFromPaths(objectName, imageMap, false, canceler);
+	}
+	
+	/**
+	 * Return an image stack object from filepaths and a dimensionname (ie T, Time, Z, etc...)
+	 * 
+	 * @param objectName
+	 * @param imageMap
+	 * @return
+	 */
+	public static JEXData makeImageStackFromPaths(String objectName, Map<DimensionMap,String> imageMap, boolean virtual, Canceler canceler)
+	{
 		JEXData data = new JEXData(JEXData.IMAGE, objectName);
 		
 		for (DimensionMap map : imageMap.keySet())
@@ -220,7 +232,7 @@ public class ImageWriter implements Cancelable {
 				continue;
 			}
 			String path = imageMap.get(map);
-			JEXDataSingle ds = FileWriter.saveFileDataSingle(path);
+			JEXDataSingle ds = FileWriter.saveFileDataSingle(path, virtual);
 			if(ds == null)
 			{
 				continue;
@@ -245,7 +257,7 @@ public class ImageWriter implements Cancelable {
 	{
 		JEXData data = new JEXData(JEXData.IMAGE, objectName);
 		
-		imageMap = separateTiles(imageMap, overlap, rows, cols, canceler);
+		imageMap = separateTilesToPaths(imageMap, overlap, rows, cols, canceler);
 		
 		for (DimensionMap map : imageMap.keySet())
 		{
@@ -270,12 +282,17 @@ public class ImageWriter implements Cancelable {
 		return data;
 	}
 	
-	public static Map<DimensionMap,String> separateTiles(Map<DimensionMap, String> images, double overlap, int rows, int cols)
+	public static TreeMap<DimensionMap,String> separateTilesToPaths(Map<DimensionMap, String> images, double overlap, int rows, int cols)
 	{
-		return separateTiles(images, overlap, rows, cols, null);
+		return separateTilesToPaths(images, overlap, rows, cols, null);
 	}
 	
-	public static Map<DimensionMap,String> separateTiles(Map<DimensionMap, String> images, double overlap, int rows, int cols, Canceler canceler)
+	public static TreeMap<DimensionMap,ImageProcessor> separateTilesToProcessors(Map<DimensionMap, ImageProcessor> images, double overlap, int rows, int cols)
+	{
+		return separateTilesToProcessors(images, overlap, rows, cols, null);
+	}
+	
+	public static TreeMap<DimensionMap,String> separateTilesToPaths(Map<DimensionMap, String> images, double overlap, int rows, int cols, Canceler canceler)
 	{
 		SeparateImageTiles splitter = new SeparateImageTiles();
 		overlap = overlap/100.0; // Turn percent into fraction.
@@ -301,6 +318,36 @@ public class ImageWriter implements Cancelable {
 			
 			cropRois = splitter.getCropRois(im.getWidth(), im.getHeight(), rows, cols);
 			TreeMap<DimensionMap,String> toSave = splitter.getCropImages(cropRois, map, im.getProcessor());
+			outputMap.putAll(toSave);
+			
+			// Status bar
+			int percentage = (int) (100 * ((double) count / (double) images.size()));
+			JEXStatics.statusBar.setProgressPercentage(percentage);
+		}
+		
+		return outputMap;
+	}
+	
+	public static TreeMap<DimensionMap,ImageProcessor> separateTilesToProcessors(Map<DimensionMap, ImageProcessor> images, double overlap, int rows, int cols, Canceler canceler)
+	{
+		SeparateImageTiles splitter = new SeparateImageTiles();
+		overlap = overlap/100.0; // Turn percent into fraction.
+		
+		// Run the function
+		TreeMap<DimensionMap,ImageProcessor> outputMap = new TreeMap<>();
+		
+		int count = 0;
+		TreeMap<DimensionMap,ROIPlus> cropRois = null;
+		for (DimensionMap map : images.keySet())
+		{
+			if(canceler != null && canceler.isCanceled())
+			{
+				continue;
+			}
+			ImageProcessor imp = images.get(map);
+			
+			cropRois = splitter.getCropRois(imp.getWidth(), imp.getHeight(), rows, cols);
+			TreeMap<DimensionMap,ImageProcessor> toSave = splitter.getCropImageProcessors(cropRois, map, imp);
 			outputMap.putAll(toSave);
 			
 			// Status bar

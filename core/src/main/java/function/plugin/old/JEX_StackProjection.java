@@ -340,11 +340,11 @@ public class JEX_StackProjection extends JEXCrunchable {
 	public static ImageProcessor evaluate(List<DimensionMap> stack, JEXData image, boolean abs)
 	{
 
-		String pathToGet = ImageReader.readImagePath(image.getData(stack.get(0)));
+		String pathToGet = ImageReader.readImagePath(image.getData(stack.get(0)), image.getTypeName().getType().getFlavor().equals(JEXData.FLAVOR_VIRTUAL));
 		ImageProcessor initial = (new ImagePlus(pathToGet)).getProcessor();
 		int bitDepth = initial.getBitDepth();
 		initial = initial.convertToFloatProcessor();		
-		pathToGet = ImageReader.readImagePath(image.getData(stack.get(stack.size()-1)));
+		pathToGet = ImageReader.readImagePath(image.getData(stack.get(stack.size()-1)), image.getTypeName().getType().getFlavor().equals(JEXData.FLAVOR_VIRTUAL));
 		ImageProcessor ret = (new ImagePlus(pathToGet)).getProcessor();
 		ret = ret.convertToFloatProcessor();
 		Blitter b = new FloatBlitter((FloatProcessor) ret);

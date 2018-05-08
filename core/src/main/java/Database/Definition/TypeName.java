@@ -72,6 +72,17 @@ public class TypeName implements Comparable<TypeName> {
 	}
 	
 	/**
+	 * Set the type field
+	 * 
+	 * @param type
+	 */
+	public void setFlavor(String flavor)
+	{
+		// Create a new one because we essentially want Types to be 'final'.
+		this.type = new Type(this.type.getType(), flavor);
+	}
+	
+	/**
 	 * Set the name field
 	 * 
 	 * @param name

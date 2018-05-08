@@ -18,6 +18,7 @@ import function.plugin.mechanism.ParameterMarker;
 import ij.ImagePlus;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
+import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import jex.utilities.ImageUtility;
 import logs.Logs;
@@ -119,14 +120,23 @@ public class TIEPhaseCalculator extends JEXPlugin {
 	
 	@ParameterMarker(uiOrder=15, name="Threshold: Sigma", description="How many sigma above background should the threshold cutoff be? Use 0 to save the 'signal-to-noise' image which can be then thresholded or used to determine the best sigma.", ui=MarkerConstants.UI_TEXTFIELD, defaultText = "0.0")
 	double sigma;
-
+	
+	@ParameterMarker(uiOrder=16, name="Tiles: Rows", description="If desired, the images can be split into tiles before processing by setting the number of tile rows here to > 1.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
+	int rows;
+	
+	@ParameterMarker(uiOrder=17, name="Tiles: Cols", description="If desired, the images can be split into tiles before processing by setting the number of tile cols here to > 1.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
+	int cols;
+	
+	@ParameterMarker(uiOrder=18, name="Tiles: Overlap", description="Set the percent overlap of the tiles", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1.0")
+	double overlap;
+	
 	//	@ParameterMarker(uiOrder=3, name="Double Precision (vs Float)", description="Should 'double' precision be used in the calculation?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
 	//	boolean dPrecision;
 
-	@ParameterMarker(uiOrder=16, name="Exclusion Filter DimTable", description="Filter specific dimension combinations from analysis. (Format: <DimName1>=<a1,a2,...>;<DimName2>=<b1,b2...>)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
+	@ParameterMarker(uiOrder=19, name="Exclusion Filter DimTable", description="Filter specific dimension combinations from analysis. (Format: <DimName1>=<a1,a2,...>;<DimName2>=<b1,b2...>)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
 	String filterDimTableString;
 
-	@ParameterMarker(uiOrder=17, name="Keep Excluded Images?", description="Should images excluded by the filter be copied to the new object?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
+	@ParameterMarker(uiOrder=20, name="Keep Excluded Images?", description="Should images excluded by the filter be copied to the new object?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
 	boolean keepExcluded;
 
 	/////////// Define Outputs ///////////
@@ -147,8 +157,14 @@ public class TIEPhaseCalculator extends JEXPlugin {
 	public boolean run(JEXEntry optionalEntry)
 	{
 		// Validate the input data
-		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(imageData == null || !imageData.getTypeName().getType().matches(JEXData.IMAGE))
 		{
+			return false;
+		}
+		
+		if(this.rows < 1 || this.cols < 1)
+		{
+			JEXDialog.messageDialog("The number of tile rows and cols must both be >= 1. Aborting.", this);
 			return false;
 		}
 
@@ -161,7 +177,7 @@ public class TIEPhaseCalculator extends JEXPlugin {
 		int count = 0, percentage = 0;
 		String tempPath;
 
-		// For each dimension map without a Z, iterator over Z
+		// For each dimension map without a Z, iterate over Z
 		Dim zDim = imageData.getDimTable().getDimWithName(this.zDimName);
 		DimTable dt = imageData.getDimTable().getSubTable(this.zDimName);
 
@@ -208,9 +224,10 @@ public class TIEPhaseCalculator extends JEXPlugin {
 		for (DimensionMap map : dt.getMapIterator())
 		{
 			// get the med and hi float processors
-			FloatProcessor fpHi = null;
-			FloatProcessor fpMed = null;
-			FloatProcessor fpLo = null;
+			//			FloatProcessor fpHi = null;
+			//			FloatProcessor fpMed = null;
+			//			FloatProcessor fpLo = null;
+			TreeMap<DimensionMap,ImageProcessor> tiles = new TreeMap<>();
 			DimensionMap toSave = null;
 			for(int i = 0; i < zDim.size(); i++)
 			{
@@ -227,14 +244,14 @@ public class TIEPhaseCalculator extends JEXPlugin {
 							outputImageMap.put(toGet, tempPath);
 						}
 						count = count + 1;
-						percentage = (int) (100 * ((double) (count) / ((double) total)));
+						percentage = (int) (100 * ((double) (count) / ((double) total * this.rows * this.cols)));
 						JEXStatics.statusBar.setProgressPercentage(percentage);
 					}
 					else
 					{
 						Logs.log("Skipping the processing and saving of " + toGet.toString(), this);
 						count = count + 1;
-						percentage = (int) (100 * ((double) (count) / ((double) total)));
+						percentage = (int) (100 * ((double) (count) / ((double) total * this.rows * this.cols)));
 						JEXStatics.statusBar.setProgressPercentage(percentage);
 					}
 					continue;
@@ -245,93 +262,186 @@ public class TIEPhaseCalculator extends JEXPlugin {
 					return false;
 				}
 
-				if(fpLo == null)
+				if(tiles.get(new DimensionMap("TIEZ=Lo,ImRow=1,ImCol=1")) == null)
 				{
 					ImagePlus tempIm = new ImagePlus(imageMap.get(toGet));
-					fpLo = tempIm.getProcessor().convertToFloatProcessor();
+					FloatProcessor fp = tempIm.getProcessor().convertToFloatProcessor();
 					if(originalBitDepth == 0)
 					{
 						originalBitDepth = tempIm.getBitDepth();
 					}
-					tempIm = null;
-					if(tie == null)
+					TreeMap<DimensionMap,ImageProcessor> temp = new TreeMap<>();
+					if(this.rows > 1 || this.cols > 1)
 					{
-						tie = new TIECalculator(fpLo.getWidth(), fpLo.getHeight(), this.r, this.thresh, this.mag, this.pixelSize, this.dz, this.lambda, this.simple);
+						Logs.log("Splitting image into tiles", this);
+						temp.put(new DimensionMap("TIEZ=Lo"), fp);
+						tiles.putAll(ImageWriter.separateTilesToProcessors(temp, overlap, rows, cols, this.getCanceler()));
 					}
+					else
+					{
+						tiles.put(new DimensionMap("TIEZ=Lo,ImRow=0,ImCol=0"), fp);
+					}
+					tempIm = null;
 					continue;
 				}
-				else if(fpMed == null)
+				else if(tiles.get(new DimensionMap("TIEZ=Med,ImRow=0,ImCol=0")) == null)
 				{
-					fpMed = (new ImagePlus(imageMap.get(toGet)).getProcessor().convertToFloatProcessor());
+					FloatProcessor fp = (new ImagePlus(imageMap.get(toGet)).getProcessor().convertToFloatProcessor());
+					TreeMap<DimensionMap,ImageProcessor> temp = new TreeMap<>();
+					if(this.rows > 1 || this.cols > 1)
+					{
+						Logs.log("Splitting image into tiles", this);
+						temp.put(new DimensionMap("TIEZ=Med"), fp);
+						tiles.putAll(ImageWriter.separateTilesToProcessors(temp, overlap, rows, cols, this.getCanceler()));
+					}
+					else
+					{
+						tiles.put(new DimensionMap("TIEZ=Med,ImRow=0,ImCol=0"), fp);
+					}
 					toSave = toGet.copy();
 					continue;
 				}
-				else if(fpHi == null)
+				else if(tiles.get(new DimensionMap("TIEZ=Hi,ImRow=0,ImCol=0")) == null)
 				{
-					fpHi = (new ImagePlus(imageMap.get(toGet)).getProcessor().convertToFloatProcessor());
+					FloatProcessor fp = (new ImagePlus(imageMap.get(toGet)).getProcessor().convertToFloatProcessor());
+					TreeMap<DimensionMap,ImageProcessor> temp = new TreeMap<>();
+					if(this.rows > 1 || this.cols > 1)
+					{
+						Logs.log("Splitting image into tiles", this);
+						temp.put(new DimensionMap("TIEZ=Hi"), fp);
+						tiles.putAll(ImageWriter.separateTilesToProcessors(temp, overlap, rows, cols, this.getCanceler()));
+					}
+					else
+					{
+						tiles.put(new DimensionMap("TIEZ=Hi,ImRow=0,ImCol=0"), fp);
+					}
 				}
 				else
 				{
-					fpLo = fpMed;
-					fpMed = fpHi;
-					fpHi = (new ImagePlus(imageMap.get(toGet)).getProcessor().convertToFloatProcessor());
+					DimTable tilesDT = new DimTable(tiles);
+					for(DimensionMap tempMap : tilesDT.getSubTable(new DimensionMap("TIEZ=Med")).getMapIterator())
+					{
+						tiles.put(tempMap.copyAndSet("TIEZ=Lo"), tiles.get(tempMap)); // fpLo = fpMed;
+					}
+					for(DimensionMap tempMap : tilesDT.getSubTable(new DimensionMap("TIEZ=Hi")).getMapIterator())
+					{
+						tiles.put(tempMap.copyAndSet("TIEZ=Med"), tiles.get(tempMap)); // fpMed = fpHi;
+					}
+					FloatProcessor fp = (new ImagePlus(imageMap.get(toGet)).getProcessor().convertToFloatProcessor());
+					TreeMap<DimensionMap,ImageProcessor> temp = new TreeMap<>();
+					if(this.rows > 1 || this.cols > 1)
+					{
+						Logs.log("Splitting image into tiles", this);
+						temp.put(new DimensionMap("TIEZ=Hi"), fp);
+						tiles.putAll(ImageWriter.separateTilesToProcessors(temp, overlap, rows, cols, this.getCanceler()));
+					}
+					else
+					{
+						tiles.put(new DimensionMap("TIEZ=Hi,ImRow=0,ImCol=0"), fp);
+					}
 				}
 
 				//				FileUtility.showImg(fpLo, true);
 				//				FileUtility.showImg(fpMed, true);
 				//				FileUtility.showImg(fpHi, true);
-				FloatProcessor phi = tie.calculatePhase(fpMed, fpLo, fpHi);
 				
-				if(this.doFilteringAndScaling)
+				DimTable subt = new DimTable(tiles).getSubTable("TIEZ");
+				for(DimTable subsubt : subt.getSubTableIterator("ImRow"))
 				{
-					fft.filter(phi);
-					ImagePlus filtered = new ImagePlus("Filtered", phi);
-					
-					Pair<FloatProcessor, String> images = ImageUtility.getWeightedMeanFilterImage(filtered, this.saveThresholdImage, true, true, false, this.filterLargeDia, 2d, 2d, 0.75, "Subtract Background", 0d, this.sigma, 100d);
-					phi = images.p1;
-					if(this.bitDepth < 32)
+					for(DimensionMap tileMap : subsubt.getMapIterator())
 					{
-						//						phi.resetMinAndMax();
-						//						tie.viewImage(phi);
-						double max = Math.pow(2, this.bitDepth)-1;
-						double originalMax = Math.pow(2, originalBitDepth)-1;
-						phi.multiply(max/(originalMax * this.scale)); // mimic preadjusting all images to range of 0-1 with '1/originalMax'
-						phi.add(max/2);
-						phi.resetMinAndMax();
+						// Check if canceled
+						if(this.isCanceled())
+						{
+							return false;
+						}
+						
+						if(filterTable.testMapAsExclusionFilter(tileMap))
+						{
+							Logs.log("Skipping the processing and saving of " + tileMap.toString(), this);
+							count = count + 1;
+							percentage = (int) (100 * ((double) (count) / ((double) total * this.rows * this.cols)));
+							JEXStatics.statusBar.setProgressPercentage(percentage);
+							continue;
+						}
+						
+						if(tie == null)
+						{
+							// Initialize TIE Calculator first time through
+							tie = new TIECalculator(tiles.get(tileMap.copyAndSet("TIEZ=Med")).getWidth(), tiles.get(tileMap.copyAndSet("TIEZ=Med")).getHeight(), this.r, this.thresh, this.mag, this.pixelSize, this.dz, this.lambda, this.simple);
+						}
+						// Logs.log("" + tiles.get(tileMap.copyAndSet("Z=Med")).getWidth() + " : " +tiles.get(tileMap.copyAndSet("Z=Med")).getHeight(), this);
+						Logs.log("Processing Tile: " + toSave.toString() + "," + tileMap.toString(), this);
+						FloatProcessor phi = tie.calculatePhase((FloatProcessor) tiles.get(tileMap.copyAndSet("TIEZ=Med")), (FloatProcessor) tiles.get(tileMap.copyAndSet("TIEZ=Lo")), (FloatProcessor) tiles.get(tileMap.copyAndSet("TIEZ=Hi")));
+						
+						if(this.doFilteringAndScaling)
+						{
+							fft.filter(phi);
+							Pair<FloatProcessor, String> images = ImageUtility.getWeightedMeanFilterImage(phi, this.saveThresholdImage, true, true, false, this.filterLargeDia, 2d, 2d, 0.75, "Subtract Background", 0d, this.sigma, 100d);
+							phi = images.p1;
+							if(this.bitDepth < 32)
+							{
+								//						phi.resetMinAndMax();
+								//						tie.viewImage(phi);
+								double max = Math.pow(2, this.bitDepth)-1;
+								double originalMax = Math.pow(2, originalBitDepth)-1;
+								phi.multiply(max/(originalMax * this.scale)); // mimic preadjusting all images to range of 0-1 with '1/originalMax'
+								phi.add(max/2);
+								phi.resetMinAndMax();
+							}
+							DimensionMap mapToSave = toSave.copy();
+							if(this.rows > 1)
+							{
+								mapToSave.put("ImRow", tileMap.get("ImRow"));
+							}
+							if(this.cols > 1)
+							{
+								mapToSave.put("ImCol", tileMap.get("ImRow"));
+							}
+							maskMap.put(mapToSave, images.p2);
+						}
+						else
+						{
+							double originalMax = Math.pow(2, originalBitDepth)-1;
+							phi.multiply(1/originalMax); // This mimics preadjusting all the images to a range of 0-1.
+							phi.resetMinAndMax();
+						}
+						
+						ImageProcessor out = JEXWriter.convertToBitDepthIfNecessary(phi, this.bitDepth);
+						tempPath = JEXWriter.saveImage(out);
+						if(tempPath != null)
+						{
+							DimensionMap mapToSave = toSave.copy();
+							if(this.rows > 1)
+							{
+								mapToSave.put("TileRow", tileMap.get("ImRow"));
+							}
+							if(this.cols > 1)
+							{
+								mapToSave.put("TileCol", tileMap.get("ImCol"));
+							}
+							outputImageMap.put(mapToSave, tempPath);
+						}
+						//				if(keepdIdz)
+						//				{
+						//					if(bitDepthOfOriginal < 32)
+						//					{
+						//						phi.p1.multiply(Math.pow(2, bitDepthOfOriginal)-1.0);
+						//					}
+						//					
+						//					phi.p1.resetMinAndMax();
+						//					tempPath = JEXWriter.saveImage(phi.p1);
+						//					if(tempPath != null)
+						//					{
+						//						dIdzMap.put(toSave.copy(), tempPath);
+						//					}
+						//				}
+						count = count + 1;
+						percentage = (int) (100 * ((double) (count) / ((double) total * this.rows * this.cols)));
+						JEXStatics.statusBar.setProgressPercentage(percentage);
 					}
-					maskMap.put(toSave.copy(), images.p2);
 				}
-				else
-				{
-					double originalMax = Math.pow(2, originalBitDepth)-1;
-					phi.multiply(1/originalMax); // This mimics preadjusting all the images to a range of 0-1.
-					phi.resetMinAndMax();
-				}
-				
-				ImageProcessor out = JEXWriter.convertToBitDepthIfNecessary(phi, this.bitDepth);
-				tempPath = JEXWriter.saveImage(out);
-				if(tempPath != null)
-				{
-					outputImageMap.put(toSave.copy(), tempPath);
-				}
-				//				if(keepdIdz)
-				//				{
-				//					if(bitDepthOfOriginal < 32)
-				//					{
-				//						phi.p1.multiply(Math.pow(2, bitDepthOfOriginal)-1.0);
-				//					}
-				//					
-				//					phi.p1.resetMinAndMax();
-				//					tempPath = JEXWriter.saveImage(phi.p1);
-				//					if(tempPath != null)
-				//					{
-				//						dIdzMap.put(toSave.copy(), tempPath);
-				//					}
-				//				}
 				toSave = toGet.copy();
-				count = count + 1;
-				percentage = (int) (100 * ((double) (count) / ((double) total)));
-				JEXStatics.statusBar.setProgressPercentage(percentage);
 			}
 		}
 

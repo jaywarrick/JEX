@@ -1,5 +1,6 @@
 package function.plugin.plugins.imageProcessing;
 
+import java.util.Map.Entry;
 import java.util.TreeMap;
 
 import org.scijava.plugin.Plugin;
@@ -16,6 +17,7 @@ import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
 import ij.ImagePlus;
 import ij.process.FloatProcessor;
+import ij.process.ImageProcessor;
 import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import jex.utilities.ImageUtility;
@@ -82,11 +84,20 @@ public class WeightedMeanFilter extends JEXPlugin {
 
 	@ParameterMarker(uiOrder=9, name="Exclusion Filter DimTable", description="Exclude combinatoins of Dimension Names and values. (Use following notation '<DimName1>=<a1,a2,...>;<DimName2>=<b1,b2,...>' e.g., 'Channel=0,100,100; Time=1,2,3,4,5' (spaces are ok).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
 	String exclusionFilterString;
+	
+	@ParameterMarker(uiOrder=10, name="Tiles: Rows", description="If desired, the images can be split into tiles before processing by setting the number of tile rows here to > 1.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
+	int rows;
+	
+	@ParameterMarker(uiOrder=11, name="Tiles: Cols", description="If desired, the images can be split into tiles before processing by setting the number of tile cols here to > 1.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
+	int cols;
+	
+	@ParameterMarker(uiOrder=12, name="Tiles: Overlap", description="Set the percent overlap of the tiles", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1.0")
+	double overlap;
 
-	@ParameterMarker(uiOrder=10, name="Keep Excluded Images?", description="Should images excluded by the filter be copied to the new object?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
+	@ParameterMarker(uiOrder=13, name="Keep Excluded Images?", description="Should images excluded by the filter be copied to the new object?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
 	boolean keepExcluded;
 
-	@ParameterMarker(uiOrder=12, name="Dark Field Intensity", description="What is the intensity of an image without any illumination (i.e., the dark field). This is subtracted prior to division for division options.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="100.0")
+	@ParameterMarker(uiOrder=14, name="Dark Field Intensity", description="What is the intensity of an image without any illumination (i.e., the dark field). This is subtracted prior to division for division options.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="100.0")
 	double darkfield;
 
 	//	@ParameterMarker(uiOrder=12, name="Output Std. Dev. Images?", description="Should the locally weighted standard deviation images be output?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
@@ -115,7 +126,7 @@ public class WeightedMeanFilter extends JEXPlugin {
 		DimTable filterTable = new DimTable(this.exclusionFilterString);
 
 		// Validate the input data
-		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(imageData == null || !imageData.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return false;
 		}
@@ -188,7 +199,7 @@ public class WeightedMeanFilter extends JEXPlugin {
 					Logs.log("Skipping the processing and saving of " + map.toString(), this);
 				}
 				count = count + 1;
-				percentage = (int) (100 * ((double) (count) / ((double) imageMap.size())));
+				percentage = (int) (100 * ((double) (count) / ((double) imageMap.size() * this.rows * this.cols)));
 				JEXStatics.statusBar.setProgressPercentage(percentage);
 				continue;
 			}
@@ -198,29 +209,46 @@ public class WeightedMeanFilter extends JEXPlugin {
 			if(tempImPath == null)
 			{
 				count = count + 1;
-				percentage = (int) (100 * ((double) (count) / ((double) imageMap.size())));
+				percentage = (int) (100 * ((double) (count) / ((double) imageMap.size() * this.rows * this.cols)));
 				JEXStatics.statusBar.setProgressPercentage(percentage);
 				continue;
 			}
-			ImagePlus im = new ImagePlus(imageMap.get(map));
+			
+			FloatProcessor fp = (new ImagePlus(imageMap.get(map)).getProcessor().convertToFloatProcessor());
+			TreeMap<DimensionMap,ImageProcessor> temp = new TreeMap<>();
+			TreeMap<DimensionMap,ImageProcessor> tiles = new TreeMap<>();
+			if(this.rows > 1 || this.cols > 1)
+			{
+				Logs.log("Splitting image into tiles", this);
+				temp.put(map.copy(), fp);
+				tiles.putAll(ImageWriter.separateTilesToProcessors(temp, overlap, rows, cols, this.getCanceler()));
+			}
+			else
+			{
+				tiles.put(map.copyAndSet("ImRow=0,ImCol=0"), fp);
+			}
 
 			// Get images and parameters
 			Double sigma = sigmas.get(map);
 			Double nominal = nominals.get(map);
 			
-			Pair<FloatProcessor, String> images = ImageUtility.getWeightedMeanFilterImage(im, doThreshold, doSubtraction, doBackgroundOnly, doDivision, this.meanRadius, this.varRadius, this.subScale, this.threshScale, this.operation, nominal, sigma, this.darkfield);
-			
-			if(images.p1 != null)
+			for(Entry<DimensionMap, ImageProcessor> e : tiles.entrySet())
 			{
-				String filteredImagePath = JEXWriter.saveImage(images.p1, this.outputBitDepth);
-				outputImageMap.put(map.copy(), filteredImagePath);
-			}
-			outputMaskMap.put(map.copy(), images.p2);
+				Pair<FloatProcessor, String> images = ImageUtility.getWeightedMeanFilterImage((FloatProcessor) e.getValue(), doThreshold, doSubtraction, doBackgroundOnly, doDivision, this.meanRadius, this.varRadius, this.subScale, this.threshScale, this.operation, nominal, sigma, this.darkfield);
+				
+				if(images.p1 != null)
+				{
+					String filteredImagePath = JEXWriter.saveImage(images.p1, this.outputBitDepth);
+					outputImageMap.put(e.getKey().copy(), filteredImagePath);
+				}
+				outputMaskMap.put(e.getKey().copy(), images.p2);
 
-			// Update the progress bar.
-			count = count + 1;
-			percentage = (int) (100 * ((double) (count) / ((double) imageMap.size())));
-			JEXStatics.statusBar.setProgressPercentage(percentage);
+				// Update the progress bar.
+				count = count + 1;
+				percentage = (int) (100 * ((double) (count) / ((double) imageMap.size() * this.rows * this.cols)));
+				JEXStatics.statusBar.setProgressPercentage(percentage);
+			}
+			
 		}
 
 		// Save the background/subtraction image

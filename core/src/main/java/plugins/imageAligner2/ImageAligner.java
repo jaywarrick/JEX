@@ -253,7 +253,7 @@ public class ImageAligner implements PlugInController {
 		JEXDataSingle frontds = imageData.getData(this.frontDataBrowser.currentImageDimMap());
 		if(frontds != null)
 		{
-			this.frontImageFilePath = ImageReader.readImagePath(frontds);
+			this.frontImageFilePath = ImageReader.readImagePath(frontds, imageData.getTypeName().getType().getFlavor().equals(JEXData.FLAVOR_VIRTUAL));
 			// this.imageFilePath = ds.get(JEXDataSingle.FOLDERNAME) +
 			// File.separator + ds.get(JEXDataSingle.FILENAME);
 			
@@ -276,7 +276,7 @@ public class ImageAligner implements PlugInController {
 		JEXDataSingle backds = imageData.getData(this.backDataBrowser.currentImageDimMap());
 		if(backds != null)
 		{
-			this.backImageFilePath = ImageReader.readImagePath(backds);
+			this.backImageFilePath = ImageReader.readImagePath(backds, imageData.getTypeName().getType().getFlavor().equals(JEXData.FLAVOR_VIRTUAL));
 			// this.imageFilePath = ds.get(JEXDataSingle.FOLDERNAME) +
 			// File.separator + ds.get(JEXDataSingle.FILENAME);
 			
