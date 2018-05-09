@@ -99,7 +99,7 @@ public class JEX_OverlayStack extends JEXCrunchable {
 	@Override
 	public boolean allowMultithreading()
 	{
-		return false;
+		return true;
 	}
 	
 	// ----------------------------------------------------
