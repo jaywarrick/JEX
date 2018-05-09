@@ -262,7 +262,7 @@ public class TIEPhaseCalculator extends JEXPlugin {
 					return false;
 				}
 
-				if(tiles.get(new DimensionMap("TIEZ=Lo,ImRow=1,ImCol=1")) == null)
+				if(tiles.get(new DimensionMap("TIEZ=Lo,ImRow=0,ImCol=0")) == null)
 				{
 					ImagePlus tempIm = new ImagePlus(imageMap.get(toGet));
 					FloatProcessor fp = tempIm.getProcessor().convertToFloatProcessor();
