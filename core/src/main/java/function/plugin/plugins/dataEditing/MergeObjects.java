@@ -21,6 +21,7 @@ import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import logs.Logs;
 import miscellaneous.FileUtility;
+import tables.Dim;
 import tables.DimTable;
 import tables.DimensionMap;
 
@@ -128,6 +129,18 @@ public class MergeObjects extends JEXPlugin {
 		for(JEXData d : datalist)
 		{
 			retDT = DimTable.union(retDT, d.getDimTable());
+		}
+		for(JEXData d : datalist)
+		{
+			DimTable tempDT = d.getDimTable();
+			for(Dim dim : retDT)
+			{
+				if(tempDT.getDimWithName(dim.name())==null)
+				{
+					JEXDialog.messageDialog("The dimension " + dim.name() + " does not exist in all objects. For example that dim doesn't exist in " + d.getTypeName().toString() + ". Aborting.", this);
+					return false;
+				}
+			}
 		}
 		
 		JEXData ret = new JEXData(data1.getTypeName().getType(), newName);
