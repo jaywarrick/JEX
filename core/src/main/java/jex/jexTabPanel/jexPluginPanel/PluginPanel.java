@@ -166,7 +166,7 @@ public class PluginPanel implements ActionListener {
 		{
 			TreeSet<JEXEntry> entries = JEXStatics.jexManager.getSelectedEntries();
 			TypeName tn = JEXStatics.jexManager.getSelectedObject();
-			if(entries.size() > 0 && tn != null && tn.getType().equals(JEXData.IMAGE))
+			if(entries.size() > 0 && tn != null && tn.getType().matches(JEXData.IMAGE))
 			{
 				ImageAligner aligner = new ImageAligner();
 				aligner.setDBSelection(entries, tn);
