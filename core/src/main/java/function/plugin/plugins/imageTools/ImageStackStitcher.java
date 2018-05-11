@@ -126,7 +126,7 @@ public class ImageStackStitcher extends JEXPlugin {
 	@Override
 	public int getMaxThreads()
 	{
-		return 1;
+		return 10;
 	}
 
 	// ----------------------------------------------------
