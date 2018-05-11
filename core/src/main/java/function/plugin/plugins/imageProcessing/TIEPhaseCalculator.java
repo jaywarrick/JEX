@@ -396,7 +396,7 @@ public class TIEPhaseCalculator extends JEXPlugin {
 							}
 							if(this.cols > 1)
 							{
-								mapToSave.put("ImCol", tileMap.get("ImRow"));
+								mapToSave.put("ImCol", tileMap.get("ImCol"));
 							}
 							maskMap.put(mapToSave, images.p2);
 						}
@@ -414,11 +414,11 @@ public class TIEPhaseCalculator extends JEXPlugin {
 							DimensionMap mapToSave = toSave.copy();
 							if(this.rows > 1)
 							{
-								mapToSave.put("TileRow", tileMap.get("ImRow"));
+								mapToSave.put("ImRow", tileMap.get("ImRow"));
 							}
 							if(this.cols > 1)
 							{
-								mapToSave.put("TileCol", tileMap.get("ImCol"));
+								mapToSave.put("ImCol", tileMap.get("ImCol"));
 							}
 							outputImageMap.put(mapToSave, tempPath);
 						}
