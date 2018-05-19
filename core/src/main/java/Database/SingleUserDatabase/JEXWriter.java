@@ -226,15 +226,15 @@ public class JEXWriter {
 		{
 			if(bitDepth == 8)
 			{
-				return imp.convertToByte(false);
+				return imp.convertToByteProcessor(false);
 			}
 			else if(bitDepth == 16)
 			{
-				return imp.convertToShort(false);
+				return imp.convertToShortProcessor(false);
 			}
 			else
 			{
-				return imp.convertToFloat();
+				return imp.convertToFloatProcessor();
 			}
 		}
 		else
