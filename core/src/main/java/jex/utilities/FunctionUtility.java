@@ -377,32 +377,31 @@ public class FunctionUtility {
 		//				pixels[i] = v;
 		//			}
 		//		}
-		if(gamma != 1 && imp instanceof FloatProcessor)
+		if(gamma != 1)
 		{
 			// Temporarily put image on scale of 0-1 for gamma adjustment for predictable behavior
 			//			imp.resetMinAndMax();
 			//			Logs.log("ActualMinMax:" + imp.getMin() + "," + imp.getMax(), FunctionUtility.class);
-			imp.multiply(1.0/newMax);
-			imp.resetMinAndMax();
-			imp.gamma(gamma);
+			ip.multiply(1.0/newMax);
+			ip.resetMinAndMax();
+			ip.gamma(gamma);
 			//			imp.resetMinAndMax();
 			//			Logs.log("ActualMinMax:" + imp.getMin() + "," + imp.getMax(), FunctionUtility.class);
-			imp.multiply(newMax);
-			imp.resetMinAndMax();
+			ip.multiply(newMax);
+			ip.resetMinAndMax();
 			//			Logs.log("ActualMinMax:" + imp.getMin() + "," + imp.getMax(), FunctionUtility.class);
 		}
-		else
+		if(imp instanceof ByteProcessor)
 		{
-			if(imp instanceof ByteProcessor)
-			{
-				ip = ip.convertToByteProcessor(false);
-				imp.setPixels(ip.getPixels());
-			}
-			if(imp instanceof ShortProcessor)
-			{
-				ip = ip.convertToShortProcessor(false);
-				imp.setPixels(ip.getPixels());
-			}
+			ip.resetMinAndMax();
+			ip = ip.convertToByteProcessor(false);
+			imp.setPixels(ip.getPixels());
+		}
+		if(imp instanceof ShortProcessor)
+		{
+			ip.resetMinAndMax();
+			ip = ip.convertToShortProcessor(false);
+			imp.setPixels(ip.getPixels());
 		}
 
 	}
