@@ -134,6 +134,11 @@ public class ZernikeComputer<T extends RealType<T>> extends
 		}
 
 		// normalization
+		// I checked that this normalization approach produces
+		// size scale invariance.
+		// If one divides by the mean intensity after all this, 
+		// then one achieves intensity/contrast invariance.
+		// i.e., the measure provided here will double if all intensities are doubled.
 		try
 		{
 			
