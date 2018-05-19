@@ -202,7 +202,7 @@ public class JEX_ImageFilters extends JEXCrunchable {
 		// Gather parameters
 		double radius = Double.parseDouble(parameters.getValueOfParameter("Radius"));
 		String method = parameters.getValueOfParameter("Filter Type");
-		String filterString = parameters.getValueOfParameter("Exclusion Filter");
+		String filterString = parameters.getValueOfParameter("Exclusion Filter Table");
 		DimTable filterTable = new DimTable(filterString);
 		
 		boolean keepUnprocessed = Boolean.parseBoolean(parameters.getValueOfParameter("Keep Unprocessed Images?"));
