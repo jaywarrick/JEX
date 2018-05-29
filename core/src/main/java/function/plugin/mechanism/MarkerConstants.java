@@ -27,6 +27,7 @@ public final class MarkerConstants {
 	public static final String TYPE_LABEL = "Label";
 	public static final String TYPE_WORKFLOW = "Workflow";
 	public static final String TYPE_ROI = "Roi";
+	public static final String TYPE_TRACK = "Track";
 	
 	// Match constants in Database.Definition.Parameter class
 	public static final int UI_TEXTFIELD = 0;
