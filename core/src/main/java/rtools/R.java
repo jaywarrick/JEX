@@ -745,14 +745,22 @@ public class R {
 	public static String getExpressionResultAsString(String expression)
 	{
 		REXP fileObject = R.eval(expression);
-		String fileString = null;
+		String[] fileString = null;
 		try
 		{
-			fileString = fileObject.asString();
-			String fixedString = fileString; //fileString.replaceAll("/", File.separator); // Might have to figure out Pattern.quote(File.separator) stuff for windows.
+			fileString = fileObject.asStrings();
+			if(fileString.length==0)
+			{
+				return null;
+			}
+			if(fileString.length > 1)
+			{
+				Logs.log("WARNING: Object has length greater than 1. Returning just first element.", R.class);
+			}
+			String fixedString = fileString[0]; //fileString.replaceAll("/", File.separator); // Might have to figure out Pattern.quote(File.separator) stuff for windows.
 			return fixedString;
 		}
-		catch (REXPMismatchException e)
+		catch (Exception e)
 		{
 			Logs.log("Couldn't convert " + expression + " to String", R.class);
 			e.printStackTrace();
@@ -763,18 +771,30 @@ public class R {
 	public static Boolean getExpressionResultAsBoolean(String expression)
 	{
 		String s = getExpressionResultAsString(expression);
+		if(s == null)
+		{
+			return null;
+		}
 		return Boolean.parseBoolean(s);
 	}
 
 	public static Double getExpressionResultAsDouble(String expression)
 	{
 		String s = getExpressionResultAsString(expression);
+		if(s == null)
+		{
+			return null;
+		}
 		return Double.parseDouble(s);
 	}
 
 	public static Integer getExpressionResultAsInteger(String expression)
 	{
 		String s = getExpressionResultAsString(expression);
+		if(s == null)
+		{
+			return null;
+		}
 		return Integer.parseInt(s);
 	}
 
