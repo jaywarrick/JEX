@@ -343,7 +343,7 @@ public class jMontageMaker implements PlugIn {
 		return imp2;
 	}
 	
-	public static ImagePlus makeMontage(ImagePlus imp, int columns, int rows, double scale, int first, int last, int inc, int borderWidth, boolean labels, boolean useForegroundColor, Color foregroundColor, Color backgroundColor, int fontSize, boolean quiet, boolean forceColorProcessor)
+	public static ImagePlus makeMontage(ImagePlus imp, int columns, int rows, double scale, int first, int last, int inc, int borderWidth, boolean labels, boolean useForegroundColor, Color labelColor, Color backgroundColor, int fontSize, boolean quiet, boolean forceColorProcessor)
 	{
 		int stackWidth = imp.getWidth();
 		int stackHeight = imp.getHeight();
@@ -381,14 +381,14 @@ public class jMontageMaker implements PlugIn {
 			fontSize = 1;
 		}
 		montage.setFont(new Font("SansSerif", Font.PLAIN, fontSize));
-		Color fgColor = Color.white;
+		Color labColor = Color.white;
 		Color bgColor = Color.black;
 		if(useForegroundColor)
 		{
-			fgColor = Toolbar.getForegroundColor();
+			labColor = Toolbar.getForegroundColor();
 			bgColor = Toolbar.getBackgroundColor();
 		}
-		else if(foregroundColor == null || backgroundColor == null)
+		else if(labelColor == null || backgroundColor == null)
 		{
 			boolean whiteBackground = false;
 			if((ip instanceof ByteProcessor) || (ip instanceof ColorProcessor))
@@ -400,18 +400,18 @@ public class jMontageMaker implements PlugIn {
 			}
 			if(whiteBackground)
 			{
-				fgColor = Color.black;
+				labColor = Color.black;
 				bgColor = Color.white;
 			}
 		}
 		else
 		{
-			fgColor = foregroundColor;
+			labColor = labelColor;
 			bgColor = backgroundColor;
 		}
 		montage.setColor(bgColor);
 		montage.fill();
-		montage.setColor(fgColor);
+		montage.setColor(labColor);
 		ImageStack stack = imp.getStack();
 		int x = 0;
 		int y = 0;
@@ -431,7 +431,7 @@ public class jMontageMaker implements PlugIn {
 //			}
 			if(labels)
 			{
-				montage.setColor(Color.white);
+				montage.setColor(labColor);
 				drawLabel(montage, slice, label, x, y, colWidth, rowHeight);
 			}
 			x += colWidth;
@@ -452,7 +452,7 @@ public class jMontageMaker implements PlugIn {
 		//		}
 		if(labels)
 		{
-			montage.setColor(Color.white);
+			montage.setColor(labColor);
 			String label = stack.getShortSliceLabel(slice);
 			drawLabel(montage, last+1, label, 0, montageHeight + borderWidth/2, width, height);
 		}
