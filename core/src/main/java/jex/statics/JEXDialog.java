@@ -21,21 +21,43 @@ public class JEXDialog {
 	public synchronized static void messageDialog(String msg)
 	{
 		//default icon, custom title
-		JOptionPane.showMessageDialog(JEXStatics.main, msg);
+		Thread t = new Thread(new Runnable()
+		{
+			public void run()
+			{
+				JOptionPane.showMessageDialog(JEXStatics.main, msg);
+				Logs.log(msg, JEXDialog.class);
+			}
+		});
+		t.start();
 	}
 	
 	public synchronized static void messageDialog(String msg, Class<?> source)
 	{
-		//default icon, custom title
-		JOptionPane.showMessageDialog(JEXStatics.main, msg);
-		Logs.log(msg, source);
+		Thread t = new Thread(new Runnable()
+		{
+			public void run()
+			{
+				//default icon, custom title
+				JOptionPane.showMessageDialog(JEXStatics.main, msg);
+				Logs.log(msg, source);
+			}
+		});
+		t.start();
 	}
 	
 	public synchronized static void messageDialog(String msg, Object source)
 	{
-		//default icon, custom title
-		JOptionPane.showMessageDialog(JEXStatics.main, msg);
-		Logs.log(msg, source);
+		Thread t = new Thread(new Runnable()
+		{
+			public void run()
+			{
+				//default icon, custom title
+				JOptionPane.showMessageDialog(JEXStatics.main, msg);
+				Logs.log(msg, source);
+			}
+		});
+		t.start();
 	}
 	
 	/**

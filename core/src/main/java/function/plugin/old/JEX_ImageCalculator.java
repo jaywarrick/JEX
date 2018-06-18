@@ -146,10 +146,11 @@ public class JEX_ImageCalculator extends JEXCrunchable {
 		// String[] {"true"},0);
 		Parameter p1 = new Parameter("Math Operation", "Math operation to perform using the pixel information from Image A and B.", Parameter.DROPDOWN, new String[] { "A+B", "A-B", "A*B", "A/B", "|A-B|", "MAX", "MIN", "AVERAGE", "AND", "OR", "XOR", "COPY", "COPY Transparent 0" }, 4);
 		Parameter p2 = new Parameter("Output Bit-Depth", "Bit-Depth of the output image", Parameter.DROPDOWN, new String[] { "8", "16", "32" }, 2);
+		Parameter p0 = getNumThreadsParameter(10, 6);
 		
 		// Make an array of the parameters and return it
 		ParameterSet parameterArray = new ParameterSet();
-		// parameterArray.addParameter(p0);
+		parameterArray.addParameter(p0);
 		parameterArray.addParameter(p1);
 		parameterArray.addParameter(p2);
 		;

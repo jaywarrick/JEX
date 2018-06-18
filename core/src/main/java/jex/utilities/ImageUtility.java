@@ -16,10 +16,12 @@ import java.util.Vector;
 
 import Database.SingleUserDatabase.JEXWriter;
 import function.ops.histogram.PolynomialRegression;
+import function.plugin.plugins.featureExtraction.FeatureUtils;
 import function.plugin.plugins.imageProcessing.RankFilters2;
 import function.singleCellAnalysis.SingleCellUtility;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.gui.Roi;
 import ij.plugin.filter.GaussianBlur;
 import ij.process.Blitter;
 import ij.process.ByteProcessor;
@@ -29,6 +31,8 @@ import ij.process.FloatProcessor;
 import ij.process.FloatStatistics;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
+import ij.process.ShortProcessor;
+import image.roi.ROIPlus;
 import logs.Logs;
 import miscellaneous.FileUtility;
 import miscellaneous.Pair;
@@ -102,10 +106,42 @@ public class ImageUtility {
 
 		return temp;
 	}
+	
+	public static Pair<Double, Double> percentile(ImageProcessor imp, double minPercentile, double maxPercentile, int sampleSize)
+	{
+		Pair<Double,Double> thresholds = null;
+		
+		if(sampleSize < 1)
+		{
+			FeatureUtils fu = new FeatureUtils();
+			Vector<Double> samples = fu.sampleFromShape(imp, new ROIPlus(new Roi(0,0,imp.getWidth(),imp.getHeight())), true);
+			double[] temp = StatisticsUtility.percentile(samples, new double[] {minPercentile, maxPercentile});
+			return new Pair<>(temp[0],temp[1]);
+		}
+		
+		// Get the thresholds
+		if(imp instanceof ByteProcessor || imp.getBitDepth() == 8)
+		{
+			thresholds = StatisticsUtility.percentile((byte[]) imp.getPixelsCopy(), minPercentile, maxPercentile);
+		}
+		if(imp instanceof ShortProcessor || imp.getBitDepth() == 16)
+		{
+			thresholds = StatisticsUtility.percentile((short[]) imp.getPixelsCopy(), minPercentile, maxPercentile);
+		}
+		if(imp instanceof FloatProcessor || imp.getBitDepth() == 32)
+		{
+			thresholds = StatisticsUtility.percentile((float[]) imp.getPixelsCopy(), minPercentile, maxPercentile);
+		}
+		else
+		{
+			return null;
+		}
+		
+		return thresholds;
+	}
 
 	public static Pair<Double,Double> getHistogramQuantileThresholds(FloatProcessor imp, double histMin, double histMax, int nBins, double minPercentile, double maxPercentile, boolean showHist, String title)
 	{
-
 		// Make the histogram
 		if(nBins < 2)
 		{

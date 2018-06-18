@@ -119,7 +119,7 @@ public class ImageStackStitcher extends JEXPlugin {
 
 
 	/**
-	 * Returns true if the user wants to allow multithreding
+	 * Returns true if the user wants to allow multithreading
 	 * 
 	 * @return
 	 */

@@ -17,8 +17,7 @@ import ij.ImagePlus;
 import ij.process.Blitter;
 import ij.process.ImageProcessor;
 import jex.statics.JEXStatics;
-import miscellaneous.CSVList;
-import tables.Dim;
+import tables.DimTable;
 import tables.DimensionMap;
 
 /**
@@ -33,7 +32,7 @@ import tables.DimensionMap;
  */
 public class JEX_ImageFilters extends JEXCrunchable {
 
-	public static String MEAN = "mean", MIN = "min", MAX = "max", MEDIAN = "median", VARIANCE = "variance", STDEV = "std. dev.", OUTLIERS="outliers", DESPECKLE="despeckle", REMOVE_NAN="remove NaN", OPEN="open", CLOSE="close", OPEN_TOPHAT="open top-hat", CLOSE_TOPHAT="close top-hat", SUM="sum";
+	public static String MEAN = "mean", MIN = "min", MAX = "max", MEDIAN = "median", VARIANCE = "variance", STDEV = "std. dev.", OUTLIERS="outliers", DESPECKLE="despeckle", REMOVE_NAN="remove NaN", OPEN="open", CLOSE="close", OPEN_TOPHAT="open top-hat", CLOSE_TOPHAT="close top-hat", SUM="sum", SNR="Signal:Noise Ratio", NSR="Noise:Signal Ratio";
 	public static String OP_NONE = "None", OP_LOG = "Natural Log", OP_EXP="Exp", OP_SQRT="Square Root", OP_SQR="Square", OP_INVERT="Invert";
 
 	public JEX_ImageFilters()
@@ -146,8 +145,8 @@ public class JEX_ImageFilters extends JEXCrunchable {
 		// Parameter p0 = new
 		// Parameter("Dummy Parameter","Lets user know that the function has been selected.",FormLine.DROPDOWN,new
 		// String[] {"true"},0);
-		Parameter p1 = new Parameter("Filter Type", "Type of filter to apply.", Parameter.DROPDOWN, new String[] { MEAN, MIN, MAX, MEDIAN, VARIANCE, STDEV, OUTLIERS, DESPECKLE, REMOVE_NAN, OPEN, CLOSE, OPEN_TOPHAT, CLOSE_TOPHAT, SUM }, 0);
-		Parameter p7 = new Parameter("Exclusion Filter", "<DimName>=<Val1>,<Val2>,...<Valn>, Specify the dimension and dimension values to exclude. Leave blank to process all.", "");
+		Parameter p1 = new Parameter("Filter Type", "Type of filter to apply.", Parameter.DROPDOWN, new String[] { MEAN, MIN, MAX, MEDIAN, VARIANCE, STDEV, OUTLIERS, DESPECKLE, REMOVE_NAN, OPEN, CLOSE, OPEN_TOPHAT, CLOSE_TOPHAT, SUM, SNR, NSR }, 0);
+		Parameter p7 = new Parameter("Exclusion Filter Table", "<DimName>=<Val1>,<Val2>,...<Valn>;<DimName2>=<Val1>,<Val2>,...<Valn>, Specify the dimension and dimension values to exclude. Leave blank to process all.", "");
 		Parameter p8 = new Parameter("Keep Unprocessed Images?", "Should the images within the object that are exlcluded from analysis by the Dimension Filter be kept in the result?", Parameter.CHECKBOX, true);
 		Parameter p2 = new Parameter("Radius", "Radius of filter in pixels.", "2.0");
 		Parameter p3 = new Parameter("Output Bit-Depth", "Bit-Depth of the output image", Parameter.DROPDOWN, new String[] { "8", "16", "32" }, 2);
@@ -203,13 +202,8 @@ public class JEX_ImageFilters extends JEXCrunchable {
 		// Gather parameters
 		double radius = Double.parseDouble(parameters.getValueOfParameter("Radius"));
 		String method = parameters.getValueOfParameter("Filter Type");
-		String filterString = parameters.getValueOfParameter("Exclusion Filter");
-		Dim filterDim = null;
-		if(filterString != null && !filterString.equals(""))
-		{
-			String[] filterArray = filterString.split("=");
-			filterDim = new Dim(filterArray[0], new CSVList(filterArray[1]));
-		}
+		String filterString = parameters.getValueOfParameter("Exclusion Filter Table");
+		DimTable filterTable = new DimTable(filterString);
 		
 		boolean keepUnprocessed = Boolean.parseBoolean(parameters.getValueOfParameter("Keep Unprocessed Images?"));
 		int bitDepth = Integer.parseInt(parameters.getValueOfParameter("Output Bit-Depth"));
@@ -227,14 +221,12 @@ public class JEX_ImageFilters extends JEXCrunchable {
 				return false;
 			}
 			
-			
-			ImagePlus im = new ImagePlus(imageMap.get(map));
-			if(filterDim != null && filterDim.containsValue(map.get(filterDim.dimName)))
+			if(filterTable.testMapAsExclusionFilter(map))
 			{
 				// Then skip, but save unprocessed image if necessary
 				if(keepUnprocessed)
 				{
-					String path = JEXWriter.saveImage(im);
+					String path = JEXWriter.saveImage(new ImagePlus(imageMap.get(map)));
 					outputImageMap.put(map, path);
 				}
 				count = count + 1;
@@ -243,10 +235,11 @@ public class JEX_ImageFilters extends JEXCrunchable {
 				continue;
 			}
 			
+			ImagePlus im = new ImagePlus(imageMap.get(map));
 			ImageProcessor ip = im.getProcessor().convertToFloat();
 			ImageProcessor orig = null;
 			
-			if(method.equals(OPEN_TOPHAT) || method.equals(CLOSE_TOPHAT))
+			if(method.equals(OPEN_TOPHAT) || method.equals(CLOSE_TOPHAT) || method.equals(SNR) || method.equals(NSR))
 			{
 				orig = ip.duplicate();
 			}
@@ -258,6 +251,19 @@ public class JEX_ImageFilters extends JEXCrunchable {
 			{
 				orig.copyBits(ip, 0, 0, Blitter.SUBTRACT);
 				ip = orig;
+				orig = null;
+			}
+			else if(method.equals(NSR))
+			{
+				rF.rank(orig, radius, RankFilters2.STDEV);
+				orig.copyBits(ip, 0, 0, Blitter.DIVIDE);
+				ip = orig;
+				orig = null;
+			}
+			else if(method.equals(SNR))
+			{
+				rF.rank(orig, radius, RankFilters2.STDEV);
+				ip.copyBits(orig, 0, 0, Blitter.DIVIDE);
 				orig = null;
 			}
 			
@@ -362,6 +368,10 @@ public class JEX_ImageFilters extends JEXCrunchable {
 		else if(method.equals(SUM))
 		{
 			methodInt = RankFilters2.SUM;
+		}
+		else if(method.equals(SNR) || method.equals(NSR))
+		{
+			methodInt = RankFilters2.MEAN;
 		}
 		return methodInt;
 	}

@@ -89,7 +89,7 @@ public class JEX_MakeMovieWithTimeStamp extends JEXCrunchable {
 	@Override
 	public boolean allowMultithreading()
 	{
-		return false;
+		return true;
 	}
 	
 	// ----------------------------------------------------
@@ -151,6 +151,7 @@ public class JEX_MakeMovieWithTimeStamp extends JEXCrunchable {
 		
 		// Make an array of the parameters and return it
 		ParameterSet parameterArray = new ParameterSet();
+		parameterArray.addParameter(getNumThreadsParameter(10, 6));
 		parameterArray.addParameter(p12);
 		parameterArray.addParameter(p1);
 		parameterArray.addParameter(p2);

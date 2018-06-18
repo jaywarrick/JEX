@@ -108,6 +108,18 @@ public class Trajectory extends XDataSingle {
 	}
 	
 	/**
+	 * Create a new Trajectory from a PointList object
+	 */
+	public Trajectory(PointList pl)
+	{
+		this();
+		for(IdPoint p : pl)
+		{
+			pmap.put(new Integer(p.id), new Point(p.x, p.y));
+		}
+	}
+	
+	/**
 	 * Create a new Trajectory from a vector of points
 	 * 
 	 * @param pointList

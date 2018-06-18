@@ -1,14 +1,5 @@
 package function.plugin.IJ2;
 
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.Definition.ParameterSet;
-import Database.Definition.TypeName;
-import Database.SingleUserDatabase.JEXWriter;
-import function.JEXCrunchable;
-import ij.ImagePlus;
-import ij.process.FloatProcessor;
-
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
@@ -17,16 +8,23 @@ import java.util.TreeMap;
 import java.util.Vector;
 import java.util.concurrent.Future;
 
+import org.scijava.command.CommandInfo;
+import org.scijava.command.CommandModule;
+import org.scijava.module.ModuleItem;
+
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.Definition.ParameterSet;
+import Database.Definition.TypeName;
+import Database.SingleUserDatabase.JEXWriter;
+import function.JEXCrunchable;
+import ij.ImagePlus;
+import ij.process.ImageProcessor;
 import jex.statics.JEXStatics;
 import jex.utilities.FunctionUtility;
 import net.imagej.Dataset;
 import net.imagej.display.DataView;
 import net.imagej.display.ImageDisplay;
-
-import org.scijava.command.CommandInfo;
-import org.scijava.command.CommandModule;
-import org.scijava.module.ModuleItem;
-
 import tables.DimTable;
 import tables.DimensionMap;
 
@@ -328,6 +326,18 @@ public class IJ2CrunchablePlugin extends JEXCrunchable {
 		return ret;
 	}
 	
+	public static String saveAdjustedImage(ImageProcessor imp, double oldMin, double oldMax, double newMin, double newMax, double gamma, int bitDepth)
+	{
+		// Adjust the image
+		FunctionUtility.imAdjust(imp, oldMin, oldMax, newMin, newMax, gamma);
+		
+		// Save the results
+		String imPath = JEXWriter.saveImage(imp, bitDepth);
+
+		// return temp filePath
+		return imPath;
+	}
+	
 	public static String saveAdjustedImage(String imagePath, double oldMin, double oldMax, double newMin, double newMax, double gamma, int bitDepth)
 	{
 		// Get image data
@@ -337,18 +347,7 @@ public class IJ2CrunchablePlugin extends JEXCrunchable {
 			return null;
 		}
 		ImagePlus im = new ImagePlus(imagePath);
-		FloatProcessor imp = (FloatProcessor) im.getProcessor().convertToFloat(); // should be a float processor
 		
-		// Adjust the image
-		FunctionUtility.imAdjust(imp, oldMin, oldMax, newMin, newMax, gamma);
-		
-		// Save the results
-		String imPath = JEXWriter.saveImage(imp, bitDepth);
-		//		ImagePlus toSave = FunctionUtility.makeImageToSave(imp, "false", bitDepth, gamma);
-		//		String imPath = JEXWriter.saveImage(toSave);
-		im.flush();
-		
-		// return temp filePath
-		return imPath;
+		return saveAdjustedImage(im.getProcessor(), oldMin, oldMax, newMin, newMax, gamma, bitDepth);
 	}
 }

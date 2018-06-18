@@ -1,20 +1,12 @@
 package function.plugin.plugins.imageTools;
 
-import ij.ImagePlus;
-
 import java.awt.Color;
 import java.util.List;
 import java.util.TreeMap;
 import java.util.Vector;
 
-import jex.statics.JEXDialog;
-import jex.utilities.ImageUtility;
-
 import org.scijava.plugin.Plugin;
 
-import tables.Dim;
-import tables.DimTable;
-import tables.DimensionMap;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;
@@ -26,6 +18,13 @@ import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.MarkerConstants;
 import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
+import ij.ImagePlus;
+import jex.statics.JEXDialog;
+import jex.utilities.ImageUtility;
+import logs.Logs;
+import tables.Dim;
+import tables.DimTable;
+import tables.DimensionMap;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions
@@ -68,17 +67,23 @@ public class Montage1Dim extends JEXPlugin {
 	@ParameterMarker(uiOrder=7, name="Pixel Spacing", description="Number of pixels between each image.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="5")
 	int spacing;
 
-	@ParameterMarker(uiOrder=8, name="Background Color", description="Color of pixels for blank regions of montage (i.e., missing images)", ui=MarkerConstants.UI_DROPDOWN, choices={"White","Black","Gray","Yellow"}, defaultChoice=0)
+	@ParameterMarker(uiOrder=8, name="Background/Border Color", description="Color of pixels for blank regions of montage (i.e., missing images and borders)", ui=MarkerConstants.UI_DROPDOWN, choices={"White","Black","Gray","Yellow"}, defaultChoice=0)
 	String borderColor;
 
-	@ParameterMarker(uiOrder=9, name="Label/Border Color", description="Color of pixels used for the labels / borders", ui=MarkerConstants.UI_DROPDOWN, choices={"White","Black","Gray","Yellow"}, defaultChoice=1)
+	@ParameterMarker(uiOrder=9, name="Label Color", description="Color of pixels used for the labels", ui=MarkerConstants.UI_DROPDOWN, choices={"White","Black","Gray","Yellow"}, defaultChoice=1)
 	String labelColor;
+	
+	@ParameterMarker(uiOrder=10, name="Force Colored Image Output", description="Color of pixels used for the labels / borders", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	boolean forceColor;
 
-	@ParameterMarker(uiOrder=10, name="Add Labels?", description="Whether to add labels corresponding to the dim values or not.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
+	@ParameterMarker(uiOrder=11, name="Add Labels?", description="Whether to add labels corresponding to the dim values or not.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
 	boolean labels;
 	
-	@ParameterMarker(uiOrder=10, name="Font Size", description="Font size of the labels", ui=MarkerConstants.UI_TEXTFIELD, defaultText="18")
+	@ParameterMarker(uiOrder=12, name="Font Size", description="Font size of the labels", ui=MarkerConstants.UI_TEXTFIELD, defaultText="18")
 	int fontSize;
+	
+	@ParameterMarker(uiOrder=13, name="Exclusion Filter DimTable", description="Filter specific dimension combinations from analysis. (Format: <DimName1>=<a1,a2,...>;<DimName2>=<b1,b2...>)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
+	String filterDimTableString;
 
 	/////////// Define Outputs here ///////////
 
@@ -113,6 +118,8 @@ public class Montage1Dim extends JEXPlugin {
 			JEXDialog.messageDialog("Couldn't find dimension with specified name.");
 			return false;
 		}
+		
+		DimTable filterTable = new DimTable(this.filterDimTableString);
 
 		// Run the function
 		// Get the Partial DimTable and iterate through it and stitch.
@@ -142,7 +149,7 @@ public class Montage1Dim extends JEXPlugin {
 				{
 					return false;
 				}
-				List<DimensionMap> mapsToGet = this.getMapsForStitching(stackDim, partialMap);
+				List<DimensionMap> mapsToGet = this.getMapsForStitching(stackDim, partialMap, imageMap, filterTable);
 
 				// Then make montage
 				ImagePlus montage = makeMontageFromJEXStack(mapsToGet, imageMap, cols);
@@ -174,18 +181,22 @@ public class Montage1Dim extends JEXPlugin {
 
 		int rows = (int) Math.ceil(((double) maps.size())/((double) cols));
 
-		ImagePlus ret = jMontageMaker.makeMontage(im, cols, rows, scale, 1, maps.size(), 1, spacing, labels, false, this.getColor(labelColor), this.getColor(borderColor), fontSize, true);
+		ImagePlus ret = jMontageMaker.makeMontage(im, cols, rows, this.scale, 1, maps.size(), 1, this.spacing, this.labels, false, this.getColor(this.labelColor), this.getColor(this.borderColor), this.fontSize, true, this.forceColor);
 		return ret;
 	}
 
-	private List<DimensionMap> getMapsForStitching(Dim stackDim, DimensionMap partialMap)
+	private List<DimensionMap> getMapsForStitching(Dim stackDim, DimensionMap partialMap, TreeMap<DimensionMap,String> images, DimTable filterTable)
 	{
 		List<DimensionMap> ret = new Vector<DimensionMap>();
 		for (int z = 0; z < stackDim.size(); z++)
 		{
 			DimensionMap imageMap = partialMap.copy();
 			imageMap.put(stackDim.name(), stackDim.valueAt(z));
-			ret.add(imageMap);
+			if(images.get(imageMap) != null && !filterTable.testMapAsExclusionFilter(imageMap))
+			{
+				Logs.log("Adding: " + imageMap.toString() + " ---> " + images.get(imageMap), this);
+				ret.add(imageMap);
+			}
 		}
 		return ret;
 	}
@@ -195,7 +206,7 @@ public class Montage1Dim extends JEXPlugin {
 		if(color.equals("White")) return Color.WHITE;
 		if(color.equals("Black")) return Color.BLACK;
 		if(color.equals("Gray")) return Color.GRAY;
-		if(color.equals("YELLOW")) return Color.YELLOW;
+		if(color.equals("Yellow")) return Color.YELLOW;
 		else return Color.WHITE;
 	}
 }

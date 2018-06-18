@@ -208,7 +208,7 @@ public class jMontageMaker implements PlugIn {
 		}
 		label = gd.getNextBoolean();
 		useForegroundColor = gd.getNextBoolean();
-		makeMontage(imp, columns, rows, scale, first, last, inc, borderWidth, label, useForegroundColor, null, null, 12, true);
+		makeMontage(imp, columns, rows, scale, first, last, inc, borderWidth, label, useForegroundColor, null, null, 12, true, false);
 	}
 	
 	public static ImagePlus makeMontage(File[] imageList, int columns, int rows, double scale, int first, int last, int inc, int borderWidth, boolean labels, boolean useForegroundColor, boolean quiet)
@@ -343,41 +343,52 @@ public class jMontageMaker implements PlugIn {
 		return imp2;
 	}
 	
-	public static ImagePlus makeMontage(ImagePlus imp, int columns, int rows, double scale, int first, int last, int inc, int borderWidth, boolean labels, boolean useForegroundColor, Color foregroundColor, Color backgroundColor, int fontSize, boolean quiet)
+	public static ImagePlus makeMontage(ImagePlus imp, int columns, int rows, double scale, int first, int last, int inc, int borderWidth, boolean labels, boolean useForegroundColor, Color labelColor, Color backgroundColor, int fontSize, boolean quiet, boolean forceColorProcessor)
 	{
 		int stackWidth = imp.getWidth();
 		int stackHeight = imp.getHeight();
 		// int nSlices = imp.getStackSize();
-		if(scale > 1)
-		{
-			if(columns * stackWidth > rows * stackHeight)
-			{
-				scale = scale / (columns * stackWidth);
-			}
-			else
-			{
-				scale = scale / (rows * stackHeight);
-			}
-		}
+		//		if(scale > 1)
+		//		{
+		//			if(columns * stackWidth > rows * stackHeight)
+		//			{
+		//				scale = scale / (columns * stackWidth);
+		//			}
+		//			else
+		//			{
+		//				scale = scale / (rows * stackHeight);
+		//			}
+		//		}
 		int width = (int) (stackWidth * scale);
 		int height = (int) (stackHeight * scale);
-		int montageWidth = width * columns;
-		int montageHeight = height * rows;
+		int colWidth = width + borderWidth;
+		int rowHeight = height + borderWidth;
+		int montageWidth = colWidth * columns;
+		int montageHeight = rowHeight * rows;
 		ImageProcessor ip = imp.getProcessor();
-		ImageProcessor montage = ip.createProcessor(montageWidth + borderWidth / 2, montageHeight + borderWidth / 2);
+		ImageProcessor montage = null;
+		if(forceColorProcessor)
+		{
+			montage = new ColorProcessor(montageWidth, montageHeight);
+		}
+		else
+		{
+			montage = ip.createProcessor(montageWidth, montageHeight);
+		}
+		
 		if(fontSize < 1)
 		{
 			fontSize = 1;
 		}
 		montage.setFont(new Font("SansSerif", Font.PLAIN, fontSize));
-		Color fgColor = Color.white;
+		Color labColor = Color.white;
 		Color bgColor = Color.black;
 		if(useForegroundColor)
 		{
-			fgColor = Toolbar.getForegroundColor();
+			labColor = Toolbar.getForegroundColor();
 			bgColor = Toolbar.getBackgroundColor();
 		}
-		else if(foregroundColor == null || backgroundColor == null)
+		else if(labelColor == null || backgroundColor == null)
 		{
 			boolean whiteBackground = false;
 			if((ip instanceof ByteProcessor) || (ip instanceof ColorProcessor))
@@ -389,18 +400,18 @@ public class jMontageMaker implements PlugIn {
 			}
 			if(whiteBackground)
 			{
-				fgColor = Color.black;
+				labColor = Color.black;
 				bgColor = Color.white;
 			}
 		}
 		else
 		{
-			fgColor = foregroundColor;
+			labColor = labelColor;
 			bgColor = backgroundColor;
 		}
 		montage.setColor(bgColor);
 		montage.fill();
-		montage.setColor(fgColor);
+		montage.setColor(labColor);
 		ImageStack stack = imp.getStack();
 		int x = 0;
 		int y = 0;
@@ -411,27 +422,39 @@ public class jMontageMaker implements PlugIn {
 			aSlice = stack.getProcessor(slice);
 			if(scale != 1.0)
 				aSlice = aSlice.resize(width, height);
-			montage.insert(aSlice, x, y);
+			montage.insert(aSlice, x + borderWidth/2, y + borderWidth/2);
 			String label = stack.getShortSliceLabel(slice);
-			if(borderWidth > 0)
-				drawBorder(montage, x, y, width, height, borderWidth);
+//			if(borderWidth > 0)
+//			{
+//				montage.setColor(Color.black);
+//				drawBorder(montage, x, y, colWidth, rowHeight, borderWidth);
+//			}
 			if(labels)
-				drawLabel(montage, slice, label, x, y, width, height);
-			x += width;
+			{
+				montage.setColor(labColor);
+				drawLabel(montage, slice, label, x, y, colWidth, rowHeight);
+			}
+			x += colWidth;
 			if(x >= montageWidth)
 			{
 				x = 0;
-				y += height;
+				y += rowHeight;
 				if(y >= montageHeight)
 					break;
 			}
 			IJ.showProgress((double) (slice - first) / (last - first));
 			slice += inc;
 		}
-		if(borderWidth > 0)
+		//		if(borderWidth > 0)
+		//		{
+		//			int w2 = borderWidth / 2;
+		//			drawBorder(montage, w2, w2, montageWidth - w2, montageHeight - w2, borderWidth);
+		//		}
+		if(labels)
 		{
-			int w2 = borderWidth / 2;
-			drawBorder(montage, w2, w2, montageWidth - w2, montageHeight - w2, borderWidth);
+			montage.setColor(labColor);
+			String label = stack.getShortSliceLabel(slice);
+			drawLabel(montage, last+1, label, 0, montageHeight + borderWidth/2, width, height);
 		}
 		IJ.showProgress(1.0);
 		ImagePlus imp2 = new ImagePlus("Montage", montage);
@@ -457,7 +480,7 @@ public class jMontageMaker implements PlugIn {
 		montage.moveTo(x, y);
 		montage.lineTo(x + width, y);
 		montage.lineTo(x + width, y + height);
-		montage.lineTo(x, y + height);
+		montage.moveTo(x, y + height);
 		montage.lineTo(x, y);
 	}
 	
