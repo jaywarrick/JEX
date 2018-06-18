@@ -545,7 +545,7 @@ public class ImageUtility {
 			if(sigma == 0)
 			{
 				threshLocalMean.multiply(-1.0);
-				myPath = JEXWriter.saveImage(threshLocalMean.convertToByteProcessor(false));
+				myPath = JEXWriter.saveImage(threshLocalMean);
 			}
 			else
 			{
