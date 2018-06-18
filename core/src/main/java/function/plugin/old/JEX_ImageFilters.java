@@ -157,12 +157,12 @@ public class JEX_ImageFilters extends JEXCrunchable {
 		ParameterSet parameterArray = new ParameterSet();
 		parameterArray.addParameter(p4);
 		parameterArray.addParameter(p1);
-		parameterArray.addParameter(p7);
-		parameterArray.addParameter(p8);
 		parameterArray.addParameter(p2);
 		parameterArray.addParameter(p3);
 		parameterArray.addParameter(p5);
 		parameterArray.addParameter(p6);
+		parameterArray.addParameter(p7);
+		parameterArray.addParameter(p8);
 
 		return parameterArray;
 	}
