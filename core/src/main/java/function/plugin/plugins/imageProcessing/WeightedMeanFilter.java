@@ -108,7 +108,7 @@ public class WeightedMeanFilter extends JEXPlugin {
 	@OutputMarker(uiOrder=1, name="Image (BG)", type=MarkerConstants.TYPE_IMAGE, flavor="", description="The resultant adjusted image", enabled=true)
 	JEXData output;
 
-	@OutputMarker(uiOrder=2, name="Mask", type=MarkerConstants.TYPE_IMAGE, flavor="", description="The resultant thresholded mask image", enabled=true)
+	@OutputMarker(uiOrder=2, name="SNR Mask", type=MarkerConstants.TYPE_IMAGE, flavor="", description="The resultant thresholded mask image", enabled=true)
 	JEXData maskOutput;
 
 	//	@OutputMarker(uiOrder=4, name="Local Std. Dev.", type=MarkerConstants.TYPE_IMAGE, flavor="", description="The resultant weighting image used for bg subtraction and thresholding", enabled=true)
