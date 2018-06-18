@@ -1689,7 +1689,7 @@ public class StatisticsUtility {
 		Collections.sort(values, Comparator.naturalOrder());
 		for(int i=0; i < ret.length; i++)
 		{
-			int j = (int) Math.round(values.size()*(percentiles[i]/100.0));
+			int j = (int) Math.round((values.size()-1)*(percentiles[i]/100.0));
 			ret[i] = values.get(j);
 		}
 		return ret;
@@ -1710,8 +1710,8 @@ public class StatisticsUtility {
 			return null;
 		}
 		Arrays.sort(pixelsCopy);
-		int minI = (int) Math.round(pixelsCopy.length*(minPercentile/100.0));
-		int maxI = (int) Math.round(pixelsCopy.length*(maxPercentile/100.0));
+		int minI = (int) Math.round((pixelsCopy.length-1)*(minPercentile/100.0));
+		int maxI = (int) Math.round((pixelsCopy.length-1)*(maxPercentile/100.0));
 		return new Pair<>((double) pixelsCopy[minI], (double) pixelsCopy[maxI]);
 	}
 	
@@ -1722,8 +1722,8 @@ public class StatisticsUtility {
 			return null;
 		}
 		Arrays.sort(pixelsCopy);
-		int minI = (int) Math.round(pixelsCopy.length*(minPercentile/100.0));
-		int maxI = (int) Math.round(pixelsCopy.length*(maxPercentile/100.0));
+		int minI = (int) Math.round((pixelsCopy.length-1)*(minPercentile/100.0));
+		int maxI = (int) Math.round((pixelsCopy.length-1)*(maxPercentile/100.0));
 		return new Pair<>((double) pixelsCopy[minI], (double) pixelsCopy[maxI]);
 	}
 	
@@ -1734,8 +1734,8 @@ public class StatisticsUtility {
 			return null;
 		}
 		Arrays.sort(pixelsCopy);
-		int minI = (int) Math.round(pixelsCopy.length*(minPercentile/100.0));
-		int maxI = (int) Math.round(pixelsCopy.length*(maxPercentile/100.0));
+		int minI = (int) Math.round((pixelsCopy.length-1)*(minPercentile/100.0));
+		int maxI = (int) Math.round((pixelsCopy.length-1)*(maxPercentile/100.0));
 		return new Pair<>((double) pixelsCopy[minI], (double) pixelsCopy[maxI]);
 	}
 
