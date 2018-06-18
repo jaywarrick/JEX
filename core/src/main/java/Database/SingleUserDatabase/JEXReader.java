@@ -1,5 +1,6 @@
 package Database.SingleUserDatabase;
 
+import java.awt.Rectangle;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -72,6 +73,35 @@ public class JEXReader {
 	{
 		Logs.log("Opening image - " + path, JEXReader.class);
 		ImagePlus im = new ImagePlus(path);
+		Img<T> ret = ImageJFunctions.wrapReal(im);
+
+		// Adjust the image if necessary.
+		if(offset != null && offset != 0.0)
+		{
+			for ( T type : ret )
+			{
+				if(type.getRealDouble() > offset)
+				{
+					type.setReal(type.getRealDouble() - offset);
+				}
+				else
+				{
+					type.setZero();
+				}
+			} 
+		}
+		return ret;
+	}
+	
+	public synchronized static <T extends RealType<T>> Img<T> getSingleImage(String path, Double offset, Rectangle cropRegion)
+	{
+		Logs.log("Opening image - " + path, JEXReader.class);
+		ImagePlus im = new ImagePlus(path);
+		if(cropRegion != null)
+		{
+			im.setRoi(cropRegion);
+			im = im.crop();
+		}
 		Img<T> ret = ImageJFunctions.wrapReal(im);
 
 		// Adjust the image if necessary.
