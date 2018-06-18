@@ -38,7 +38,7 @@ import tables.DimensionMap;
  */
 public class JEX_StackProjection extends JEXCrunchable {
 
-	public static final String METHOD_MEAN = "mean", METHOD_MIN = "min", METHOD_MAX = "max", METHOD_MEDIAN = "median", METHOD_SUM = "sum", METHOD_STDEV = "std. dev.", METHOD_DIFF = "diff (final-initial)", METHOD_ABSDIFF = "absolute diff [abs(final-initial)]";
+	public static final String METHOD_MEAN = "mean", METHOD_MIN = "min", METHOD_MAX = "max", METHOD_MEDIAN = "median", METHOD_SUM = "sum", METHOD_STDEV = "std. dev.", METHOD_DIFF = "diff (final-initial)", METHOD_ABSDIFF = "absolute diff [abs(final-initial)]", METHOD_MULT = "multiply";
 
 	public JEX_StackProjection()
 	{}
@@ -148,7 +148,7 @@ public class JEX_StackProjection extends JEXCrunchable {
 	public ParameterSet requiredParameters()
 	{
 		Parameter p0 = new Parameter("Dimension", "Name of dimension to perform the operation (case and whitespace sensitive).", "Z");
-		Parameter p1 = new Parameter("Math Operation", "Type of math operation to perform.", Parameter.DROPDOWN, new String[] { METHOD_MEAN, METHOD_MAX, METHOD_MIN, METHOD_SUM, METHOD_STDEV, METHOD_MEDIAN, METHOD_DIFF, METHOD_ABSDIFF }, 5);
+		Parameter p1 = new Parameter("Math Operation", "Type of math operation to perform.", Parameter.DROPDOWN, new String[] { METHOD_MEAN, METHOD_MAX, METHOD_MIN, METHOD_SUM, METHOD_STDEV, METHOD_MEDIAN, METHOD_DIFF, METHOD_ABSDIFF, METHOD_MULT}, 5);
 		Parameter p2 = new Parameter("Sliding Window Projection", "Perform the projection for the whole stack or for N number of images at a time, shifting by 1 each time.", Parameter.DROPDOWN, new String[] { "true", "false" }, 1);
 		Parameter p3 = new Parameter("N", "Number of images in sliding window (ignored if not sliding window).", "2");
 		Parameter p4 = getNumThreadsParameter(10, 6);
@@ -255,6 +255,10 @@ public class JEX_StackProjection extends JEXCrunchable {
 					{
 						finalImp = evaluate(stackMaps, imageData, true);
 					}
+					else if(mathOperation.equals(METHOD_MULT))
+					{
+						finalImp = multiplicationProjection(stackMaps, imageData);
+					}
 					else
 					{
 						finalImp = evaluate(stackMaps, imageData, mathOperation);
@@ -287,6 +291,10 @@ public class JEX_StackProjection extends JEXCrunchable {
 				else if(mathOperation.equals(METHOD_ABSDIFF))
 				{
 					finalImp = evaluate(stackMaps, imageData, true);
+				}
+				else if(mathOperation.equals(METHOD_MULT))
+				{
+					finalImp = multiplicationProjection(stackMaps, imageData);
 				}
 				else
 				{
@@ -455,6 +463,30 @@ public class JEX_StackProjection extends JEXCrunchable {
 		Dim right = new Dim(dimToProject.name(), dimToProject.valuesStartingAt(i));
 		Dim left = new Dim(dimToProject.name(), dimToProject.valuesUpThrough(i + slidingWindowSize - 1));
 		return Dim.intersect(left, right);
+	}
+	
+	private FloatProcessor multiplicationProjection(List<DimensionMap> stackMaps, JEXData imageData)
+	{
+		FloatProcessor ret = null;
+		FloatBlitter fb = null;
+		for(DimensionMap map : stackMaps)
+		{
+			String path = ImageReader.readImagePath(imageData.getData(map), imageData.getTypeName().getType().getFlavor().equals(JEXData.FLAVOR_VIRTUAL));
+			if(path != null)
+			{
+				FloatProcessor fp = (new ImagePlus(path)).getProcessor().convertToFloatProcessor();
+				if(ret == null)
+				{
+					ret = fp;
+					fb = new FloatBlitter(fp);
+				}
+				else
+				{
+					fb.copyBits(fp, 0, 0, Blitter.MULTIPLY);
+				}
+			}
+		}
+		return ret;
 	}
 }
 
