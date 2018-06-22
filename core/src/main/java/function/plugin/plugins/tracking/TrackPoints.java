@@ -40,6 +40,7 @@ import Database.DBObjects.JEXEntry;
 import Database.DataReader.RoiReader;
 import Database.DataWriter.FileWriter;
 import Database.DataWriter.RoiWriter;
+import Database.DataWriter.TrackWriter;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.tracking.oldlap.FastLAPTracker;
@@ -115,10 +116,13 @@ public class TrackPoints extends JEXPlugin {
 	@OutputMarker(uiOrder=2, name="Tracks", type=MarkerConstants.TYPE_ROI, flavor="", description="Inidividual point rois for each track with ids matching the maxima (tracked) output.", enabled=true)
 	JEXData trackRoiData;
 	
-	@OutputMarker(uiOrder=3, name="Position Table", type=MarkerConstants.TYPE_FILE, flavor="", description="A csv table of positions of all cells at all times.", enabled=true)
+	@OutputMarker(uiOrder=3, name="Tracks Object", type=MarkerConstants.TYPE_TRACK, flavor="", description="Inidividual point rois for each track with ids matching the maxima (tracked) output.", enabled=true)
+	JEXData trackTrackData;
+	
+	@OutputMarker(uiOrder=4, name="Position Table", type=MarkerConstants.TYPE_FILE, flavor="", description="A csv table of positions of all cells at all times.", enabled=true)
 	JEXData positionData;
 	
-	@OutputMarker(uiOrder=4, name="Median Deltas ROI", type=MarkerConstants.TYPE_ROI, flavor="", description="Point ROI that represents the median overall motion of the cells, stored as a point roi for use with other functions such as image registration.", enabled=true)
+	@OutputMarker(uiOrder=5, name="Median Deltas ROI", type=MarkerConstants.TYPE_ROI, flavor="", description="Point ROI that represents the median overall motion of the cells, stored as a point roi for use with other functions such as image registration.", enabled=true)
 	JEXData deltasRoiData;
 	
 	@Override
@@ -199,6 +203,7 @@ public class TrackPoints extends JEXPlugin {
 		// Create the JEXData and assign the outputs
 		this.trackRoiData = RoiWriter.makeRoiObject("temp", finalTrackRois);
 		this.trackedMaximaData = RoiWriter.makeRoiObject("temp", finalMaximaRois);
+		this.trackTrackData = TrackWriter.makeTracksObject("temp", finalTrackRois);
 		String tablePath = JEXCSVWriter.writeDoubleTable(positionTable);
 		this.positionData = FileWriter.makeFileObject("position data", null, tablePath);
 		this.deltasRoiData = RoiWriter.makeRoiObject("diffs", diffRois);
