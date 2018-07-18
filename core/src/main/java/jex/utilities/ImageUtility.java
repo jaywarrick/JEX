@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.TreeMap;
 import java.util.Vector;
 
-import Database.SingleUserDatabase.JEXWriter;
 import function.ops.histogram.PolynomialRegression;
 import function.plugin.plugins.featureExtraction.FeatureUtils;
 import function.plugin.plugins.imageProcessing.RankFilters2;
@@ -452,9 +451,9 @@ public class ImageUtility {
 		return(weightImages);
 	}
 	
-	public static Pair<FloatProcessor, String> getWeightedMeanFilterImage(FloatProcessor original, boolean doThreshold, boolean doSubtraction, boolean doBackgroundOnly, boolean doDivision, double meanRadius, double varRadius, double subScale, double threshScale, String operation, Double nominal, Double sigma, double darkfield)
+	public static Pair<FloatProcessor, ImageProcessor> getWeightedMeanFilterImage(FloatProcessor original, boolean doThreshold, boolean doSubtraction, boolean doBackgroundOnly, boolean doDivision, double meanRadius, double varRadius, double subScale, double threshScale, String operation, Double nominal, Double sigma, double darkfield)
 	{
-		Pair<FloatProcessor, String> ret = new Pair<>((FloatProcessor) null, (String) null);
+		Pair<FloatProcessor, ImageProcessor> ret = new Pair<>((FloatProcessor) null, (ImageProcessor) null);
 		//	FloatProcessor original = im.getProcessor().convertToFloatProcessor();
 		FloatProcessor copyOfOriginal = null, subLocalMean = null, threshLocalMean = null;
 		if(doThreshold & sigma >= 0 || doSubtraction || doDivision)
@@ -476,9 +475,9 @@ public class ImageUtility {
 		{
 			// Then threshold the weights image instead of the actual image (e.g., BF images are better done this way)
 			ByteProcessor bp = ImageUtility.getThresholdedWeightsImage(threshWeights, sigma.floatValue(), threshScale);
-			String myPath = JEXWriter.saveImage(bp);
+			//String myPath = JEXWriter.saveImage(bp);
 			//FileUtility.showImg(bp, true);
-			ret.p2 = myPath;
+			ret.p2 = bp;
 		}
 
 		//RankFilters2 rF = new RankFilters2();
@@ -541,16 +540,16 @@ public class ImageUtility {
 			FloatBlitter tempfb = new FloatBlitter(threshLocalMean);
 			tempfb.copyBits(copyOfOriginal, 0, 0, Blitter.SUBTRACT);
 			tempfb.copyBits(localSD, 0, 0, Blitter.DIVIDE);
-			String myPath = null;
+			ImageProcessor myPath = null;
 			if(sigma == 0)
 			{
 				threshLocalMean.multiply(-1.0);
-				myPath = JEXWriter.saveImage(threshLocalMean);
+				myPath = threshLocalMean;
 			}
 			else
 			{
 				ByteProcessor mask = ImageUtility.getThresholdedImage(threshLocalMean, -1f*sigma.floatValue(), false);
-				myPath = JEXWriter.saveImage(mask);
+				myPath = mask;
 			}
 			ret.p2 = myPath;
 		}
