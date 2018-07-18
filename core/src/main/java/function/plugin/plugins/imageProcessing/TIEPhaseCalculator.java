@@ -144,7 +144,7 @@ public class TIEPhaseCalculator extends JEXPlugin {
 	@OutputMarker(uiOrder=1, name="Phase", type=MarkerConstants.TYPE_IMAGE, flavor="", description="The resultant phase image", enabled=true)
 	JEXData output;
 	
-	@OutputMarker(uiOrder=2, name="Phase Mask", type=MarkerConstants.TYPE_IMAGE, flavor="", description="Mask made from the the phase image, locally thresholded using the 'weighted mean filter' method.", enabled=true)
+	@OutputMarker(uiOrder=2, name="SNR Phase Mask", type=MarkerConstants.TYPE_IMAGE, flavor="", description="Mask made from the the phase image, locally thresholded using the 'weighted mean filter' method.", enabled=true)
 	JEXData mask;
 
 	@Override
@@ -377,7 +377,7 @@ public class TIEPhaseCalculator extends JEXPlugin {
 						if(this.doFilteringAndScaling)
 						{
 							fft.filter(phi);
-							Pair<FloatProcessor, String> images = ImageUtility.getWeightedMeanFilterImage(phi, this.saveThresholdImage, true, true, false, this.filterLargeDia, 2d, 2d, 0.75, "Subtract Background", 0d, this.sigma, 100d);
+							Pair<FloatProcessor, ImageProcessor> images = ImageUtility.getWeightedMeanFilterImage(phi, this.saveThresholdImage, true, true, false, this.filterLargeDia, 2d, 2d, 0.75, "Subtract Background", 0d, this.sigma, 100d);
 							phi = images.p1;
 							if(this.bitDepth < 32)
 							{
@@ -398,7 +398,11 @@ public class TIEPhaseCalculator extends JEXPlugin {
 							{
 								mapToSave.put("ImCol", tileMap.get("ImCol"));
 							}
-							maskMap.put(mapToSave, images.p2);
+							if(images.p2 != null)
+							{
+								String maskPath = JEXWriter.saveImage(images.p2, 8);
+								maskMap.put(mapToSave, maskPath);
+							}
 						}
 						else
 						{
