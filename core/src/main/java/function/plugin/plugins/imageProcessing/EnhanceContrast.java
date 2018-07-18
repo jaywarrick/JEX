@@ -1,4 +1,4 @@
-package function.plugin.plugins.imageThresholding;
+package function.plugin.plugins.imageProcessing;
 
 import java.util.TreeMap;
 import java.util.Vector;
@@ -16,7 +16,6 @@ import function.plugin.mechanism.MarkerConstants;
 import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
 import ij.ImagePlus;
-import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
@@ -38,14 +37,14 @@ import tables.DimensionMap;
 
 @Plugin(
 		type = JEXPlugin.class,
-		name="Histogram Contrast Enhancement",
-		menuPath="Image Thresholding",
+		name="Enhance Contrast",
+		menuPath="Image Processing",
 		visible=true,
 		description="Adjust the intensities of each channel to be between a min and max intensity defined as a percentile of the pixels below those thresholds (e.g., between min=1% and max=99%)."
 		)
-public class HistogramContrastEnhancement extends JEXPlugin {
+public class EnhanceContrast extends JEXPlugin {
 
-	public HistogramContrastEnhancement()
+	public EnhanceContrast()
 	{}
 
 	/////////// Define Inputs ///////////
@@ -55,31 +54,34 @@ public class HistogramContrastEnhancement extends JEXPlugin {
 
 	/////////// Define Parameters ///////////
 
-	@ParameterMarker(uiOrder=1, name="Min Percentile", description="Lower threshold or new 'Min Intensity (i.e., 0)' of the image defined as a percentile of the current intensities in the image.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
+	@ParameterMarker(uiOrder=1, name="Min Percentile", description="Lower threshold (e.g., 0.5%)' of the image defined as a percentile of the current intensities in the image.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
 	double minPercentile;
 
-	@ParameterMarker(uiOrder=2, name="Max Percentile", description="Upper threshold or new 'Max Intensity (e.g., 255 for 8-bit)' of the image defined as a percentile of the current intensities in the image.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="99.0")
+	@ParameterMarker(uiOrder=2, name="Max Percentile", description="Upper threshold (e.g., 99%)' of the image defined as a percentile of the current intensities in the image.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="99.0")
 	double maxPercentile;
+	
+	@ParameterMarker(uiOrder=3, name="Gamma (post)", description="Gamma adjustment applied post contrast adjustment.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1.0")
+	double gamma;
 
-	@ParameterMarker(uiOrder=3, name="Method", description="Should thresholds be determined for each individual image or by inidivual channel or one threshold for all?", ui=MarkerConstants.UI_DROPDOWN, choices={"per Image","per Channel","Uniform"}, defaultChoice=0)
+	@ParameterMarker(uiOrder=4, name="Method", description="Should thresholds be determined for each individual image or by inidivual channel or one threshold for all?", ui=MarkerConstants.UI_DROPDOWN, choices={"per Image","per Channel","Uniform"}, defaultChoice=0)
 	String method;
 
-	@ParameterMarker(uiOrder=4, name="Channel Dim Name", description="If creating a single threshold per channel, what is the name of the channel dimension?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Channel")
+	@ParameterMarker(uiOrder=5, name="Channel Dim Name", description="If creating a single threshold per channel, what is the name of the channel dimension?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Channel")
 	String channelDimName;
 
-	@ParameterMarker(uiOrder=5, name="(n) Number of Images to Sample", description="For large datasets, one can just analyze the first 'n' images to limit calculation time and just use threshold limits based on some of the images. A value < 1 results in use of all images. The per Image method ignores this setting.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="5")
+	@ParameterMarker(uiOrder=6, name="(n) Number of Images to Sample", description="For large datasets, one can just analyze the first 'n' images to limit calculation time and just use threshold limits based on some of the images. A value < 1 results in use of all images. The per Image method ignores this setting.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="5")
 	int n;
 	
-	@ParameterMarker(uiOrder=6, name="Pixel Sample Size", description="For large images, a subset of the pixels can be used to estimate percentiles to speed calculation. Sample size < 1 results in sampling of the entire image.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="-1")
+	@ParameterMarker(uiOrder=7, name="Pixel Sample Size", description="For large images, a subset of the pixels can be used to estimate percentiles to speed calculation. Sample size < 1 results in sampling of the entire image.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="-1")
 	int sampleSize;
 	
-	@ParameterMarker(uiOrder=5, name="Output Bit Depth", description="What bit depth should the image be saved as, scaling the image to fill the bit depth range?", ui=MarkerConstants.UI_DROPDOWN, choices={"8","16","32"}, defaultChoice=0)
+	@ParameterMarker(uiOrder=8, name="Output Bit Depth", description="What bit depth should the image be saved as, scaling the image to fill the bit depth range?", ui=MarkerConstants.UI_DROPDOWN, choices={"8","16","32"}, defaultChoice=0)
 	int outputBitDepth;
 	
-	@ParameterMarker(uiOrder=7, name="Exclusion Filter DimTable", description="Filter specific dimension combinations from analysis. (Format: <DimName1>=<a1,a2,...>;<DimName2>=<b1,b2...>)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
+	@ParameterMarker(uiOrder=9, name="Exclusion Filter DimTable", description="Filter specific dimension combinations from analysis. (Format: <DimName1>=<a1,a2,...>;<DimName2>=<b1,b2...>)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
 	String filterDimTableString;
 	
-	@ParameterMarker(uiOrder=8, name="Keep Excluded Images?", description="Should images excluded by the filter be copied to the new object?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
+	@ParameterMarker(uiOrder=10, name="Keep Excluded Images?", description="Should images excluded by the filter be copied to the new object?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
 	boolean keepExcluded;
 
 	//	@ParameterMarker(uiOrder=5, name="Plot First (n) Histograms?", description="Should the first histogram and thresholds be plotted? (REQUIRES R / RServe to be up an running)", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
@@ -106,11 +108,11 @@ public class HistogramContrastEnhancement extends JEXPlugin {
 		}
 
 		// Check parameters
-		if(minPercentile >= maxPercentile)
-		{
-			JEXDialog.messageDialog("The 'Min Percentile' must be less than the 'Max Percentile'", this);
-			return false;
-		}
+		//		if(minPercentile >= maxPercentile)
+		//		{
+		//			JEXDialog.messageDialog("The 'Min Percentile' must be less than the 'Max Percentile'", this);
+		//			return false;
+		//		}
 		if(minPercentile < 0)
 		{
 			JEXDialog.messageDialog("The 'Min Percentile' must be >= 0", this);
@@ -150,26 +152,6 @@ public class HistogramContrastEnhancement extends JEXPlugin {
 					{
 						if(filterTable.testMapAsExclusionFilter(map))
 						{
-							if(this.keepExcluded)
-							{
-								Logs.log("Skipping the processing of " + map.toString(), this);
-								ImagePlus out = new ImagePlus(imageMap.get(map));
-								tempPath = JEXWriter.saveImage(out);
-								if(tempPath != null)
-								{
-									outputImageMap.put(map, tempPath);
-								}
-								count = count + 1;
-								percentage = (int) (100 * ((double) (count) / ((double) imageMap.size())));
-								JEXStatics.statusBar.setProgressPercentage(percentage);
-							}
-							else
-							{
-								Logs.log("Skipping the processing and saving of " + map.toString(), this);
-								count = count + 1;
-								percentage = (int) (100 * ((double) (count) / ((double) imageMap.size())));
-								JEXStatics.statusBar.setProgressPercentage(percentage);
-							}
 							continue;
 						}
 						
@@ -215,6 +197,29 @@ public class HistogramContrastEnhancement extends JEXPlugin {
 					// Apply the thresholds throughout.
 					for(DimensionMap map : t.getMapIterator())
 					{
+						if(filterTable.testMapAsExclusionFilter(map))
+						{
+							if(this.keepExcluded)
+							{
+								Logs.log("Skipping the processing of " + map.toString(), this);
+								ImagePlus out = new ImagePlus(imageMap.get(map));
+								tempPath = JEXWriter.saveImage(out);
+								if(tempPath != null)
+								{
+									outputImageMap.put(map, tempPath);
+								}
+							}
+							else
+							{
+								Logs.log("Skipping the processing and saving of " + map.toString(), this);
+							}
+							// Update the progress bar
+							count = count + 1;
+							percentage = (int) (100 * ((double) (count) / ((double) imageMap.size())));
+							JEXStatics.statusBar.setProgressPercentage(percentage);
+							continue;
+						}
+						
 						// Check if canceled
 						if(this.isCanceled())
 						{
@@ -223,10 +228,10 @@ public class HistogramContrastEnhancement extends JEXPlugin {
 
 						// Get the image
 						ImagePlus im = new ImagePlus(imageMap.get(map));
-						ImageProcessor imp = (FloatProcessor) im.getProcessor();
+						ImageProcessor imp = im.getProcessor();
 
 						// Save the contrasted image
-						tempPath = this.getAdjustedImage(imp, new Pair<Double,Double>(minThresh, maxThresh));
+						tempPath = this.getAdjustedImage(imp, new Pair<Double,Double>(minThresh, maxThresh), this.gamma);
 						if(tempPath != null)
 						{
 							outputImageMap.put(map, tempPath);
@@ -289,8 +294,7 @@ public class HistogramContrastEnhancement extends JEXPlugin {
 				}
 
 				// Get the image
-				ImagePlus im = new ImagePlus(imageMap.get(map));
-				ImageProcessor imp = im.getProcessor();
+				ImageProcessor imp = (new ImagePlus(path)).getProcessor();
 				
 				// Get the thresholds
 				thresholds = ImageUtility.percentile(imp, this.minPercentile, this.maxPercentile, this.sampleSize);
@@ -305,14 +309,13 @@ public class HistogramContrastEnhancement extends JEXPlugin {
 				}
 				
 				// Save the contrasted image
-				tempPath = this.getAdjustedImage(imp, thresholds);//im.getBitDepth());
+				tempPath = this.getAdjustedImage(imp, thresholds, this.gamma);//im.getBitDepth());
 				if(tempPath != null)
 				{
 					outputImageMap.put(map, tempPath);
 				}
 
 				// Reclaim memory
-				im.flush();
 				imp = null;
 
 				// Update the progress bar
@@ -342,16 +345,10 @@ public class HistogramContrastEnhancement extends JEXPlugin {
 						{
 							outputImageMap.put(map, tempPath);
 						}
-						count = count + 1;
-						percentage = (int) (100 * ((double) (count) / ((double) imageMap.size())));
-						JEXStatics.statusBar.setProgressPercentage(percentage);
 					}
 					else
 					{
 						Logs.log("Skipping the processing and saving of " + map.toString(), this);
-						count = count + 1;
-						percentage = (int) (100 * ((double) (count) / ((double) imageMap.size())));
-						JEXStatics.statusBar.setProgressPercentage(percentage);
 					}
 					continue;
 				}
@@ -366,7 +363,6 @@ public class HistogramContrastEnhancement extends JEXPlugin {
 				String path = imageMap.get(map);
 				if(path == null)
 				{
-					i = i + 1;
 					continue;
 				}
 
@@ -375,7 +371,6 @@ public class HistogramContrastEnhancement extends JEXPlugin {
 				if(thresholds == null)
 				{
 					Logs.log("Couldn't determine a threshold for image: " + map.toString() + " - " + imageMap.get(map) + ". Skipping.", this);
-					i = i + 1;
 					continue;
 				}
 				mins.add(thresholds.p1);
@@ -404,18 +399,22 @@ public class HistogramContrastEnhancement extends JEXPlugin {
 				}
 
 				// Get the image
-				ImagePlus im = new ImagePlus(imageMap.get(map));
-				FloatProcessor imp = (FloatProcessor) im.getProcessor().convertToFloat();
+				String path = imageMap.get(map);
+				if(path == null)
+				{
+					count = count + 1;
+					continue;
+				}
+				ImageProcessor imp = (new ImagePlus(imageMap.get(map))).getProcessor();
 
 				// Save the contrasted image
-				tempPath = this.getAdjustedImage(imp, new Pair<Double,Double>(minThresh, maxThresh));
+				tempPath = this.getAdjustedImage(imp, new Pair<Double,Double>(minThresh, maxThresh), this.gamma);
 				if(tempPath != null)
 				{
 					outputImageMap.put(map, tempPath);
 				}
 
 				// Reclaim memory
-				im.flush();
 				imp = null;
 
 				// Update the progress bar
@@ -436,17 +435,17 @@ public class HistogramContrastEnhancement extends JEXPlugin {
 		return true;	
 	}
 
-	public String getAdjustedImage(ImageProcessor imp, Pair<Double,Double> thresholds)
+	public String getAdjustedImage(ImageProcessor imp, Pair<Double,Double> thresholds, double gamma)
 	{
 		// Call helper method
 		String tempPath = null;
 		if(this.outputBitDepth < 32)
 		{
-			tempPath = saveAdjustedImage(imp, thresholds.p1, thresholds.p2, 0.0, Math.pow(2, this.outputBitDepth)-1, 1.0, this.outputBitDepth);
+			tempPath = saveAdjustedImage(imp, thresholds.p1, thresholds.p2, 0.0, Math.pow(2, this.outputBitDepth)-1, gamma, this.outputBitDepth);
 		}
 		else
 		{
-			tempPath = saveAdjustedImage(imp, thresholds.p1, thresholds.p2, 0.0, 1.0, 1.0, this.outputBitDepth);
+			tempPath = saveAdjustedImage(imp, thresholds.p1, thresholds.p2, 0.0, 1.0, gamma, this.outputBitDepth);
 		}
 
 		return tempPath;
