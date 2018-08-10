@@ -93,7 +93,7 @@ public class SortDecimalDimensionValues extends JEXPlugin {
 		
 		// Remove the old data object.
 		JEXStatics.jexDBManager.removeDataFromEntry(optionalEntry, this.inputData);
-		JEXStatics.jexDBManager.updateObjectsView();
+		//		JEXStatics.jexDBManager.updateObjectsView(); // This is called within the next call.
 		JEXStatics.jexDBManager.saveDataInEntry(optionalEntry, output, true);
 
 		// Return status
