@@ -1,15 +1,5 @@
 package Database.SingleUserDatabase;
 
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DBObjects.JEXLabel;
-import Database.Definition.DimensionGroupMap;
-import Database.Definition.Experiment;
-import Database.Definition.Filter;
-import Database.Definition.FilterSet;
-import Database.Definition.Type;
-import Database.Definition.TypeName;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -19,7 +9,17 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.Vector;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DBObjects.JEXLabel;
+import Database.Definition.DimensionGroupMap;
+import Database.Definition.Experiment;
+import Database.Definition.Filter;
+import Database.Definition.FilterSet;
+import Database.Definition.Type;
+import Database.Definition.TypeName;
 import jex.JEXManager;
 import jex.statics.JEXStatics;
 import logs.Logs;
@@ -750,6 +750,40 @@ public class JEXDB implements Iterable<JEXEntry> {
 	public tnvi getFilteredTNVI()
 	{
 		return this.fTNVI;
+	}
+	
+	/**
+	 * Return the JEXData of typename TN in entry ENTRY
+	 */
+	public Vector<JEXData> getDatasOfTypeWithNameContainingInEntry(TypeName tn, JEXEntry entry)
+	{
+		if(tn == null || entry == null)
+		{
+			return null;
+		}
+		
+		TreeMap<Type,TreeMap<String,JEXData>> tnmap = entry.getDataList();
+		if(tnmap == null)
+		{
+			return null;
+		}
+		
+		TreeMap<String,JEXData> nmap = tnmap.get(tn.getType());
+		if(nmap == null)
+		{
+			return null;
+		}
+		
+		Vector<JEXData> ret = new Vector<>();
+		for(String name : nmap.keySet())
+		{
+			if(name.contains(tn.getName()))
+			{
+				ret.add(nmap.get(name));
+			}
+		}
+		
+		return ret;
 	}
 	
 	/**

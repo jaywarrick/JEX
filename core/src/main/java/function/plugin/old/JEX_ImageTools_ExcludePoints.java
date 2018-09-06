@@ -239,13 +239,16 @@ public class JEX_ImageTools_ExcludePoints extends JEXCrunchable {
 			setToIterateOver = regionROI.keySet();
 		}
 		
+		
 		for (DimensionMap map : setToIterateOver)
 		{
 			DimensionMap mapToSave = new DimensionMap();
-			for(Dim d : pointTable)
-			{
-				mapToSave.put(d.dimName, map.get(d.dimName));
-			}
+			// Removed this so that you can crop same set of points differently with regions of different dimensionmap
+			//			for(Dim d : pointTable)
+			//			{
+			//				mapToSave.put(d.dimName, map.get(d.dimName));
+			//			}
+			mapToSave = map.copy();
 			points = pointROI.get(map);
 			region = regionROI.get(map);
 			if(region != null && points != null)
