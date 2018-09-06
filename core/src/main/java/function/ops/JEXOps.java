@@ -56,8 +56,8 @@ public class JEXOps {
 	 * @Plugin(type = JEXOps.RadiusOfGyration.class
 	 * </pre>
 	 */
-	public interface RadiusOfGyration extends Op {
-		String NAME = "stats.radiusOfGyration";
+	public interface RadiusOfGyrationSquared extends Op {
+		String NAME = "stats.radiusOfGyrationSquared";
 	}
 	
 	/**

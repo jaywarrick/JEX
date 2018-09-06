@@ -13,9 +13,9 @@ import net.imglib2.IterableInterval;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.DoubleType;
 
-@Plugin(type = JEXOps.RadiusOfGyration.class, label = "Radius of Gyration")
-public class  DefaultRadiusOfGyration<I extends RealType<I>>
-	extends AbstractUnaryFunctionOp<IterableInterval<I>, DoubleType> implements JEXOps.RadiusOfGyration
+@Plugin(type = JEXOps.RadiusOfGyrationSquared.class, label = "Radius of Gyration Squared")
+public class  DefaultRadiusOfGyrationSquared<I extends RealType<I>>
+	extends AbstractUnaryFunctionOp<IterableInterval<I>, DoubleType> implements JEXOps.RadiusOfGyrationSquared
 {
 
 	private UnaryFunctionOp<IterableInterval<I>, ? extends RealType<?>> moment00Func;
@@ -39,8 +39,8 @@ public class  DefaultRadiusOfGyration<I extends RealType<I>>
 		final double moment20 = moment20Func.calculate(input).getRealDouble();
 		final double moment02 = moment02Func.calculate(input).getRealDouble();
 
-		final double rog = Math.sqrt((moment20 + moment02)/moment00);
+		final double rog2 = (moment20 + moment02)/moment00;
 
-		return(new DoubleType(rog));
+		return(new DoubleType(rog2));
 	}
 }

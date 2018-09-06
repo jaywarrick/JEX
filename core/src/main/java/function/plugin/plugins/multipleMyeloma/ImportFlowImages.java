@@ -39,6 +39,7 @@ import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import jex.utilities.FunctionUtility;
 import jex.utilities.ROIUtility;
+import logs.Logs;
 import miscellaneous.FileUtility;
 import miscellaneous.Pair;
 import miscellaneous.StatisticsUtility;
@@ -234,6 +235,11 @@ public class ImportFlowImages extends JEXPlugin {
 				}
 
 				// Get the image for manipulation
+				if(sortedFiles.get(map) == null)
+				{
+					JEXDialog.messageDialog("Expected an image for each channel but an image was missing. Aborting.", this);
+					return false;
+				}
 				ImagePlus im = new ImagePlus(sortedFiles.get(map));
 				FloatProcessor imp = im.getProcessor().convertToFloatProcessor();
 
@@ -245,7 +251,7 @@ public class ImportFlowImages extends JEXPlugin {
 
 				// Get the background median
 				Pair<Double,Double> med_mad = getMedAndMad(circle, imp);
-				
+
 				channelBgMedians.get(map.get(channelDim.dimName)).add(med_mad.p1);
 				channelBgMads.get(map.get(channelDim.dimName)).add(med_mad.p2);
 
@@ -428,7 +434,15 @@ public class ImportFlowImages extends JEXPlugin {
 
 				// Clean up
 				channelBgMedians.clear();
+				for(String val : channelDim.dimValues)
+				{
+					channelBgMedians.put(val, new Vector<Double>());
+				}
 				channelBgMads.clear();
+				for(String val : channelDim.dimValues)
+				{
+					channelBgMads.put(val, new Vector<Double>());
+				}
 				edgeMedians.clear();
 				edgeMads.clear();
 				imageMap.clear();

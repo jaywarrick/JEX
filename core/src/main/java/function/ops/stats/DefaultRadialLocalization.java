@@ -4,7 +4,7 @@ import org.scijava.Priority;
 import org.scijava.plugin.Plugin;
 
 import function.ops.JEXOps;
-import function.ops.JEXOps.RadiusOfGyration;
+import function.ops.JEXOps.RadiusOfGyrationSquared;
 import net.imagej.ops.special.function.AbstractBinaryFunctionOp;
 import net.imagej.ops.special.function.Functions;
 import net.imagej.ops.special.function.UnaryFunctionOp;
@@ -22,8 +22,8 @@ implements JEXOps.RadialLocalization {
 
 	@Override
 	public void initialize() {
-		rogAFunc = Functions.unary(ops(), RadiusOfGyration.class, DoubleType.class, in1());
-		rogBFunc = Functions.unary(ops(), RadiusOfGyration.class, DoubleType.class, in2());
+		rogAFunc = Functions.unary(ops(), RadiusOfGyrationSquared.class, DoubleType.class, in1());
+		rogBFunc = Functions.unary(ops(), RadiusOfGyrationSquared.class, DoubleType.class, in2());
 	}
 	
 	@Override

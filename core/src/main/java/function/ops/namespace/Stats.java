@@ -45,10 +45,10 @@ public class Stats extends AbstractNamespace {
 	}
 	
 	@OpMethod(
-			op = function.ops.stats.DefaultRadiusOfGyration.class)
+			op = function.ops.stats.DefaultRadiusOfGyrationSquared.class)
 	public <T extends RealType<T>> DoubleType defaultradiusofgyration(final IterableInterval<T> in1) {
 		final DoubleType result = (DoubleType) ops().run(
-				function.ops.stats.DefaultRadiusOfGyration.class, in1);
+				function.ops.stats.DefaultRadiusOfGyrationSquared.class, in1);
 		return result;
 	}
 	
