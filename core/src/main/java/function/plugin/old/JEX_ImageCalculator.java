@@ -241,6 +241,10 @@ public class JEX_ImageCalculator extends JEXCrunchable {
 			FloatProcessor impA;
 			for (DimensionMap map : imageBMap.keySet())
 			{
+				if(this.isCanceled())
+				{
+					return false;
+				}
 				impA = new FloatProcessor(savedImpA.getWidth(), savedImpA.getHeight(), (float[]) savedImpA.getPixelsCopy(), null);
 				String pathB = imageBMap.get(map);
 				if(pathB == null)
