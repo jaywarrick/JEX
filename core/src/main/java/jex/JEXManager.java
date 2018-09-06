@@ -8,24 +8,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.Vector;
 
 import javax.swing.JOptionPane;
 
-import jex.infoPanels.InfoPanelController;
-import jex.jexTabPanel.jexLabelPanel.LabelsPanel;
-import jex.objectAndEntryPanels.JEXDataPanel;
-import jex.statics.JEXDialog;
-import jex.statics.JEXStatics;
-import jex.statics.PrefsUtility;
-import logs.Logs;
-import miscellaneous.CSVList;
-import miscellaneous.DirectoryManager;
-import miscellaneous.FileUtility;
-import preferences.XPreferences;
-import signals.SSCenter;
-import tables.Dim;
-import tables.DimTable;
-import tables.DimensionMap;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXDataSingle;
 import Database.DBObjects.JEXEntry;
@@ -45,6 +31,21 @@ import Database.SingleUserDatabase.JEXDBInfo;
 import Database.SingleUserDatabase.JEXWriter;
 import Database.SingleUserDatabase.Repository;
 import Database.SingleUserDatabase.tnvi;
+import jex.infoPanels.InfoPanelController;
+import jex.jexTabPanel.jexLabelPanel.LabelsPanel;
+import jex.objectAndEntryPanels.JEXDataPanel;
+import jex.statics.JEXDialog;
+import jex.statics.JEXStatics;
+import jex.statics.PrefsUtility;
+import logs.Logs;
+import miscellaneous.CSVList;
+import miscellaneous.DirectoryManager;
+import miscellaneous.FileUtility;
+import preferences.XPreferences;
+import signals.SSCenter;
+import tables.Dim;
+import tables.DimTable;
+import tables.DimensionMap;
 
 public class JEXManager {
 	
@@ -1182,6 +1183,19 @@ public class JEXManager {
 	public JEXData getDataOfTypeNameInEntry(TypeName tn, JEXEntry entry)
 	{
 		JEXData result = this.getCurrentDatabase().getDataOfTypeNameInEntry(tn, entry);
+		return result;
+	}
+	
+	/**
+	 * Return the data object in entry ENTRY of typename TN
+	 * 
+	 * @param tn
+	 * @param entry
+	 * @return
+	 */
+	public Vector<JEXData> getDatasOfTypeWithNameContainingInEntry(TypeName tn, JEXEntry entry)
+	{
+		Vector<JEXData> result = this.getCurrentDatabase().getDatasOfTypeWithNameContainingInEntry(tn, entry);
 		return result;
 	}
 	

@@ -46,6 +46,7 @@ public class PointDelegate extends PGonDelegate {
 				temp.width = 4;
 				temp.height = 4;
 				g2.fill(temp);
+				// Suppress id strings here.
 				g2.drawString("" + p.id, p.x + 3, p.y - 3);
 			}
 		}
