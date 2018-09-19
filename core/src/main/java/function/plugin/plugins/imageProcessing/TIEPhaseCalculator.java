@@ -379,16 +379,23 @@ public class TIEPhaseCalculator extends JEXPlugin {
 							fft.filter(phi);
 							Pair<FloatProcessor, ImageProcessor> images = ImageUtility.getWeightedMeanFilterImage(phi, this.saveThresholdImage, true, true, false, this.filterLargeDia, 2d, 2d, 0.75, "Subtract Background", 0d, this.sigma, 100d);
 							phi = images.p1;
+							double max = 1;
+							double originalMax = 1;
 							if(this.bitDepth < 32)
 							{
-								//						phi.resetMinAndMax();
-								//						tie.viewImage(phi);
-								double max = Math.pow(2, this.bitDepth)-1;
-								double originalMax = Math.pow(2, originalBitDepth)-1;
-								phi.multiply(max/(originalMax * this.scale)); // mimic preadjusting all images to range of 0-1 with '1/originalMax'
-								phi.add(max/2);
-								phi.resetMinAndMax();
+								max = Math.pow(2, this.bitDepth)-1;
+								
 							}
+							if(originalBitDepth < 32)
+							{
+								originalMax = Math.pow(2, originalBitDepth)-1;
+							}
+							phi.multiply(max/(originalMax * this.scale)); // mimic preadjusting all images to range of 0-1 with '1/originalMax'
+							if(this.bitDepth < 32)
+							{
+								phi.add(max/2);
+							}
+							phi.resetMinAndMax();
 							DimensionMap mapToSave = toSave.copy();
 							if(this.rows > 1)
 							{
