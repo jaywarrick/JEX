@@ -789,6 +789,32 @@ public class JEXDB implements Iterable<JEXEntry> {
 	/**
 	 * Return the JEXData of typename TN in entry ENTRY
 	 */
+	public JEXData getChunkFlavoredDataOfTypeNameInEntry(TypeName tn, JEXEntry entry)
+	{
+		if(tn == null || entry == null)
+		{
+			return null;
+		}
+		
+		TreeMap<Type,TreeMap<String,JEXData>> tnmap = entry.getDataList();
+		if(tnmap == null)
+		{
+			return null;
+		}
+		
+		TreeMap<String,JEXData> nmap = tnmap.get(new Type(tn.getType().getType(), tn.getType().getFlavor() + JEXData.FLAVOR_CHUNK));
+		if(nmap == null)
+		{
+			return null;
+		}
+		
+		JEXData data = nmap.get(tn.getName());
+		return data;
+	}
+	
+	/**
+	 * Return the JEXData of typename TN in entry ENTRY
+	 */
 	public JEXData getDataOfTypeNameInEntry(TypeName tn, JEXEntry entry)
 	{
 		if(tn == null || entry == null)

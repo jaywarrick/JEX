@@ -115,11 +115,6 @@ public class DistributorArray implements ActionListener {
 		refreshGUI();
 	}
 	
-	public HashMap<Point,Boolean> getSelectedIndeces()
-	{
-		return selectionArray;
-	}
-	
 	public void setSelectionForCellAtIndexXY(int x, int y, boolean selected)
 	{
 		// Get the tray

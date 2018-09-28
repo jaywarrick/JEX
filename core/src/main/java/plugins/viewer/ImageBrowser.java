@@ -1086,7 +1086,7 @@ public class ImageBrowser implements PlugInController {
 		JEXDataSingle ds = imageData.getData(this.dataBrowser.currentImageDimMap());
 		if(ds != null)
 		{
-			this.imageFilePath = ImageReader.readImagePath(ds, imageData.getDataObjectType().getFlavor().equals(JEXData.FLAVOR_VIRTUAL));
+			this.imageFilePath = ImageReader.readImagePath(ds, imageData.hasVirtualFlavor());
 			// this.imageFilePath = ds.get(JEXDataSingle.FOLDERNAME) +
 			// File.separator + ds.get(JEXDataSingle.FILENAME);
 			

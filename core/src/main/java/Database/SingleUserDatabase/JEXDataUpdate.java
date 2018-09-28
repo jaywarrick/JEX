@@ -64,7 +64,7 @@ public class JEXDataUpdate implements Update {
 			TreeMap<DimensionMap,JEXDataSingle> datamap = updatedData.getDataMap();
 			for (DimensionMap map : datamap.keySet())
 			{
-				if(type.getFlavor().equals(JEXData.FLAVOR_VIRTUAL))
+				if(type.hasFlavor(JEXData.FLAVOR_VIRTUAL))
 				{
 					// Then purposely skip as we want to reference a file outside the database.
 					continue;
@@ -118,7 +118,7 @@ public class JEXDataUpdate implements Update {
 			TreeMap<DimensionMap,JEXDataSingle> datamap = updatedData.getDataMap();
 			for (DimensionMap map : datamap.keySet())
 			{
-				if(data.getTypeName().getType().getFlavor().equals(JEXData.FLAVOR_VIRTUAL))
+				if(data.hasVirtualFlavor())
 				{
 					// Then purposely skip as we want to reference a file outside the database.
 					continue;

@@ -1180,6 +1180,19 @@ public class JEXManager {
 	 * @param entry
 	 * @return
 	 */
+	public JEXData getChunkFlavoredDataOfTypeNameInEntry(TypeName tn, JEXEntry entry)
+	{
+		JEXData result = this.getCurrentDatabase().getChunkFlavoredDataOfTypeNameInEntry(tn, entry);
+		return result;
+	}
+	
+	/**
+	 * Return the data object in entry ENTRY of typename TN
+	 * 
+	 * @param tn
+	 * @param entry
+	 * @return
+	 */
 	public JEXData getDataOfTypeNameInEntry(TypeName tn, JEXEntry entry)
 	{
 		JEXData result = this.getCurrentDatabase().getDataOfTypeNameInEntry(tn, entry);

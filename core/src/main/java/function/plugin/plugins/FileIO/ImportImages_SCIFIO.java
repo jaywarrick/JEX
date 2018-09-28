@@ -16,6 +16,7 @@ import Database.DBObjects.JEXEntry;
 import Database.DataWriter.FileWriter;
 import Database.DataWriter.ImageWriter;
 import Database.DataWriter.ValueWriter;
+import Database.Definition.Type;
 import Database.SingleUserDatabase.JEXWriter;
 import function.plugin.IJ2.IJ2PluginUtility;
 import function.plugin.mechanism.JEXPlugin;
@@ -152,6 +153,8 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 		{
 			// We have a single output to return.
 			this.output = imagesAndMetaData.p1.get(0);
+			// TODO
+			this.output.setDataObjectType(new Type(this.output.getDataObjectType(), JEXData.FLAVOR_CHUNK));
 		}
 		else
 		{
@@ -544,9 +547,10 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 						}
 						else
 						{
-							JEXDialog.messageDialog("Can't handle images with this level of dimensionality at yet. Sorry. Aborting.", this);
+							// JEXDialog.messageDialog("Can't handle images with this level of dimensionality at yet. Sorry. Aborting.", this);
+							byte[] converted = (byte[]) DataTools.makeDataArray(plane.getBytes(), 1, false, d.isLittleEndian());
+							ips.add(new ByteProcessor((int)dims[0], (int)dims[1], converted, null));
 						}
-
 					}
 					else if(d.getBitsPerPixel() >= 9 && d.getBitsPerPixel() <= 16)
 					{

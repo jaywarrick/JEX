@@ -107,6 +107,26 @@ public class Type implements Comparable<Type> {
 		return this.flavor;
 	}
 	
+	public boolean hasFlavor(String flavor)
+	{
+		if(this.flavor == null && flavor == null)
+		{
+			return true;
+		}
+		if(this.flavor == null || flavor == null)
+		{
+			return false;
+		}
+		else if(this.getFlavor().equals(flavor))
+		{
+			return true;
+		}
+		else
+		{
+			return this.getFlavor().contains(flavor);
+		}
+	}
+	
 	//	public void setFlavor(String flavor)
 	//	{
 	//		if(flavor != null && !flavor.equals(""))

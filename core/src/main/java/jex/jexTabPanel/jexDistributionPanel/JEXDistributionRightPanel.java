@@ -59,7 +59,7 @@ public class JEXDistributionRightPanel extends JPanel implements ActionListener 
 
 	private int minHeight = 20;
 	private JParameterPanel startPt = new JParameterPanel(new Parameter("First Drop Location", "Choose where in the array the first files will be dropped.", Parameter.DROPDOWN, new String[]{"UL","UR","LL","LR"}), 100);
-	private JParameterPanel firstMove = new JParameterPanel(new Parameter("First Indexing Direction", "Choose which way to 'move' first when indexing to the next array location.", Parameter.DROPDOWN, new String[]{"Horizontal","Vertical"}), 100);
+	//	private JParameterPanel firstMove = new JParameterPanel(new Parameter("First Indexing Direction", "Choose which way to 'move' first when indexing to the next array location.", Parameter.DROPDOWN, new String[]{"Horizontal","Vertical"}), 100);
 	private JParameterPanel snaking = new JParameterPanel(new Parameter("Snaking?", "Choose if indexing should be done in a snaking pattern.", Parameter.CHECKBOX, true), 20);
 
 	private JParameterPanel rows = new JParameterPanel(new Parameter("Tile Rows", "How many rows of tiles are there per image (must be >= 1). If rows and cols are both <=1, no tiles are created.", Parameter.TEXTFIELD, "1"), 100);
@@ -140,8 +140,8 @@ public class JEXDistributionRightPanel extends JPanel implements ActionListener 
 		// Make the distribution direction buttons.
 		this.startPt.panel().setMinimumSize(new Dimension(10, minHeight));
 		this.add(this.startPt.panel(), "growx");
-		this.firstMove.panel().setMinimumSize(new Dimension(10, minHeight));
-		this.add(this.firstMove.panel(), "growx");
+		//		this.firstMove.panel().setMinimumSize(new Dimension(10, minHeight));
+		//		this.add(this.firstMove.panel(), "growx");
 		this.snaking.panel().setMinimumSize(new Dimension(10, minHeight));
 		this.add(this.snaking.panel(), "growx");
 
@@ -239,8 +239,8 @@ public class JEXDistributionRightPanel extends JPanel implements ActionListener 
 		// Make the distribution direction buttons.
 		this.startPt.panel().setMinimumSize(new Dimension(10, minHeight));
 		this.add(this.startPt.panel(), "growx");
-		this.firstMove.panel().setMinimumSize(new Dimension(10, minHeight));
-		this.add(this.firstMove.panel(), "growx");
+		//		this.firstMove.panel().setMinimumSize(new Dimension(10, minHeight));
+		//		this.add(this.firstMove.panel(), "growx");
 		this.snaking.panel().setMinimumSize(new Dimension(10, minHeight));
 		this.add(this.snaking.panel(), "growx");
 
@@ -322,10 +322,10 @@ public class JEXDistributionRightPanel extends JPanel implements ActionListener 
 		return Boolean.parseBoolean(this.snaking.getValue());
 	}
 
-	public boolean getFirstMoveHorizontal()
-	{
-		return this.firstMove.getValue().equals("Horizontal");
-	}
+	//	public boolean getFirstMoveHorizontal()
+	//	{
+	//		return this.firstMove.getValue().equals("Horizontal");
+	//	}
 
 	public String getStartPt()
 	{

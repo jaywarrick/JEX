@@ -348,11 +348,11 @@ public class JEX_StackProjection extends JEXCrunchable {
 	public static ImageProcessor evaluate(List<DimensionMap> stack, JEXData image, boolean abs)
 	{
 
-		String pathToGet = ImageReader.readImagePath(image.getData(stack.get(0)), image.getTypeName().getType().getFlavor().equals(JEXData.FLAVOR_VIRTUAL));
+		String pathToGet = ImageReader.readImagePath(image.getData(stack.get(0)), image.hasVirtualFlavor());
 		ImageProcessor initial = (new ImagePlus(pathToGet)).getProcessor();
 		int bitDepth = initial.getBitDepth();
 		initial = initial.convertToFloatProcessor();		
-		pathToGet = ImageReader.readImagePath(image.getData(stack.get(stack.size()-1)), image.getTypeName().getType().getFlavor().equals(JEXData.FLAVOR_VIRTUAL));
+		pathToGet = ImageReader.readImagePath(image.getData(stack.get(stack.size()-1)), image.hasVirtualFlavor());
 		ImageProcessor ret = (new ImagePlus(pathToGet)).getProcessor();
 		ret = ret.convertToFloatProcessor();
 		Blitter b = new FloatBlitter((FloatProcessor) ret);
@@ -471,7 +471,7 @@ public class JEX_StackProjection extends JEXCrunchable {
 		FloatBlitter fb = null;
 		for(DimensionMap map : stackMaps)
 		{
-			String path = ImageReader.readImagePath(imageData.getData(map), imageData.getTypeName().getType().getFlavor().equals(JEXData.FLAVOR_VIRTUAL));
+			String path = ImageReader.readImagePath(imageData.getData(map), imageData.hasVirtualFlavor());
 			if(path != null)
 			{
 				FloatProcessor fp = (new ImagePlus(path)).getProcessor().convertToFloatProcessor();
