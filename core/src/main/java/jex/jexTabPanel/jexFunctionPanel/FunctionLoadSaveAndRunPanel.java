@@ -13,6 +13,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 
 import jex.statics.DisplayStatics;
+import jex.statics.JEXStatics;
 import net.miginfocom.swing.MigLayout;
 
 public class FunctionLoadSaveAndRunPanel implements ActionListener, ItemListener {
@@ -161,6 +162,7 @@ public class FunctionLoadSaveAndRunPanel implements ActionListener, ItemListener
 			{
 				this.autoUpdate.setText("Auto-Updating (OFF)");
 				// Call code to cancel auto-updater
+				JEXStatics.cruncher.cancelUpdating();
 			}
 		}
 	}

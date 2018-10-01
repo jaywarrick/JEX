@@ -1,9 +1,6 @@
 package cruncher;
 
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.DBObjects.JEXWorkflow;
-
+import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
@@ -14,10 +11,16 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.DBObjects.JEXWorkflow;
+import Database.DataReader.ImageReader;
 import jex.statics.JEXStatics;
 import logs.Logs;
 import miscellaneous.Canceler;
+import miscellaneous.FileUtility;
 import miscellaneous.Pair;
+import miscellaneous.StringUtility;
 
 /**
  * Note that Canceler only refers to GUI Tasks for now.
@@ -44,12 +47,14 @@ public class Cruncher implements Canceler {
 	private final ExecutorService ticketQueue = Executors.newFixedThreadPool(1);
 	private ExecutorService multiFunctionQueue = Executors.newFixedThreadPool(5);
 	private ExecutorService singleFunctionQueue = Executors.newFixedThreadPool(1);
-	private JEXWorkflow workflowToUpdate = null;
+	private JEXWorkflow workflowToUpdate = new JEXWorkflow("Workflow Updater");
 	private TreeSet<JEXEntry> entriesToUpdate = new TreeSet<>();
 	private boolean updateAutoSaving = false;
+	private DirectoryWatcher directoryWatcher;
 	
 	public Cruncher()
 	{
+		this.directoryWatcher = new DirectoryWatcher(this);
 		this.tickets = new Vector<Pair<String,Vector<Ticket>>>(0);
 		this.guiTasks = new Vector<Callable<Integer>>(0);
 	}
@@ -61,15 +66,23 @@ public class Cruncher implements Canceler {
 	
 	public void runUpdate()
 	{
-		this.runWorkflow(this.workflowToUpdate, this.entriesToUpdate, this.updateAutoSaving, false);
+		Logs.log("Running Update." + this.updateAutoSaving, this);
+		//this.runWorkflow(this.workflowToUpdate, this.entriesToUpdate, this.updateAutoSaving, false);
 	}
-	
+
 	public void cancelUpdating()
 	{
 		this.workflowToUpdate = null;
 		this.entriesToUpdate.clear();
 		this.updateAutoSaving = false;
-		
+		try
+		{
+			this.directoryWatcher.close();
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
 	}
 	
 	public void runWorkflow(JEXWorkflow workflow, TreeSet<JEXEntry> entries, boolean autoSave, boolean autoUpdate)
@@ -86,10 +99,42 @@ public class Cruncher implements Canceler {
 		boolean first = true;
 		for (JEXFunction function : workflow)
 		{
-			if(first)
+			// If autoUpdating is on, the first function in the workflow is the ImportVirtualImageUpdates function, then start the updater.
+			if(autoUpdate && first && function.getFunctionName().equals("Import Virtual Image Updates"))
 			{
-				
+				// Grab the first non-null data
+				JEXData input = null;
+				for(JEXEntry entry : entries)
+				{
+					if(input == null)
+					{
+						input = JEXStatics.jexManager.getDataOfTypeNameInEntry(function.inputs.firstEntry().getValue(), entry);
+					}
+					else
+					{
+						break;
+					}
+				}
+				// If the data is virtual
+				if(input != null && input.hasVirtualFlavor())
+				{
+					String path = ImageReader.readObjectToImagePath(input);
+					String dirToWatch = FileUtility.getFileParent(path);
+					String timeToken = function.parameters.getParameter("Time String Token").getValue();
+					if(!timeToken.equals(""))
+					{
+						timeToken = StringUtility.removeWhiteSpaceOnEnds(timeToken);
+						try {
+							this.directoryWatcher.start(dirToWatch, input.getDimTable(), timeToken);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+				}
 			}
+			
+			// Then create a ticket for this function and set of entries.
 			Ticket ticket = new Ticket(function, entries, autoSave);
 			batch.add(ticket);
 		}
