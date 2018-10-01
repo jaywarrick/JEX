@@ -1365,6 +1365,33 @@ public class FeatureUtils {
 		ret.p2 = labelToPointsMap;
 		return ret;
 	}
+	
+	/////////////////////////////////////////
+	////////// ROI Manipulation /////////////
+	/////////////////////////////////////////
+	
+	public ROIPlus cropPointRoi(ROIPlus maxima, ROIPlus cropRegion)
+	{
+		PointList toSave = new PointList();
+		
+		// Filter the points by cropping out any outside the region (or on the border)
+		Shape cropS = cropRegion.getShape();
+		PointList pl = maxima.getPointList();
+		for(IdPoint p : pl)
+		{
+			if(cropS.contains(p))
+			{
+				toSave.add(p);
+			}
+		}
+		
+		// Translate the points to the new origin.
+		Rectangle r = cropRegion.pointList.getBounds();
+		toSave.translate(-r.x, -r.y);
+		
+		// Save the new ROI
+		return(new ROIPlus(toSave, ROIPlus.ROI_POINT));
+	}
 
 	/////////////////////////////////////////
 	///////// Region Manipulation ///////////

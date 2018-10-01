@@ -1,7 +1,5 @@
 package function.plugin.plugins.roi;
 
-import java.awt.Rectangle;
-import java.awt.Shape;
 import java.util.TreeMap;
 
 import org.scijava.plugin.Plugin;
@@ -14,8 +12,7 @@ import function.plugin.mechanism.InputMarker;
 import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.MarkerConstants;
 import function.plugin.mechanism.OutputMarker;
-import image.roi.IdPoint;
-import image.roi.PointList;
+import function.plugin.plugins.featureExtraction.FeatureUtils;
 import image.roi.ROIPlus;
 import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
@@ -84,6 +81,8 @@ public class RegisterPointRoi extends JEXPlugin {
 		return 10;
 	}
 
+	FeatureUtils utils = new FeatureUtils();
+	
 	@Override
 	public boolean run(JEXEntry optionalEntry)
 	{
@@ -106,10 +105,8 @@ public class RegisterPointRoi extends JEXPlugin {
 		TreeMap<DimensionMap,ROIPlus> cropMap = RoiReader.readObjectToRoiMap(cropData);
 		TreeMap<DimensionMap,ROIPlus> adjusted = new TreeMap<DimensionMap,ROIPlus>();
 		int count = 0, percentage = 0;
-		PointList toSave = null;
 		for (DimensionMap map : original.keySet())
 		{
-			toSave = new PointList();
 			ROIPlus roi = original.get(map).copy();
 			ROIPlus crop = cropMap.get(map);
 			if(roi == null || crop == null)
@@ -118,23 +115,10 @@ public class RegisterPointRoi extends JEXPlugin {
 				continue;
 			}
 			
-			// Filter the points by cropping out any outside the region (or on the border)
-			Shape cropS = crop.getShape();
-			PointList pl = roi.getPointList();
-			for(IdPoint p : pl)
-			{
-				if(cropS.contains(p))
-				{
-					toSave.add(p);
-				}
-			}
-			
-			// Translate the points to the new origin.
-			Rectangle r = crop.pointList.getBounds();
-			toSave.translate(-r.x, -r.y);
+			ROIPlus croppedMaxima = utils.cropPointRoi(roi, crop);
 			
 			// Save the new ROI
-			adjusted.put(map, new ROIPlus(toSave, ROIPlus.ROI_POINT));
+			adjusted.put(map, croppedMaxima);
 			
 			// Update progress
 			count = count + 1;

@@ -1,8 +1,13 @@
 package function.plugin.old;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.TreeMap;
+
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;
+import Database.DataReader.RoiReader;
 import Database.DataWriter.ImageWriter;
 import Database.Definition.Parameter;
 import Database.Definition.ParameterSet;
@@ -14,11 +19,7 @@ import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.FloatBlitter;
 import ij.process.FloatProcessor;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.TreeMap;
-
+import image.roi.ROIPlus;
 import jex.statics.JEXStatics;
 import jex.utilities.FunctionUtility;
 import logs.Logs;
@@ -114,8 +115,9 @@ public class JEX_OverlayStack extends JEXCrunchable {
 	@Override
 	public TypeName[] getInputNames()
 	{
-		TypeName[] inputNames = new TypeName[1];
+		TypeName[] inputNames = new TypeName[2];
 		inputNames[0] = new TypeName(IMAGE, "Image Set");
+		inputNames[2] = new TypeName(ROI, "Crop Roi (optional)");
 		return inputNames;
 	}
 	
@@ -222,6 +224,9 @@ public class JEX_OverlayStack extends JEXCrunchable {
 			return false;
 		}
 		
+		// Collect the inputs
+		JEXData roiData = inputs.get("Crop Roi"); // Optional input
+		
 		// //// Get params
 		String dimName = this.parameters.getValueOfParameter("Dim Name");
 		String bfDim = this.parameters.getValueOfParameter("BF Dim Value");
@@ -243,7 +248,13 @@ public class JEX_OverlayStack extends JEXCrunchable {
 		
 		// Run the function
 		TreeMap<DimensionMap,String> images1 = ImageReader.readObjectToImagePathTable(data1);
-		TreeMap<DimensionMap,String> outputMap = overlayStack(images1, dimName, rDim, gDim, bDim, bfDim, rMin, rMax, gMin, gMax, bMin, bMax, bfMin, bfMax, rgbScale, bfScale, rgbGamma, bfGamma, this);
+		TreeMap<DimensionMap,ROIPlus> cropMap = new TreeMap<>();
+		if(roiData != null)
+		{
+			cropMap = RoiReader.readObjectToRoiMap(roiData);
+		}
+		
+		TreeMap<DimensionMap,String> outputMap = overlayStack(images1, cropMap, dimName, rDim, gDim, bDim, bfDim, rMin, rMax, gMin, gMax, bMin, bMax, bfMin, bfMax, rgbScale, bfScale, rgbGamma, bfGamma, this);
 		
 		// Set the outputs
 		JEXData output = ImageWriter.makeImageStackFromPaths(this.outputNames[0].getName(), outputMap);
@@ -303,7 +314,7 @@ public class JEX_OverlayStack extends JEXCrunchable {
 		return ret;
 	}
 	
-	public static TreeMap<DimensionMap,String> overlayStack(TreeMap<DimensionMap,String> images1, String dimName, String rDim, String gDim, String bDim, String bfDim, Double rMin, Double rMax, Double gMin, Double gMax, Double bMin, Double bMax, Double bfMin, Double bfMax, String rgbScale, String bfScale, Double rgbGamma, Double bfGamma, Canceler canceler)
+	public static TreeMap<DimensionMap,String> overlayStack(TreeMap<DimensionMap,String> images1, TreeMap<DimensionMap,ROIPlus> cropRois, String dimName, String rDim, String gDim, String bDim, String bfDim, Double rMin, Double rMax, Double gMin, Double gMax, Double bMin, Double bMax, Double bfMin, Double bfMax, String rgbScale, String bfScale, Double rgbGamma, Double bfGamma, Canceler canceler)
 	{
 		TreeMap<DimensionMap,String> outputMap = new TreeMap<DimensionMap,String>();
 		
@@ -314,21 +325,42 @@ public class JEX_OverlayStack extends JEXCrunchable {
 		int count = 0;
 		int total = maps.size();
 		FloatBlitter blitter = null;
+		ROIPlus crop = null;
 		for (DimensionMap map : maps)
 		{
 			if(canceler.isCanceled())
 			{
 				return null;
 			}
+			
+			// Reset crop ROI and get the next one to apply to all colors
+			crop = null;
+			
 			// Make dims to get
 			DimensionMap bfMap = map.copy();
 			bfMap.put(dimName, bfDim);
+			if(crop == null)
+			{
+				crop = cropRois.get(bfMap);
+			}
 			DimensionMap rMap = map.copy();
 			rMap.put(dimName, rDim);
+			if(crop == null)
+			{
+				crop = cropRois.get(bfMap);
+			}
 			DimensionMap gMap = map.copy();
 			gMap.put(dimName, gDim);
+			if(crop == null)
+			{
+				crop = cropRois.get(bfMap);
+			}
 			DimensionMap bMap = map.copy();
 			bMap.put(dimName, bDim);
+			if(crop == null)
+			{
+				crop = cropRois.get(bfMap);
+			}
 			
 			// get the paths
 			String bfPath = null;
@@ -373,6 +405,11 @@ public class JEX_OverlayStack extends JEXCrunchable {
 			if(bfPath != null)
 			{
 				bfIm = new ImagePlus(bfPath);
+				if(crop != null)
+				{
+					bfIm.setRoi(crop.getRoi());
+					bfIm = bfIm.crop();
+				}
 				bfImp = (FloatProcessor) bfIm.getProcessor().convertToFloat(); // should be a float processor
 				FunctionUtility.imAdjust(bfImp, bfMin, bfMax, 0d, 255d, 1d);
 				if(bfScale.equals(LOG))
@@ -394,6 +431,11 @@ public class JEX_OverlayStack extends JEXCrunchable {
 			if(rPath != null)
 			{
 				im = new ImagePlus(rPath);
+				if(crop != null)
+				{
+					im.setRoi(crop.getRoi());
+					im = im.crop();
+				}
 				imp = (FloatProcessor) im.getProcessor().convertToFloat(); // should be a float processor
 				FunctionUtility.imAdjust(imp, rMin, rMax, 0d, 255d, 1d);
 				w = imp.getWidth();
@@ -409,6 +451,11 @@ public class JEX_OverlayStack extends JEXCrunchable {
 			if(gPath != null)
 			{
 				im = new ImagePlus(gPath);
+				if(crop != null)
+				{
+					im.setRoi(crop.getRoi());
+					im = im.crop();
+				}
 				imp = (FloatProcessor) im.getProcessor().convertToFloat(); // should be a float processor
 				FunctionUtility.imAdjust(imp, gMin, gMax, 0d, 255d, 1d);
 				w = imp.getWidth();
@@ -424,6 +471,11 @@ public class JEX_OverlayStack extends JEXCrunchable {
 			if(bPath != null)
 			{
 				im = new ImagePlus(bPath);
+				if(crop != null)
+				{
+					im.setRoi(crop.getRoi());
+					im = im.crop();
+				}
 				imp = (FloatProcessor) im.getProcessor().convertToFloat(); // should be a float processor
 				FunctionUtility.imAdjust(imp, bMin, bMax, 0d, 255d, 1d);
 				w = imp.getWidth();

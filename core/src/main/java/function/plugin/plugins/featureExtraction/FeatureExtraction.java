@@ -91,6 +91,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	private LabelRegions<Integer> wholeCellRegions;
 	private LabelRegions<Integer> maskParentRegions;
 	private ROIPlus maxima;
+	private ROIPlus crop;
 	private LabelRegion<Integer> wholeCellRegion;
 	private LabelRegion<Integer> combinedSubCellRegion;
 	private Vector<LabelRegion<Integer>> individualSubCellRegions;
@@ -125,6 +126,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	public TreeMap<DimensionMap, String> imageMap = new TreeMap<DimensionMap, String>();
 	public TreeMap<DimensionMap, String> maskMap = new TreeMap<DimensionMap, String>();
 	public TreeMap<DimensionMap, ROIPlus> roiMap = new TreeMap<DimensionMap, ROIPlus>();
+	public TreeMap<DimensionMap, ROIPlus> cropMap = new TreeMap<DimensionMap, ROIPlus>();
 	TreeMap<Integer, Integer> idToLabelMap = new TreeMap<Integer, Integer>();
 	DimTable filterTable = new DimTable();
 
@@ -139,11 +141,14 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	@InputMarker(uiOrder = 1, name = "Images to Measure", type = MarkerConstants.TYPE_IMAGE, description = "Intensity images", optional = false)
 	JEXData imageData;
 
-	@InputMarker(uiOrder = 3, name = "Masks", type = MarkerConstants.TYPE_IMAGE, description = "Mask images", optional = false)
+	@InputMarker(uiOrder = 2, name = "Masks", type = MarkerConstants.TYPE_IMAGE, description = "Mask images", optional = false)
 	JEXData maskData;
 
-	@InputMarker(uiOrder = 4, name = "Maxima", type = MarkerConstants.TYPE_ROI, description = "Maxima ROI", optional = false)
+	@InputMarker(uiOrder = 3, name = "Maxima", type = MarkerConstants.TYPE_ROI, description = "Maxima ROI", optional = false)
 	JEXData roiData;
+	
+	@InputMarker(uiOrder = 4, name = "Crop Roi (optional)", type = MarkerConstants.TYPE_ROI, description = "Crop ROI", optional = true)
+	JEXData cropData;
 
 	// ///////// Define Parameters here ///////////
 
@@ -281,6 +286,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 				continue;
 			}
 			
+			this.setCropRoi(mapMask_WholeCell); // Set this first to be sure other things are cropped appropriately
 			this.setWholeCellMask(mapMask_WholeCell);
 			if(this.wholeCellMaskImage == null) { continue; }
 			if (this.isCanceled()) { this.close(); return false; }
@@ -359,7 +365,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		}
 		else
 		{
-			this.wholeCellMaskImage = JEXReader.getSingleImage(path, null);
+			this.wholeCellMaskImage = JEXReader.getSingleImage(path, null, this.crop);
 			this.wholeCellLabeling = utils.getLabeling(this.wholeCellMaskImage, connectedness.equals("4 Connected"));
 			this.wholeCellRegions = new LabelRegions<Integer>(this.wholeCellLabeling);
 		}
@@ -378,14 +384,14 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		}
 		else
 		{
-			this.image = JEXReader.getSingleFloatImage(imageMap.get(this.mapImage), this.channelOffsetValues.get(this.mapImage));
+			this.image = JEXReader.getSingleFloatImage(imageMap.get(this.mapImage), this.channelOffsetValues.get(this.mapImage), this.crop);
 		}
 	}
 
 	public void setMaskToMeasure()
 	{
 		Logs.log("Measuring mask: " + this.mapMask, this);
-		this.mask = JEXReader.getSingleImage(maskMap.get(this.mapMask), null);
+		this.mask = JEXReader.getSingleImage(maskMap.get(this.mapMask), null, this.crop);
 
 		// Apply the labels of the whole cells to the mask (e.g., multiple subregions now get the same parent label)
 		this.maskParentLabeling = utils.applyLabeling(this.wholeCellLabeling, this.mask);
@@ -403,18 +409,26 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	private void setMaximaRoi(DimensionMap mapMask_WholeCell)
 	{
 		this.maxima = roiMap.get(mapMask_WholeCell);
+		if(this.crop != null)
+		{
+			this.maxima = utils.cropPointRoi(this.maxima, this.crop);
+		}
 	}
 
+	private void setCropRoi(DimensionMap mapMask_WholeCell)
+	{
+		this.crop = cropMap.get(mapMask_WholeCell);
+	}
+	
 	private void setIdToLabelMap(DimensionMap mapMask_WholeCell)
 	{
 		this.idToLabelMap = new TreeMap<Integer, Integer>();
 
 		// Determine which LabelRegions are the ones we want to keep by
 		// testing if our maxima of interest are contained.
-		ROIPlus maxima = roiMap.get(mapMask_WholeCell);
 		for (LabelRegion<Integer> cellRegion : this.wholeCellRegions) {
 			RandomAccess<BoolType> ra = cellRegion.randomAccess();
-			for (IdPoint p : maxima.pointList) {
+			for (IdPoint p : this.maxima.pointList) {
 				ra.setPosition(p);
 				if (ra.get().get()) {
 					idToLabelMap.put(p.id, cellRegion.getLabel().intValue());
@@ -1205,6 +1219,14 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		}
 		maskMap = ImageReader.readObjectToImagePathTable(maskData);
 		roiMap = RoiReader.readObjectToRoiMap(roiData);
+		if(cropData != null)
+		{
+			cropMap = RoiReader.readObjectToRoiMap(cropData);
+		}
+		else
+		{
+			cropMap = new TreeMap<DimensionMap,ROIPlus>();
+		}
 
 		this.count = 0;
 		this.percentage = 0;

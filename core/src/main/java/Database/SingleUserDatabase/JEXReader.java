@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import Database.DBObjects.JEXData;
 import Database.Definition.TypeName;
 import ij.ImagePlus;
+import image.roi.ROIPlus;
 import logs.Logs;
 import miscellaneous.CSVReader;
 import net.imglib2.img.Img;
@@ -44,7 +45,67 @@ public class JEXReader {
 
 		return ret;
 	}
+	
+	/**
+	 * Read in and image and convert it to float and wrap in Img<FloatType>
+	 * @param path
+	 * @param offset
+	 * @param cropRoi
+	 * @return
+	 */
+	public synchronized static Img<FloatType> getSingleFloatImage(String path, Double offset, ROIPlus cropRoi)
+	{
+		Logs.log("Opening image - " + path, JEXReader.class);
+		ImagePlus im = new ImagePlus(path);
+		if(cropRoi != null)
+		{
+			im.setRoi(cropRoi.getRoi());
+			im = im.crop();
+		}
+		Img<FloatType> ret = ImageJFunctions.convertFloat(im);
 
+		// Adjust the image if necessary.
+		if(offset != null && offset != 0.0)
+		{
+			for ( FloatType type : ret )
+			{
+				type.setReal(type.getRealDouble() - offset);
+			} 
+		}
+
+		return ret;
+	}
+
+	/**
+	 * Read in and image and convert it to float and wrap in Img<FloatType>
+	 * @param path
+	 * @param offset
+	 * @param crop
+	 * @return
+	 */
+	public synchronized static Img<FloatType> getSingleFloatImage(String path, Double offset, Rectangle cropRegion)
+	{
+		Logs.log("Opening image - " + path, JEXReader.class);
+		ImagePlus im = new ImagePlus(path);
+		if(cropRegion != null)
+		{
+			im.setRoi(cropRegion);
+			im = im.crop();
+		}
+		Img<FloatType> ret = ImageJFunctions.convertFloat(im);
+
+		// Adjust the image if necessary.
+		if(offset != null && offset != 0.0)
+		{
+			for ( FloatType type : ret )
+			{
+				type.setReal(type.getRealDouble() - offset);
+			} 
+		}
+
+		return ret;
+	}
+	
 	/**
 	 * Read in and image and convert it to float and wrap in Img<FloatType>
 	 * @param path
@@ -73,6 +134,35 @@ public class JEXReader {
 	{
 		Logs.log("Opening image - " + path, JEXReader.class);
 		ImagePlus im = new ImagePlus(path);
+		Img<T> ret = ImageJFunctions.wrapReal(im);
+
+		// Adjust the image if necessary.
+		if(offset != null && offset != 0.0)
+		{
+			for ( T type : ret )
+			{
+				if(type.getRealDouble() > offset)
+				{
+					type.setReal(type.getRealDouble() - offset);
+				}
+				else
+				{
+					type.setZero();
+				}
+			} 
+		}
+		return ret;
+	}
+	
+	public synchronized static <T extends RealType<T>> Img<T> getSingleImage(String path, Double offset, ROIPlus cropRoi)
+	{
+		Logs.log("Opening image - " + path, JEXReader.class);
+		ImagePlus im = new ImagePlus(path);
+		if(cropRoi != null)
+		{
+			im.setRoi(cropRoi.getRoi());
+			im = im.crop();
+		}
 		Img<T> ret = ImageJFunctions.wrapReal(im);
 
 		// Adjust the image if necessary.
