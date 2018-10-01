@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -802,7 +803,27 @@ public class JEXDB implements Iterable<JEXEntry> {
 			return null;
 		}
 		
-		TreeMap<String,JEXData> nmap = tnmap.get(new Type(tn.getType().getType(), tn.getType().getFlavor() + JEXData.FLAVOR_CHUNK));
+		boolean found = false;
+		TreeMap<String,JEXData> nmap = null;
+		for(Entry<Type,TreeMap<String,JEXData>> tnmapE : tnmap.entrySet())
+		{
+			if(found)
+			{
+				break;
+			}
+			if(tnmapE.getKey().matches(tn.getType()) & tnmapE.getKey().hasFlavor(JEXData.FLAVOR_CHUNK))
+			{
+				for(Entry<String,JEXData> nmapE : tnmapE.getValue().entrySet())
+				{
+					if(nmapE.getKey().equals(tn.getName()))
+					{
+						nmap = tnmapE.getValue();
+						found = true;
+						break;
+					}
+				}
+			}
+		}
 		if(nmap == null)
 		{
 			return null;

@@ -230,7 +230,7 @@ public class JEXFunctionPanel extends JPanel {
 		// Get the function into a workflow object
 		workflow.add(function.duplicate());
 
-		JEXStatics.cruncher.runWorkflow(workflow, entries, autoSave);
+		JEXStatics.cruncher.runWorkflow(workflow, entries, autoSave, false);
 		Logs.log(function.getFunctionName() + " submitted", 0, this);
 	}
 
@@ -271,7 +271,7 @@ public class JEXFunctionPanel extends JPanel {
 		return workflow;
 	}
 
-	public void runAllFunctions(boolean autoSave)
+	public void runAllFunctions(boolean autoSave, boolean autoUpdate)
 	{
 		// Get the entries to run the function on
 		TreeSet<JEXEntry> entries = getSelectedEntries();
@@ -286,7 +286,7 @@ public class JEXFunctionPanel extends JPanel {
 		JEXWorkflow workflow = getWorkflow();
 
 		// Rarely used capability. Now using to just save the workflow.
-		JEXStatics.cruncher.runWorkflow(workflow, entries, autoSave);
+		JEXStatics.cruncher.runWorkflow(workflow, entries, autoSave, autoUpdate);
 	}
 
 	/**

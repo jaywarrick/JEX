@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.Collection;
-import java.util.TreeMap;
+import java.util.Vector;
 
 import org.apache.commons.io.FileUtils;
 
@@ -76,6 +76,16 @@ public class JEXWriter {
 		dbInfo.getXML().saveToPath(dbInfo.getAbsolutePath());
 	}
 	
+	public static JEXData performVirtualMerge(JEXData[] dataArray, JEXEntry e, String mergedName, Canceler canceler)
+	{
+		Vector<JEXData> datalist = new Vector<>();
+		for(JEXData d : dataArray)
+		{
+			datalist.add(d);
+		}
+		return performVirtualMerge(datalist, e, mergedName, canceler);
+	}
+	
 	/**
 	 * Merge newData into old data, replacing where necessary.
 	 * Data earlier in the list takes precedence.
@@ -83,18 +93,14 @@ public class JEXWriter {
 	 */
 	public static JEXData performVirtualMerge(Collection<JEXData> datalist, JEXEntry e, String mergedName, Canceler canceler)
 	{
-		if(datalist.size() == 0)
+		// Return null if no data provided
+		if(datalist == null || datalist.size() == 0)
 		{
 			return null;
 		}
 		
-		if(datalist.size() == 1)
-		{
-			return datalist.iterator().next();
-		}
-		
+		// Check that all the data in the datalist are of the same general Type
 		Type t = datalist.iterator().next().getTypeName().getType();
-		
 		for(JEXData d : datalist)
 		{
 			if(!d.getTypeName().getType().matches(t))
@@ -104,11 +110,14 @@ public class JEXWriter {
 			}
 		}
 		
+		// Create a DimTable for the unioned object
 		DimTable retDT = new DimTable();
 		for(JEXData d : datalist)
 		{
 			retDT = DimTable.union(retDT, d.getDimTable());
 		}
+		
+		// Make sure the DimTable for each object has all the same dimension names as the unioned object (i.e., dimensionality matches)
 		for(JEXData d : datalist)
 		{
 			DimTable tempDT = d.getDimTable();
@@ -122,21 +131,26 @@ public class JEXWriter {
 			}
 		}
 		
+		// Create a new object of merged data.
+		// Create the fresh new object
 		JEXData ret = new JEXData(t, mergedName);
-		TreeMap<DimensionMap,JEXDataSingle> retMap = ret.getDataMap();
 
+		// Initialize status parameters
 		int tot = retDT.mapCount();
 		int count = 0;
 		int percentage = 0;
 
+		Logs.log("" + retDT, JEXWriter.class);
+		// For each map in the unioned DimTable
 		for(DimensionMap map : retDT.getMapIterator())
 		{
+			// Try to grab and copy the JEXDataSingles from each object prioritizing objects higher in the list.
 			JEXDataSingle toAdd = null;
 			for(JEXData d : datalist)
 			{
 				if(d.getData(map) != null)
 				{
-					toAdd = d.getData(map).copy();
+					toAdd = d.getData(map);
 					break; // This way, the first object with something at this dimension map takes precedent
 				}
 			}
@@ -145,24 +159,32 @@ public class JEXWriter {
 				continue;
 			}
 			
+			// Check to see if progress should be canceled.
 			if(canceler != null && canceler.isCanceled())
 			{
 				return null;
 			}
 			
-			if(t.matches(JEXData.FILE) || t.matches(JEXData.IMAGE) || t.matches(JEXData.MOVIE) || t.matches(JEXData.SOUND))
-			{
-				toAdd.put(JEXDataSingle.RELATIVEPATH,  toAdd.get(JEXDataSingle.RELATIVEPATH));
-			}
+			//			// If there are attached files, copy over that information
+			//			if(t.matches(JEXData.FILE) || t.matches(JEXData.IMAGE) || t.matches(JEXData.MOVIE) || t.matches(JEXData.SOUND))
+			//			{
+			//				toAdd.put(JEXDataSingle.RELATIVEPATH,  toAdd.get(JEXDataSingle.RELATIVEPATH));
+			//			}
 
-			retMap.put(map.copy(), toAdd);
+			ret.addData(map.copy(), toAdd.copy());
 			// Status bar
 			count = count + 1;
 			percentage = (int) (100 * ((double) count / (double) tot));
 			JEXStatics.statusBar.setProgressPercentage(percentage);
 		}
 		
-		ret.setDimTable(new DimTable(retMap));
+		Logs.log("Pringting Merged Data:", JEXWriter.class);
+		for(DimensionMap map : ret.getDataMap().keySet())
+		{
+			Logs.log("" + map + " " + ret.getDataMap().get(map), JEXWriter.class);
+		}
+		
+		ret.setDimTable(new DimTable(ret.getDataMap()));
 		//	output.add(ret);
 
 		return ret;

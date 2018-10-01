@@ -13,9 +13,12 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map.Entry;
 
+import org.apache.commons.lang3.math.NumberUtils;
+
 import jex.statics.JEXDialog;
 
 import java.util.TreeMap;
+import java.util.Vector;
 
 import tables.Dim;
 import tables.DimTable;
@@ -639,5 +642,57 @@ public class StringUtility implements Comparator<String> {
 			ret.put(e.getKey(), Double.parseDouble(e.getValue()));
 		}
 		return ret;
+	}
+	
+	/**
+	 * Create DimensionMap of a given image 
+	 * 
+	 * The filename is parsed for alpha-numeric pairs (excluding non-alpha-numeric characters)
+	 * 
+	 * @param filePath image Path and Name
+	 * @return
+	 */
+	public static DimensionMap getMapFromPath(String filePath)
+	{
+		String name = FileUtility.getFileNameWithoutExtension(filePath);
+		String[] sepNames = name.split("(?<=\\D)(?=\\d)|(?<=\\d)(?=\\D)");
+		Vector<String> filteredSepNames = new Vector<>();
+		// Keep only string elements that are alpha-numeric
+		for(String s : sepNames)
+		{
+			String toAdd = s.replaceAll("[^A-Za-z0-9]", "");
+			if(!toAdd.equals(""))
+			{
+				filteredSepNames.add(toAdd);
+			}	
+		}
+
+		// Keep only the items that have a key-value pairing
+		DimensionMap map = new DimensionMap();
+		String last = null;
+		for(String s : filteredSepNames)
+		{
+			if(last == null)
+			{
+				last = s;
+				continue;
+			}
+
+			// If the current string is numeric and the last is not, then we have a key-value pair
+			if(Character.isDigit(s.charAt(0)) && !Character.isDigit(last.charAt(0)))
+			{
+				if(NumberUtils.isCreatable(s))
+				{
+					Number n = NumberUtils.createNumber(s);
+					s = n.toString();
+				}
+				map.put(last, s);
+			}
+
+			// Move on the next possible pair
+			last = s;
+		}
+
+		return map;
 	}
 }

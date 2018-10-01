@@ -139,6 +139,37 @@ public class Ticket implements Callable<Integer>, Canceler{
 	{
 		this.outputList = outputList;
 	}
+	
+	public TreeMap<JEXEntry, FunctionCallable> getFunctionCallables()
+	{
+		TreeMap<JEXEntry,FunctionCallable> fcs = new TreeMap<>();
+		for (JEXEntry entry : this.runList.keySet())
+		{
+			Logs.log("Submitting new function to the cruncher", 1, this);
+			JEXStatics.statusBar.setStatusText("Submitting new function to the cruncher");
+
+			JEXFunction func = this.runList.get(entry);
+
+			// Allow functions to share a paramset if they are not multithreaded
+			// Needed for semiManual actions.
+			if(!this.cr.allowMultithreading())
+			{
+				func.setParameters(this.firstParamSet);
+			}
+
+			// Gather the inputs and run
+			// We gather inputs in the ticket because upon running we want to
+			// grab inputs that may have been created with a ticket that was
+			// submitted at the "same time" as this ticket
+			FunctionCallable fc = this.getFunctionCallable(func, entry);
+			Logs.log("Running entry: " + entry.toString(), 0, this);
+			if(fc != null)
+			{
+				fcs.put(entry, fc);
+			}
+		}
+		return(fcs);
+	}
 
 	@Override
 	public Integer call() throws Exception
@@ -176,34 +207,14 @@ public class Ticket implements Callable<Integer>, Canceler{
 				}
 			}
 
-			for (JEXEntry entry : this.runList.keySet())
+			// Create and function callables and futures
+			fcs = this.getFunctionCallables();
+			for(Entry<JEXEntry, FunctionCallable> e : fcs.entrySet())
 			{
-				Logs.log("Submitting new function to the cruncher", 1, this);
-				JEXStatics.statusBar.setStatusText("Submitting new function to the cruncher");
-
-				JEXFunction func = this.runList.get(entry);
-
-				// Allow functions to share a paramset if they are not multithreaded
-				// Needed for semiManual actions.
-				if(!this.cr.allowMultithreading())
-				{
-					func.setParameters(this.firstParamSet);
-				}
-
-				// Gather the inputs and run
-				// We gather inputs in the ticket because upon running we want to
-				// grab inputs that may have been created with a ticket that was
-				// submitted at the "same time" as this ticket
-				FunctionCallable fc = this.getFunctionCallable(func, entry);
-				Logs.log("Running entry: " + entry.toString(), 0, this);
-				if(fc != null)
-				{
-					fcs.put(entry, fc);
-					Future<Integer> future = JEXStatics.cruncher.runFunction(fc);
-					this.futures.put(entry,future);
-				}
+				Future<Integer> future = JEXStatics.cruncher.runFunction(e.getValue());
+				this.futures.put(e.getKey(),future);
 			}
-
+			
 			// Collect outputs and wait for them to finish
 			@SuppressWarnings("unused")
 			int done = 0;

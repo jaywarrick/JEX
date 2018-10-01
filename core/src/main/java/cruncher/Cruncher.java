@@ -44,6 +44,9 @@ public class Cruncher implements Canceler {
 	private final ExecutorService ticketQueue = Executors.newFixedThreadPool(1);
 	private ExecutorService multiFunctionQueue = Executors.newFixedThreadPool(5);
 	private ExecutorService singleFunctionQueue = Executors.newFixedThreadPool(1);
+	private JEXWorkflow workflowToUpdate = null;
+	private TreeSet<JEXEntry> entriesToUpdate = new TreeSet<>();
+	private boolean updateAutoSaving = false;
 	
 	public Cruncher()
 	{
@@ -56,11 +59,37 @@ public class Cruncher implements Canceler {
 		return this.batchList;
 	}
 	
-	public void runWorkflow(JEXWorkflow workflow, TreeSet<JEXEntry> entries, boolean autoSave)
+	public void runUpdate()
 	{
+		this.runWorkflow(this.workflowToUpdate, this.entriesToUpdate, this.updateAutoSaving, false);
+	}
+	
+	public void cancelUpdating()
+	{
+		this.workflowToUpdate = null;
+		this.entriesToUpdate.clear();
+		this.updateAutoSaving = false;
+		
+	}
+	
+	public void runWorkflow(JEXWorkflow workflow, TreeSet<JEXEntry> entries, boolean autoSave, boolean autoUpdate)
+	{
+		// Save info in case we need to run this again during updates
+		if(autoUpdate && workflow.get(0).getFunctionName().equals("Import Virtual Image Updates"))
+		{
+			this.workflowToUpdate.addAll(workflow);
+			this.entriesToUpdate.addAll(entries);
+			this.updateAutoSaving = autoSave;
+		}
+		
 		Batch batch = new Batch();
+		boolean first = true;
 		for (JEXFunction function : workflow)
 		{
+			if(first)
+			{
+				
+			}
 			Ticket ticket = new Ticket(function, entries, autoSave);
 			batch.add(ticket);
 		}

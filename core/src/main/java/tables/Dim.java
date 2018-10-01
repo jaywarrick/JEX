@@ -56,7 +56,7 @@ public class Dim implements Copiable<Dim> {
 	/**
 	 * Add new dimValues to dimValueSet
 	 */
-	private void updateDimValueSet()
+	public void updateDimValueSet()
 	{
 		this.dimValueSet = new TreeSet<String>(new StringUtility());
 		this.dimValueSet.addAll(this.dimValues);

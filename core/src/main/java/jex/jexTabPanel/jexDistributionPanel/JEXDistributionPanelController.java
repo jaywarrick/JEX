@@ -125,7 +125,7 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 
 		JEXStatics.main.displayGlassPane(diagPanel, true);
 	}
-
+	
 	/**
 	 * Deal the files
 	 */

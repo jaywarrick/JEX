@@ -149,12 +149,14 @@ public class FileWriter {
 		// Test if the file exists else return null
 		if(!file.exists())
 		{
+			Logs.log("File does not exist. Skipping.", FileWriter.class);
 			return null;
 		}
 
 		JEXDataSingle ds = new JEXDataSingle();
 		if(virtual)
 		{
+			Logs.log("Saving virtual path " + file.getAbsolutePath(), FileWriter.class);
 			ds.put(JEXDataSingle.RELATIVEPATH,  file.getAbsolutePath());
 		}
 		else
