@@ -302,7 +302,7 @@ public class ND2DatasetCreator implements PlugInController, ActionListener {
 					TreeSet<JEXEntry> singleEntry = new TreeSet<JEXEntry>();
 					singleEntry.add(target);
 					wf.add(function);
-					JEXStatics.cruncher.runWorkflow(wf, singleEntry, true);
+					JEXStatics.cruncher.runWorkflow(wf, singleEntry, true, false);
 					
 					JEXData value = ValueWriter.makeValueObject(this.image.getText().trim(), path);
 					dataArray.put(target, value);

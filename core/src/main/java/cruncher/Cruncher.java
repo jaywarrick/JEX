@@ -21,6 +21,7 @@ import miscellaneous.Canceler;
 import miscellaneous.FileUtility;
 import miscellaneous.Pair;
 import miscellaneous.StringUtility;
+import tables.DimTable;
 
 /**
  * Note that Canceler only refers to GUI Tasks for now.
@@ -47,14 +48,21 @@ public class Cruncher implements Canceler {
 	private final ExecutorService ticketQueue = Executors.newFixedThreadPool(1);
 	private ExecutorService multiFunctionQueue = Executors.newFixedThreadPool(5);
 	private ExecutorService singleFunctionQueue = Executors.newFixedThreadPool(1);
+	
 	private JEXWorkflow workflowToUpdate = new JEXWorkflow("Workflow Updater");
 	private TreeSet<JEXEntry> entriesToUpdate = new TreeSet<>();
 	private boolean updateAutoSaving = false;
-	private DirectoryWatcher directoryWatcher;
+	private ExecutorService updaterService = Executors.newFixedThreadPool(1);
+	private Future<?> updaterFuture = null;
+	private DirectoryWatcher directoryWatcher = null;
+	private String dirToWatch = null;
+	private DimTable template = null;
+	private String timeToken = null;
 	
 	public Cruncher()
 	{
 		this.directoryWatcher = new DirectoryWatcher(this);
+		this.initUpdater();
 		this.tickets = new Vector<Pair<String,Vector<Ticket>>>(0);
 		this.guiTasks = new Vector<Callable<Integer>>(0);
 	}
@@ -67,22 +75,8 @@ public class Cruncher implements Canceler {
 	public void runUpdate()
 	{
 		Logs.log("Running Update." + this.updateAutoSaving, this);
+		Logs.log("" + template, this);
 		//this.runWorkflow(this.workflowToUpdate, this.entriesToUpdate, this.updateAutoSaving, false);
-	}
-
-	public void cancelUpdating()
-	{
-		this.workflowToUpdate = null;
-		this.entriesToUpdate.clear();
-		this.updateAutoSaving = false;
-		try
-		{
-			this.directoryWatcher.close();
-		}
-		catch (IOException e)
-		{
-			e.printStackTrace();
-		}
 	}
 	
 	public void runWorkflow(JEXWorkflow workflow, TreeSet<JEXEntry> entries, boolean autoSave, boolean autoUpdate)
@@ -119,15 +113,18 @@ public class Cruncher implements Canceler {
 				if(input != null && input.hasVirtualFlavor())
 				{
 					String path = ImageReader.readObjectToImagePath(input);
-					String dirToWatch = FileUtility.getFileParent(path);
-					String timeToken = function.parameters.getParameter("Time String Token").getValue();
-					if(!timeToken.equals(""))
+					String tmp = function.parameters.getParameter("Time String Token").getValue();
+					if(!tmp.equals(""))
 					{
-						timeToken = StringUtility.removeWhiteSpaceOnEnds(timeToken);
-						try {
-							this.directoryWatcher.start(dirToWatch, input.getDimTable(), timeToken);
-						} catch (InterruptedException e) {
-							// TODO Auto-generated catch block
+						this.dirToWatch = FileUtility.getFileParent(path);
+						this.timeToken = StringUtility.removeWhiteSpaceOnEnds(tmp);
+						this.template = input.getDimTable();
+						try
+						{
+							this.directoryWatcher.watch(dirToWatch);
+						}
+						catch (IOException e)
+						{
 							e.printStackTrace();
 						}
 					}
@@ -144,6 +141,23 @@ public class Cruncher implements Canceler {
 		{
 			this.runTicket(ticket);
 		}
+	}
+	
+	private void initUpdater()
+    {
+		if(this.updaterFuture == null)
+		{
+			this.updaterFuture = this.updaterService.submit(this.directoryWatcher);
+		}   
+    }
+	
+	public void stopUpdater()
+	{
+		// abort watcher
+        this.updaterFuture.cancel(true);
+        this.updaterFuture = null;
+        this.directoryWatcher.reset();
+        this.initUpdater();
 	}
 	
 	public void runTicket(Ticket ticket)

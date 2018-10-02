@@ -1,7 +1,6 @@
 package cruncher;
 
 import java.io.IOException;
-import java.nio.file.ClosedWatchServiceException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -10,19 +9,21 @@ import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 
+import jex.statics.JEXDialog;
 import logs.Logs;
-import tables.DimTable;
 
 public class DirectoryWatcher implements Runnable {
 
-	public WatchService watcher = null;
+	private WatchService watcher = null;
 	private WatchKey key = null;
-	private Thread watchThread = null;
 	private Cruncher parent = null;
-	private String hotPath = null;
-	private DimTable template = null;
-	private String timeToken = null;
-
+	
+	@SuppressWarnings("unchecked")
+    static <T> WatchEvent<T> cast(WatchEvent<?> event)
+	{
+        return (WatchEvent<T>) event;
+    }
+	
 	public DirectoryWatcher(Cruncher parent)
 	{
 		this.parent = parent;
@@ -36,78 +37,42 @@ public class DirectoryWatcher implements Runnable {
 		}
 	}
 	
-	public void close() throws IOException {
-        try {
-            stop();
-        }
-        catch ( InterruptedException e ) {
-            Logs.log("request to stop failed, guess its time to stop being polite!", this);
-        }
+	/**
+     * Creates a WatchService and registers the given directory
+     */
+    public synchronized void watch(String path) throws IOException
+    {
+    		if(this.watcher == null)
+    		{
+    			this.watcher = FileSystems.getDefault().newWatchService();
+    		}
+    		if(this.key == null)
+    		{
+    	        Path dir = Paths.get(path);
+    	        this.key = dir.register(watcher, StandardWatchEventKinds.ENTRY_CREATE);
+    		}
+    		else
+    		{
+    			JEXDialog.messageDialog("Warning! A directory is already being watched for updates. Ignorning request to watch new directory.", this);
+    		}
     }
+    
+    @Override
+    public void run()
+    {
+        try {
+            for (;;) {
+                // wait for key to be signalled
+                WatchKey key = watcher.take();
 
-	public void start(String dirString, DimTable template, String timeToken) throws InterruptedException
-	{
-		this.hotPath = dirString;
-		this.template = template;
-		this.timeToken = timeToken;
+                if (this.key != key) {
+                    System.err.println("WatchKey not recognized!");
+                    continue;
+                }
 
-		this.watchThread = new Thread(this);
-		watchThread.start();
-		synchronized( this )
-		{
-			this.wait();
-		}
-	}
-	
-	public void join() throws InterruptedException
-	{
-		watchThread.join();
-	}
-
-	public void stop() throws InterruptedException
-	{
-		this.hotPath = null;
-		this.template = null;
-		this.timeToken = null;
-		this.watchThread.interrupt();
-		this.watchThread.join();
-		this.watchThread = null;
-		Logs.log("Updater stopped", this);
-	}
-
-	@SuppressWarnings("unchecked")
-	public void run()
-	{
-
-		try {
-			Path dirPath = Paths.get(this.hotPath);
-			key = dirPath.register(watcher, StandardWatchEventKinds.ENTRY_CREATE);
-
-			for (;;)
-			{
-
-				// wait for key to be signaled
-				try
-				{
-					key = watcher.take();
-				}
-				catch (InterruptedException x)
-				{
-					Logs.log("Auto-updater interrupted.", this);
-					watcher.close();
-					key = null;
-					return;
-				}
-				catch (ClosedWatchServiceException c)
-				{
-					Logs.log("Auto-updater interrupted.", this);
-					key = null;
-					return;
-				}
-
-				for (WatchEvent<?> event: key.pollEvents())
-				{
-					WatchEvent.Kind<?> kind = event.kind();
+                for (WatchEvent<?> event : key.pollEvents()) {
+                    WatchEvent<Path> ev = cast(event);
+                    WatchEvent.Kind<?> kind = event.kind();
 
 					// This key is registered only
 					// for ENTRY_CREATE events,
@@ -118,31 +83,37 @@ public class DirectoryWatcher implements Runnable {
 						continue;
 					}
 
-					// The filename is the
-					// context of the event.
-					WatchEvent<Path> ev = (WatchEvent<Path>)event;
+					// Get the path of the created file.
 					Path filename = ev.context();
 					Logs.log("Found new file :" + filename, this);
 
 					// Compare the provided DT with the number of files and see
 					// if another timepoint worth of files as been created.
 					this.parent.runUpdate();
-				}
+                }
 
-				// Reset the key -- this step is critical if you want to
-				// receive further watch events.  If the key is no longer valid,
-				// the directory is inaccessible so exit the loop.
-				boolean valid = key.reset();
-				if (!valid)
-				{
-					break;
-				}
-			}
-		}
-		catch (IOException x)
-		{
-			x.printStackTrace();
-		}
-	}
-
+                // reset key
+                if (!key.reset()) {
+                		JEXDialog.messageDialog("The Auto-Updater status is in valid. Resetting.", this);
+                		this.reset();
+                    break;
+                }
+            }
+        }
+        catch (InterruptedException x)
+        {	
+        		this.reset();
+            return;
+        }
+    }
+    
+    public void reset()
+    {
+    		if(this.key != null)
+    		{
+    			this.key.reset();
+    			this.key.cancel();
+    		}
+		this.key = null;
+    }
 }

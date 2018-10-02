@@ -162,7 +162,7 @@ public class FunctionLoadSaveAndRunPanel implements ActionListener, ItemListener
 			{
 				this.autoUpdate.setText("Auto-Updating (OFF)");
 				// Call code to cancel auto-updater
-				JEXStatics.cruncher.cancelUpdating();
+				JEXStatics.cruncher.stopUpdater();
 			}
 		}
 	}
