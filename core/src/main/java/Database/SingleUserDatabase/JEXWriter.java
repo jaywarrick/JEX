@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.Collection;
+import java.util.TreeMap;
 import java.util.Vector;
 
 import org.apache.commons.io.FileUtils;
@@ -134,6 +135,7 @@ public class JEXWriter {
 		// Create a new object of merged data.
 		// Create the fresh new object
 		JEXData ret = new JEXData(t, mergedName);
+		TreeMap<DimensionMap,JEXDataSingle> retMap = ret.getDataMap();
 
 		// Initialize status parameters
 		int tot = retDT.mapCount();
@@ -178,13 +180,13 @@ public class JEXWriter {
 			JEXStatics.statusBar.setProgressPercentage(percentage);
 		}
 		
-		Logs.log("Pringting Merged Data:", JEXWriter.class);
+		Logs.log("Printing Merged Data:", JEXWriter.class);
 		for(DimensionMap map : ret.getDataMap().keySet())
 		{
 			Logs.log("" + map + " " + ret.getDataMap().get(map), JEXWriter.class);
 		}
 		
-		ret.setDimTable(new DimTable(ret.getDataMap()));
+		ret.setDimTable(new DimTable(retMap));
 		//	output.add(ret);
 
 		return ret;

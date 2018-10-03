@@ -299,7 +299,7 @@ public class Ticket implements Callable<Integer>, Canceler{
 		TreeMap<DimensionMap,JEXDataSingle> datamap = data.getDataMap();
 
 		// Copy referenced data in place
-		if(!data.hasVirtualFlavor())
+		if(!data.hasVirtualFlavor() && (data.getTypeName().getType().matches(JEXData.FILE) || data.getTypeName().getType().matches(JEXData.IMAGE) || data.getTypeName().getType().matches(JEXData.MOVIE) || data.getTypeName().getType().matches(JEXData.SOUND)))
 		{
 			String dbFolder = JEXWriter.getDatabaseFolder();
 			for (DimensionMap map : datamap.keySet())

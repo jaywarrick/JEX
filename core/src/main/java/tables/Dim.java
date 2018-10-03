@@ -379,6 +379,33 @@ public class Dim implements Copiable<Dim> {
 		return new Dim(dim1.name(), newDimValues);
 	}
 	
+	/**
+	 * returned Dim contains no references to dim1 and dim2 or their values. (deep copy)
+	 * a subtraction of dimValues (dim1 minus dim2)
+	 * If names don't match... return null
+	 * 
+	 * @param dim1
+	 * @param dim2
+	 * @return
+	 */
+	public static Dim subtract(Dim dim1, Dim dim2)
+	{
+		if(!dim1.name().equals(dim2.name()))
+		{
+			return null;
+		}
+		
+		List<String> newDimValues = new Vector<String>();
+		for (String s1 : dim1.dimValues)
+		{
+			if(!dim2.containsValue(s1))
+			{
+				newDimValues.add(s1);
+			}
+		}
+		return new Dim(dim1.name(), newDimValues);
+	}
+	
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */

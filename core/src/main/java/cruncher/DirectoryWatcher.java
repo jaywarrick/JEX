@@ -10,13 +10,13 @@ import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 
 import jex.statics.JEXDialog;
+import jex.statics.JEXStatics;
 import logs.Logs;
 
 public class DirectoryWatcher implements Runnable {
 
 	private WatchService watcher = null;
 	private WatchKey key = null;
-	private Cruncher parent = null;
 	
 	@SuppressWarnings("unchecked")
     static <T> WatchEvent<T> cast(WatchEvent<?> event)
@@ -24,9 +24,8 @@ public class DirectoryWatcher implements Runnable {
         return (WatchEvent<T>) event;
     }
 	
-	public DirectoryWatcher(Cruncher parent)
+	public DirectoryWatcher()
 	{
-		this.parent = parent;
 		try
 		{
 			watcher = FileSystems.getDefault().newWatchService();
@@ -89,7 +88,7 @@ public class DirectoryWatcher implements Runnable {
 
 					// Compare the provided DT with the number of files and see
 					// if another timepoint worth of files as been created.
-					this.parent.runUpdate();
+					JEXStatics.cruncher.runUpdate();
                 }
 
                 // reset key

@@ -572,7 +572,12 @@ public class DimTable extends ArrayList<Dim> implements Copiable<DimTable> {
 	{
 		for(String key : map.keySet())
 		{
-			if(!dt.getDimWithName(key).containsValue(map.get(key)))
+			Dim keyDim = dt.getDimWithName(key);
+			if(keyDim == null)
+			{
+				return false;
+			}
+			if(!keyDim.containsValue(map.get(key)))
 			{
 				return false;
 			}
@@ -665,6 +670,24 @@ public class DimTable extends ArrayList<Dim> implements Copiable<DimTable> {
 			d = Dim.intersect(d, table2.getDimWithName(d.name())); // d is now replaced by a standalone fresh Dim (deep copy)
 		}
 		return ret;
+	}
+	
+	public static DimTable subtract(DimTable table1, DimTable table2)
+	{
+		DimTable dt = new DimTable();
+		for(Dim d : table1)
+		{
+			Dim tmp = table2.getDimWithName(d.name());
+			if(tmp != null)
+			{
+				Dim tmp2 = Dim.subtract(d, tmp);
+				if(tmp2 != null)
+				{
+					dt.add(tmp2);
+				}
+			}
+		}
+		return dt;
 	}
 	
 	// class NumString implements Comparable<NumString>{

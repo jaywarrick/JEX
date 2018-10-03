@@ -55,32 +55,26 @@ public class ImportVirtualImageUpdates extends JEXPlugin {
 
 	/////////// Define Parameters ///////////
 
-//	@ParameterMarker(uiOrder=0, name="Input Directory (if no input Object)", description="Location of the images if there is no input object provided. Must be a directory.", ui=MarkerConstants.UI_FILECHOOSER, defaultText="")
+	//	@ParameterMarker(uiOrder=0, name="Input Directory (if no input Object)", description="Location of the images if there is no input object provided. Must be a directory.", ui=MarkerConstants.UI_FILECHOOSER, defaultText="")
 	String inDir;
 
-//	@ParameterMarker(uiOrder=1, name="File Extension", description="The type of file that is being imported if there is no input object provided. Default is tif.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="tif")
+	//	@ParameterMarker(uiOrder=1, name="File Extension", description="The type of file that is being imported if there is no input object provided. Default is tif.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="tif")
 	String fileExtension;
+
+//	@ParameterMarker(uiOrder=1, name="Next timepoint only?", description="Get all new files (unchecked) or just the next timepoint only (checked)?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
+	boolean nextOnly = true;
 
 	@ParameterMarker(uiOrder=2, name="XY String Token(s)", description="Use a CSV list to define what set of characters in each filename denotes the file index/x-y/row-col location for the acquisition? (e.g., 'xy', or 'x,y' or 'R,C')", ui=MarkerConstants.UI_TEXTFIELD, defaultText="xy")
 	String xyTokenString;
 
 	@ParameterMarker(uiOrder=3, name="Time String Token", description="What set of characters in each filename denotes the Time index?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="t")
 	String timeToken;
-	
+
 	@ParameterMarker(uiOrder=4, name="Old Token Names", description="List dimension names parsed from the file names that should be changed?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="t,xy,c,z")
 	String oldTokens;
-	
+
 	@ParameterMarker(uiOrder=5, name="New Token Names", description="What should the parsed dimension names that are going to be renamed be changed to for saving in the database?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="T,XY,Channel,Z")
 	String newTokens;
-
-	@ParameterMarker(uiOrder=6, name="Distribution Starting Point", description="In what corner of the entry array should the first image be dealt?", ui=MarkerConstants.UI_DROPDOWN, choices={"UL", "UR", "LL", "LR"}, defaultChoice=0)
-	String startPt;
-
-	@ParameterMarker(uiOrder=7, name="Distribute Horizontally First?", description="Distribute split objects into the entry array horizontally first?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
-	boolean horizontal;
-
-	@ParameterMarker(uiOrder=8, name="Distribute in Snaking Pattern?", description="Distribute split objects into the entry array using a snaking pattern?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
-	boolean snaking;
 
 	/////////// Define Outputs ///////////
 
@@ -95,8 +89,8 @@ public class ImportVirtualImageUpdates extends JEXPlugin {
 	public static TreeMap<JEXEntry,JEXData> inputDatas = new TreeMap<>();
 
 	@Override
-	public boolean run(JEXEntry optionalEntry) {
-
+	public boolean run(JEXEntry optionalEntry)
+	{
 		if(input != null && input.getDataObjectType().matches(JEXData.IMAGE) && input.hasVirtualFlavor())
 		{
 			JEXDataSingle ds = input.getFirstSingle();
@@ -134,8 +128,11 @@ public class ImportVirtualImageUpdates extends JEXPlugin {
 					DimensionMap map = StringUtility.getMapFromPath(f.getAbsolutePath());
 					files.put(map, f.getAbsolutePath());
 				}
-				dt = new DimTable(files);
-				this.trimFilesAndDT();
+				boolean success = this.trimFilesAndDT(input, nextOnly);
+				if(!success)
+				{
+					return false;
+				}
 			}
 			else { // one file
 				JEXDialog.messageDialog("A directory must be specified instead of a file. Aborting");
@@ -144,16 +141,24 @@ public class ImportVirtualImageUpdates extends JEXPlugin {
 		}
 
 		inputDatas.put(optionalEntry, input);
+		
+		Logs.log("Visited Entrty " + optionalEntry.getEntryID(), this);
 
 		return true;
 	}
 
 	public void finalizeTicket(Ticket ticket)
 	{
+//		files = null;
+		if(dt == null)
+		{
+			// then trimming the file list was unsuccessful.
+			return;
+		}
 		double count = 0;
 		double total = ticket.getOutputList().size();
 		double percentage = 0;
-		
+
 		if(inputDatas.firstEntry().getValue().hasChunkFlavor())
 		{
 			int answer = JEXDialog.getChoice("Continue?", "A 'chunk' flavored object of the same name exists and is being used as the input. Typically you don't want this for this function. Should the function continue anyway?", new String[] {"Yes", "No"}, 1);
@@ -169,146 +174,118 @@ public class ImportVirtualImageUpdates extends JEXPlugin {
 
 		// First, get the xyTokens
 		CSVList xyTokens = StringUtility.getCSVListAndRemoveWhiteSpaceOnEnds(this.xyTokenString);
-		for(String xyToken : xyTokens)
+		//		// Check that the 
+		//		for(String xyToken : xyTokens)
+		//		{
+		//			Dim xyDim = dt.getDimWithName(xyToken);
+		//			if(xyDim == null)
+		//			{
+		//				JEXDialog.messageDialog("The XY string token '" + xyToken + "' did not match any of the parsed dimensions from the filenames. Aborting. Dimensions = " + dt.toString());
+		//				// Remember to reset the static variable again so this data isn't carried over to other function runs
+		//				files = null;
+		//				dt = null;
+		//				inputDatas.clear();
+		//				return;
+		//			}
+		//		}
+		
+		// Filter files to just those files that pertain to these entries.
+		TreeMap<DimensionMap,String> filteredFiles = new TreeMap<>();
+		int validEntries = 0;
+		for (Entry<JEXEntry,JEXData> entry : inputDatas.entrySet())
 		{
-			Dim xyDim = dt.getDimWithName(xyToken);
-			if(xyDim == null)
+			// Check an input data exists for this entry.
+			JEXData input = entry.getValue();
+			if(input == null)
 			{
-				JEXDialog.messageDialog("The XY string token '" + xyToken + "' did not match any of the parsed dimensions from the filenames. Aborting. Dimensions = " + dt.toString());
-				// Remember to reset the static variable again so this data isn't carried over to other function runs
-				files = null;
-				dt = null;
-				inputDatas.clear();
-				return;
+				JEXDialog.messageDialog("No input data found for entry X=" + entry.getKey().getTrayX() + " Y=" + entry.getKey().getTrayY() + ". Skipping");
+				continue;
+			}
+			validEntries = validEntries + 1;
+			
+			// Generate a DimTable for this entry and data.
+			DimTable entryTable = this.getEntryTable(entry.getKey(), input, xyTokens);
+			
+			// Use the entryTable to only grab the appropriate files.
+			for(DimensionMap map : entryTable.getMapIterator())
+			{
+				String path = files.get(map);
+				if(path == null)
+				{
+					JEXDialog.messageDialog("No input files found for entry X=" + entry.getKey().getTrayX() + " Y=" + entry.getKey().getTrayY() + " " + map.toString() + ". Skipping");
+					continue;
+				}
+				filteredFiles.put(map, path);
 			}
 		}
+		files = filteredFiles;
 		
+		// Check if we have a full timepoint.
+		if(files.size() != dt.mapCount()*validEntries)
+		{
+			JEXDialog.messageDialog("We expected " + dt.mapCount()*validEntries + " files but only found " + files.size() + ". Since the timepoint is not complete for these entries, we are aborting and stopping Auto-Updater.", this);
+			return;
+		}
+
+		// Now for each entry, create the new datas
 		for (Entry<JEXEntry,JEXData> entry : inputDatas.entrySet())
 		{
 			JEXData input = entry.getValue();
 			if(input == null)
 			{
-				JEXDialog.messageDialog("No input data found for entry " + entry.getKey().getEntryID() + ". Skipping");
 				continue;
 			}
 			
-			// Get a dimensionMap to filter the files for saving
-			String templateFilePath = FileReader.readToPath(input.getFirstSingle());
-			DimensionMap filterTemplate = StringUtility.getMapFromPath(templateFilePath);
-			DimensionMap filter = new DimensionMap();
-			for(String xyToken : xyTokens)
+			// Generate a DimTable for this entry and data.
+			DimTable entryTable = this.getEntryTable(entry.getKey(), input, xyTokens);
+
+			TreeMap<DimensionMap,String> entryFiles = new TreeMap<>();
+			for(DimensionMap map : entryTable.getMapIterator())
 			{
-				filter.put(xyToken, filterTemplate.get(xyToken));
-			}
-			if(!dt.testUnderdefinedMap(filter))
-			{
-				JEXDialog.messageDialog("The parsed map of the files in the input object " + filter + " do not adequately match the parsed dimension maps of the new input files " + dt + ". Aborting", this);
-				// Remember to reset the static variable again so this data isn't carried over to other function runs
-				files = null;
-				dt = null;
-				inputDatas.clear();
-				return;
+				entryFiles.put(map, files.get(map)); // possibility of null file path eliminated in loops above.
 			}
 			
-			TreeMap<DimensionMap,String> subsetOfData = new TreeMap<>();
-			
-			// Just grab the files in the list that match the xyTokens for this entry
-			int totFilesToGet = dt.getSubTable(filter).mapCount(); // All times, but just this location
-			int filesGotten = 0;
-			for(DimensionMap mapToGet : dt.getMapIterator(filter))
+			if(entryFiles.size() == 0)
 			{
-				DimensionMap toSave = mapToGet.copy();
+				JEXDialog.messageDialog("There were no new files for entry X=" + entry.getKey().getTrayX() + " Y=" + entry.getKey().getTrayY() + ".", this);
+				continue;
+			}
+			
+			// Convert the dimensionMaps to match the database maps
+			TreeMap<DimensionMap,String> temp = new TreeMap<>();
+			for(Entry<DimensionMap,String> e : entryFiles.entrySet())
+			{
+				DimensionMap toConvert = e.getKey().copy();
 				for(String xyToken : xyTokens)
 				{
-					toSave.remove(xyToken);
+					toConvert.remove(xyToken);
 				}
-				String pathToGet = files.get(mapToGet);
-				if(pathToGet == null)
-				{
-					Logs.log("A file was expected for " + mapToGet.toString() + ". Skipping.", this);
-					continue;
-				}
-				subsetOfData.put(toSave, pathToGet);
-				filesGotten = filesGotten + 1;
+				
+				DimensionMap convertedMap = this.getRenamedDimensionMap(toConvert);
+				temp.put(convertedMap, e.getValue());
 			}
-			if(filesGotten != totFilesToGet)
-			{
-				// The filter is based upon the input data.
-				// The dt is based upon the files in the directory
-				// Thus, if these numbers don't line up, we probably have an issue to contend with.
-				JEXDialog.messageDialog("Warning. Not all expected files were found for entry " + entry.getKey().getEntryID() + ".", this);
-			}
+			entryFiles = temp;
 
-			// Figure out what part of the filtered file list is new compared to what is in the database already
-			// and put the new files into a map
-			TreeMap<DimensionMap,String> newFiles = new TreeMap<>();
-			TreeMap<DimensionMap,String> alreadySavedFiles = ImageReader.readObjectToImagePathTable(input);
-			for(DimensionMap map : subsetOfData.keySet())
-			{
-				// First get a database version of the dimension map for the incoming file
-				DimensionMap renamedMap = this.getRenamedDimensionMap(map);
-				if(renamedMap == null)
-				{
-					JEXDialog.messageDialog("The list of old and new tokens could not be used successfully to rename the parsed dimension names. Please check the old tokens exist in each file name and that the old and new tokens lists are the same size.", this);
-					// Remember to reset the static variable again so this data isn't carried over to other function runs
-					files = null;
-					dt = null;
-					inputDatas.clear();
-					return;
-				}
-				
-				// Get a version of the database map for the incoming data that is without time.
-				DimensionMap testMap = map.copy();
-				testMap.remove(this.timeToken);
-				testMap = this.getRenamedDimensionMap(testMap);				
-				
-				// If the timeless incoming databased map doesn't fit the existing dimension of the already saved data, we have a problem.
-				if(!input.getDimTable().testUnderdefinedMap(testMap))
-				{
-					// This means that the input object dimensions don't match the dimensions of the new object to be made
-					JEXDialog.messageDialog("There is a dimension mismatch between the imported files with renamed dimension names, and the dimension names in existing input data. Aborting.", this);
-					// Remember to reset the static variable again so this data isn't carried over to other function runs
-					files = null;
-					dt = null;
-					inputDatas.clear();
-					return;
-				}
-				
-				// So far so good. If the incoming databased map doesn't exist in the saved data, then put it into newFiles
-				// Save it according to the database map but use the parsed filename map to get it from the file subset.
-				if(alreadySavedFiles.get(renamedMap) == null)
-				{
-					newFiles.put(renamedMap, subsetOfData.get(map));
-				}
-			}
-			
-			if(newFiles.size() == 0)
-			{
-				continue;
-			}
-			
 			Logs.log("Found new files to merge.", this);
-			for(DimensionMap map : newFiles.keySet())
+			for(DimensionMap map : entryFiles.keySet())
 			{
-				Logs.log(newFiles.get(map), this);
+				Logs.log(entryFiles.get(map), this);
 			}
 			// Create a chunk with the new files
-			JEXData chunkData = ImageWriter.makeImageStackFromPaths(input.getDataObjectName(), newFiles, true, ticket);
+			JEXData chunkData = ImageWriter.makeImageStackFromPaths(input.getDataObjectName(), entryFiles, true, ticket);
 			if(chunkData == null)
 			{
 				Logs.log("No new data found for the object in Entry " + entry.getKey() + ". Skipping.", this);
 				continue;
 			}
-			
+
 			// Set the flavor of the chunk to virtual chunk
 			chunkData.setDataObjectType(new Type(chunkData.getTypeName().getType().getType(), JEXData.FLAVOR_VIRTUAL + " " + JEXData.FLAVOR_CHUNK));
 
 			// Merge the input data and the new virtual chunk
 			// Put the 'input' first in the list so its type takes precedence.
 			JEXData mergedData = JEXWriter.performVirtualMerge(new JEXData[] {input, chunkData}, entry.getKey(), input.getDataObjectName(), this);
-			
-			
-			
+
 			// Save the output
 			HashSet<JEXData> datas = new HashSet<>();
 			if(!mergedData.getTypeName().equals(chunkData.getTypeName()))
@@ -320,12 +297,10 @@ public class ImportVirtualImageUpdates extends JEXPlugin {
 			{
 				datas.add(chunkData);
 			}
-			
-			
-			
+
 			// Add the datas to the output for the entry
 			ticket.getOutputList().put(entry.getKey(), datas);
-			
+
 			// Update the status bar
 			count = count + 1;
 			percentage = 100 * count / total;
@@ -337,24 +312,77 @@ public class ImportVirtualImageUpdates extends JEXPlugin {
 		dt = null;
 		inputDatas.clear();
 	}
-
-	public void trimFilesAndDT()
+	
+	public DimTable getEntryTable(JEXEntry entry, JEXData input, CSVList xyTokens)
 	{
-		// First trim the data table to "contain" the files.
-		int mapCount = dt.mapCount();
-		while(mapCount > files.size() && dt.getDimWithName(this.timeToken).size() > 0)
+		// Get a DimTable with xyTokens appropriate to the entry to filter the files
+		String templateFilePath = FileReader.readToPath(input.getFirstSingle());
+		DimensionMap filterTemplate = StringUtility.getMapFromPath(templateFilePath);
+		DimTable entryTable = dt.copy();
+		for(String xyToken : xyTokens)
 		{
-			Dim tDim = dt.getDimWithName(this.timeToken);
-			tDim.dimValues.remove(tDim.size()-1);
-			tDim.updateDimValueSet();
-			mapCount = dt.mapCount();
+			entryTable.add(new Dim(xyToken, filterTemplate.get(xyToken)));
 		}
+		return entryTable;
+	}
+
+	public boolean trimFilesAndDT(JEXData input, boolean nextOnly)
+	{		
+		CSVList xyTokens = StringUtility.getCSVListAndRemoveWhiteSpaceOnEnds(this.xyTokenString);
+
+		TreeMap<DimensionMap,String> exampleInputFiles = ImageReader.readObjectToImagePathTable(input);
+		TreeMap<DimensionMap,String> parsedDimMaps = new TreeMap<>(); 
+		for(Entry<DimensionMap,String> e : exampleInputFiles.entrySet())
+		{
+			DimensionMap map = StringUtility.getMapFromPath(e.getValue());
+			parsedDimMaps.put(map, e.getValue());
+		}
+		DimTable inputDT = new DimTable(parsedDimMaps);
+		for(String xyToken : xyTokens)
+		{
+			inputDT.removeDimWithName(xyToken);
+		}
+
+
+		// grab the DimTable for the directory of files.
+		DimTable dirDT = new DimTable(files);
+		for(String xyToken : xyTokens)
+		{
+			dirDT.removeDimWithName(xyToken);
+		}
+
+		// Just grab new files
+		Dim dirTimes = dirDT.getDimWithName(timeToken);
+		Dim inputTimes = inputDT.getDimWithName(timeToken);
+		Dim newTimes = Dim.subtract(dirTimes, inputTimes);
+		System.out.println();
+		System.out.println();
+		if(newTimes.size() == 0)
+		{
+			JEXDialog.messageDialog("New new timepoints detected in directory. Aborting.", this);
+			return false;
+		}
+		if(nextOnly)
+		{
+			newTimes = new Dim(timeToken + "=" + newTimes.valueAt(0));
+		}
+		int i = dirDT.indexOf(dirTimes);
+		dirDT.remove(i);
+		dirDT.add(i, newTimes);
+
+		// Save the filtered dimTable
+		dt = dirDT;
 
 		// Then trim the files to match the trimmed data.table
 		Vector<DimensionMap> toRemove = new Vector<>();
 		for(DimensionMap map : files.keySet())
 		{
-			if(!DimTable.hasKeyValues(dt, map))
+			DimensionMap mapToRemove = map.copy();
+			for(String xyToken : xyTokens)
+			{
+				mapToRemove.remove(xyToken);
+			}
+			if(!DimTable.hasKeyValues(dt, mapToRemove))
 			{
 				toRemove.add(map);
 			}
@@ -363,6 +391,7 @@ public class ImportVirtualImageUpdates extends JEXPlugin {
 		{
 			files.remove(map);
 		}
+		return true;
 	}
 
 	public JEXDataSingle createJEXDataSingle(String path)
@@ -376,7 +405,7 @@ public class ImportVirtualImageUpdates extends JEXPlugin {
 		// Return the datasingle
 		return ds;
 	}
-	
+
 	public DimensionMap getRenamedDimensionMap(DimensionMap oldMap)
 	{
 		CSVList daOld = StringUtility.getCSVStringAsCSVListWithoutWhiteSpace(this.oldTokens);
@@ -485,7 +514,7 @@ public class ImportVirtualImageUpdates extends JEXPlugin {
 		}
 		return ret;
 	}
-	
+
 
 	public Integer[] getSelectionRowsAndCols(TreeMap<JEXEntry,JEXData> inputs)
 	{
