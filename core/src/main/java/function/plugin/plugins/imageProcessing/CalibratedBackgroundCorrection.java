@@ -115,13 +115,13 @@ public class CalibratedBackgroundCorrection extends JEXPlugin {
 	public boolean run(JEXEntry optionalEntry)
 	{
 		// Collect the inputs
-		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(imageData == null || !imageData.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return false;
 		}
 
 		FloatProcessor darkImp = null;
-		if(darkData != null && darkData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(darkData != null && darkData.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			ImagePlus darkIm = ImageReader.readObjectToImagePlus(darkData);
 			if(darkIm == null)
@@ -132,7 +132,7 @@ public class CalibratedBackgroundCorrection extends JEXPlugin {
 		}
 
 		FloatProcessor illumImp = null;
-		if(illumData != null && illumData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(illumData != null && illumData.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			ImagePlus illumIm = ImageReader.readObjectToImagePlus(illumData);
 			if(illumIm == null)

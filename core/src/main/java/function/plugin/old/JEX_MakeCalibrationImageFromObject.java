@@ -194,7 +194,7 @@ public class JEX_MakeCalibrationImageFromObject extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData imageData = inputs.get("Source Images");
-		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(imageData == null || !imageData.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			// Return status
 			return true;

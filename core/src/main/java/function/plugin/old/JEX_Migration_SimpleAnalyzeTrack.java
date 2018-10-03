@@ -181,7 +181,7 @@ public class JEX_Migration_SimpleAnalyzeTrack extends JEXCrunchable {
 		// Collect the inputs
 		Logs.log("Collecting inputs", 1, this);
 		JEXData data = inputs.get("Tracks to Analyze");
-		if(!data.getTypeName().getType().equals(JEXData.TRACK))
+		if(!data.getTypeName().getType().matches(JEXData.TRACK))
 			return false;
 		
 		// Run the function

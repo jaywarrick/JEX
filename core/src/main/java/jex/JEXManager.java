@@ -1846,7 +1846,7 @@ public class JEXManager {
 	public boolean getEntryValidity(JEXEntry entry)
 	{
 		JEXData data = this.getDataOfTypeNameInEntry(new TypeName(JEXData.LABEL, JEXEntry.VALID), entry);
-		if(!data.getTypeName().getType().equals(JEXData.LABEL))
+		if(!data.getTypeName().getType().matches(JEXData.LABEL))
 		{
 			return true;
 		}

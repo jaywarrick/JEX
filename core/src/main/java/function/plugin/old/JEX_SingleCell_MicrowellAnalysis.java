@@ -238,27 +238,27 @@ public class JEX_SingleCell_MicrowellAnalysis extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData microwellData = inputs.get("Microwells");
-		if(microwellData == null || !microwellData.getTypeName().getType().equals(JEXData.ROI))
+		if(microwellData == null || !microwellData.getTypeName().getType().matches(JEXData.ROI))
 		{
 			return false;
 		}
 		JEXData countData = inputs.get("Microwell Count Stats");
-		if(countData == null || !countData.getTypeName().getType().equals(JEXData.FILE))
+		if(countData == null || !countData.getTypeName().getType().matches(JEXData.FILE))
 		{
 			return false;
 		}
 		JEXData intData = inputs.get("Microwell Intensities");
-		if(intData == null || !intData.getTypeName().getType().equals(JEXData.FILE))
+		if(intData == null || !intData.getTypeName().getType().matches(JEXData.FILE))
 		{
 			return false;
 		}
 		JEXData ifData = inputs.get("IF-DF");
-		if(ifData == null || !ifData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(ifData == null || !ifData.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return false;
 		}
 		JEXData cropData = inputs.get("Crop ROI (optional)");
-		if(cropData == null || !cropData.getTypeName().getType().equals(JEXData.ROI))
+		if(cropData == null || !cropData.getTypeName().getType().matches(JEXData.ROI))
 		{
 			return false;
 		}

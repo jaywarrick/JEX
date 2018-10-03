@@ -217,7 +217,7 @@ public class JEX_OscillatoryAdhesionAnalysis3 extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData imageData = inputs.get("Difference Images");
-		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(imageData == null || !imageData.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return false;
 		}
@@ -226,7 +226,7 @@ public class JEX_OscillatoryAdhesionAnalysis3 extends JEXCrunchable {
 		
 		// Collect the inputs
 		JEXData fileData = inputs.get("Octave Summary File");
-		if(fileData == null || !fileData.getTypeName().getType().equals(JEXData.FILE))
+		if(fileData == null || !fileData.getTypeName().getType().matches(JEXData.FILE))
 		{
 			return false;
 		}
@@ -234,7 +234,7 @@ public class JEX_OscillatoryAdhesionAnalysis3 extends JEXCrunchable {
 		
 		// Collect the inputs
 		JEXData roiData = inputs.get("ROI");
-		if(roiData == null || !roiData.getTypeName().getType().equals(JEXData.ROI))
+		if(roiData == null || !roiData.getTypeName().getType().matches(JEXData.ROI))
 		{
 			return false;
 		}

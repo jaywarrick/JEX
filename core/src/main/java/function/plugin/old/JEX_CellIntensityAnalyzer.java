@@ -205,10 +205,10 @@ public class JEX_CellIntensityAnalyzer extends JEXCrunchable {
 			
 			// Collect the inputs
 			JEXData pointData1 = inputs.get("Point ROI");
-			if(pointData1 == null || !pointData1.getTypeName().getType().equals(JEXData.ROI))
+			if(pointData1 == null || !pointData1.getTypeName().getType().matches(JEXData.ROI))
 				return false;
 			JEXData image = inputs.get("Images");
-			if(image == null || !image.getTypeName().getType().equals(JEXData.IMAGE))
+			if(image == null || !image.getTypeName().getType().matches(JEXData.IMAGE))
 				return false;
 			
 			// Get the parameters

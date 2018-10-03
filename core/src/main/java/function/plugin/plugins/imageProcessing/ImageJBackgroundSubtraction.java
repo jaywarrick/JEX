@@ -78,7 +78,7 @@ public class ImageJBackgroundSubtraction extends JEXPlugin {
 	public boolean run(JEXEntry optionalEntry)
 	{
 		// Validate the input data
-		if(inputData == null || !inputData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(inputData == null || !inputData.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return false;
 		}

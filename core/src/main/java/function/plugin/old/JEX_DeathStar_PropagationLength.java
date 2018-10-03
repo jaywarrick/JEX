@@ -201,14 +201,14 @@ public class JEX_DeathStar_PropagationLength extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData pointData = inputs.get("Point ROI");
-		if(pointData == null || !pointData.getTypeName().getType().equals(JEXData.ROI))
+		if(pointData == null || !pointData.getTypeName().getType().matches(JEXData.ROI))
 		{
 			return false;
 		}
 		
 		// Collect the inputs
 		JEXData rectangleData = inputs.get("Rectangle ROI");
-		if(rectangleData == null || !rectangleData.getTypeName().getType().equals(JEXData.ROI))
+		if(rectangleData == null || !rectangleData.getTypeName().getType().matches(JEXData.ROI))
 		{
 			return false;
 		}

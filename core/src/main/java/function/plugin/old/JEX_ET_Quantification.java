@@ -229,7 +229,7 @@ public class JEX_ET_Quantification extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData stainData = inputs.get("DNA Stain Image");
-		if(stainData == null || !stainData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(stainData == null || !stainData.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return false;
 		}

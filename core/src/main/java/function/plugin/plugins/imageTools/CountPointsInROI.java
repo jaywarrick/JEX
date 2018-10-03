@@ -94,12 +94,12 @@ public class CountPointsInROI extends JEXPlugin {
 	{
 
 		// Validate Point ROI (required)
-		if(pointData == null || !pointData.getTypeName().getType().equals(JEXData.ROI))
+		if(pointData == null || !pointData.getTypeName().getType().matches(JEXData.ROI))
 			return false;
 
 		// Validate Region ROI (optional)
 		if(regionData != null)
-			if(!regionData.getTypeName().getType().equals(JEXData.ROI))
+			if(!regionData.getTypeName().getType().matches(JEXData.ROI))
 				return false;
 
 		// Initialize some variables

@@ -167,7 +167,7 @@ public class JEX_ExportMovies extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData data = inputs.get("Movies to Export");
-		if(!data.getTypeName().getType().equals(JEXData.MOVIE))
+		if(!data.getTypeName().getType().matches(JEXData.MOVIE))
 		{
 			return false;
 		}

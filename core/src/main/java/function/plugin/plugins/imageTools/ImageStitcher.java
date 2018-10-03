@@ -136,7 +136,7 @@ public class ImageStitcher extends JEXPlugin {
 	public boolean run(JEXEntry entry)
 	{
 		// Collect the inputs
-		if(hData == null || !hData.getTypeName().getType().equals(JEXData.VALUE))
+		if(hData == null || !hData.getTypeName().getType().matches(JEXData.VALUE))
 		{
 			return false;
 		}
@@ -144,7 +144,7 @@ public class ImageStitcher extends JEXPlugin {
 		int horDxImage = Integer.parseInt(alignmentInfoHor.get(0));
 		int horDyImage = Integer.parseInt(alignmentInfoHor.get(1));
 		
-		if(vData == null || !vData.getTypeName().getType().equals(JEXData.VALUE))
+		if(vData == null || !vData.getTypeName().getType().matches(JEXData.VALUE))
 		{
 			return false;
 		}
@@ -153,7 +153,7 @@ public class ImageStitcher extends JEXPlugin {
 		int verDyImage = Integer.parseInt(alignmentInfoVer.get(1));
 		
 		// Collect the inputs
-		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(imageData == null || !imageData.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return false;
 		}

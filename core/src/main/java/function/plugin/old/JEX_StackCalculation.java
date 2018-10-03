@@ -180,7 +180,7 @@ public class JEX_StackCalculation extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData data1 = inputs.get("Stack 1");
-		if(!data1.getTypeName().getType().equals(JEXData.IMAGE))
+		if(!data1.getTypeName().getType().matches(JEXData.IMAGE))
 			return false;
 		
 		JEXData data2 = inputs.get("Optional Stack 2");

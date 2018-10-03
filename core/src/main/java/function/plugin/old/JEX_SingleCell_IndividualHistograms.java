@@ -225,7 +225,7 @@ public class JEX_SingleCell_IndividualHistograms extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData data = inputs.get("Data File(s)");
-		if(data == null || !data.getTypeName().getType().equals(JEXData.FILE))
+		if(data == null || !data.getTypeName().getType().matches(JEXData.FILE))
 		{
 			return false;
 		}

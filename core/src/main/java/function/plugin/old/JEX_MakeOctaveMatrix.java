@@ -202,7 +202,7 @@ public class JEX_MakeOctaveMatrix extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData valueData = inputs.get("Value");
-		if(valueData == null || !valueData.getTypeName().getType().equals(JEXData.VALUE))
+		if(valueData == null || !valueData.getTypeName().getType().matches(JEXData.VALUE))
 		{
 			return false;
 		}

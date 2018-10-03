@@ -77,7 +77,7 @@ public class CompileCSVTables extends JEXPlugin {
 	public boolean run(JEXEntry optionalEntry)
 	{
 		// Validate the input data
-		if(fileData == null || !fileData.getTypeName().getType().equals(JEXData.FILE))	
+		if(fileData == null || !fileData.getTypeName().getType().matches(JEXData.FILE))	
 		{
 			return false;
 		}

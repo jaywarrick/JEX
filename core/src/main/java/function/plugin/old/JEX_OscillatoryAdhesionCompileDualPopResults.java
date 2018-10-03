@@ -186,7 +186,7 @@ public class JEX_OscillatoryAdhesionCompileDualPopResults extends JEXCrunchable 
 	{
 		// Collect the inputs
 		JEXData valueData = inputs.get("Dual Fit Results");
-		if(valueData == null || !valueData.getTypeName().getType().equals(JEXData.VALUE))
+		if(valueData == null || !valueData.getTypeName().getType().matches(JEXData.VALUE))
 		{
 			return false;
 		}

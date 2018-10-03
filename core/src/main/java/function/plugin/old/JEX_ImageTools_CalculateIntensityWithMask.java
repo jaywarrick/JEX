@@ -176,7 +176,7 @@ public class JEX_ImageTools_CalculateIntensityWithMask extends JEXCrunchable {
 		// Collect the inputs
 		JEXData data1 = inputs.get("Image to quantify");
 		JEXData data2 = inputs.get("Mask");
-		if(data1 == null || !data1.getTypeName().getType().equals(JEXData.IMAGE))
+		if(data1 == null || !data1.getTypeName().getType().matches(JEXData.IMAGE))
 			return false;
 		
 		// Run the function

@@ -207,7 +207,7 @@ public class JEX_OscillatoryAdhesionFilter extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData imageData = inputs.get("Timelapse Images");
-		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(imageData == null || !imageData.getTypeName().getType().matches(JEXData.IMAGE))
 			return false;
 		TreeMap<DimensionMap,String> imagePaths = ImageReader.readObjectToImagePathTable(imageData);
 		DimTable originalDimTable = imageData.getDimTable().copy();

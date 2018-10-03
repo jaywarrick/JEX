@@ -115,11 +115,11 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 	public boolean run(JEXEntry entry)
 	{
 		// Check the inputs
-		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(imageData == null || !imageData.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return false;
 		}
-		if(maximaRoiData == null || !maximaRoiData.getTypeName().getType().equals(JEXData.ROI))
+		if(maximaRoiData == null || !maximaRoiData.getTypeName().getType().matches(JEXData.ROI))
 		{
 			return false;
 		}		
@@ -176,7 +176,7 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 		TreeMap<DimensionMap,ROIPlus> rois = RoiReader.readObjectToRoiMap(maximaRoiData);
 		TreeMap<DimensionMap,String> paths = ImageReader.readObjectToImagePathTable(imageData);
 		TreeMap<DimensionMap,ROIPlus> regions = new TreeMap<>();
-		if(regionRoiData != null && regionRoiData.getTypeName().getType().equals(JEXData.ROI))
+		if(regionRoiData != null && regionRoiData.getTypeName().getType().matches(JEXData.ROI))
 		{
 			regions = RoiReader.readObjectToRoiMap(regionRoiData);
 		}

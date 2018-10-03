@@ -559,9 +559,9 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 			return false;
 		}
 
-		if ((imageData != null && !imageData.getTypeName().getType().equals(JEXData.IMAGE))
-				|| (maskData != null && !maskData.getTypeName().getType().equals(JEXData.IMAGE))
-				|| (roiData != null && !roiData.getTypeName().getType().equals(JEXData.ROI))) {
+		if ((imageData != null && !imageData.getTypeName().getType().matches(JEXData.IMAGE))
+				|| (maskData != null && !maskData.getTypeName().getType().matches(JEXData.IMAGE))
+				|| (roiData != null && !roiData.getTypeName().getType().matches(JEXData.ROI))) {
 			JEXDialog.messageDialog(
 					"All inputs to the function are not of the correct 'Type'. Please check that the image and mask object are 'Image' objects and the maxima is a 'Roi' object.",
 					this);

@@ -139,7 +139,7 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 		}
 
 		// Collect the inputs
-		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(imageData == null || !imageData.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return false;
 		}
@@ -269,7 +269,7 @@ public class ThresholdOrSubtractBackgroundNoise extends JEXPlugin {
 		// Run the function
 		TreeMap<DimensionMap,String> imageMap = ImageReader.readObjectToImagePathTable(imageData);
 		TreeMap<DimensionMap,ROIPlus> rois = new TreeMap<DimensionMap,ROIPlus>();
-		if(roiData != null && roiData.getTypeName().getType().equals(JEXData.ROI))
+		if(roiData != null && roiData.getTypeName().getType().matches(JEXData.ROI))
 		{
 			rois = RoiReader.readObjectToRoiMap(roiData);
 		}

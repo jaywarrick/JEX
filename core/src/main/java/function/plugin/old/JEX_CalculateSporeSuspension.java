@@ -168,7 +168,7 @@ public class JEX_CalculateSporeSuspension extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData data1 = inputs.get("Spore concentration");
-		if(!data1.getTypeName().getType().equals(JEXData.VALUE))
+		if(!data1.getTypeName().getType().matches(JEXData.VALUE))
 			return false;
 		
 		// Grabing the parameters

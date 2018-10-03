@@ -183,21 +183,21 @@ public class JEX_SingleCell_MicrowellMatcher extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData beforeData = inputs.get("Before ROI");
-		if(beforeData == null || !beforeData.getTypeName().getType().equals(JEXData.ROI))
+		if(beforeData == null || !beforeData.getTypeName().getType().matches(JEXData.ROI))
 		{
 			return false;
 		}
 		
 		// Collect the inputs
 		JEXData beforeDataAdjusted = inputs.get("Before ROI (Adjusted)");
-		if(beforeDataAdjusted == null || !beforeDataAdjusted.getTypeName().getType().equals(JEXData.ROI))
+		if(beforeDataAdjusted == null || !beforeDataAdjusted.getTypeName().getType().matches(JEXData.ROI))
 		{
 			return false;
 		}
 		
 		// Collect the inputs
 		JEXData afterData = inputs.get("After ROI");
-		if(afterData == null || !afterData.getTypeName().getType().equals(JEXData.ROI))
+		if(afterData == null || !afterData.getTypeName().getType().matches(JEXData.ROI))
 		{
 			return false;
 		}

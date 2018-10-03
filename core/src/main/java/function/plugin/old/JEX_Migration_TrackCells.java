@@ -192,7 +192,7 @@ public class JEX_Migration_TrackCells extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData data1 = inputs.get("Cell positions");
-		if(!data1.getTypeName().getType().equals(JEXData.ROI))
+		if(!data1.getTypeName().getType().matches(JEXData.ROI))
 			return false;
 		
 		JEXData data2 = inputs.get("Optional timelapse");

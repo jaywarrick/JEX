@@ -198,12 +198,12 @@ public class JEX_ImageTools_CountPointsInROI extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData pointData = inputs.get("Point ROI");
-		if(pointData == null || !pointData.getTypeName().getType().equals(JEXData.ROI))
+		if(pointData == null || !pointData.getTypeName().getType().matches(JEXData.ROI))
 			return false;
 		
 		// Collect the inputs
 		JEXData regionData = inputs.get("Region ROI");
-		if(regionData == null || !regionData.getTypeName().getType().equals(JEXData.ROI))
+		if(regionData == null || !regionData.getTypeName().getType().matches(JEXData.ROI))
 			return false;
 		
 		// Run the function

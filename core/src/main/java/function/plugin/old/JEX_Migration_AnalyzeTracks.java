@@ -195,7 +195,7 @@ public class JEX_Migration_AnalyzeTracks extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData data = inputs.get("Tracks to Analyze");
-		if(!data.getTypeName().getType().equals(JEXData.TRACK))
+		if(!data.getTypeName().getType().matches(JEXData.TRACK))
 			return false;
 		
 		// Run the function

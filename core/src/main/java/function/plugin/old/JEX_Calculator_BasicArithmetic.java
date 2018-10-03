@@ -178,9 +178,9 @@ public class JEX_Calculator_BasicArithmetic extends JEXCrunchable {
 		JEXData value2Data = inputs.get("Value 2");
 		
 		// Check the inputs
-		if(value1Data == null || !value1Data.getTypeName().getType().equals(JEXData.VALUE))
+		if(value1Data == null || !value1Data.getTypeName().getType().matches(JEXData.VALUE))
 			return false;
-		if(value2Data == null || !value2Data.getTypeName().getType().equals(JEXData.VALUE))
+		if(value2Data == null || !value2Data.getTypeName().getType().matches(JEXData.VALUE))
 			return false;
 		
 		// Gather the paramters

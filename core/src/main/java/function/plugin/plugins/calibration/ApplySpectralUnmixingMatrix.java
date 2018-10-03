@@ -81,12 +81,12 @@ public class ApplySpectralUnmixingMatrix extends JEXPlugin {
 	{
 		
 		// Check the inputs
-		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(imageData == null || !imageData.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return false;
 		}
 		
-		if(matrixData == null || !matrixData.getTypeName().getType().equals(JEXData.FILE))
+		if(matrixData == null || !matrixData.getTypeName().getType().matches(JEXData.FILE))
 		{
 			return false;
 		}

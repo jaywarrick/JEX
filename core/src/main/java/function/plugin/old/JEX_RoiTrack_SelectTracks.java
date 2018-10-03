@@ -176,7 +176,7 @@ public class JEX_RoiTrack_SelectTracks extends JEXCrunchable {
 		// Collect the inputs
 		Logs.log("Collecting inputs", 1, this);
 		JEXData data = inputs.get("Tracks to Process");
-		if(!data.getTypeName().getType().equals(JEXData.ROI_TRACK)) return false;
+		if(!data.getTypeName().getType().matches(JEXData.ROI_TRACK)) return false;
 		
 		// Run the function
 		Logs.log("Running the function", 1, this);

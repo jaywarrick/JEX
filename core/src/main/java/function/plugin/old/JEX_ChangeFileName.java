@@ -181,7 +181,7 @@ public class JEX_ChangeFileName extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData fileData = inputs.get("Folder");
-		if(fileData == null || !fileData.getTypeName().getType().equals(JEXData.FILE))
+		if(fileData == null || !fileData.getTypeName().getType().matches(JEXData.FILE))
 			return false;
 		File folder = FileReader.readFileObjectToFile(fileData);
 		if(folder == null || !folder.isDirectory())

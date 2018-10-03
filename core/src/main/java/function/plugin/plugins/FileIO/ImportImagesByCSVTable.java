@@ -137,27 +137,27 @@ public class ImportImagesByCSVTable extends JEXPlugin {
 		// SETUP THE PENDING IMAGE FILES FOR THIS ENTRY
 		// Gather a list of the provided labels.
 		List<JEXData> labels = new Vector<JEXData>();
-		if(labelData1 != null && labelData1.getTypeName().getType().equals(JEXData.LABEL))
+		if(labelData1 != null && labelData1.getTypeName().getType().matches(JEXData.LABEL))
 		{
 			labels.add(labelData1);
 		}
-		if(labelData2 != null && labelData2.getTypeName().getType().equals(JEXData.LABEL))
+		if(labelData2 != null && labelData2.getTypeName().getType().matches(JEXData.LABEL))
 		{
 			labels.add(labelData2);
 		}
-		if(labelData3 != null && labelData3.getTypeName().getType().equals(JEXData.LABEL))
+		if(labelData3 != null && labelData3.getTypeName().getType().matches(JEXData.LABEL))
 		{
 			labels.add(labelData3);
 		}
-		if(labelData4 != null && labelData4.getTypeName().getType().equals(JEXData.LABEL))
+		if(labelData4 != null && labelData4.getTypeName().getType().matches(JEXData.LABEL))
 		{
 			labels.add(labelData4);
 		}
-		if(labelData5 != null && labelData5.getTypeName().getType().equals(JEXData.LABEL))
+		if(labelData5 != null && labelData5.getTypeName().getType().matches(JEXData.LABEL))
 		{
 			labels.add(labelData5);
 		}
-		if(labelData6 != null && labelData6.getTypeName().getType().equals(JEXData.LABEL))
+		if(labelData6 != null && labelData6.getTypeName().getType().matches(JEXData.LABEL))
 		{
 			labels.add(labelData6);
 		}

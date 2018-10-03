@@ -216,17 +216,17 @@ public class JEX_ParticleAnalysis extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData binaryData = inputs.get("Binary Image");
-		if(binaryData == null || !binaryData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(binaryData == null || !binaryData.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return false;
 		}
 		JEXData roiData = inputs.get("ROI");
-		if(roiData != null && !roiData.getTypeName().getType().equals(JEXData.ROI))
+		if(roiData != null && !roiData.getTypeName().getType().matches(JEXData.ROI))
 		{
 			return false;
 		}
 		JEXData grayData = inputs.get("Grayscale Image (optional)");
-		if(grayData != null && !grayData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(grayData != null && !grayData.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return false;
 		}

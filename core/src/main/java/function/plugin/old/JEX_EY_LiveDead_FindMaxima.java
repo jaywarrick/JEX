@@ -193,11 +193,11 @@ public class JEX_EY_LiveDead_FindMaxima extends JEXCrunchable {
 		// data1 contains all the LIVE images per entry
 		// data2 contains all the DEAD images per entry
 		JEXData data1 = inputs.get("Live Image");
-		if(!data1.getTypeName().getType().equals(JEXData.IMAGE))
+		if(!data1.getTypeName().getType().matches(JEXData.IMAGE))
 			return false;
 		
 		JEXData data2 = inputs.get("Dead Image");
-		if(!data2.getTypeName().getType().equals(JEXData.IMAGE))
+		if(!data2.getTypeName().getType().matches(JEXData.IMAGE))
 			return false;
 		
 		// Extract just the images from the imsets, and store as array lists of

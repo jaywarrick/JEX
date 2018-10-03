@@ -235,7 +235,7 @@ public class JEX_SingleCell_TransformRawData_v1 extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData fileData = inputs.get("Time Files");
-		if(fileData == null || !fileData.getTypeName().getType().equals(JEXData.FILE))
+		if(fileData == null || !fileData.getTypeName().getType().matches(JEXData.FILE))
 		{
 			return false;
 		}

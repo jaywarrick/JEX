@@ -175,7 +175,7 @@ public class JEX_ExportFiles extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData data = inputs.get("Files to Export");
-		if(!(data.getTypeName().getType().equals(JEXData.FILE) || data.getTypeName().getType().equals(JEXData.ROI) || data.getTypeName().getType().equals(JEXData.IMAGE) || data.getTypeName().getType().equals(JEXData.MOVIE) || data.getTypeName().getType().equals(JEXData.WORKFLOW) || data.getTypeName().getType().equals(JEXData.SOUND)))
+		if(!(data.getTypeName().getType().matches(JEXData.FILE) || data.getTypeName().getType().matches(JEXData.ROI) || data.getTypeName().getType().matches(JEXData.IMAGE) || data.getTypeName().getType().matches(JEXData.MOVIE) || data.getTypeName().getType().matches(JEXData.WORKFLOW) || data.getTypeName().getType().matches(JEXData.SOUND)))
 		{
 			return false;
 		}
@@ -246,7 +246,7 @@ public class JEX_ExportFiles extends JEXCrunchable {
 	private static TreeMap<DimensionMap,String> readObjectToFilePathTable(JEXData data)
 	{
 		TreeMap<DimensionMap,String> result = new TreeMap<DimensionMap,String>();
-		if(data.getTypeName().getType().equals(JEXData.ROI))
+		if(data.getTypeName().getType().matches(JEXData.ROI))
 		{
 			String dataFolder = data.getDetachedRelativePath();
 			dataFolder = JEXWriter.getDatabaseFolder() + File.separator + dataFolder;

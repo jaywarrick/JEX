@@ -227,7 +227,7 @@ public class JEX_OscillatoryAdhesionAnalysis2 extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData imageData = inputs.get("Filtered Timelapse Images");
-		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(imageData == null || !imageData.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return false;
 		}
@@ -236,7 +236,7 @@ public class JEX_OscillatoryAdhesionAnalysis2 extends JEXCrunchable {
 		
 		// Collect the inputs
 		JEXData roiData = inputs.get("ROI");
-		if(roiData == null || !roiData.getTypeName().getType().equals(JEXData.ROI))
+		if(roiData == null || !roiData.getTypeName().getType().matches(JEXData.ROI))
 		{
 			return false;
 		}
@@ -244,7 +244,7 @@ public class JEX_OscillatoryAdhesionAnalysis2 extends JEXCrunchable {
 		
 		// Collect the inputs
 		JEXData fStartData = inputs.get("fStart");
-		if(fStartData == null || !fStartData.getTypeName().getType().equals(JEXData.LABEL))
+		if(fStartData == null || !fStartData.getTypeName().getType().matches(JEXData.LABEL))
 		{
 			return false;
 		}
@@ -252,7 +252,7 @@ public class JEX_OscillatoryAdhesionAnalysis2 extends JEXCrunchable {
 		
 		// Collect the inputs
 		JEXData fEndData = inputs.get("fEnd");
-		if(fEndData == null || !fEndData.getTypeName().getType().equals(JEXData.LABEL))
+		if(fEndData == null || !fEndData.getTypeName().getType().matches(JEXData.LABEL))
 		{
 			return false;
 		}
@@ -260,7 +260,7 @@ public class JEX_OscillatoryAdhesionAnalysis2 extends JEXCrunchable {
 		
 		// Collect the inputs
 		JEXData calData = inputs.get("cal");
-		if(calData == null || !calData.getTypeName().getType().equals(JEXData.VALUE))
+		if(calData == null || !calData.getTypeName().getType().matches(JEXData.VALUE))
 		{
 			return false;
 		}

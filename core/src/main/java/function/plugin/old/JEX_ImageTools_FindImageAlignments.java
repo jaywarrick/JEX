@@ -197,7 +197,7 @@ public class JEX_ImageTools_FindImageAlignments extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData imageData = inputs.get("Images");
-		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(imageData == null || !imageData.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return false;
 		}

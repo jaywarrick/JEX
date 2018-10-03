@@ -199,7 +199,7 @@ public class JEX_TimeLapseAdaptiveBackgroundSubtraction extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData imageData = inputs.get("Timelapse Image(s)");
-		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(imageData == null || !imageData.getTypeName().getType().matches(JEXData.IMAGE))
 			return false;
 		DimTable originalDimTable = imageData.getDimTable().copy();
 		

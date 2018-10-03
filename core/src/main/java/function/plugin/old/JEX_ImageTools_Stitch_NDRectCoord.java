@@ -193,7 +193,7 @@ public class JEX_ImageTools_Stitch_NDRectCoord extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData valueData = inputs.get("Horizontal Image Alignment");
-		if(valueData == null || !valueData.getTypeName().getType().equals(JEXData.VALUE))
+		if(valueData == null || !valueData.getTypeName().getType().matches(JEXData.VALUE))
 		{
 			return false;
 		}
@@ -203,7 +203,7 @@ public class JEX_ImageTools_Stitch_NDRectCoord extends JEXCrunchable {
 		
 		// Collect the inputs
 		valueData = inputs.get("Vertical Image Alignment");
-		if(valueData == null || !valueData.getTypeName().getType().equals(JEXData.VALUE))
+		if(valueData == null || !valueData.getTypeName().getType().matches(JEXData.VALUE))
 		{
 			return false;
 		}
@@ -221,7 +221,7 @@ public class JEX_ImageTools_Stitch_NDRectCoord extends JEXCrunchable {
 		
 		// Collect the inputs
 		JEXData imageData = inputs.get("Image Set");
-		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(imageData == null || !imageData.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return false;
 		}

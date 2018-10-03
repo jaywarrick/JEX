@@ -180,7 +180,7 @@ public class JEX_ReduceSize extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData data = inputs.get("Image to reduce");
-		if(!data.getTypeName().getType().equals(JEXData.IMAGE))
+		if(!data.getTypeName().getType().matches(JEXData.IMAGE))
 			return false;
 		
 		// //// Get params

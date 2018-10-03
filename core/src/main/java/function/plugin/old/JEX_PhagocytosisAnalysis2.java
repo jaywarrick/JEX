@@ -239,15 +239,15 @@ public class JEX_PhagocytosisAnalysis2 extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData data1 = inputs.get("Particle image");
-		if(!data1.getTypeName().getType().equals(JEXData.IMAGE))
+		if(!data1.getTypeName().getType().matches(JEXData.IMAGE))
 			return false;
 		
 		JEXData data2 = inputs.get("Cell image");
-		if(!data2.getTypeName().getType().equals(JEXData.IMAGE))
+		if(!data2.getTypeName().getType().matches(JEXData.IMAGE))
 			return false;
 		
 		JEXData data3 = inputs.get("BF image");
-		if(!data3.getTypeName().getType().equals(JEXData.IMAGE))
+		if(!data3.getTypeName().getType().matches(JEXData.IMAGE))
 			return false;
 		
 		JEXData data4 = inputs.get("Optional ROI");

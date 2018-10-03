@@ -204,11 +204,11 @@ public class JEX_Migration_AnalyzePointSourceMigartion extends JEXCrunchable {
 		Logs.log("Collecting inputs", 1, this);
 		
 		JEXData trackData = inputs.get("Tracks to Process");
-		if(!trackData.getTypeName().getType().equals(JEXData.TRACK))
+		if(!trackData.getTypeName().getType().matches(JEXData.TRACK))
 			return false;
 		
 		JEXData imageData = inputs.get("Timelapse images");
-		if(!imageData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(!imageData.getTypeName().getType().matches(JEXData.IMAGE))
 			return false;
 		
 		// Run the function

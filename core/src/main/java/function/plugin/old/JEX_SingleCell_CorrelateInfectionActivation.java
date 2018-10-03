@@ -206,7 +206,7 @@ public class JEX_SingleCell_CorrelateInfectionActivation extends JEXCrunchable {
 		// Collect the inputs
 		JEXData jData = inputs.get("Time Files");
 		jData.getDataMap();
-		if(jData == null || !jData.getTypeName().getType().equals(JEXData.FILE))
+		if(jData == null || !jData.getTypeName().getType().matches(JEXData.FILE))
 			return false;
 		TreeMap<DimensionMap,String> tables = FileReader.readObjectToFilePathTable(jData);
 		

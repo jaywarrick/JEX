@@ -172,7 +172,7 @@ public class JEX_Movie_to_ImagePlus extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData data = inputs.get("Movie");
-		if(!data.getTypeName().getType().equals(JEXData.FILE))
+		if(!data.getTypeName().getType().matches(JEXData.FILE))
 			return false;
 		
 		// //// Get params

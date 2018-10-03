@@ -187,11 +187,11 @@ public class JEX_ImageCalculator extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData imageAData = inputs.get("Image A");
-		if(imageAData == null || !imageAData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(imageAData == null || !imageAData.getTypeName().getType().matches(JEXData.IMAGE))
 			return false;
 		// Collect the inputs
 		JEXData imageBData = inputs.get("Image B");
-		if(imageBData == null || !imageBData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(imageBData == null || !imageBData.getTypeName().getType().matches(JEXData.IMAGE))
 			return false;
 		
 		// Gather parameters

@@ -217,7 +217,7 @@ public class JEX_OscillatoryAdhesionPlotDualPops extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData wdData = inputs.get("Working Directory");
-		if(wdData == null || !wdData.getTypeName().getType().equals(JEXData.LABEL))
+		if(wdData == null || !wdData.getTypeName().getType().matches(JEXData.LABEL))
 		{
 			return false;
 		}
@@ -225,7 +225,7 @@ public class JEX_OscillatoryAdhesionPlotDualPops extends JEXCrunchable {
 		
 		// Collect the inputs
 		JEXData dataData = inputs.get("Plot Points");
-		if(dataData == null || !dataData.getTypeName().getType().equals(JEXData.FILE))
+		if(dataData == null || !dataData.getTypeName().getType().matches(JEXData.FILE))
 		{
 			return false;
 		}
@@ -233,7 +233,7 @@ public class JEX_OscillatoryAdhesionPlotDualPops extends JEXCrunchable {
 		
 		// Collect the inputs
 		JEXData fitData = inputs.get("Curve Fit Results");
-		if(fitData == null || !fitData.getTypeName().getType().equals(JEXData.VALUE))
+		if(fitData == null || !fitData.getTypeName().getType().matches(JEXData.VALUE))
 		{
 			return false;
 		}

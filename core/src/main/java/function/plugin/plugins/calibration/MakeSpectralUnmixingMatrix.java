@@ -87,21 +87,21 @@ public class MakeSpectralUnmixingMatrix extends JEXPlugin {
 	{
 		
 		// Check required inputs
-		if(calData == null || !calData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(calData == null || !calData.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return false;
 		}
 		
 		// Check optional inputs
-		if(calMaskData != null && !calData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(calMaskData != null && !calData.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return false;
 		}
-		if(bgData != null && !bgData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(bgData != null && !bgData.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return false;
 		}
-		if(bgRoiData != null && !bgRoiData.getTypeName().getType().equals(JEXData.ROI))
+		if(bgRoiData != null && !bgRoiData.getTypeName().getType().matches(JEXData.ROI))
 		{
 			return false;
 		}

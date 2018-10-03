@@ -232,11 +232,11 @@ public class JEX_PlaqueAnalysis_MeasurePlaqueLocations extends JEXCrunchable{
 	{
 		// Collect the inputs
 		JEXData roiData = inputs.get("Point ROI");
-		if (roiData == null || !roiData.getTypeName().getType().equals(JEXData.ROI)) return false;
+		if (roiData == null || !roiData.getTypeName().getType().matches(JEXData.ROI)) return false;
 
 		// Collect the inputs
 		JEXData fileData = inputs.get("Time Files");
-		if (fileData == null || !fileData.getTypeName().getType().equals(JEXData.FILE)) return false;
+		if (fileData == null || !fileData.getTypeName().getType().matches(JEXData.FILE)) return false;
 
 		// Gather parameters
 		String color = parameters.getValueOfParameter("Color");

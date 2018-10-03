@@ -178,7 +178,7 @@ public class JEX_MakeMovie extends JEXCrunchable {
 		// Collect the inputs
 		Logs.log("Collecting inputs", 1, this);
 		JEXData data = inputs.get("Timelapse stack");
-		if(!data.getTypeName().getType().equals(JEXData.IMAGE))
+		if(!data.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return false;
 		}

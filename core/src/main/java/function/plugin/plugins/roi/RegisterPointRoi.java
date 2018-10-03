@@ -88,14 +88,14 @@ public class RegisterPointRoi extends JEXPlugin {
 	public boolean run(JEXEntry optionalEntry)
 	{
 		maximaData.getDataMap();
-		if(maximaData == null || !maximaData.getTypeName().getType().equals(JEXData.ROI))
+		if(maximaData == null || !maximaData.getTypeName().getType().matches(JEXData.ROI))
 		{
 			JEXDialog.messageDialog("A maxima roi must be provided. Aborting.", this);
 			return false;
 		}
 		
 		cropData.getDataMap();
-		if(cropData == null || !cropData.getTypeName().getType().equals(JEXData.ROI))
+		if(cropData == null || !cropData.getTypeName().getType().matches(JEXData.ROI))
 		{
 			JEXDialog.messageDialog("A crop roi must be provided. Aborting.", this);
 			return false;

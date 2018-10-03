@@ -220,7 +220,7 @@ public class JEX_SingleCell_PlotTrajectories extends JEXCrunchable {
 		// Collect the inputs
 		JEXData data = inputs.get("Data File(s)");
 		data.getDataMap();
-		if(data == null || !data.getTypeName().getType().equals(JEXData.FILE))
+		if(data == null || !data.getTypeName().getType().matches(JEXData.FILE))
 			return false;
 		String timeDimName = parameters.getValueOfParameter("Time Dim Name");
 		Table<String> dataFiles = new Table<String>(data.getDimTable(), FileReader.readObjectToFilePathTable(data));

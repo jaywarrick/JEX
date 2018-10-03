@@ -66,7 +66,7 @@ public class MakeSpectralUnmixingMatrixWithMask extends JEXPlugin {
 	{
 
 		//		// Check required inputs
-		//		if(calData == null || !calData.getTypeName().getType().equals(JEXData.IMAGE))
+		//		if(calData == null || !calData.getTypeName().getType().matches(JEXData.IMAGE))
 		//		{
 		//			return false;
 		//		}
@@ -87,7 +87,7 @@ public class MakeSpectralUnmixingMatrixWithMask extends JEXPlugin {
 		//		}
 		//
 		//		// Check optional inputs
-		//		if(calMaskData != null && !calData.getTypeName().getType().equals(JEXData.IMAGE))
+		//		if(calMaskData != null && !calData.getTypeName().getType().matches(JEXData.IMAGE))
 		//		{
 		//			return false;
 		//		}
@@ -167,7 +167,7 @@ public class MakeSpectralUnmixingMatrixWithMask extends JEXPlugin {
 		/////////////// CONFLICT //////////////
 
 		//		// Check required inputs
-		//		if(calData == null || !calData.getTypeName().getType().equals(JEXData.IMAGE))
+		//		if(calData == null || !calData.getTypeName().getType().matches(JEXData.IMAGE))
 		//		{
 		//			return false;
 		//		}
@@ -188,7 +188,7 @@ public class MakeSpectralUnmixingMatrixWithMask extends JEXPlugin {
 		//		}
 		//
 		//		// Check optional inputs
-		//		if(calMaskData != null && !calData.getTypeName().getType().equals(JEXData.IMAGE))
+		//		if(calMaskData != null && !calData.getTypeName().getType().matches(JEXData.IMAGE))
 		//		{
 		//			return false;
 		//		}

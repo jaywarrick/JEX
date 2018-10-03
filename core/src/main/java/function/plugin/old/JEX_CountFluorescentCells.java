@@ -228,7 +228,7 @@ public class JEX_CountFluorescentCells extends JEXCrunchable {
 		// data1 contains all the Hoechst images per entry
 		// data2 contains all the p65 images per entry
 		JEXData data1 = inputs.get("Image");
-		if(!data1.getTypeName().getType().equals(JEXData.IMAGE))
+		if(!data1.getTypeName().getType().matches(JEXData.IMAGE))
 			return false;
 		
 		JEXData data2 = inputs.get("Optional ROI");

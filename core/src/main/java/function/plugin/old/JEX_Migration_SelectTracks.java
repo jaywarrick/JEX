@@ -193,7 +193,7 @@ public class JEX_Migration_SelectTracks extends JEXCrunchable {
 		// Collect the inputs
 		Logs.log("Collecting inputs", 1, this);
 		JEXData data = inputs.get("Tracks to Process");
-		if(!data.getTypeName().getType().equals(JEXData.TRACK))
+		if(!data.getTypeName().getType().matches(JEXData.TRACK))
 			return false;
 		
 		// Run the function

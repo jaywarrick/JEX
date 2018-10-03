@@ -173,14 +173,14 @@ public class JEX_ImageTools_FileToImageStack extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData data = inputs.get("File stack");
-		if(!data.getTypeName().getType().equals(JEXData.FILE) && !data.getTypeName().getType().equals(JEXData.IMAGE))
+		if(!data.getTypeName().getType().matches(JEXData.FILE) && !data.getTypeName().getType().matches(JEXData.IMAGE))
 			return false;
 		
 		// Prepare the output image map
 		ArrayList<String> fileList = new ArrayList<String>(0);
 		ArrayList<String> indexList = new ArrayList<String>(0);
 				
-		if (data.getTypeName().getType().equals(JEXData.FILE))
+		if (data.getTypeName().getType().matches(JEXData.FILE))
 		{
 			// Get the file name
 			String fileName = FileReader.readFileObject(data);
@@ -208,7 +208,7 @@ public class JEX_ImageTools_FileToImageStack extends JEXCrunchable {
 			}
 		}
 		
-		else if (data.getTypeName().getType().equals(JEXData.IMAGE))
+		else if (data.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			// Get the file name
 			String fileName = ImageReader.readObjectToImagePath(data);

@@ -181,7 +181,7 @@ public class JEX_ImageTools_MeasureIntensity extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData data1 = inputs.get("Image");
-		if(!data1.getTypeName().getType().equals(JEXData.IMAGE))
+		if(!data1.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return false;
 		}

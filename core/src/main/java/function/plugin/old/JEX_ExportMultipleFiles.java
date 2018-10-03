@@ -189,7 +189,7 @@ public class JEX_ExportMultipleFiles extends JEXCrunchable {
 		JEXData temp = inputs.get("File 1");
 		if(temp != null)
 		{
-			if(!temp.getTypeName().getType().equals(JEXData.FILE))
+			if(!temp.getTypeName().getType().matches(JEXData.FILE))
 			{
 				return false;
 			}
@@ -198,7 +198,7 @@ public class JEX_ExportMultipleFiles extends JEXCrunchable {
 		temp = inputs.get("File 2");
 		if(temp != null)
 		{
-			if(!temp.getTypeName().getType().equals(JEXData.FILE))
+			if(!temp.getTypeName().getType().matches(JEXData.FILE))
 			{
 				return false;
 			}
@@ -207,7 +207,7 @@ public class JEX_ExportMultipleFiles extends JEXCrunchable {
 		temp = inputs.get("File 3");
 		if(temp != null)
 		{
-			if(!temp.getTypeName().getType().equals(JEXData.FILE))
+			if(!temp.getTypeName().getType().matches(JEXData.FILE))
 			{
 				return false;
 			}
@@ -216,7 +216,7 @@ public class JEX_ExportMultipleFiles extends JEXCrunchable {
 		temp = inputs.get("File 4");
 		if(temp != null)
 		{
-			if(!temp.getTypeName().getType().equals(JEXData.FILE))
+			if(!temp.getTypeName().getType().matches(JEXData.FILE))
 			{
 				return false;
 			}
@@ -225,7 +225,7 @@ public class JEX_ExportMultipleFiles extends JEXCrunchable {
 		temp = inputs.get("File 5");
 		if(temp != null)
 		{
-			if(!temp.getTypeName().getType().equals(JEXData.FILE))
+			if(!temp.getTypeName().getType().matches(JEXData.FILE))
 			{
 				return false;
 			}
@@ -234,7 +234,7 @@ public class JEX_ExportMultipleFiles extends JEXCrunchable {
 		temp = inputs.get("File 6");
 		if(temp != null)
 		{
-			if(!temp.getTypeName().getType().equals(JEXData.FILE))
+			if(!temp.getTypeName().getType().matches(JEXData.FILE))
 			{
 				return false;
 			}
@@ -243,7 +243,7 @@ public class JEX_ExportMultipleFiles extends JEXCrunchable {
 		temp = inputs.get("File 7");
 		if(temp != null)
 		{
-			if(!temp.getTypeName().getType().equals(JEXData.FILE))
+			if(!temp.getTypeName().getType().matches(JEXData.FILE))
 			{
 				return false;
 			}
@@ -252,7 +252,7 @@ public class JEX_ExportMultipleFiles extends JEXCrunchable {
 		temp = inputs.get("File 8");
 		if(temp != null)
 		{
-			if(!temp.getTypeName().getType().equals(JEXData.FILE))
+			if(!temp.getTypeName().getType().matches(JEXData.FILE))
 			{
 				return false;
 			}
@@ -261,7 +261,7 @@ public class JEX_ExportMultipleFiles extends JEXCrunchable {
 		temp = inputs.get("File 9");
 		if(temp != null)
 		{
-			if(!temp.getTypeName().getType().equals(JEXData.FILE))
+			if(!temp.getTypeName().getType().matches(JEXData.FILE))
 			{
 				return false;
 			}
@@ -270,7 +270,7 @@ public class JEX_ExportMultipleFiles extends JEXCrunchable {
 		temp = inputs.get("File 10");
 		if(temp != null)
 		{
-			if(!temp.getTypeName().getType().equals(JEXData.FILE))
+			if(!temp.getTypeName().getType().matches(JEXData.FILE))
 			{
 				return false;
 			}

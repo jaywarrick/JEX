@@ -177,13 +177,13 @@ public class JEX_ImageTools_MeasureFluorescentIntensityWithMask extends JEXCrunc
 	{
 		// Collect the inputs
 		JEXData data1 = inputs.get("Image to quantify");
-		if(!data1.getTypeName().getType().equals(JEXData.IMAGE))
+		if(!data1.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return false;
 		}
 		
 		JEXData data2 = inputs.get("Image to quantify");
-		if(!data2.getTypeName().getType().equals(JEXData.IMAGE))
+		if(!data2.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return false;
 		}

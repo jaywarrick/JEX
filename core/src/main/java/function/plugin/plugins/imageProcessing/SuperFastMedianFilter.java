@@ -141,7 +141,7 @@ public class SuperFastMedianFilter extends JEXPlugin {
 		}
 		
 		// Validate the input data
-		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(imageData == null || !imageData.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return false;
 		}

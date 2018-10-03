@@ -155,7 +155,7 @@ public class ImageAligner implements PlugInController, ActionListener {
 	 */
 	public void load(JEXData imageData)
 	{
-		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(imageData == null || !imageData.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return;
 		}

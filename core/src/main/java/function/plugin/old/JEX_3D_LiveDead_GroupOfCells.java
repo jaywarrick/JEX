@@ -249,13 +249,13 @@ public class JEX_3D_LiveDead_GroupOfCells extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData data1 = inputs.get("Live Image");
-		if(!data1.getTypeName().getType().equals(JEXData.IMAGE))
+		if(!data1.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return false;
 		}
 		
 		JEXData data2 = inputs.get("Dead Image");
-		if(!data2.getTypeName().getType().equals(JEXData.IMAGE))
+		if(!data2.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return false;
 		}

@@ -142,7 +142,7 @@ public class MakeEntryMontage extends JEXPlugin {
 			return false;
 		}
 		// Collect the inputs
-		if(!imageData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(!imageData.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			JEXDialog.messageDialog("The object provided is not an 'Image' object.");
 			return false;

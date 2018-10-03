@@ -224,14 +224,14 @@ public class JEX_SingleCell_BackGroundCorrectCalibrated extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData data = inputs.get("Images");
-		if(data == null || !data.getTypeName().getType().equals(JEXData.IMAGE))
+		if(data == null || !data.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return false;
 		}
 
 		JEXData darkData = inputs.get("DF Image");
 		FloatProcessor darkImp = null;
-		if(darkData != null && darkData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(darkData != null && darkData.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			ImagePlus darkIm = ImageReader.readObjectToImagePlus(darkData);
 			if(darkIm == null)
@@ -243,7 +243,7 @@ public class JEX_SingleCell_BackGroundCorrectCalibrated extends JEXCrunchable {
 
 		JEXData illumData = inputs.get("IF Image");
 		FloatProcessor illumImp = null;
-		if(illumData != null && illumData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(illumData != null && illumData.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			ImagePlus illumIm = ImageReader.readObjectToImagePlus(illumData);
 			if(illumIm == null)
