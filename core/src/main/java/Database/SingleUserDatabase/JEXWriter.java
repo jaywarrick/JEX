@@ -135,7 +135,6 @@ public class JEXWriter {
 		// Create a new object of merged data.
 		// Create the fresh new object
 		JEXData ret = new JEXData(t, mergedName);
-		TreeMap<DimensionMap,JEXDataSingle> retMap = ret.getDataMap();
 
 		// Initialize status parameters
 		int tot = retDT.mapCount();
@@ -186,7 +185,7 @@ public class JEXWriter {
 			Logs.log("" + map + " " + ret.getDataMap().get(map), JEXWriter.class);
 		}
 		
-		ret.setDimTable(new DimTable(retMap));
+		ret.setDimTable(new DimTable(ret.getDataMap()));
 		//	output.add(ret);
 
 		return ret;
