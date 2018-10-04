@@ -200,7 +200,7 @@ public class JEX_AdhesionProjection extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData imageData = inputs.get("Image");
-		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(imageData == null || !imageData.getTypeName().getType().matches(JEXData.IMAGE))
 			return false;
 		DimTable originalDimTable = imageData.getDimTable().copy();
 

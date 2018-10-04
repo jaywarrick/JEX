@@ -182,7 +182,7 @@ public class JEX_Watershed extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData imageData = inputs.get("Binary Image");
-		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(imageData == null || !imageData.getTypeName().getType().matches(JEXData.IMAGE))
 			return false;
 		
 		TreeMap<DimensionMap,String> imageMap = ImageReader.readObjectToImagePathTable(imageData);

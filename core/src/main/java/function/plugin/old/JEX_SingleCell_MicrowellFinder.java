@@ -203,12 +203,12 @@ public class JEX_SingleCell_MicrowellFinder extends JEXCrunchable {
 			// Collect the inputs
 			boolean roiProvided = false;
 			JEXData imageData = inputs.get("Image");
-			if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
+			if(imageData == null || !imageData.getTypeName().getType().matches(JEXData.IMAGE))
 			{
 				return false;
 			}
 			JEXData roiData = inputs.get("ROI (optional)");
-			if(roiData != null && roiData.getTypeName().getType().equals(JEXData.ROI))
+			if(roiData != null && roiData.getTypeName().getType().matches(JEXData.ROI))
 			{
 				roiProvided = true;
 			}

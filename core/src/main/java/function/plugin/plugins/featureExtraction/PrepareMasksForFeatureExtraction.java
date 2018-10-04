@@ -168,7 +168,7 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 
 		TreeMap<DimensionMap, ROIPlus> roiMap = RoiReader.readObjectToRoiMap(roiData);
 		TreeMap<DimensionMap, String> segMap = null;
-		if(segData != null && segData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(segData != null && segData.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			segMap = ImageReader.readObjectToImagePathTable(segData);
 		}

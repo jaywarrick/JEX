@@ -7,6 +7,7 @@ public class DimTableIterator implements Iterator<DimTable> {
 	
 	DimTable table;
 	String dimName;
+	boolean dimIsBlank = false;
 	Iterator<String> itr;
 
 	/**
@@ -23,7 +24,10 @@ public class DimTableIterator implements Iterator<DimTable> {
 		Dim dimToIterate = this.table.getDimWithName(dimName);
 		if(dimToIterate == null)
 		{
-			itr = (new Vector<String>()).iterator();
+			Vector<String> temp = new Vector<>();
+			temp.add("temp");
+			itr = temp.iterator();
+			dimIsBlank = true;
 		}
 		else
 		{
@@ -40,7 +44,15 @@ public class DimTableIterator implements Iterator<DimTable> {
 	@Override
 	public DimTable next()
 	{
-		return table.getSubTable(new DimensionMap(dimName + "=" + itr.next()));
+		if(dimIsBlank)
+		{
+			itr.next();
+			return table;
+		}
+		else
+		{
+			return table.getSubTable(new DimensionMap(dimName + "=" + itr.next()));
+		}
 	}
 
 	/**

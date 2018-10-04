@@ -238,21 +238,21 @@ public class JEX_SingleCell_MicrowellMeasurements extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData maximaData = inputs.get("Maxima");
-		if(maximaData == null || !maximaData.getTypeName().getType().equals(JEXData.ROI))
+		if(maximaData == null || !maximaData.getTypeName().getType().matches(JEXData.ROI))
 		{
 			return false;
 		}
 		
 		// Collect the inputs
 		JEXData imageData = inputs.get("Images");
-		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(imageData == null || !imageData.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return false;
 		}
 		
 		// Collect the inputs
 		JEXData microwellData = inputs.get("Microwells");
-		if(microwellData == null || !microwellData.getTypeName().getType().equals(JEXData.ROI))
+		if(microwellData == null || !microwellData.getTypeName().getType().matches(JEXData.ROI))
 		{
 			return false;
 		}

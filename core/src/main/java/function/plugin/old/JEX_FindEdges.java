@@ -173,7 +173,7 @@ public class JEX_FindEdges extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData data = inputs.get("Input image");
-		if(!data.getTypeName().getType().equals(JEXData.IMAGE))
+		if(!data.getTypeName().getType().matches(JEXData.IMAGE))
 			return false;
 		
 		// //// Get params

@@ -183,7 +183,7 @@ public class JEX_BackGroundSubtract extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData data = inputs.get("Image to process");
-		if(!data.getTypeName().getType().equals(JEXData.IMAGE))
+		if(!data.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return false;
 		}

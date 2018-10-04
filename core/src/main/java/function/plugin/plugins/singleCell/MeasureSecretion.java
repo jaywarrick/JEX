@@ -109,25 +109,25 @@ public class MeasureSecretion extends JEXPlugin {
 	public boolean run(JEXEntry optionalEntry)
 	{
 		imageData.getDataMap();
-		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(imageData == null || !imageData.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return false;
 		}
 		
 		roiData.getDataMap();
-		if(roiData == null || !roiData.getTypeName().getType().equals(JEXData.ROI))
+		if(roiData == null || !roiData.getTypeName().getType().matches(JEXData.ROI))
 		{
 			return false;
 		}
 		
 		boolean haveBF = true;
-		if(bfData == null || !bfData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(bfData == null || !bfData.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			haveBF = false;
 		}
 		
 		boolean haveCell = true;
-		if(cellData == null || !cellData.getTypeName().getType().equals(JEXData.ROI))
+		if(cellData == null || !cellData.getTypeName().getType().matches(JEXData.ROI))
 		{
 			haveCell = false;
 		}

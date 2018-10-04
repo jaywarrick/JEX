@@ -194,7 +194,7 @@ public class JEX_AdjustImage extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData data = inputs.get("Image to adjust");
-		if(!data.getTypeName().getType().equals(JEXData.IMAGE))
+		if(!data.getTypeName().getType().matches(JEXData.IMAGE))
 			return false;
 		
 		// Run the function

@@ -192,7 +192,7 @@ public class JEX_LocalMovementAnalysis extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData data = inputs.get("Timelapse");
-		if(!data.getTypeName().getType().equals(JEXData.IMAGE))
+		if(!data.getTypeName().getType().matches(JEXData.IMAGE))
 			return false;
 		
 		// Run the function

@@ -186,13 +186,13 @@ public class JEX_AnalyzeCluster extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData data1 = inputs.get("Image to process");
-		if(!data1.getTypeName().getType().equals(JEXData.IMAGE))
+		if(!data1.getTypeName().getType().matches(JEXData.IMAGE))
 			return false;
 		TreeMap<DimensionMap,String> imageMap = ImageReader.readObjectToImagePathTable(data1);
 		
 		JEXData data2 = inputs.get("Optional ROI");
 		ROIPlus roi = null;
-		if(data2.getTypeName().getType().equals(JEXData.ROI))
+		if(data2.getTypeName().getType().matches(JEXData.ROI))
 		{
 			roi = RoiReader.readObjectToRoi(data2);
 		}

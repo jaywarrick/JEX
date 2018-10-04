@@ -197,7 +197,7 @@ public class JEX_ImageTools_Stitch_RectCoord extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData valueData = inputs.get("Horizontal Image Alignment");
-		if(valueData == null || !valueData.getTypeName().getType().equals(JEXData.VALUE))
+		if(valueData == null || !valueData.getTypeName().getType().matches(JEXData.VALUE))
 			return false;
 		CSVList alignmentInfoHor = new CSVList(ValueReader.readValueObject(valueData));
 		int horDxImage = Integer.parseInt(alignmentInfoHor.get(0));
@@ -205,7 +205,7 @@ public class JEX_ImageTools_Stitch_RectCoord extends JEXCrunchable {
 		
 		// Collect the inputs
 		valueData = inputs.get("Vertical Image Alignment");
-		if(valueData == null || !valueData.getTypeName().getType().equals(JEXData.VALUE))
+		if(valueData == null || !valueData.getTypeName().getType().matches(JEXData.VALUE))
 			return false;
 		CSVList alignmentInfoVer = new CSVList(ValueReader.readValueObject(valueData));
 		int verDxImage = Integer.parseInt(alignmentInfoVer.get(0));
@@ -223,7 +223,7 @@ public class JEX_ImageTools_Stitch_RectCoord extends JEXCrunchable {
 		
 		// Collect the inputs
 		JEXData imageData = inputs.get("Image Stack");
-		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(imageData == null || !imageData.getTypeName().getType().matches(JEXData.IMAGE))
 			return false;
 		DimTable table = imageData.getDimTable();
 		Dim stackDim = table.getDimWithName(stackDimName);

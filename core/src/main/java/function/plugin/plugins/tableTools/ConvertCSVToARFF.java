@@ -64,7 +64,7 @@ public class ConvertCSVToARFF extends JEXPlugin {
 	public boolean run(JEXEntry optionalEntry)
 	{
 		// Validate the input data
-		if(csvData == null || !csvData.getTypeName().getType().equals(JEXData.FILE))
+		if(csvData == null || !csvData.getTypeName().getType().matches(JEXData.FILE))
 		{
 			return false;
 		}

@@ -7,11 +7,15 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.util.Collection;
+import java.util.Vector;
 
 import org.apache.commons.io.FileUtils;
 
 import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXDataSingle;
 import Database.DBObjects.JEXEntry;
+import Database.Definition.Type;
 import function.plugin.IJ2.IJ2PluginUtility;
 import ij.ImagePlus;
 import ij.io.FileInfo;
@@ -20,6 +24,7 @@ import ij.process.ImageProcessor;
 import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import logs.Logs;
+import miscellaneous.Canceler;
 import miscellaneous.DateUtility;
 import miscellaneous.DirectoryManager;
 import miscellaneous.FileUtility;
@@ -29,6 +34,9 @@ import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.RealType;
 import preferences.XPreferences;
+import tables.Dim;
+import tables.DimTable;
+import tables.DimensionMap;
 
 public class JEXWriter {
 	
@@ -66,6 +74,122 @@ public class JEXWriter {
 		// Save the info file
 		dbInfo.set(JEXDBInfo.DB_MDATE, DateUtility.getDate());
 		dbInfo.getXML().saveToPath(dbInfo.getAbsolutePath());
+	}
+	
+	public static JEXData performVirtualMerge(JEXData[] dataArray, JEXEntry e, String mergedName, Canceler canceler)
+	{
+		Vector<JEXData> datalist = new Vector<>();
+		for(JEXData d : dataArray)
+		{
+			datalist.add(d);
+		}
+		return performVirtualMerge(datalist, e, mergedName, canceler);
+	}
+	
+	/**
+	 * Merge newData into old data, replacing where necessary.
+	 * Data earlier in the list takes precedence.
+	 * @param datalist
+	 */
+	public static JEXData performVirtualMerge(Collection<JEXData> datalist, JEXEntry e, String mergedName, Canceler canceler)
+	{
+		// Return null if no data provided
+		if(datalist == null || datalist.size() == 0)
+		{
+			return null;
+		}
+		
+		// Check that all the data in the datalist are of the same general Type
+		Type t = datalist.iterator().next().getTypeName().getType();
+		for(JEXData d : datalist)
+		{
+			if(!d.getTypeName().getType().matches(t))
+			{
+				JEXDialog.messageDialog("All data must be of the same type to merge. Aborting.", JEXWriter.class);
+				return null;
+			}
+		}
+		
+		// Create a DimTable for the unioned object
+		DimTable retDT = new DimTable();
+		for(JEXData d : datalist)
+		{
+			retDT = DimTable.union(retDT, d.getDimTable());
+		}
+		
+		// Make sure the DimTable for each object has all the same dimension names as the unioned object (i.e., dimensionality matches)
+		for(JEXData d : datalist)
+		{
+			DimTable tempDT = d.getDimTable();
+			for(Dim dim : retDT)
+			{
+				if(tempDT.getDimWithName(dim.name())==null)
+				{
+					JEXDialog.messageDialog("The dimension " + dim.name() + " does not exist in all objects. For example that dim doesn't exist in " + d.getTypeName().toString() + ". Aborting.", JEXWriter.class);
+					return null;
+				}
+			}
+		}
+		
+		// Create a new object of merged data.
+		// Create the fresh new object
+		JEXData ret = new JEXData(t, mergedName);
+
+		// Initialize status parameters
+		int tot = retDT.mapCount();
+		int count = 0;
+		int percentage = 0;
+
+		Logs.log("" + retDT, JEXWriter.class);
+		// For each map in the unioned DimTable
+		for(DimensionMap map : retDT.getMapIterator())
+		{
+			// Try to grab and copy the JEXDataSingles from each object prioritizing objects higher in the list.
+			JEXDataSingle toAdd = null;
+			for(JEXData d : datalist)
+			{
+				if(d.getData(map) != null)
+				{
+					toAdd = d.getData(map);
+					break; // This way, the first object with something at this dimension map takes precedent
+				}
+			}
+			if(toAdd == null)
+			{
+				continue;
+			}
+			
+			// Check to see if progress should be canceled.
+			if(canceler != null && canceler.isCanceled())
+			{
+				return null;
+			}
+			
+			//			// If there are attached files, copy over that information
+			//			if(t.matches(JEXData.FILE) || t.matches(JEXData.IMAGE) || t.matches(JEXData.MOVIE) || t.matches(JEXData.SOUND))
+			//			{
+			//				toAdd.put(JEXDataSingle.RELATIVEPATH,  toAdd.get(JEXDataSingle.RELATIVEPATH));
+			//			}
+
+			ret.addData(map.copy(), toAdd.copy());
+			// Status bar
+			count = count + 1;
+			percentage = (int) (100 * ((double) count / (double) tot));
+			JEXStatics.statusBar.setProgressPercentage(percentage);
+		}
+		
+		Logs.log("Printing Merged Data:", JEXWriter.class);
+		for(DimensionMap map : ret.getDataMap().keySet())
+		{
+			Logs.log("" + map + " " + ret.getDataMap().get(map), JEXWriter.class);
+		}
+		
+		ret.setDimTable(new DimTable(ret.getDataMap()));
+		//	output.add(ret);
+
+		return ret;
+		// Return status
+		// return true;
 	}
 	
 	public static void editDBInfo(JEXDBInfo dbInfo, String name, String info, String password)
@@ -366,7 +490,7 @@ public class JEXWriter {
 	 * @param dst
 	 * @throws IOException
 	 */
-	private static boolean copy(File src, File dst, boolean forceCopyWithinTempFolder) throws IOException
+	public static boolean copy(File src, File dst, boolean forceCopyWithinTempFolder) throws IOException
 	{
 		// test if destination or source files are null
 		if(src == null || dst == null)

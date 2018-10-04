@@ -170,17 +170,17 @@ public class JEX_CountPhagocytosedParticles extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData sporeRoiData = inputs.get("Spore ROI");
-		if(sporeRoiData == null || !sporeRoiData.getTypeName().getType().equals(JEXData.ROI))
+		if(sporeRoiData == null || !sporeRoiData.getTypeName().getType().matches(JEXData.ROI))
 			return false;
 		
 		// Collect the inputs
 		JEXData cellRoiData = inputs.get("Cell ROI");
-		if(cellRoiData == null || !cellRoiData.getTypeName().getType().equals(JEXData.ROI))
+		if(cellRoiData == null || !cellRoiData.getTypeName().getType().matches(JEXData.ROI))
 			return false;
 		
 		// Collect the inputs
 		JEXData cellWithoutRoiData = inputs.get("Cell without spores ROI");
-		if(cellWithoutRoiData == null || !cellWithoutRoiData.getTypeName().getType().equals(JEXData.ROI))
+		if(cellWithoutRoiData == null || !cellWithoutRoiData.getTypeName().getType().matches(JEXData.ROI))
 			return false;
 		
 		// Run the function

@@ -1180,6 +1180,19 @@ public class JEXManager {
 	 * @param entry
 	 * @return
 	 */
+	public JEXData getUpdateFlavoredDataOfTypeNameInEntry(TypeName tn, JEXEntry entry)
+	{
+		JEXData result = this.getCurrentDatabase().getUpdateFlavoredDataOfTypeNameInEntry(tn, entry);
+		return result;
+	}
+	
+	/**
+	 * Return the data object in entry ENTRY of typename TN
+	 * 
+	 * @param tn
+	 * @param entry
+	 * @return
+	 */
 	public JEXData getDataOfTypeNameInEntry(TypeName tn, JEXEntry entry)
 	{
 		JEXData result = this.getCurrentDatabase().getDataOfTypeNameInEntry(tn, entry);
@@ -1196,6 +1209,12 @@ public class JEXManager {
 	public Vector<JEXData> getDatasOfTypeWithNameContainingInEntry(TypeName tn, JEXEntry entry)
 	{
 		Vector<JEXData> result = this.getCurrentDatabase().getDatasOfTypeWithNameContainingInEntry(tn, entry);
+		return result;
+	}
+	
+	public Vector<JEXData> getUpdateFlavoredDatasInEntry(JEXEntry entry)
+	{
+		Vector<JEXData> result = this.getCurrentDatabase().getUpdateFlavoredDatasInEntry(entry);
 		return result;
 	}
 	
@@ -1833,7 +1852,7 @@ public class JEXManager {
 	public boolean getEntryValidity(JEXEntry entry)
 	{
 		JEXData data = this.getDataOfTypeNameInEntry(new TypeName(JEXData.LABEL, JEXEntry.VALID), entry);
-		if(!data.getTypeName().getType().equals(JEXData.LABEL))
+		if(!data.getTypeName().getType().matches(JEXData.LABEL))
 		{
 			return true;
 		}

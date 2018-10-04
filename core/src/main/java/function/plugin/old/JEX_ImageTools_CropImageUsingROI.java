@@ -200,12 +200,12 @@ public class JEX_ImageTools_CropImageUsingROI extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData imageFiles = inputs.get("Image");
-		if(imageFiles == null || !imageFiles.getTypeName().getType().equals(JEXData.IMAGE))
+		if(imageFiles == null || !imageFiles.getTypeName().getType().matches(JEXData.IMAGE))
 			return false;
 		
 		// Collect the inputs
 		JEXData regionData = inputs.get("Region ROI");
-		if(regionData == null || !regionData.getTypeName().getType().equals(JEXData.ROI))
+		if(regionData == null || !regionData.getTypeName().getType().matches(JEXData.ROI))
 			return false;
 		
 		String exclusionFilterString = parameters.getValueOfParameter("Exclusion Filter DimTable");

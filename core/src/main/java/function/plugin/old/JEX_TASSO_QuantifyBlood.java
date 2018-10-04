@@ -198,7 +198,7 @@ public class JEX_TASSO_QuantifyBlood extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData data1 = inputs.get("Blood spatter image");
-		if(!data1.getTypeName().getType().equals(JEXData.IMAGE))
+		if(!data1.getTypeName().getType().matches(JEXData.IMAGE))
 			return false;
 		
 		// Run the function

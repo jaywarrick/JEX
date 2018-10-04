@@ -385,7 +385,7 @@ public class HTCondorSubmit_Updated extends JEXPlugin {
 	private static TreeMap<DimensionMap,String> readObjectToFilePathTable(JEXData data)
 	{
 		TreeMap<DimensionMap,String> result = new TreeMap<DimensionMap,String>();
-		if(data.getTypeName().getType().equals(JEXData.ROI))
+		if(data.getTypeName().getType().matches(JEXData.ROI))
 		{
 			String dataFolder = data.getDetachedRelativePath();
 			dataFolder = JEXWriter.getDatabaseFolder() + File.separator + dataFolder;

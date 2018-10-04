@@ -2,7 +2,6 @@ package function.plugin.plugins.dataEditing;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.TreeMap;
 import java.util.Vector;
 
 import org.scijava.plugin.Plugin;
@@ -144,7 +143,6 @@ public class MergeObjects extends JEXPlugin {
 		}
 		
 		JEXData ret = new JEXData(data1.getTypeName().getType(), newName);
-		TreeMap<DimensionMap,JEXDataSingle> retMap = ret.getDataMap();
 
 		int tot = retDT.mapCount();
 		int count = 0;
@@ -191,14 +189,14 @@ public class MergeObjects extends JEXPlugin {
 				toAdd.put(JEXDataSingle.RELATIVEPATH, relativePath);
 			}
 
-			retMap.put(map.copy(), toAdd);
+			ret.addData(map.copy(), toAdd.copy());
 			// Status bar
 			count = count + 1;
 			percentage = (int) (100 * ((double) count / (double) tot));
 			JEXStatics.statusBar.setProgressPercentage(percentage);
 		}
 		
-		ret.setDimTable(new DimTable(retMap));
+		ret.setDimTable(new DimTable(ret.getDataMap()));
 		output.add(ret);
 
 		// Return status

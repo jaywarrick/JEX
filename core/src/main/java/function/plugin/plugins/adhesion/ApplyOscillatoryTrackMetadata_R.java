@@ -88,7 +88,7 @@ public class ApplyOscillatoryTrackMetadata_R extends JEXPlugin {
 	public boolean run(JEXEntry optionalEntry)
 	{
 		// Validate the input data
-		if(roiFileData == null || !roiFileData.getTypeName().getType().equals(JEXData.FILE))
+		if(roiFileData == null || !roiFileData.getTypeName().getType().matches(JEXData.FILE))
 		{
 			return false;
 		}

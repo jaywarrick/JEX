@@ -191,10 +191,10 @@ public class JEX_ImageTools_PercentageMaker extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData subpointData = inputs.get("Subset Point ROI");
-		if(subpointData == null || !subpointData.getTypeName().getType().equals(JEXData.ROI))
+		if(subpointData == null || !subpointData.getTypeName().getType().matches(JEXData.ROI))
 			return false;
 		JEXData totpointData = inputs.get("Total Point ROI");
-		if(totpointData == null || !totpointData.getTypeName().getType().equals(JEXData.ROI))
+		if(totpointData == null || !totpointData.getTypeName().getType().matches(JEXData.ROI))
 			return false;
 		
 		// Run the function

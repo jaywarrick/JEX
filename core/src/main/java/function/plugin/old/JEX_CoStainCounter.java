@@ -195,12 +195,12 @@ public class JEX_CoStainCounter extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData pointData1 = inputs.get("First Point ROI");
-		if(pointData1 == null || !pointData1.getTypeName().getType().equals(JEXData.ROI))
+		if(pointData1 == null || !pointData1.getTypeName().getType().matches(JEXData.ROI))
 			return false;
 		
 		// Collect the inputs
 		JEXData pointData2 = inputs.get("Second Point ROI");
-		if(pointData2 == null || !pointData2.getTypeName().getType().equals(JEXData.ROI))
+		if(pointData2 == null || !pointData2.getTypeName().getType().matches(JEXData.ROI))
 			return false;
 		
 		// Get the parameters

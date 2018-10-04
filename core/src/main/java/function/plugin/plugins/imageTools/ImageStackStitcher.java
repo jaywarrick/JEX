@@ -141,7 +141,7 @@ public class ImageStackStitcher extends JEXPlugin {
 	public boolean run(JEXEntry entry)
 	{
 		// Collect the inputs
-		if(hData == null || !hData.getTypeName().getType().equals(JEXData.VALUE))
+		if(hData == null || !hData.getTypeName().getType().matches(JEXData.VALUE))
 		{
 			return false;
 		}
@@ -149,7 +149,7 @@ public class ImageStackStitcher extends JEXPlugin {
 		int horDxImage = Integer.parseInt(alignmentInfoHor.get(0));
 		int horDyImage = Integer.parseInt(alignmentInfoHor.get(1));
 
-		if(vData == null || !vData.getTypeName().getType().equals(JEXData.VALUE))
+		if(vData == null || !vData.getTypeName().getType().matches(JEXData.VALUE))
 		{
 			return false;
 		}
@@ -164,7 +164,7 @@ public class ImageStackStitcher extends JEXPlugin {
 			return false;
 		}
 		// Collect the inputs
-		if(!imageData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(!imageData.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			JEXDialog.messageDialog("The object provided is not an 'Image' object.");
 			return false;

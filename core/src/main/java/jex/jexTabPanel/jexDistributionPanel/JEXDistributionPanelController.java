@@ -1,6 +1,7 @@
 package jex.jexTabPanel.jexDistributionPanel;
 
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -19,6 +20,7 @@ import Database.Definition.Type;
 import cruncher.ImportThread;
 import function.plugin.plugins.dataEditing.SplitObjectToSeparateEntries;
 import guiObject.DialogGlassPane;
+import image.roi.PointList;
 import jex.JEXManager;
 import jex.jexTabPanel.JEXTabPanelController;
 import jex.statics.JEXDialog;
@@ -123,14 +125,39 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 
 		JEXStatics.main.displayGlassPane(diagPanel, true);
 	}
-
+	
 	/**
 	 * Deal the files
 	 */
 	public void dealFiles()
 	{
-		TreeMap<DimensionMap,Integer> lut = SplitObjectToSeparateEntries.getLookUpTable(this.fileController.getStartPt(), this.importController.getNumberRows(), this.importController.getNumberColumns(), this.fileController.getFirstMoveHorizontal(), this.fileController.getSnaking());
-		TreeMap<DimensionMap,Integer> lut_ticker = SplitObjectToSeparateEntries.getLookUpTable("UL", this.importController.getNumberRows(), this.importController.getNumberColumns(), true, false);
+		HashMap<Point,Boolean> selectionArray = this.importController.getSelectionArray();
+		PointList pl = new PointList();
+		for(Entry<Point,Boolean> e : selectionArray.entrySet())
+		{
+			if(e.getValue())
+			{
+				pl.add(e.getKey());
+			}
+		}
+		Rectangle r = pl.getBounds();
+		int xmin = r.x;
+		int ymin = r.y;
+		boolean horFirst = true;
+		for (int i = 0, len = this.dimensions.size(); i < len; i++)
+		{
+			if(this.dimensions.get(i).getDimensionName().equals("Array Column"))
+			{
+				break;
+			}
+			if(this.dimensions.get(i).getDimensionName().equals("Array Row"))
+			{
+				horFirst = false;
+				break;
+			}
+		}
+		TreeMap<DimensionMap,Integer> lut = SplitObjectToSeparateEntries.getLookUpTable(this.fileController.getStartPt(), r.height+1, r.width+1, horFirst, this.fileController.getSnaking());
+		TreeMap<DimensionMap,Integer> lut_ticker = SplitObjectToSeparateEntries.getLookUpTable("UL", r.height+1, r.width+1, horFirst, false);
 		TreeMap<Integer, DimensionMap> tul = new TreeMap<>();
 		DimTable filter = this.fileController.getFilterTable();
 		for(Entry<DimensionMap,Integer> e : lut.entrySet())
@@ -155,7 +182,7 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 			maxIncr[i] = selector.getDimensionSize() - 1;
 			if(dimVector[i].equals("Array Column"))
 			{
-				maxIncr[i] = this.importController.getNumberColumns() - 1;
+				maxIncr[i] = r.width;
 				if(colLoc != -1)
 				{
 					colLoc = -2;
@@ -167,7 +194,7 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 			}
 			if(dimVector[i].equals("Array Row"))
 			{
-				maxIncr[i] = this.importController.getNumberRows() - 1;
+				maxIncr[i] = r.height;
 				if(rowLoc != -1)
 				{
 					rowLoc = -2;
@@ -265,7 +292,7 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 				JEXDialog.messageDialog("None of the array entries displayed are selected. Please select entries or navigate to a dataset with selected entries.", this);
 				return;
 			}
-			while (!this.isValidCell(cellX, cellY))
+			while (!this.isValidCell(cellX + xmin, cellY + ymin))
 			{
 				// Go to the next cell in the array
 				Logs.log("Skipped cell at location " + cellX + "-" + cellY, 1, this);
@@ -305,11 +332,11 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 			}
 
 			// Fill the treemap of files
-			Vector<Pair<DimensionMap,String>> richFileMap = this.files.get(new Point(cellX, cellY));
+			Vector<Pair<DimensionMap,String>> richFileMap = this.files.get(new Point(cellX + xmin, cellY + ymin));
 			if(richFileMap == null)
 			{
 				richFileMap = new Vector<Pair<DimensionMap,String>>();
-				this.files.put(new Point(cellX, cellY), richFileMap);
+				this.files.put(new Point(cellX + xmin, cellY + ymin), richFileMap);
 			}
 			DimensionMap map = this.makeMap(compteur, dimVector);
 			
@@ -353,9 +380,13 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 		{
 			return false;
 		}
-		else
+		else if(selected)
 		{
 			return true;
+		}
+		else
+		{
+			return false;
 		}
 	}
 

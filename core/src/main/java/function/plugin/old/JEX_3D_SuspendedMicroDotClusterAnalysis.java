@@ -200,7 +200,7 @@ public class JEX_3D_SuspendedMicroDotClusterAnalysis extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData data1 = inputs.get("Fluorescent Image");
-		if(!data1.getTypeName().getType().equals(JEXData.IMAGE))
+		if(!data1.getTypeName().getType().matches(JEXData.IMAGE))
 			return false;
 		
 		// Run the function

@@ -82,16 +82,16 @@ public class ExcludePointsOnBoundary extends JEXPlugin {
 	@Override
 	public boolean run(JEXEntry optionalEntry)
 	{
-		if(roiData == null || !roiData.getTypeName().getType().equals(JEXData.ROI))
+		if(roiData == null || !roiData.getTypeName().getType().matches(JEXData.ROI))
 		{
 			return false;
 		}
 
 		boolean haveRoi = false;
-		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(imageData == null || !imageData.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			regionData.getDataMap();
-			if(regionData == null || !regionData.getTypeName().getType().equals(JEXData.ROI))
+			if(regionData == null || !regionData.getTypeName().getType().matches(JEXData.ROI))
 			{
 				JEXDialog.messageDialog("Both the image and the region roi were invalid for some reason.", this);
 				return false;

@@ -1,8 +1,11 @@
 package jex.jexTabPanel.jexFunctionPanel;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -10,9 +13,10 @@ import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 
 import jex.statics.DisplayStatics;
+import jex.statics.JEXStatics;
 import net.miginfocom.swing.MigLayout;
 
-public class FunctionLoadSaveAndRunPanel implements ActionListener {
+public class FunctionLoadSaveAndRunPanel implements ActionListener, ItemListener {
 
 	// GUI variables
 	private JPanel panel;
@@ -25,6 +29,7 @@ public class FunctionLoadSaveAndRunPanel implements ActionListener {
 	private JButton saveJXWToDB = new JButton();
 	private JButton runAll = new JButton();
 	private JCheckBox autoSave = new JCheckBox();
+	private JCheckBox autoUpdate = new JCheckBox();
 
 	public FunctionLoadSaveAndRunPanel(FunctionListPanel parent)
 	{
@@ -43,7 +48,7 @@ public class FunctionLoadSaveAndRunPanel implements ActionListener {
 		this.panel.setBackground(DisplayStatics.lightBackground);
 		this.panel.setBorder(BorderFactory.createLineBorder(Color.GRAY));
 		this.panel.setLayout(new MigLayout("center, flowy, ins 3", "[fill, grow]", "[fill, grow]3[fill, grow]3[fill, grow]3[fill, grow]3[]"));
-		// this.setMaximumSize(new Dimension(250,800));
+		this.panel.setMinimumSize(new Dimension(160,100));
 		// this.setPreferredSize(new Dimension(250,200));
 
 		// Create the add button
@@ -80,8 +85,14 @@ public class FunctionLoadSaveAndRunPanel implements ActionListener {
 		this.runAll.addActionListener(this);
 
 		// Create autoSave checkBox
-		this.autoSave.setText("Auto-Save Results");
+		this.autoSave.setText("Auto-Saving (ON)");
 		this.autoSave.setSelected(true);
+		this.autoSave.addItemListener(this);
+
+		// Create autoSave checkBox
+		this.autoUpdate.setText("Auto-Updating (OFF)");
+		this.autoUpdate.setSelected(false);
+		this.autoUpdate.addItemListener(this);
 
 		// Create the button panel
 		this.panel.setBackground(DisplayStatics.lightBackground);
@@ -91,6 +102,7 @@ public class FunctionLoadSaveAndRunPanel implements ActionListener {
 		this.panel.add(this.saveJXWToDB, "growx, height 10:10:");
 		this.panel.add(this.runAll, "growx, height 10:10:");
 		this.panel.add(this.autoSave);
+		this.panel.add(this.autoUpdate);
 	}
 
 	@Override
@@ -98,11 +110,11 @@ public class FunctionLoadSaveAndRunPanel implements ActionListener {
 	{
 		if(e.getSource() == this.saveJXWToDB)
 		{
-			this.parent.saveAllFunctions(this.isAutoSaveSelected());
+			this.parent.saveAllFunctions(this.isAutoSavingOn());
 		}
 		if(e.getSource() == this.runAll)
 		{
-			this.parent.runAllFunctions(this.isAutoSaveSelected());
+			this.parent.runAllFunctions(this.isAutoSavingOn(), this.isAutoUpdatingOn());
 		}
 		else if(e.getSource() == this.loadButton)
 		{
@@ -114,9 +126,45 @@ public class FunctionLoadSaveAndRunPanel implements ActionListener {
 		}
 	}
 
-	public boolean isAutoSaveSelected()
+	public boolean isAutoSavingOn()
 	{
 		return this.autoSave.isSelected();
+	}
+	
+	public boolean isAutoUpdatingOn()
+	{
+		return this.autoUpdate.isSelected();
+	}
+
+	@Override
+	public void itemStateChanged(ItemEvent e) {
+		if(e.getSource() == this.autoSave)
+		{
+			if(this.autoSave.isSelected())
+			{
+				this.autoSave.setText("Auto-Saving (ON)");
+				// Call code to start auto-updater
+			}
+			else
+			{
+				this.autoSave.setText("Auto-Saving (OFF)");
+				// Call code to cancel auto-updater
+			}
+		}
+		if(e.getSource() == this.autoUpdate)
+		{
+			if(this.autoUpdate.isSelected())
+			{
+				this.autoUpdate.setText("Auto-Updating (ON)");
+				// Call code to start auto-updater
+			}
+			else
+			{
+				this.autoUpdate.setText("Auto-Updating (OFF)");
+				// Call code to cancel auto-updater
+				JEXStatics.cruncher.stopUpdater();
+			}
+		}
 	}
 
 }

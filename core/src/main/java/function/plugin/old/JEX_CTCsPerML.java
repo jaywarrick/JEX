@@ -196,22 +196,22 @@ public class JEX_CTCsPerML extends JEXCrunchable {
 		// Run the function
 		// EpCAM Counts
 		JEXData epcam = inputs.get("EpCAM Count");
-		if(!epcam.getTypeName().getType().equals(JEXData.VALUE))
+		if(!epcam.getTypeName().getType().matches(JEXData.VALUE))
 			return false;
 		
 		// GFP Counts
 		JEXData gfp = inputs.get("Spiked Cell Count");
-		if(!gfp.getTypeName().getType().equals(JEXData.VALUE))
+		if(!gfp.getTypeName().getType().matches(JEXData.VALUE))
 			return false;
 		
 		// mL Whole Blood Equivalents
 		JEXData blood = inputs.get("mL equivalent seeded");
-		if(blood == null || !blood.getTypeName().getType().equals(JEXData.VALUE))
+		if(blood == null || !blood.getTypeName().getType().matches(JEXData.VALUE))
 			return false;
 		
 		// mL whole blood to start
 		JEXData start = inputs.get("mL whole blood to start");
-		if(start == null || !start.getTypeName().getType().equals(JEXData.VALUE))
+		if(start == null || !start.getTypeName().getType().matches(JEXData.VALUE))
 			return false;
 		
 		// This is the meat

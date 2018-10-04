@@ -15,6 +15,7 @@ import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;
 import Database.DataReader.RoiReader;
+import Database.DataWriter.FileWriter;
 import Database.SingleUserDatabase.JEXReader;
 import function.ops.featuresets.DoubleNormalizedZernikeFeatureSet;
 import function.ops.featuresets.Geometric2DFeatureSet;
@@ -154,47 +155,50 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
 	@ParameterMarker(uiOrder = 0, name = "Channel dim name", description = "Channel dimension name in mask data.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "Channel")
 	String channelName;
+	
+	@ParameterMarker(uiOrder = 1, name = "Time dim name (optional)", description = "Time dimension name in mask data.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "Time")
+	String timeName;
 
-	@ParameterMarker(uiOrder = 1, name = "Channel Offsets <Val1>,<Val2>,...<Valn>", description = "Set a single offset for all channels (e.g., positive 5.0 to subtract off 5.0 before doing calculations) or a different offset for each channel. Must have 1 value for each channel comma separated (e.g., '<Val1>,<Val2>,...<Valn>').", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "0.0")
+	@ParameterMarker(uiOrder = 2, name = "Channel Offsets <Val1>,<Val2>,...<Valn>", description = "Set a single offset for all channels (e.g., positive 5.0 to subtract off 5.0 before doing calculations) or a different offset for each channel. Must have 1 value for each channel comma separated (e.g., '<Val1>,<Val2>,...<Valn>').", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "0.0")
 	String channelOffsets;
 
-	@ParameterMarker(uiOrder = 2, name = "'Whole Cell' mask channel value", description = "Which channel value of the mask image represents the whole cell that has a 1-to-1 mapping with the maxima points.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "WholeCell")
+	@ParameterMarker(uiOrder = 3, name = "'Whole Cell' mask channel value", description = "Which channel value of the mask image represents the whole cell that has a 1-to-1 mapping with the maxima points.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "WholeCell")
 	String maskWholeCellChannelValue;
 
-	@ParameterMarker(uiOrder = 3, name = "'Nuclear' mask channel value (optional)", description = "(Optional) If a nuclear mask exists and it is specified, additional nuanced calculations of Zernike features are provided (see comments in code).", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
+	@ParameterMarker(uiOrder = 4, name = "'Nuclear' mask channel value (optional)", description = "(Optional) If a nuclear mask exists and it is specified, additional nuanced calculations of Zernike features are provided (see comments in code).", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
 	String maskNuclearChannelValue;
 	
-	@ParameterMarker(uiOrder = 4, name = "Mask Exclusion Filter DimTable", description = "Filter specific dimension combinations from analysis. (Format: <DimName1>=<a1,a2,...>;<DimName2>=<b1,b2...>)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
+	@ParameterMarker(uiOrder = 5, name = "Mask Exclusion Filter DimTable", description = "Filter specific dimension combinations from analysis. (Format: <DimName1>=<a1,a2,...>;<DimName2>=<b1,b2...>)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
 	String filterDimTableString;
 	
 	//	@ParameterMarker(uiOrder = 3, name = "Image intensity offset", description = "Amount the images are offset from zero (will be subtracted before calculation)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "0.0")
 	//	double offset;
 
-	@ParameterMarker(uiOrder = 5, name = "** Compute Stats Features?", description = "Whether to quantify first order statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
+	@ParameterMarker(uiOrder = 6, name = "** Compute Stats Features?", description = "Whether to quantify first order statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
 	boolean stats;
 
-	@ParameterMarker(uiOrder = 6, name = "** Compute 2D Geometric Features?", description = "Whether to quantify geometric statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	@ParameterMarker(uiOrder = 7, name = "** Compute 2D Geometric Features?", description = "Whether to quantify geometric statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean geometric;
 
-	@ParameterMarker(uiOrder = 7, name = "** Compute 2D Haralick Features?", description = "Whether to quantify Haralick texture statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	@ParameterMarker(uiOrder = 8, name = "** Compute 2D Haralick Features?", description = "Whether to quantify Haralick texture statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean haralick2D;
 
-	@ParameterMarker(uiOrder = 8, name = "** Compute Histogram Features?", description = "Whether to quantify histogram statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	@ParameterMarker(uiOrder = 9, name = "** Compute Histogram Features?", description = "Whether to quantify histogram statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean histogram;
 
-	@ParameterMarker(uiOrder = 9, name = "** Compute Moments Features?", description = "Whether to quantify image moment statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	@ParameterMarker(uiOrder = 10, name = "** Compute Moments Features?", description = "Whether to quantify image moment statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean moments;
 
-	@ParameterMarker(uiOrder = 10, name = "** Compute LBP Features?", description = "Whether to quantify linear binary pattern (LBP) statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	@ParameterMarker(uiOrder = 11, name = "** Compute LBP Features?", description = "Whether to quantify linear binary pattern (LBP) statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean lbp;
 
-	@ParameterMarker(uiOrder = 11, name = "** Compute Tamura Features?", description = "Whether to quantify Tamura statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	@ParameterMarker(uiOrder = 12, name = "** Compute Tamura Features?", description = "Whether to quantify Tamura statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean tamura;
 
-	@ParameterMarker(uiOrder = 12, name = "** Compute Zernike Features?", description = "Whether to quantify Zernike shape statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	@ParameterMarker(uiOrder = 13, name = "** Compute Zernike Features?", description = "Whether to quantify Zernike shape statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean zernike;
 
-	@ParameterMarker(uiOrder = 13, name = "** Connectedness Features", description = "The structuring element or number of neighbors to require to be part of the neighborhood.", ui = MarkerConstants.UI_DROPDOWN, choices = {"4 Connected", "8 Connected" }, defaultChoice = 0)
+	@ParameterMarker(uiOrder = 14, name = "** Connectedness Features", description = "The structuring element or number of neighbors to require to be part of the neighborhood.", ui = MarkerConstants.UI_DROPDOWN, choices = {"4 Connected", "8 Connected" }, defaultChoice = 0)
 	String connectedness;
 
 	// Feature set parameters
@@ -245,6 +249,10 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	public int getMaxThreads() {
 		return 10;
 	}
+	
+	TreeMap<DimensionMap,String> csvFiles = new TreeMap<>();
+	TreeMap<DimensionMap,String> arffFiles = new TreeMap<>();
+	Dim timeDim = null;
 
 	@Override
 	public boolean run(JEXEntry optionalEntry) {
@@ -272,76 +280,97 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		
 		this.filterTable = new DimTable(this.filterDimTableString);
 
-		// For each whole cell mask
-		for(DimensionMap mapMask_NoChannelTemp : maskDimTable_NoChannel.getMapIterator())
+		// For each time
+		
+		for(DimTable maskDimTable_NoChannel_1Time : maskDimTable_NoChannel.getSubTableIterator(this.timeName))
 		{
-			if (this.isCanceled()) { this.close(); return false; }
-
-			this.mapMask_NoChannel = mapMask_NoChannelTemp;
-			DimensionMap mapMask_WholeCell = this.mapMask_NoChannel.copyAndSet(channelName + "=" + maskWholeCellChannelValue);
-
-			// Skip if we can
-			if(this.filterTable.testMapAsExclusionFilter(mapMask_WholeCell))
-			{
-				continue;
-			}
+			// Start a new WriterWrapper
+			this.timeDim = maskDimTable_NoChannel_1Time.getDimWithName(this.timeName);
+			this.wrapWriter = new WriterWrapper();
 			
-			this.setCropRoi(mapMask_WholeCell); // Set this first to be sure other things are cropped appropriately
-			this.setWholeCellMask(mapMask_WholeCell);
-			if(this.wholeCellMaskImage == null) { continue; }
-			if (this.isCanceled()) { this.close(); return false; }
-			this.setMaximaRoi(mapMask_WholeCell);
-			this.setIdToLabelMap(mapMask_WholeCell);
-			if (this.isCanceled()) { this.close(); return false; }
-			this.nuclearInfo = new TreeMap<Integer, Pair<Double, RealLocalizable>>();
-
-			//	For each Image (IMAGE DimTable filtered on (WholeCellMask - ChannelDim))
-			DimTable imageSubsetTable = imageDimTable.getSubTable(this.mapMask_NoChannel);
-			boolean firstTimeThrough = true;
-			for(DimensionMap mapMaskTemp: imageSubsetTable.getMapIterator())
+			// For each whole cell mask
+			for(DimensionMap mapMask_NoChannelTemp : maskDimTable_NoChannel_1Time.getMapIterator())
 			{
+				if (this.isCanceled()) { this.close(); return false; }
+
+				this.mapMask_NoChannel = mapMask_NoChannelTemp;
+				DimensionMap mapMask_WholeCell = this.mapMask_NoChannel.copyAndSet(channelName + "=" + maskWholeCellChannelValue);
+
 				// Skip if we can
-				if(this.filterTable.getSubTable(this.channelName).testMapAsExclusionFilter(mapMaskTemp))
+				if(this.filterTable.testMapAsExclusionFilter(mapMask_WholeCell))
 				{
 					continue;
 				}
 				
-				// Set the image
-				this.setImageToMeasure(mapMaskTemp);
-				if(this.image == null)
-				{
-					continue;
-				}
+				this.setCropRoi(mapMask_WholeCell); // Set this first to be sure other things are cropped appropriately
+				this.setWholeCellMask(mapMask_WholeCell);
+				if(this.wholeCellMaskImage == null) { continue; }
+				if (this.isCanceled()) { this.close(); return false; }
+				this.setMaximaRoi(mapMask_WholeCell);
+				this.setIdToLabelMap(mapMask_WholeCell);
+				if (this.isCanceled()) { this.close(); return false; }
+				this.nuclearInfo = new TreeMap<Integer, Pair<Double, RealLocalizable>>();
 
-				// Quantify nuclear region first if possible
-				if(this.nucExists && !this.filterTable.getDimWithName(this.channelName).containsValue(this.maskNuclearChannelValue))
+				//	For each Image (IMAGE DimTable filtered on (WholeCellMask - ChannelDim))
+				DimTable imageSubsetTable = imageDimTable.getSubTable(this.mapMask_NoChannel);
+				boolean firstTimeThrough = true;
+				for(DimensionMap mapMaskTemp: imageSubsetTable.getMapIterator())
 				{
-					if(!this.quantifyFeatures(this.maskNuclearChannelValue, firstTimeThrough))
-						return false;
-					this.updateStatus();
-				}
-
-				// Then quantify whole cell mask
-				if(!this.quantifyFeatures(this.maskWholeCellChannelValue, firstTimeThrough))
-					return false;
-				this.updateStatus();
-
-				// Then quantify other masks
-				for(String maskChannelValue : maskChannelDim.dimValues)
-				{
-					if(!maskChannelValue.equals(this.maskNuclearChannelValue) && !maskChannelValue.equals(this.maskWholeCellChannelValue) && !this.filterTable.testMapAsExclusionFilter(new DimensionMap(this.channelName + "=" + maskChannelValue)))
+					// Skip if we can
+					if(this.filterTable.getSubTable(this.channelName).testMapAsExclusionFilter(mapMaskTemp))
 					{
-						if(!this.quantifyFeatures(maskChannelValue, firstTimeThrough))
+						continue;
+					}
+					
+					// Set the image
+					this.setImageToMeasure(mapMaskTemp);
+					if(this.image == null)
+					{
+						continue;
+					}
+
+					// Quantify nuclear region first if possible
+					if(this.nucExists && !this.filterTable.getDimWithName(this.channelName).containsValue(this.maskNuclearChannelValue))
+					{
+						if(!this.quantifyFeatures(this.maskNuclearChannelValue, firstTimeThrough))
 							return false;
 						this.updateStatus();
 					}
+
+					// Then quantify whole cell mask
+					if(!this.quantifyFeatures(this.maskWholeCellChannelValue, firstTimeThrough))
+						return false;
+					this.updateStatus();
+
+					// Then quantify other masks
+					for(String maskChannelValue : maskChannelDim.dimValues)
+					{
+						if(!maskChannelValue.equals(this.maskNuclearChannelValue) && !maskChannelValue.equals(this.maskWholeCellChannelValue) && !this.filterTable.testMapAsExclusionFilter(new DimensionMap(this.channelName + "=" + maskChannelValue)))
+						{
+							if(!this.quantifyFeatures(maskChannelValue, firstTimeThrough))
+								return false;
+							this.updateStatus();
+						}
+					}
+
+					firstTimeThrough = false;				
 				}
-
-				firstTimeThrough = false;				
 			}
-
+			if(this.timeDim == null)
+			{
+				Pair<String, String> results = WriterWrapper.close(this.wrapWriter, saveArff);
+				csvFiles.put(new DimensionMap(), results.p1);
+				arffFiles.put(new DimensionMap(), results.p2);
+			}
+			else
+			{
+				Pair<String, String> results = WriterWrapper.close(this.wrapWriter, saveArff);
+				csvFiles.put(new DimensionMap(this.timeDim.name() + "=" + this.timeDim.valueAt(0)), results.p1);
+				arffFiles.put(new DimensionMap(this.timeDim.name() + "=" + this.timeDim.valueAt(0)), results.p2);
+			}
 		}
-		this.close();
+		this.outputCSV = FileWriter.makeFileObject("temp", null, csvFiles);
+		this.outputARFF = FileWriter.makeFileObject("temp", null, arffFiles);
 		return true;
 	}
 
@@ -1138,9 +1167,19 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
 	public void close()
 	{
-		Pair<JEXData, JEXData> results = WriterWrapper.close(this.wrapWriter, saveArff);
-		outputCSV = results.p1;
-		outputARFF = results.p2;
+		Pair<String, String> results = WriterWrapper.close(this.wrapWriter, saveArff);
+		if(this.timeDim == null)
+		{
+			csvFiles.put(new DimensionMap(), results.p1);
+			arffFiles.put(new DimensionMap(), results.p2);
+		}
+		else
+		{
+			csvFiles.put(new DimensionMap(this.timeDim.name() + "=" + this.timeDim.valueAt(0)), results.p1);
+			arffFiles.put(new DimensionMap(this.timeDim.name() + "=" + this.timeDim.valueAt(0)), results.p2);
+		}
+		this.outputCSV = FileWriter.makeFileObject("temp", null, csvFiles);
+		this.outputARFF = FileWriter.makeFileObject("temp", null, arffFiles);
 	}
 
 	public void write(DimensionMap map, Double value)
@@ -1169,9 +1208,9 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			return false;
 		}
 
-		if ((imageData != null && !imageData.getTypeName().getType().equals(JEXData.IMAGE))
-				|| (maskData != null && !maskData.getTypeName().getType().equals(JEXData.IMAGE))
-				|| (roiData != null && !roiData.getTypeName().getType().equals(JEXData.ROI))) {
+		if ((imageData != null && !imageData.getTypeName().getType().matches(JEXData.IMAGE))
+				|| (maskData != null && !maskData.getTypeName().getType().matches(JEXData.IMAGE))
+				|| (roiData != null && !roiData.getTypeName().getType().matches(JEXData.ROI))) {
 			JEXDialog.messageDialog(
 					"All inputs to the function are not of the correct 'Type'. Please check that the image and mask object are 'Image' objects and the maxima is a 'Roi' object.",
 					this);

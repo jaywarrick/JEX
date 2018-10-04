@@ -81,7 +81,7 @@ public class CompileCSVTables_R extends JEXPlugin {
 		}
 
 		// Validate the input data
-		if(fileData == null || !fileData.getTypeName().getType().equals(JEXData.FILE))	
+		if(fileData == null || !fileData.getTypeName().getType().matches(JEXData.FILE))	
 		{
 			return false;
 		}

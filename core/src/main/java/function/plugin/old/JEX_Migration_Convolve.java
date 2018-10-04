@@ -177,11 +177,11 @@ public class JEX_Migration_Convolve extends JEXCrunchable {
 	{
 		// Get the base images
 		JEXData data1 = inputs.get("Base image");
-		if(!data1.getTypeName().getType().equals(JEXData.IMAGE))
+		if(!data1.getTypeName().getType().matches(JEXData.IMAGE))
 			return false;
 		
 		JEXData data2 = inputs.get("Small convolution image");
-		if(!data2.getTypeName().getType().equals(JEXData.IMAGE))
+		if(!data2.getTypeName().getType().matches(JEXData.IMAGE))
 			return false;
 		ImagePlus conv = ImageReader.readObjectToImagePlus(data2);
 		

@@ -191,7 +191,7 @@ public class JEX_Resize extends JEXCrunchable {
 		// Collect the inputs
 		JEXData imageData = inputs.get("Image");
 		imageData.getDataMap();
-		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(imageData == null || !imageData.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return false;
 		}

@@ -211,7 +211,7 @@ public class JEX_ImageTools_Stitch_Coord extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData valueData = inputs.get("Image Alignment");
-		if(valueData == null || !valueData.getTypeName().getType().equals(JEXData.VALUE))
+		if(valueData == null || !valueData.getTypeName().getType().matches(JEXData.VALUE))
 		{
 			return false;
 		}
@@ -219,7 +219,7 @@ public class JEX_ImageTools_Stitch_Coord extends JEXCrunchable {
 		
 		// Collect the inputs
 		JEXData fileData = inputs.get("Stage Movements");
-		if(fileData == null || !fileData.getTypeName().getType().equals(JEXData.FILE))
+		if(fileData == null || !fileData.getTypeName().getType().matches(JEXData.FILE))
 		{
 			return false;
 		}
@@ -234,7 +234,7 @@ public class JEX_ImageTools_Stitch_Coord extends JEXCrunchable {
 		
 		// Collect the inputs
 		JEXData imageData = inputs.get("Image Stack");
-		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(imageData == null || !imageData.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return false;
 		}

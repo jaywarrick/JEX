@@ -71,9 +71,9 @@ public class CopyROIToPointPatternLocations extends JEXPlugin {
 		JEXStatics.statusBar.setProgressPercentage(0);
 
 		// Collect the inputs
-		if(this.roiData == null || !this.roiData.getTypeName().getType().equals(JEXData.ROI))
+		if(this.roiData == null || !this.roiData.getTypeName().getType().matches(JEXData.ROI))
 			return false;
-		if(this.pointRoiData == null || !this.pointRoiData.getTypeName().getType().equals(JEXData.ROI))
+		if(this.pointRoiData == null || !this.pointRoiData.getTypeName().getType().matches(JEXData.ROI))
 			return false;
 
 		// Run the function

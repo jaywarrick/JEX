@@ -194,7 +194,7 @@ public class JEX_ImageTools_CountPointsToARFF extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData pointData = inputs.get("Point ROI");
-		if(pointData == null || !pointData.getTypeName().getType().equals(JEXData.ROI))
+		if(pointData == null || !pointData.getTypeName().getType().matches(JEXData.ROI))
 			return false;
 		
 		// Run the function

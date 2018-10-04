@@ -39,7 +39,6 @@ import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import jex.utilities.FunctionUtility;
 import jex.utilities.ROIUtility;
-import logs.Logs;
 import miscellaneous.FileUtility;
 import miscellaneous.Pair;
 import miscellaneous.StatisticsUtility;

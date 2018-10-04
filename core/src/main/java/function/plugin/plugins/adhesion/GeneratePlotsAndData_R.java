@@ -101,7 +101,7 @@ public class GeneratePlotsAndData_R extends JEXPlugin {
 		TreeMap<DimensionMap,String> phasePlots = new TreeMap<DimensionMap,String>();
 
 		// Validate the input data
-		if(roiFileData == null || !roiFileData.getTypeName().getType().equals(JEXData.FILE))
+		if(roiFileData == null || !roiFileData.getTypeName().getType().matches(JEXData.FILE))
 		{
 			return false;
 		}

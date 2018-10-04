@@ -220,7 +220,7 @@ public class JEX_OscillatoryAdhesionPlots extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData wdData = inputs.get("Working Directory");
-		if(wdData == null || !wdData.getTypeName().getType().equals(JEXData.LABEL))
+		if(wdData == null || !wdData.getTypeName().getType().matches(JEXData.LABEL))
 		{
 			return false;
 		}
@@ -228,7 +228,7 @@ public class JEX_OscillatoryAdhesionPlots extends JEXCrunchable {
 		
 		// Collect the inputs
 		JEXData mFileData = inputs.get("Octave Summary File");
-		if(mFileData == null || !mFileData.getTypeName().getType().equals(JEXData.FILE))
+		if(mFileData == null || !mFileData.getTypeName().getType().matches(JEXData.FILE))
 		{
 			return false;
 		}

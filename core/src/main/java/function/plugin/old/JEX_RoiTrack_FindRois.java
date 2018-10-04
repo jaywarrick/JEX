@@ -204,7 +204,7 @@ public class JEX_RoiTrack_FindRois extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData data = inputs.get("Grayscale Image");
-		if(data == null || !data.getTypeName().getType().equals(JEXData.IMAGE))
+		if(data == null || !data.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return false;
 		}

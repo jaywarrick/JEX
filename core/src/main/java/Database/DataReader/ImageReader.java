@@ -36,7 +36,7 @@ public class ImageReader {
 		if(!data.getDataObjectType().matches(JEXData.IMAGE))
 			return null;
 		JEXDataSingle ds = data.getFirstSingle();
-		String result = readImagePath(ds, data.getDataObjectType().getFlavor().equals(JEXData.FLAVOR_VIRTUAL));
+		String result = readImagePath(ds, data.hasVirtualFlavor());
 		// String folder = ds.get(JEXDataSingle.FOLDERNAME);
 		// String fileName = ds.get(JEXDataSingle.FILENAME);
 		// String result = folder + File.separator + fileName;
@@ -56,7 +56,7 @@ public class ImageReader {
 		JEXDataSingle ds = data.getData(map);
 		if(ds == null)
 			return null;
-		String result = readImagePath(ds, data.getDataObjectType().getFlavor().equals(JEXData.FLAVOR_VIRTUAL));
+		String result = readImagePath(ds, data.hasVirtualFlavor());
 		// String folder = ds.get(JEXDataSingle.FOLDERNAME);
 		// String fileName = ds.get(JEXDataSingle.FILENAME);
 		// String result = folder + File.separator + fileName;
@@ -97,7 +97,7 @@ public class ImageReader {
 		List<String> resultList = new ArrayList<String>(0);
 		for (JEXDataSingle ds : data.getDataMap().values())
 		{
-			String path = readImagePath(ds, data.getDataObjectType().getFlavor().equals(JEXData.FLAVOR_VIRTUAL));
+			String path = readImagePath(ds, data.hasVirtualFlavor());
 			// String folder = ds.get(JEXDataSingle.FOLDERNAME);
 			// String fileName = ds.get(JEXDataSingle.FILENAME);
 			// String path = folder + File.separator + fileName;
@@ -123,7 +123,7 @@ public class ImageReader {
 		List<String> resultList = new ArrayList<String>(0);
 		for (JEXDataSingle ds : data.getDataMap().values())
 		{
-			String path = readImagePath(ds, data.getDataObjectType().getFlavor().equals(JEXData.FLAVOR_VIRTUAL));
+			String path = readImagePath(ds, data.hasVirtualFlavor());
 			// String folder = ds.get(JEXDataSingle.FOLDERNAME);
 			// String fileName = ds.get(JEXDataSingle.FILENAME);
 			// String path = folder + File.separator + fileName;
@@ -148,7 +148,7 @@ public class ImageReader {
 		for (DimensionMap map : data.getDataMap().keySet())
 		{
 			JEXDataSingle ds = data.getData(map);
-			String path = readImagePath(ds, data.getDataObjectType().getFlavor().equals(JEXData.FLAVOR_VIRTUAL));
+			String path = readImagePath(ds, data.hasVirtualFlavor());
 			// String folder = ds.get(JEXDataSingle.FOLDERNAME);
 			// String fileName = ds.get(JEXDataSingle.FILENAME);
 			// String path = folder + File.separator + fileName;
@@ -168,7 +168,7 @@ public class ImageReader {
 		if(!data.getDataObjectType().matches(JEXData.IMAGE))
 			return null;
 		JEXDataSingle ds = data.getFirstSingle();
-		String path = readImagePath(ds, data.getDataObjectType().getFlavor().equals(JEXData.FLAVOR_VIRTUAL));
+		String path = readImagePath(ds, data.hasVirtualFlavor());
 		ImagePlus im = new ImagePlus(path);
 		return im;
 	}
@@ -189,7 +189,7 @@ public class ImageReader {
 		List<String> resultList = new ArrayList<String>(0);
 		for (JEXDataSingle ds : data.getDataMap().values())
 		{
-			String path = readImagePath(ds, data.getDataObjectType().getFlavor().equals(JEXData.FLAVOR_VIRTUAL));
+			String path = readImagePath(ds, data.hasVirtualFlavor());
 			// String folder = ds.get(JEXDataSingle.FOLDERNAME);
 			// String fileName = ds.get(JEXDataSingle.FILENAME);
 			// String path = folder + File.separator + fileName;
@@ -219,7 +219,7 @@ public class ImageReader {
 		for (DimensionMap map : data.getDataMap().keySet())
 		{
 			JEXDataSingle ds = data.getData(map);
-			String path = readImagePath(ds, data.getDataObjectType().getFlavor().equals(JEXData.FLAVOR_VIRTUAL));
+			String path = readImagePath(ds, data.hasVirtualFlavor());
 			// String folder = ds.get(JEXDataSingle.FOLDERNAME);
 			// String fileName = ds.get(JEXDataSingle.FILENAME);
 			// String path = folder + File.separator + fileName;

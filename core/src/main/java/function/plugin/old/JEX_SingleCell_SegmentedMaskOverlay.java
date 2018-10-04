@@ -207,17 +207,17 @@ public class JEX_SingleCell_SegmentedMaskOverlay extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData imageData = inputs.get("Image");
-		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(imageData == null || !imageData.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return false;
 		}
 		JEXData segData = inputs.get("Segmented Image");
-		if(segData != null && !segData.getTypeName().getType().equals(JEXData.IMAGE)) // This is optional
+		if(segData != null && !segData.getTypeName().getType().matches(JEXData.IMAGE)) // This is optional
 		{
 			return false;
 		}
 		JEXData innerData = inputs.get("Mask Image");
-		if(innerData == null || !innerData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(innerData == null || !innerData.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return false;
 		}
@@ -376,7 +376,7 @@ public class JEX_SingleCell_SegmentedMaskOverlay extends JEXCrunchable {
 			overlayers.put(newMap, path);
 		}
 		
-		TreeMap<DimensionMap,String> outputMap = JEX_OverlayStack.overlayStack(overlayers, dimName, rDim, gDim, bDim, "MASK", rMin, rMax, gMin, gMax, bMin, bMax, new Double(0), new Double(255), rgbScale, JEX_OverlayStack.LINEAR, 1.0, 1.0, this);
+		TreeMap<DimensionMap,String> outputMap = JEX_OverlayStack.overlayStack(overlayers, null, dimName, rDim, gDim, bDim, "MASK", rMin, rMax, gMin, gMax, bMin, bMax, new Double(0), new Double(255), rgbScale, JEX_OverlayStack.LINEAR, 1.0, 1.0, this);
 		
 		// Set the outputs
 		JEXData output = ImageWriter.makeImageStackFromPaths(this.outputNames[0].getName(), outputMap);

@@ -98,7 +98,7 @@ public class TrackOscillatoryMotion_R extends JEXPlugin {
 		JEXStatics.statusBar.setProgressPercentage(percentage);
 
 		// Validate the input data
-		if(roiData == null || !roiData.getTypeName().getType().equals(JEXData.ROI))
+		if(roiData == null || !roiData.getTypeName().getType().matches(JEXData.ROI))
 		{
 			return false;
 		}

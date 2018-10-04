@@ -84,7 +84,7 @@ public class AdjustImageIntensities extends JEXPlugin {
 	public boolean run(JEXEntry optionalEntry)
 	{
 		// Validate the input data
-		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(imageData == null || !imageData.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return false;
 		}

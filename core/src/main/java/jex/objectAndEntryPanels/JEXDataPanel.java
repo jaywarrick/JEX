@@ -1,15 +1,5 @@
 package jex.objectAndEntryPanels;
 
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXEntry;
-import Database.Definition.Type;
-import Database.Definition.TypeName;
-import Database.SingleUserDatabase.tnvi;
-import guiObject.DialogGlassPane;
-import guiObject.FlatRoundedButton;
-import guiObject.FormGlassPane;
-import icons.IconRepository;
-
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -23,6 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.Vector;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -32,6 +23,15 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXEntry;
+import Database.Definition.Type;
+import Database.Definition.TypeName;
+import Database.SingleUserDatabase.tnvi;
+import guiObject.DialogGlassPane;
+import guiObject.FlatRoundedButton;
+import guiObject.FormGlassPane;
+import icons.IconRepository;
 import jex.JEXManager;
 import jex.statics.DisplayStatics;
 import jex.statics.JEXStatics;
@@ -41,37 +41,38 @@ import net.miginfocom.swing.MigLayout;
 import signals.SSCenter;
 
 public class JEXDataPanel implements ActionListener {
-	
+
 	// Model variables
 	private tnvi objectList;
 	private List<JEXDataPanelLine> panelList;
-	
+
 	// Main gui components
 	private JScrollPane scroll;
 	private JPanel objectPane;
 	private JPanel panel;
-	
+
 	// Buttons
 	private JPanel buttonPane;
 	private FlatRoundedButton editButton;
 	private FlatRoundedButton deleteButton;
-	
+	private FlatRoundedButton clearUpdatesButton;
+
 	// Where to get the objects
 	Object objectSource;
 	String objectSourceMethod;
-	
+
 	// Where to delete the objects
 	Object objectDeletor;
 	String objectDeletorMethod;
-	
+
 	// Where to edit the objects
 	Object objectEditor;
 	String objectEditorMethod;
-	
+
 	// Where to duplicate the objects
 	Object objectDuplicator;
 	String objectDuplicatorMethod;
-	
+
 	/**
 	 * Create a new JEXData list
 	 * 
@@ -80,57 +81,57 @@ public class JEXDataPanel implements ActionListener {
 	public JEXDataPanel(tnvi objectList)
 	{
 		super();
-		
+
 		// Initialize variables
 		this.objectList = objectList;
 		this.panelList = new ArrayList<JEXDataPanelLine>(0);
-		
+
 		this.objectPane = new JPanel();
 		this.objectPane.setBackground(DisplayStatics.lightBackground);
 		this.objectPane.setLayout(new MigLayout("flowy,ins 3 3 3 3, gap 0", "[fill,grow]", "[]"));
-		
+
 		this.scroll = new JScrollPane(this.objectPane);
 		this.scroll.setBorder(BorderFactory.createEmptyBorder());
 		this.scroll.getVerticalScrollBar().setUnitIncrement(16);
-		
+
 		// Setup updating links
 		SSCenter.defaultCenter().connect(JEXStatics.jexManager, JEXManager.NAVIGATION, this, "rebuild", (Class[]) null);
-		
+
 		this.rebuild();
 	}
-	
+
 	public JEXDataPanel()
 	{
 		super();
-		
+
 		// Initialize variables
 		this.objectList = null;
 		this.panelList = new ArrayList<JEXDataPanelLine>(0);
-		
+
 		// Make the button panel
 		this.initializeButtonPanel();
-		
+
 		this.objectPane = new JPanel();
 		this.objectPane.setBackground(DisplayStatics.lightBackground);
 		this.objectPane.setLayout(new MigLayout("flowy,ins 3 3 3 3, gap 0", "[fill,grow]1", "[]"));
-		
+
 		this.scroll = new JScrollPane(this.objectPane);
 		this.scroll.setBorder(BorderFactory.createEmptyBorder());
 		this.scroll.getVerticalScrollBar().setUnitIncrement(16);
-		
+
 		// Setup updating links
 		SSCenter.defaultCenter().connect(JEXStatics.jexManager, JEXManager.NAVIGATION, this, "rebuild", (Class[]) null);
-		
+
 		this.rebuild();
 	}
-	
+
 	private void initializeButtonPanel()
 	{
 		this.buttonPane = new JPanel();
 		this.buttonPane.setBackground(DisplayStatics.lightBackground);
 		this.buttonPane.setLayout(new BoxLayout(this.buttonPane, BoxLayout.LINE_AXIS));
 		this.buttonPane.setLayout(new MigLayout("flowx, ins 0", "[fill,grow][25][25]", "25"));
-		
+
 		this.editButton = new FlatRoundedButton(null);
 		this.editButton.background = DisplayStatics.lightBackground;
 		this.editButton.mouseOverBack = DisplayStatics.menuBackground;
@@ -139,7 +140,7 @@ public class JEXDataPanel implements ActionListener {
 		this.editButton.addActionListener(this);
 		this.editButton.setToolTipText("Edits the selected data from the selected entries");
 		this.editButton.refresh();
-		
+
 		this.deleteButton = new FlatRoundedButton(null);
 		this.deleteButton.background = DisplayStatics.lightBackground;
 		this.deleteButton.mouseOverBack = DisplayStatics.menuBackground;
@@ -148,59 +149,69 @@ public class JEXDataPanel implements ActionListener {
 		this.deleteButton.addActionListener(this);
 		this.deleteButton.setToolTipText("Removes the selected data from the selected entries");
 		this.deleteButton.refresh();
-		
+
+		this.clearUpdatesButton = new FlatRoundedButton(null);
+		this.clearUpdatesButton.background = DisplayStatics.lightBackground;
+		this.clearUpdatesButton.mouseOverBack = DisplayStatics.menuBackground;
+		this.clearUpdatesButton.normalBack = DisplayStatics.lightBackground;
+		this.clearUpdatesButton.setIcon(JEXStatics.iconRepository.getIconWithName(IconRepository.MISC_CLEAR_UPDATES, 73, 20));
+		this.clearUpdatesButton.addActionListener(this);
+		this.clearUpdatesButton.setToolTipText("Removes the selected data from the selected entries");
+		this.clearUpdatesButton.refresh();
+
+		this.buttonPane.add(this.clearUpdatesButton.panel());
 		this.buttonPane.add(Box.createHorizontalStrut(5));
 		this.buttonPane.add(this.editButton.panel());
 		this.buttonPane.add(this.deleteButton.panel());
 	}
-	
+
 	public void whereToGetObjects(Object source, String methodToCall)
 	{
 		this.objectSource = source;
 		this.objectSourceMethod = methodToCall;
 	}
-	
+
 	public void whenToGetObjects(Object source, String signalName, String methodToCall)
 	{
 		// Setup updating links
 		SSCenter.defaultCenter().connect(source, signalName, this, methodToCall, (Class[]) null);
 	}
-	
+
 	public void whereToRemoveObjects(Object objectDeletor, String objectDeletorMethod)
 	{
 		this.objectDeletor = objectDeletor;
 		this.objectDeletorMethod = objectDeletorMethod;
 	}
-	
+
 	public void whereToEditObjects(Object objectEditor, String objectEditorMethod)
 	{
 		this.objectEditor = objectEditor;
 		this.objectEditorMethod = objectEditorMethod;
 	}
-	
+
 	public void whereToDuplicateObjects(Object objectDuplicator, String objectDuplicatorMethod)
 	{
 		this.objectDuplicator = objectDuplicator;
 		this.objectDuplicatorMethod = objectDuplicatorMethod;
 	}
-	
+
 	public JScrollPane scroll()
 	{
 		return this.scroll;
 	}
-	
+
 	public JPanel panel()
 	{
 		this.panel = new JPanel();
 		this.panel.setBackground(DisplayStatics.background);
 		this.panel.setLayout(new BorderLayout());
-		
+
 		this.panel.add(this.scroll, BorderLayout.CENTER);
 		this.panel.add(this.buttonPane, BorderLayout.PAGE_END);
-		
+
 		return this.panel;
 	}
-	
+
 	/**
 	 * Rebuild the objectpanel list in case the array has changed
 	 */
@@ -208,7 +219,7 @@ public class JEXDataPanel implements ActionListener {
 	{
 		Logs.log("Rebuilding the object Panel", 2, this);
 		this.objectPane.removeAll();
-		
+
 		// If the object list is empty or null
 		// then add a message signaling it to the user
 		if(this.objectList == null || this.objectList.size() == 0)
@@ -216,13 +227,13 @@ public class JEXDataPanel implements ActionListener {
 			// create a label
 			JLabel label = new JLabel("No objects");
 			label.setFont(FontUtility.italicFonts);
-			
+
 			// Create a panel
 			JPanel temp = new JPanel();
 			temp.setLayout(new BorderLayout());
 			temp.add(label);
 			temp.setPreferredSize(new Dimension(20, 20));
-			
+
 			// add it to the main panel
 			this.objectPane.add(temp);
 		}
@@ -230,74 +241,74 @@ public class JEXDataPanel implements ActionListener {
 		{
 			// create the list of panels
 			this.panelList = new ArrayList<JEXDataPanelLine>(0);
-			
+
 			// loop through the list of objects
 			for (Type type : this.objectList.keySet())
 			{
-				
+
 				// if the object is a hierarchy object, do not display it...
 				if(type.matches(JEXData.HIERARCHY))
 				{
 					continue;
 				}
-				
+
 				// Create a label indicating a new type of object in the list
 				JLabel typeLabel = new JLabel(type.toString());
 				typeLabel.setFont(FontUtility.italicFonts);
-				
+
 				// Create a panel with the label inside it
 				JPanel spacerkey = new JPanel();
 				spacerkey.setBackground(DisplayStatics.lightBackground);
 				spacerkey.setLayout(new BoxLayout(spacerkey, BoxLayout.LINE_AXIS));
 				spacerkey.add(typeLabel);
 				spacerkey.add(Box.createHorizontalGlue());
-				
+
 				// add it to the main panel
 				this.objectPane.add(spacerkey);
-				
+
 				// Loop through the object names
 				for (String name : this.objectList.get(type).keySet())
 				{
-					
+
 					// if there are no objects of that type name, then pass
 					TreeMap<String,Set<JEXEntry>> dataSet = this.objectList.get(type).get(name);
 					if(dataSet.size() == 0)
 					{
 						continue;
 					}
-					
+
 					// Create a object panel line to display the object type
 					// name
 					JEXDataPanelLine newobjectPanel = new JEXDataPanelLine(new TypeName(type, name), this);
-					
+
 					// add it to the main panel and the object panel list
 					this.panelList.add(newobjectPanel);
 					this.objectPane.add(newobjectPanel, "growx");
 				}
 			}
 		}
-		
+
 		this.objectPane.revalidate();
 		this.objectPane.repaint();
 	}
-	
+
 	// //// ACTIONS
-	
+
 	public void duplicateObject(FormGlassPane formPane)
 	{
 		if(formPane == null)
 		{
 			return;
 		}
-		
+
 		// Get the form
 		Logs.log("Duplicating the object", 1, this);
 		LinkedHashMap<String,String> form = (LinkedHashMap<String,String>) formPane.form();
-		
+
 		// get the new name and info
 		String objectName = form.get("Object name");
 		String objectInfo = form.get("Object info");
-		
+
 		// make the objects
 		Set<JEXEntry> selectedEntries = JEXStatics.jexManager.getSelectedEntries();
 		TypeName selectedTN = JEXStatics.jexManager.getSelectedObject();
@@ -310,10 +321,10 @@ public class JEXDataPanel implements ActionListener {
 			newData.setDataObjectInfo(objectInfo);
 			newData.setDataObjectDate(miscellaneous.DateUtility.getDate());
 			newData.setDataObjectModifDate(miscellaneous.DateUtility.getDate());
-			
+
 			dataArray.put(entry, newData);
 		}
-		
+
 		// Call the duplicate method from the object that controls duplications
 		try
 		{
@@ -342,28 +353,28 @@ public class JEXDataPanel implements ActionListener {
 			ex.printStackTrace();
 		}
 	}
-	
+
 	public void editObject(FormGlassPane formPane)
 	{
 		if(formPane == null)
 		{
 			return;
 		}
-		
+
 		// Get the form
 		Logs.log("Editing the object", 1, this);
 		LinkedHashMap<String,String> form = (LinkedHashMap<String,String>) formPane.form();
-		
+
 		// get the new name and info
 		String objectName = form.get("New name");
 		String objectInfo = form.get("New info");
-		
+
 		// make the objects
 		Set<JEXEntry> selectedEntries = JEXStatics.jexManager.getSelectedEntries();
 		TypeName selectedTN = JEXStatics.jexManager.getSelectedObject();
 		TreeMap<JEXEntry,JEXData> newDataArray = new TreeMap<JEXEntry,JEXData>();
 		TreeMap<JEXEntry,Set<JEXData>> oldDataArray = new TreeMap<JEXEntry,Set<JEXData>>();
-		
+
 		for (JEXEntry entry : selectedEntries)
 		{
 			// Fill the old data array
@@ -375,7 +386,7 @@ public class JEXDataPanel implements ActionListener {
 			HashSet<JEXData> datas = new HashSet<JEXData>();
 			datas.add(data);
 			oldDataArray.put(entry, datas);
-			
+
 			Object[] options = { "OK", "Cancel" };
 			JEXData dataToOverwrite = JEXStatics.jexManager.getDataOfTypeNameInEntry(new TypeName(data.getTypeName().getType(), objectName), entry);
 			if(dataToOverwrite != null)
@@ -388,7 +399,7 @@ public class JEXDataPanel implements ActionListener {
 					return;
 				}
 			}
-			
+
 			// Make the new data array
 			JEXData newData = new JEXData(data);
 			newData.setDataObjectName(objectName);
@@ -397,17 +408,17 @@ public class JEXDataPanel implements ActionListener {
 			newData.setDataObjectModifDate(miscellaneous.DateUtility.getDate());
 			newDataArray.put(entry, newData);
 		}
-		
+
 		try
 		{
 			// Remove the old data
 			Method method = this.objectDeletor.getClass().getMethod(this.objectDeletorMethod, oldDataArray.getClass());
 			method.invoke(this.objectDeletor, oldDataArray);
-			
+
 			// Add the new data
 			Method method2 = this.objectDuplicator.getClass().getMethod(this.objectDuplicatorMethod, newDataArray.getClass());
 			method2.invoke(this.objectDuplicator, newDataArray);
-			
+
 		}
 		catch (SecurityException ex)
 		{
@@ -431,21 +442,21 @@ public class JEXDataPanel implements ActionListener {
 			ex.printStackTrace();
 		}
 	}
-	
+
 	public void doAction(String actionString)
 	{}
-	
+
 	/**
 	 * Call when object list has changed
 	 */
 	public void objectsChanged()
 	{
-		
+
 		try
 		{
 			Method method = this.objectSource.getClass().getMethod(this.objectSourceMethod, (Class<?>[]) null);
 			Object result = method.invoke(this.objectSource);
-			
+
 			if(result instanceof tnvi)
 			{
 				this.objectList = (tnvi) result;
@@ -478,7 +489,7 @@ public class JEXDataPanel implements ActionListener {
 			e.printStackTrace();
 		}
 	}
-	
+
 	@Override
 	public void actionPerformed(ActionEvent e)
 	{
@@ -490,7 +501,7 @@ public class JEXDataPanel implements ActionListener {
 			{
 				return;
 			}
-			
+
 			// Compile the list of data to remove
 			Logs.log("Removing the selected object", 1, this);
 			Set<JEXEntry> selectedEntries = JEXStatics.jexManager.getSelectedEntries();
@@ -502,7 +513,7 @@ public class JEXDataPanel implements ActionListener {
 				datas.add(data);
 				dataArray.put(entry, datas);
 			}
-			
+
 			// Call the deletion method from the object that controls delections
 			try
 			{
@@ -534,7 +545,7 @@ public class JEXDataPanel implements ActionListener {
 		else if(e.getSource() == this.editButton)
 		{
 			Logs.log("Opening an object Edit query box", 1, this);
-			
+
 			// get info on the currently selected object
 			Set<JEXEntry> selectedEntries = JEXStatics.jexManager.getSelectedEntries();
 			TypeName selectedTN = JEXStatics.jexManager.getSelectedObject();
@@ -550,7 +561,7 @@ public class JEXDataPanel implements ActionListener {
 				JEXStatics.statusBar.setStatusText("No entry selected");
 				return;
 			}
-			
+
 			// create a form for getting info on the new object
 			String newObjectName = selectedTN.getName(); //JEXStatics.jexDBManager.getUniqueObjectName(selectedEntries, selectedTN.getType(), selectedTN.getName());
 			JEXData data = JEXStatics.jexManager.getExampleOfDataWithTypeNameInEntries(selectedTN, selectedEntries);
@@ -562,18 +573,60 @@ public class JEXDataPanel implements ActionListener {
 			LinkedHashMap<String,String> form = new LinkedHashMap<String,String>();
 			form.put("New name", newObjectName);
 			form.put("New info", data.getDataObjectInfo());
-			
+
 			// create a form panel
 			FormGlassPane formPane = new FormGlassPane(form);
 			formPane.callMethodOfClassOnAcceptance(this, "editObject", new Class[] { FormGlassPane.class });
-			
+
 			// create a glass panel
 			DialogGlassPane diagPanel = new DialogGlassPane("Edit selected object");
 			diagPanel.setSize(400, 200);
 			diagPanel.setCentralPanel(formPane);
-			
+
 			JEXStatics.main.displayGlassPane(diagPanel, true);
 		}
+		else if(e.getSource() == this.clearUpdatesButton)
+		{
+			// Compile the list of data to remove
+			Logs.log("Removing the selected object", 1, this);
+			Set<JEXEntry> selectedEntries = JEXStatics.jexManager.getSelectedEntries();
+			TreeMap<JEXEntry,Set<JEXData>> dataArray = new TreeMap<JEXEntry,Set<JEXData>>();
+			for (JEXEntry entry : selectedEntries)
+			{
+				Vector<JEXData> datalist = JEXStatics.jexManager.getUpdateFlavoredDatasInEntry(entry);
+				HashSet<JEXData> datas = new HashSet<JEXData>();
+				datas.addAll(datalist);
+				dataArray.put(entry, datas);
+			}
+
+			// Call the deletion method from the object that controls delections
+			try
+			{
+				Method method = this.objectDeletor.getClass().getMethod(this.objectDeletorMethod, dataArray.getClass());
+				method.invoke(this.objectDeletor, dataArray);
+			}
+			catch (SecurityException ex)
+			{
+				ex.printStackTrace();
+			}
+			catch (NoSuchMethodException ex)
+			{
+				Logs.log("Couldn't find method to create the desired connection", 0, this);
+				ex.printStackTrace();
+			}
+			catch (IllegalArgumentException ex)
+			{
+				ex.printStackTrace();
+			}
+			catch (IllegalAccessException ex)
+			{
+				ex.printStackTrace();
+			}
+			catch (InvocationTargetException ex)
+			{
+				ex.printStackTrace();
+			}
+		}
 	}
-	
+
 }

@@ -84,7 +84,7 @@ public class TransformROI extends JEXPlugin {
 	public boolean run(JEXEntry optionalEntry)
 	{
 		roiData.getDataMap();
-		if(roiData == null || !roiData.getTypeName().getType().equals(JEXData.ROI))
+		if(roiData == null || !roiData.getTypeName().getType().matches(JEXData.ROI))
 		{
 			return false;
 		}

@@ -209,14 +209,14 @@ public class JEX_ImageTools_CropPoints extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData imageFiles = inputs.get("Image");
-		if(imageFiles == null || !imageFiles.getTypeName().getType().equals(JEXData.IMAGE))
+		if(imageFiles == null || !imageFiles.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return false;
 		}
 		
 		// Collect the inputs
 		JEXData pointData = inputs.get("Maxima");
-		if(pointData == null || !pointData.getTypeName().getType().equals(JEXData.ROI))
+		if(pointData == null || !pointData.getTypeName().getType().matches(JEXData.ROI))
 		{
 			return false;
 		}

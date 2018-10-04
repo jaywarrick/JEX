@@ -123,12 +123,12 @@ public class CountPointsInROIToValueObjects extends JEXPlugin {
 	public static TreeMap<String,Object> calculate(JEXData pointData, JEXData regionData, Canceler canceler)
 	{
 		// Validate Point ROI (required)
-		if(pointData == null || !pointData.getTypeName().getType().equals(JEXData.ROI))
+		if(pointData == null || !pointData.getTypeName().getType().matches(JEXData.ROI))
 			return null;
 
 		// Validate Region ROI (optional)
 		if(regionData != null)
-			if(!regionData.getTypeName().getType().equals(JEXData.ROI))
+			if(!regionData.getTypeName().getType().matches(JEXData.ROI))
 				return null;
 
 		// Initialize some variables

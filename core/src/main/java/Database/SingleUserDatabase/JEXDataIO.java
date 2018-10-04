@@ -279,7 +279,7 @@ public class JEXDataIO {
 			data.addData(map, dataSingle);
 		}
 		
-		if(data.getTypeName().getType().equals(JEXData.FUNCTION_OLD))
+		if(data.getTypeName().getType().matches(JEXData.FUNCTION_OLD))
 		{
 			JEXFunction func = null;
 			try

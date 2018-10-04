@@ -2,8 +2,6 @@ package function.ops.featuresets.wrappers;
 
 import java.util.Set;
 
-import Database.DBObjects.JEXData;
-import Database.DataWriter.FileWriter;
 import logs.Logs;
 import miscellaneous.JEXCSVReader;
 import miscellaneous.JEXCSVWriter;
@@ -35,17 +33,17 @@ public class WriterWrapper {
 		writer.writer.write(temp, value.toString());
 	}
 	
-	public static synchronized Pair<JEXData,JEXData> close(WriterWrapper writer, boolean saveArff)
+	public static synchronized Pair<String,String> close(WriterWrapper writer, boolean saveArff)
 	{
 		Logs.log("Closing the function (closing file writers and converting output file to arff as well).", WriterWrapper.class);
 		if(writer == null || writer.writer == null)
 		{
-			return new Pair<JEXData,JEXData>(null, null);
+			return new Pair<String,String>(null, null);
 		}
 		writer.writer.close();
 		String csvPath = writer.writer.getPath();
 		
-		JEXData outputARFF = null;
+		String arffPath = null;
 		if(saveArff)
 		{
 			JEXCSVReader reader = new JEXCSVReader(csvPath, true);
@@ -80,14 +78,14 @@ public class WriterWrapper {
 
 			// Close and save the data.
 			reader.close();
-			String arffPath = arffWriter.getPath();
+			arffPath = arffWriter.getPath();
 			arffWriter.close();
-			outputARFF = FileWriter.makeFileObject("temp", null, arffPath);
+			//			outputARFF = FileWriter.makeFileObject("temp", null, arffPath);
 		}
 		
 		// Always do this at the end (i.e., before trying to make an Arff version as doing so moves the location of the file prior to conversion cause a FileNotFoundException). Here, everything is fine.
-		JEXData outputCSV = FileWriter.makeFileObject("temp", null, csvPath);
+		//			JEXData outputCSV = FileWriter.makeFileObject("temp", null, csvPath);
 		
-		return new Pair<JEXData,JEXData>(outputCSV, outputARFF);
+		return new Pair<String,String>(csvPath, arffPath);
 	}
 }

@@ -178,11 +178,11 @@ public class JEX_ConvolveIJ extends JEXCrunchable {
 	{
 		// Get the base images
 		JEXData data1 = inputs.get("Image");
-		if(!data1.getTypeName().getType().equals(JEXData.IMAGE))
+		if(!data1.getTypeName().getType().matches(JEXData.IMAGE))
 			return false;
 		
 		JEXData data2 = inputs.get("Kernel");
-		if(!data2.getTypeName().getType().equals(JEXData.IMAGE))
+		if(!data2.getTypeName().getType().matches(JEXData.IMAGE))
 			return false;
 		FloatProcessor kernel = (FloatProcessor) ImageReader.readObjectToImagePlus(data2).getProcessor().convertToFloat();
 		

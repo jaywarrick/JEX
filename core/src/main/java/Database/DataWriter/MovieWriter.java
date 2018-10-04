@@ -88,7 +88,7 @@ public class MovieWriter implements ImageObserver {
 	 */
 	public TreeMap<DimensionMap,String> makeQuickTimeMovie(JEXData images, JEXData cropROI, int imageBinning, Format format, int imagesPerSecond, String timeDimName, double startTime, double interval, String units, int digits, int fontSize, int inset, Color textColor, JEXCrunchable optionalCruncherForCanceling)
 	{
-		if(images == null || !images.getTypeName().getType().equals(JEXData.IMAGE))
+		if(images == null || !images.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return null;
 		}
@@ -97,7 +97,7 @@ public class MovieWriter implements ImageObserver {
 		boolean roiSupplied = true;
 		boolean singletonRoi = false;
 		Roi crop = null;
-		if(cropROI == null || !cropROI.getTypeName().getType().equals(JEXData.ROI))
+		if(cropROI == null || !cropROI.getTypeName().getType().matches(JEXData.ROI))
 		{
 			roiSupplied = false;
 		}
@@ -311,7 +311,7 @@ public class MovieWriter implements ImageObserver {
 	 */
 	public TreeMap<DimensionMap,String> makeAVIMovie(JEXData images, JEXData cropROI, int imageBinning, String encoding, int imagesPerSecond, String timeDimName, double startTime, double interval, String units, int digits, int fontSize, int inset, Color textColor, JEXCrunchable optionalCruncherForCanceling)
 	{
-		if(images == null || !images.getTypeName().getType().equals(JEXData.IMAGE))
+		if(images == null || !images.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return null;
 		}
@@ -320,7 +320,7 @@ public class MovieWriter implements ImageObserver {
 		boolean roiSupplied = true;
 		boolean singletonRoi = false;
 		Roi crop = null;
-		if(cropROI == null || !cropROI.getTypeName().getType().equals(JEXData.ROI))
+		if(cropROI == null || !cropROI.getTypeName().getType().matches(JEXData.ROI))
 		{
 			roiSupplied = false;
 		}

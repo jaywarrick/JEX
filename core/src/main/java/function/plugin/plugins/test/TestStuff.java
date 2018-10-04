@@ -11,6 +11,8 @@ import java.util.Vector;
 
 import javax.swing.JFrame;
 
+import org.apache.commons.lang3.math.NumberUtils;
+
 import function.algorithm.neighborhood.EdgeCursor;
 import function.algorithm.neighborhood.Indexer;
 import function.algorithm.neighborhood.PositionableRunningNeighborhood;
@@ -62,11 +64,14 @@ import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.ValuePair;
 import rtools.R;
+import tables.Dim;
+import tables.DimTable;
+import tables.DimensionMap;
 
 public class TestStuff {
-	
+
 	public static FeatureUtils utils = new FeatureUtils();
-	
+
 	static
 	{
 		DirectoryManager.setHostDirectory("/Users/jwarrick/Downloads");
@@ -75,9 +80,69 @@ public class TestStuff {
 
 	public static void main (String[] args) throws Exception
 	{
-		tryTIEStuff();
+		tryTableLooping();
 	}	
 	
+	public static void tryTableLooping()
+	{
+		DimTable dt = new DimTable();
+		Dim d1 = new Dim("Z", 10);
+		dt.add(d1);
+		for(DimTable blah : dt.getSubTableIterator(""))
+		{
+			for(DimensionMap map : blah.getMapIterator())
+			{
+				Logs.log("" + map, TestStuff.class);
+			}
+		}
+	}
+
+	public static void tryParsingFileNames()
+	{
+		//		String f = "A0bg.89_xxx95.89.tif";
+		String f = "t01xy04z1c3.tif";
+
+		String[] parse = f.split("(?<=\\D)(?=\\d)|(?<=\\d)(?=\\D)");
+		Vector<String> parsed = new Vector<>();
+		for(String s : parse)
+		{
+			String toAdd = s.replaceAll("[^A-Za-z0-9]", "");
+			if(!toAdd.equals(""))
+			{
+				parsed.add(toAdd);
+			}	
+		}
+
+		// Keep only the items that have a key-value pairing
+		DimensionMap map = new DimensionMap();
+		String last = null;
+		for(String s : parsed)
+		{
+			if(last == null)
+			{
+				last = s;
+				continue;
+			}
+
+			// If the current string is numeric and the last is not, then we have a key-value pair
+			if(Character.isDigit(s.charAt(0)) && !Character.isDigit(last.charAt(0)))
+			{
+				if(NumberUtils.isCreatable(s))
+				{
+					Number n = NumberUtils.createNumber(s);
+					s = n.toString();
+				}
+				map.put(last, s);
+			}
+
+			// Move on the next possible pair
+			last = s;
+		}
+
+		
+		System.out.println(map);
+	}
+
 	public static void tryTIEStuff()
 	{
 		String pathI = "/Users/jwarrick/Documents/Miyamoto/Projects/QPI/JEX Output/Phase Recovery/Image - Image (BG)/x0_y0_Channel1_Z5.tif";
@@ -86,35 +151,35 @@ public class TestStuff {
 		FloatProcessor fpI = (new ImagePlus(pathI)).getProcessor().convertToFloatProcessor();
 		FloatProcessor fpLo = (new ImagePlus(pathLo)).getProcessor().convertToFloatProcessor();
 		FloatProcessor fpHi = (new ImagePlus(pathHi)).getProcessor().convertToFloatProcessor();
-		
+
 		// TIECalculator(int imWidth, int imHeight, float regularization, float threshold, float magnification, float pixelSizeInMicrons, float dzInMicrons, float wavelengthInNanometers)
 		TIECalculator tie = new TIECalculator(fpI.getWidth(), fpI.getHeight(), 0.4f, 0.001f, 20f, 6.450f, 4f, 600f, true);
-		
+
 		FloatProcessor ret = tie.calculatePhase(fpI, fpLo, fpHi);
 		FileUtility.showImg(ret, true);
-		
+
 	}
-	
+
 	public static void tryScrollStuff()
 	{
-        JFrame frame = new JFrame();
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(200,200);
-        frame.addMouseWheelListener(new MouseWheelListener() {
+		JFrame frame = new JFrame();
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setSize(200,200);
+		frame.addMouseWheelListener(new MouseWheelListener() {
 
-            @Override
-            public void mouseWheelMoved(MouseWheelEvent event) {
-                if (event.isShiftDown()) {
-                    System.err.println("Horizontal " + event.getWheelRotation());
-                } else {
-                    System.err.println("Vertical " + event.getWheelRotation());                    
-                }
-            }
-        });
-        frame.setVisible(true);
-    }
-	
-	
+			@Override
+			public void mouseWheelMoved(MouseWheelEvent event) {
+				if (event.isShiftDown()) {
+					System.err.println("Horizontal " + event.getWheelRotation());
+				} else {
+					System.err.println("Vertical " + event.getWheelRotation());                    
+				}
+			}
+		});
+		frame.setVisible(true);
+	}
+
+
 	public static void tryForLoops()
 	{
 		int sum = 0;
@@ -133,14 +198,14 @@ public class TestStuff {
 		}
 		System.out.println(sum);
 	}
-	
+
 	public static void tryTroubleImageModeFinding2()
 	{
 		ImagePlus im = new ImagePlus("C:/Users/User/Desktop/TroubleImage1.tif");
 		ImageUtility.getImageVarianceWeights(im.getProcessor(), 2, true, true, 2);
 		System.out.println("Yo");
 	}
-	
+
 	public static void tryTroubleImageModeFinding()
 	{
 		ImagePlus im = new ImagePlus("C:/Users/User/Desktop/TroubleImage1.tif");
@@ -155,9 +220,9 @@ public class TestStuff {
 		double[] values = ret.p1;
 		int[] counts = ret.p2;
 		ImageUtility.getHistogramPlot(values, counts, true, 65.0);
-		
+
 		int window = (int) Math.max(5, Math.round(0.05*nBins));
-		
+
 		double minDiff = Double.MAX_VALUE;
 		double diff = 0.0;
 		for(int left = 0; left < values.length - window + 1; left++)
@@ -182,7 +247,7 @@ public class TestStuff {
 			}
 		}
 	}
-	
+
 	private static Double getVertex(PolynomialRegression p)
 	{
 		if(p.degree() == 2)
@@ -194,14 +259,14 @@ public class TestStuff {
 			return null;
 		}
 	}
-	
+
 	public static void tryModeFitting()
 	{
 		ImagePlus im = new ImagePlus("C:/Users/User/Desktop/TestVarianceImage3.tif");
 		ImageStatistics stats = im.getProcessor().getStatistics();
 		Pair<double[], int[]> ret = ImageUtility.getHistogram(im.getProcessor(), stats.min, stats.median, -1, false);
-		
-		
+
+
 		double[] values = ret.p1;
 		int[] counts = ret.p2;
 		int i = ImageUtility.getHistogramModeIndex(counts);
@@ -215,7 +280,7 @@ public class TestStuff {
 		{
 			right = right + 1;
 		}
-		
+
 		double[] valuesSubset = ImageUtility.getRange(values, left, right);
 		int[] countsSubset = ImageUtility.getRange(counts, left, right);
 		PolynomialRegression p = new PolynomialRegression(valuesSubset, countsSubset, 2);
@@ -229,10 +294,10 @@ public class TestStuff {
 		{
 			Logs.log(j + "th Regression Coefficient = " + p.beta(j), TestStuff.class);
 		}
-		
+
 		ImageUtility.getHistogramPlot(values, counts, true, values[i], mode);
 	}
-	
+
 	public static void tryHistogram()
 	{
 		ImagePlus im = new ImagePlus("C:/Users/User/Desktop/TestConfluentBFImage.tif");
@@ -242,14 +307,14 @@ public class TestStuff {
 			System.out.println(ret.p1[i] + " - " + ret.p2[i]);
 		}
 	}
-	
+
 	public static void tryGettingVarianceWeightImage()
 	{
 		ImagePlus im = new ImagePlus("C:/Users/User/Desktop/TestConfluentBFImage.tif");
 		Pair<FloatProcessor[],FloatProcessor> ret1 = ImageUtility.getImageVarianceWeights(im.getProcessor(), 2.0, false, true, 2.0);
 		FileUtility.showImg(ret1.p1[0], true);
 	}
-	
+
 	public static void tryGettingMode()
 	{
 		ImagePlus im = new ImagePlus("C:/Users/User/Desktop/TestVarianceImage.tif");
@@ -258,14 +323,14 @@ public class TestStuff {
 		fp.resetMinAndMax();
 		double min = fp.getMin();
 		double max = fp.getMax();
-		
+
 		// Calculate
 		Pair<double[], int[]> hist = ImageUtility.getHistogram(fp, min, max, -1, false);
 		int i = ImageUtility.getHistogramModeIndex(hist.p2);
 		ImageUtility.getHistogramPlot(hist.p1, hist.p2, true, hist.p1[0], hist.p1[i], hist.p1[i] + (hist.p1[i]-hist.p1[0]));
 		Logs.log(hist.p1[0] + " - " + hist.p1[i], TestStuff.class);
 	}
-	
+
 	public static void tryStringSplitting()
 	{
 		String s = ".";
@@ -282,14 +347,14 @@ public class TestStuff {
 		System.out.println(toSplit.replace("Hello", "There"));
 		System.out.println("Rep.001".replace("00", ""));
 	}
-	
+
 	public static void tryMakingSpeckledImg()
 	{
 		Img<UnsignedByteType> img = utils.makeImageFromInterval(new FinalInterval(100, 100), new UnsignedByteType(0));
 		utils.addRandomSpeckles(img, 1000, new UnsignedByteType(255));
 		utils.show(img, false);
 	}
-	
+
 	public static void trySnakingIndexer()
 	{
 		long[] dims = new long[]{10,10};
@@ -301,12 +366,12 @@ public class TestStuff {
 			System.out.println("X:" + cur[0] + " Y:" + cur[1]);
 		}
 	}
-	
+
 	public static void tryRunningNeighborhood()
 	{
 		FeatureUtils utils = new FeatureUtils();
 		IJ2PluginUtility.ij().op();
-//		ImagePlus im = new ImagePlus("/Users/jaywarrick/Downloads/Image of 1's.tif");
+		//		ImagePlus im = new ImagePlus("/Users/jaywarrick/Downloads/Image of 1's.tif");
 		ImagePlus im = new ImagePlus("/Users/jaywarrick/Documents/Miyamoto/Grants/Submitted/2017 R01 - MM TME/Figures/SymmetryTests/Nuclei-01.tif");
 		Img<UnsignedByteType> img = ImageJFunctions.wrapByte(im);
 		PositionableRunningNeighborhood<UnsignedByteType> p = new PositionableRunningNeighborhood<>(new Ellipse2D.Double(0,0,41,11), img, PositionableRunningNeighborhood.BORDER);
@@ -352,26 +417,26 @@ public class TestStuff {
 		utils.show(img, true);
 		utils.show(img2, true);
 	}
-	
+
 	public static void tryLabelSubLabelRegion()
 	{
 		IJ2PluginUtility.ij().op();
 		ImagePlus im = new ImagePlus("/Users/jaywarrick/Desktop/For ImageJ Forum/Objects.tif");
 		ImagePlus im2 = new ImagePlus("/Users/jaywarrick/Desktop/For ImageJ Forum/ErodedObjects.tif");
-		
+
 		FeatureUtils utils = new FeatureUtils();
 		// Make a two images, parent and child
 		RandomAccessibleInterval<UnsignedByteType> parentImg = ImageJFunctions.wrapByte(im);
 		RandomAccessibleInterval<UnsignedByteType> childImg = ImageJFunctions.wrapByte(im2);
-		
-		
+
+
 		// Create a LabelRegion from the parent.
 		ImgLabeling<Integer, IntType > labeling = utils.getLabeling(parentImg, true);
 		ImgLabeling<Integer, IntType > subLabeling = utils.applyLabeling(labeling, childImg);
-		
+
 		utils.show(labeling);
 		utils.show(subLabeling);
-		
+
 		LabelRegions<Integer> regions = new LabelRegions<>(subLabeling);
 		int i = 1;
 		for(LabelRegion<Integer> r : regions)
@@ -385,11 +450,11 @@ public class TestStuff {
 			System.out.println(p.getVertices());
 		}
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public static <T extends RealType<T>> void tryMomentInvariance() throws Exception
 	{
-		
+
 		//### Results
 		/*
 		 * For Hu3, using getAbsNormDiff and getAbsSum made the diffHu the same as the HuDiff 
@@ -406,7 +471,7 @@ public class TestStuff {
 		System.out.println(pl1a);
 		System.out.println(pl1b);
 		System.out.println(pl1c);
-		
+
 		PointSamplerList<DoubleType> pl2a = pl1a.copy();
 		pl2a.rotate(37);
 		pl2a = pl2a.getRealPointListCenteredAt(origin);
@@ -419,7 +484,7 @@ public class TestStuff {
 		//System.out.println(pl2a);
 		//System.out.println(pl2b);
 		System.out.println(pl2c);
-		
+
 		PointSamplerII<DoubleType> ii = new PointSamplerII<DoubleType>(pl1a);
 		UnaryFunctionOp<IterableInterval<DoubleType>, DoubleType> op11 = (UnaryFunctionOp<IterableInterval<DoubleType>, DoubleType>) IJ2PluginUtility.ij().op().op(Ops.ImageMoments.Moment11.class, ii);
 		UnaryFunctionOp<IterableInterval<DoubleType>, DoubleType> op20 = (UnaryFunctionOp<IterableInterval<DoubleType>, DoubleType>) IJ2PluginUtility.ij().op().op(Ops.ImageMoments.CentralMoment20.class, ii);
@@ -428,10 +493,10 @@ public class TestStuff {
 		UnaryFunctionOp<IterableInterval<DoubleType>, DoubleType> op03 = (UnaryFunctionOp<IterableInterval<DoubleType>, DoubleType>) IJ2PluginUtility.ij().op().op(Ops.ImageMoments.CentralMoment03.class, ii);
 		UnaryFunctionOp<IterableInterval<DoubleType>, DoubleType> op21 = (UnaryFunctionOp<IterableInterval<DoubleType>, DoubleType>) IJ2PluginUtility.ij().op().op(Ops.ImageMoments.CentralMoment21.class, ii);
 		UnaryFunctionOp<IterableInterval<DoubleType>, DoubleType> op12 = (UnaryFunctionOp<IterableInterval<DoubleType>, DoubleType>) IJ2PluginUtility.ij().op().op(Ops.ImageMoments.CentralMoment12.class, ii);
-		
+
 		@SuppressWarnings("unused")
 		double val20, val02, bval20, bval02, cval20, cval02, val11, bval11, cval11, val30, val03, val21, val12, bval30, bval03, bval21, bval12, cval30, cval03, cval21, cval12, suma, sumb, sumc;
-		
+
 		ii = new PointSamplerII<DoubleType>(pl1a);
 		val11 = op11.calculate(ii).getRealDouble();
 		val02 = op02.calculate(ii).getRealDouble();
@@ -467,7 +532,7 @@ public class TestStuff {
 		//printInfo3(cval30, cval03, cval21, cval12, sumc);
 		//System.out.println("Hu3(Diff)=" + getHu3(val30-bval30, val03-bval03, val21-bval21, val12-bval12));
 		//System.out.println("Hu3(Diff)=" + getHu3(val30/suma-bval30/sumb, val03/suma-bval03/sumb, val21/suma-bval21/sumb, val12/suma-bval12/sumb));
-		
+
 		ii = new PointSamplerII<DoubleType>(pl2a);
 		val11 = op11.calculate(ii).getRealDouble();
 		val02 = op02.calculate(ii).getRealDouble();
@@ -502,9 +567,9 @@ public class TestStuff {
 		printInfo2(cval20, cval02, cval11, sumc);
 		//System.out.println("Hu3(Diff)=" + getHu3(val30-bval30, val03-bval03, val21-bval21, val12-bval12));
 		//System.out.println("Hu3(Diff)=" + getHu3(val30/suma-bval30/sumb, val03/suma-bval03/sumb, val21/suma-bval21/sumb, val12/suma-bval12/sumb));
-		
+
 	}
-	
+
 	public static PointSamplerList<DoubleType> getDiff(PointSamplerList<DoubleType> pl1, PointSamplerList<DoubleType> pl2)
 	{
 		PointSamplerList<DoubleType> ret = new PointSamplerList<DoubleType>(new DoubleType(0));
@@ -522,7 +587,7 @@ public class TestStuff {
 		}
 		return ret;
 	}
-	
+
 	public static PointSamplerList<DoubleType> getAbsDiff(PointSamplerList<DoubleType> pl1, PointSamplerList<DoubleType> pl2)
 	{
 		PointSamplerList<DoubleType> ret = new PointSamplerList<DoubleType>(new DoubleType(0));
@@ -540,7 +605,7 @@ public class TestStuff {
 		}
 		return ret;
 	}
-	
+
 	public static PointSamplerList<DoubleType> getAbsNormDiff(PointSamplerList<DoubleType> pl1, PointSamplerList<DoubleType> pl2)
 	{
 		double sum1 = getSum(pl1);
@@ -560,7 +625,7 @@ public class TestStuff {
 		}
 		return ret;
 	}
-	
+
 	public static PointSamplerList<DoubleType> getNormDiff(PointSamplerList<DoubleType> pl1, PointSamplerList<DoubleType> pl2)
 	{
 		double sum1 = getSum(pl1);
@@ -580,7 +645,7 @@ public class TestStuff {
 		}
 		return ret;
 	}
-	
+
 	public static double getSum(PointSamplerII<DoubleType> ii)
 	{
 		double tot = 0;
@@ -608,7 +673,7 @@ public class TestStuff {
 		}
 		return tot;
 	}
-	
+
 	public static double getAbsSum(PointSamplerList<DoubleType> pl)
 	{
 		double tot = 0;
@@ -618,29 +683,29 @@ public class TestStuff {
 		}
 		return tot;
 	}
-	
+
 	public static void printInfo3(double n30, double n03, double n21, double n12, double sum)
 	{
 		System.out.println("val30=" + n30 + ", val03=" + n03 + ", val21=" + n21 + ", val12=" + n12 + ", Hu3=" + getHu3(n30/sum, n03/sum, n21/sum, n12/sum));
 	}
-	
+
 	public static void printInfo2(double n20, double n02, double n11, double sum)
 	{
 		System.out.println("val20=" + n20 + ", val02=" + n02 + ", val11=" + n11 + ", Hu2=" + getHu2(n20/sum, n02/sum, n11/sum));
 	}
-	
+
 	public static double getHu3(double n30, double n03, double n21, double n12)
 	{
 		double ret = (n30 - 3*n12) * (n30 - 3*n12) + (3*n21 - n03) * (3*n21 - n03);
 		return ret;
 	}
-	
+
 	public static double getHu2(double n20, double n02, double n11)
 	{
 		double ret = (n20 - n02) * (n20 - n02) + 4 * n11 * n11;
 		return ret;
 	}
-	
+
 	public static PointSamplerList<DoubleType> getRCGrid(int r, int c, double intensity)
 	{
 		PointSamplerList<DoubleType> pl = new PointSamplerList<DoubleType>(new DoubleType(0.0));
@@ -664,7 +729,7 @@ public class TestStuff {
 		System.out.println(sum);
 		return pl;
 	}
-	
+
 	public static void trySamplingIterableRegion() throws Exception
 	{
 		DirectoryManager.setHostDirectory("/Users/jaywarrick/Desktop");
@@ -723,10 +788,10 @@ public class TestStuff {
 		DirectoryManager.setHostDirectory("/Users/jaywarrick/Desktop");
 
 		PointSamplerList<IntType> pl = getRandomPoints(maxRadius, xOffset, yOffset, scale, rotation, nPoints, rndSeed);
-		
-		
+
+
 		PointSamplerList<IntType> pl3 = new PointSamplerList<>(new IntType(0));
-		
+
 		pl3.add(new PointSample<IntType>(0,0,new IntType(1)));
 		pl3.add(new PointSample<IntType>(0,1,new IntType(1)));
 		pl3.add(new PointSample<IntType>(0,2,new IntType(1)));
@@ -736,7 +801,7 @@ public class TestStuff {
 		pl3.add(new PointSample<IntType>(2,0,new IntType(1)));
 		pl3.add(new PointSample<IntType>(2,1,new IntType(1)));
 		pl3.add(new PointSample<IntType>(2,2,new IntType(1)));
-		
+
 		PointSamplerList<IntType> pl2 = new PointSamplerList<>(new IntType(0));
 		for(PointSampler<IntType> p : pl)
 		{
@@ -756,11 +821,11 @@ public class TestStuff {
 		comp.setOrder(0);
 		comp.setRepetition(0);
 		comp.setEnclosingCircle(c);
-		
+
 		ZernikeMoment zm = comp.calculate(ii);
 		System.out.println(zm.getMagnitude());
-		
-		
+
+
 		//@SuppressWarnings("unchecked")
 		//ZernikeFeatureSet<IntType> opZ = IJ2PluginUtility.ij().op().op(ZernikeFeatureSet.class, ii, 1, 5);
 

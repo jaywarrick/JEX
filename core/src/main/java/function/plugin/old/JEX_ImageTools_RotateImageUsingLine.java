@@ -195,12 +195,12 @@ public class JEX_ImageTools_RotateImageUsingLine extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData imageFiles = inputs.get("Image");
-		if(imageFiles == null || !imageFiles.getTypeName().getType().equals(JEXData.IMAGE))
+		if(imageFiles == null || !imageFiles.getTypeName().getType().matches(JEXData.IMAGE))
 			return false;
 		
 		// Collect the inputs
 		JEXData lineData = inputs.get("Line ROI");
-		if(lineData == null || !lineData.getTypeName().getType().equals(JEXData.ROI))
+		if(lineData == null || !lineData.getTypeName().getType().matches(JEXData.ROI))
 			return false;
 		
 		// Run the function

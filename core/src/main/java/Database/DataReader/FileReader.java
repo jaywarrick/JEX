@@ -62,7 +62,7 @@ public class FileReader {
 		if(!data.getDataObjectType().matches(JEXData.FILE))
 			return null;
 		JEXDataSingle ds = data.getFirstSingle();
-		String ret = readToPath(ds, data.getDataObjectType().getFlavor().equals(JEXData.FLAVOR_VIRTUAL));
+		String ret = readToPath(ds, data.hasVirtualFlavor());
 		
 		return ret;
 	}
@@ -78,7 +78,7 @@ public class FileReader {
 		if(!data.getDataObjectType().matches(JEXData.FILE))
 			return null;
 		JEXDataSingle ds = data.getFirstSingle();
-		String result = readToPath(ds, data.getDataObjectType().getFlavor().equals(JEXData.FLAVOR_VIRTUAL));
+		String result = readToPath(ds, data.hasVirtualFlavor());
 		File file = new File(result);
 		return file;
 	}
@@ -95,7 +95,7 @@ public class FileReader {
 			return null;
 		TreeMap<DimensionMap,String> result = new TreeMap<DimensionMap,String>();
 		JEXDataSingle ds = data.getFirstSingle();
-		String dataFolder = FileReader.readToFile(ds, data.getDataObjectType().getFlavor().equals(JEXData.FLAVOR_VIRTUAL)).getParent(); // DO THIS
+		String dataFolder = FileReader.readToFile(ds, data.hasVirtualFlavor()).getParent(); // DO THIS
 		// ONE TIME
 		// OUTSIDE
 		// LOOP

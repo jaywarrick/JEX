@@ -273,7 +273,7 @@ public class IJ2CrunchablePlugin extends JEXCrunchable {
 		for (String name : inputs.keySet())
 		{
 			JEXData temp = inputs.get(name);
-			if(temp != null && temp.getTypeName().getType().equals(JEXData.IMAGE))
+			if(temp != null && temp.getTypeName().getType().matches(JEXData.IMAGE))
 			{
 				DimTable table = temp.getDimTable();
 				ret = DimTable.union(ret, table);

@@ -182,7 +182,7 @@ public class JEX_Migration_ExtractImage extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData data = inputs.get("Source Image");
-		if(!data.getTypeName().getType().equals(JEXData.IMAGE))
+		if(!data.getTypeName().getType().matches(JEXData.IMAGE))
 			return false;
 		List<String> imset = ImageReader.readObjectToImagePathList(data);
 		

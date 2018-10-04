@@ -92,6 +92,12 @@ public class SplitObjectVirtual extends JEXPlugin {
 		DimTable filter = new DimTable(this.filterString);
 
 		boolean keeping = this.operation.equals("Keep");
+		
+		if(this.dimToSplit == "" || inputData.getDimTable().getDimWithName(this.dimToSplit) == null)
+		{
+			JEXDialog.messageDialog("The dim to split was either blank or was not found in the object. Aborting.", this);
+			return false;
+		}
 
 		int tot = inputData.getDimTable().mapCount();
 		int count = 0;

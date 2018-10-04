@@ -225,7 +225,7 @@ public class JEX_MakeFACSMeanPlots extends JEXCrunchable {
 		// Collect the inputs
 		JEXData fileData = inputs.get("ARFF Files");
 		
-		if(fileData == null || !fileData.getTypeName().getType().equals(JEXData.FILE))
+		if(fileData == null || !fileData.getTypeName().getType().matches(JEXData.FILE))
 			return false;
 		
 		// Gather parameters

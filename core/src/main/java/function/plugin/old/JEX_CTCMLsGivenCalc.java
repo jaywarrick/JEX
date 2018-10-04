@@ -196,22 +196,22 @@ public class JEX_CTCMLsGivenCalc extends JEXCrunchable {
 		// Run the function
 		// EpCAM Counts
 		JEXData epi = inputs.get("uL for EPISpot");
-		if(!epi.getTypeName().getType().equals(JEXData.VALUE))
+		if(!epi.getTypeName().getType().matches(JEXData.VALUE))
 			return false;
 		
 		// GFP Counts
 		JEXData seed = inputs.get("uL seeded");
-		if(!seed.getTypeName().getType().equals(JEXData.VALUE))
+		if(!seed.getTypeName().getType().matches(JEXData.VALUE))
 			return false;
 		
 		// mL Whole Blood Equivalents
 		JEXData mrna = inputs.get("uL for mRNA");
-		if(!mrna.getTypeName().getType().equals(JEXData.VALUE))
+		if(!mrna.getTypeName().getType().matches(JEXData.VALUE))
 			return false;
 		
 		// mL whole blood to start
 		JEXData equiv = inputs.get("mL equivalent seeded");
-		if(equiv == null || !equiv.getTypeName().getType().equals(JEXData.VALUE))
+		if(equiv == null || !equiv.getTypeName().getType().matches(JEXData.VALUE))
 			return false;
 		
 		// This is the meat

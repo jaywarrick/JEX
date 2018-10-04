@@ -179,7 +179,7 @@ public class JEX_StabilizeStack extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData data = inputs.get("Stack");
-		if(!data.getTypeName().getType().equals(JEXData.IMAGE))
+		if(!data.getTypeName().getType().matches(JEXData.IMAGE))
 			return false;
 		
 		// //// Get params

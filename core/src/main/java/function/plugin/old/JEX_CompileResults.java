@@ -189,7 +189,7 @@ public class JEX_CompileResults extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData data = inputs.get("Results Files");
-		if(data == null || !data.getTypeName().getType().equals(JEXData.FILE))
+		if(data == null || !data.getTypeName().getType().matches(JEXData.FILE))
 		{
 			return false;
 		}

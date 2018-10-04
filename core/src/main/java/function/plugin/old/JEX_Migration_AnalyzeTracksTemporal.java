@@ -189,7 +189,7 @@ public class JEX_Migration_AnalyzeTracksTemporal extends JEXCrunchable {
 		// Collect the inputs
 		Logs.log("Collecting inputs", 1, this);
 		JEXData data = inputs.get("Tracks to Analyze");
-		if(!data.getTypeName().getType().equals(JEXData.TRACK))
+		if(!data.getTypeName().getType().matches(JEXData.TRACK))
 			return false;
 		
 		JEXData roiData = inputs.get("Optional ROI");

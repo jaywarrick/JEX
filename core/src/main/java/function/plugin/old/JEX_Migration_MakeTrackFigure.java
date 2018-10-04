@@ -192,7 +192,7 @@ public class JEX_Migration_MakeTrackFigure extends JEXCrunchable {
 	{
 		// Collect the inputs
 		data = inputs.get("Tracks to Analyze");
-		if(!data.getTypeName().getType().equals(JEXData.TRACK))
+		if(!data.getTypeName().getType().matches(JEXData.TRACK))
 			return false;
 		
 		// Run the function

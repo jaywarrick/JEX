@@ -74,7 +74,7 @@ public class ScaleImage extends JEXPlugin {
 	@Override
 	public boolean run(JEXEntry optionalEntry)
 	{
-		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(imageData == null || !imageData.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return false;
 		}

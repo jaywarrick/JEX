@@ -34,6 +34,7 @@ public class JEXData {
 	
 	// Special JEXData flavors
 	public static final String FLAVOR_VIRTUAL = "Virtual";
+	public static final String FLAVOR_UPDATE = "Update";
 	
 	// JEXData fields
 	public static final String NAME = "Name";
@@ -86,7 +87,7 @@ public class JEXData {
 	 */
 	public JEXData(JEXData jd)
 	{
-		this(jd.getDataObjectType(), jd.getDataObjectName(), jd.getDataObjectInfo());
+		this(new Type(jd.getDataObjectType().getType(), jd.getDataObjectType().getFlavor()), jd.getDataObjectName(), jd.getDataObjectInfo());
 		this.setAuthor(jd.getAuthor());
 		this.setDataObjectDate(jd.getDataObjectDate());
 		this.setDataObjectModifDate(jd.getDataObjectModifDate());
@@ -241,6 +242,24 @@ public class JEXData {
 	public boolean isType(Type t)
 	{
 		return this.getTypeName().getType().equals(t);
+	}
+	
+	/** 
+	 * Checks if the JEXData has the specified flavor contained within it
+	 */
+	public boolean hasFlavor(String flavor)
+	{
+		return this.getTypeName().getType().hasFlavor(flavor);
+	}
+	
+	public boolean hasUpdateFlavor()
+	{
+		return this.hasFlavor(FLAVOR_UPDATE);
+	}
+	
+	public boolean hasVirtualFlavor()
+	{
+		return this.hasFlavor(FLAVOR_VIRTUAL);
 	}
 	
 	/**
@@ -469,6 +488,17 @@ public class JEXData {
 			value.setDimensionMap(map);
 			this.getDataMap().put(map, value);
 		}
+	}
+	
+	/**
+	 * Put the value VALUE at the location MAP in the data object
+	 * 
+	 * @param map
+	 * @param value
+	 */
+	public void clearData()
+	{
+		this.getDataMap().clear();
 	}
 	
 	/**

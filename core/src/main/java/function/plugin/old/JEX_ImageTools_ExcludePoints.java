@@ -1,5 +1,9 @@
 package function.plugin.old;
 
+import java.util.HashMap;
+import java.util.Set;
+import java.util.TreeMap;
+
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.RoiReader;
@@ -9,15 +13,9 @@ import Database.Definition.ParameterSet;
 import Database.Definition.TypeName;
 import function.JEXCrunchable;
 import image.roi.ROIPlus;
-
-import java.util.HashMap;
-import java.util.Set;
-import java.util.TreeMap;
-
 import jex.statics.JEXStatics;
 import jex.utilities.ROIUtility;
 import logs.Logs;
-import tables.Dim;
 import tables.DimTable;
 import tables.DimensionMap;
 
@@ -198,12 +196,12 @@ public class JEX_ImageTools_ExcludePoints extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData pointData = inputs.get("Point ROI");
-		if(pointData == null || !pointData.getTypeName().getType().equals(JEXData.ROI))
+		if(pointData == null || !pointData.getTypeName().getType().matches(JEXData.ROI))
 			return false;
 		
 		// Collect the inputs
 		JEXData regionData = inputs.get("Region ROI");
-		if(regionData == null || !regionData.getTypeName().getType().equals(JEXData.ROI))
+		if(regionData == null || !regionData.getTypeName().getType().matches(JEXData.ROI))
 			return false;
 		
 		// Gather the parameters

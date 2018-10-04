@@ -152,7 +152,7 @@ public class MakeCalibrationImage_Object extends JEXPlugin {
 	public boolean run(JEXEntry entry)
 	{
 		// Check the inputs
-		if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
+		if(imageData == null || !imageData.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return false;
 		}

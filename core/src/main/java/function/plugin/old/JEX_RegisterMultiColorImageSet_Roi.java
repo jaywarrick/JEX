@@ -193,7 +193,7 @@ public class JEX_RegisterMultiColorImageSet_Roi extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData data = inputs.get("Multicolor Image Set");
-		if(data == null || !data.getTypeName().getType().equals(JEXData.IMAGE))
+		if(data == null || !data.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return false;
 		}

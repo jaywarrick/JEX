@@ -196,7 +196,7 @@ public class JEX_FibrinogenFluorescenceQuantification extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData data1 = inputs.get("Fibrinogen Image");
-		if(!data1.getTypeName().getType().equals(JEXData.IMAGE))
+		if(!data1.getTypeName().getType().matches(JEXData.IMAGE))
 			return false;
 		
 		// Run the function

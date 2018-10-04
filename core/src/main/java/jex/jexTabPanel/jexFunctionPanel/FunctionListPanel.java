@@ -127,9 +127,9 @@ public class FunctionListPanel implements MouseWheelListener {
 		this.parent.saveAllFunctions(autoSave);
 	}
 	
-	public void runAllFunctions(boolean autoSave)
+	public void runAllFunctions(boolean autoSave, boolean autoUpdate)
 	{
-		this.parent.runAllFunctions(autoSave);
+		this.parent.runAllFunctions(autoSave, autoUpdate);
 	}
 	
 	public void loadFunctionList()
@@ -184,7 +184,7 @@ public class FunctionListPanel implements MouseWheelListener {
 	
 	public boolean isAutoSaveSelected()
 	{
-		return this.editPanel.isAutoSaveSelected();
+		return this.editPanel.isAutoSavingOn();
 	}
 	
 	// ----------------------------------------------------

@@ -194,7 +194,7 @@ public class JEX_Migration_FindMax extends JEXCrunchable {
 	{
 		// Collect the inputs
 		JEXData data1 = inputs.get("Source Image");
-		if(!data1.getTypeName().getType().equals(JEXData.IMAGE))
+		if(!data1.getTypeName().getType().matches(JEXData.IMAGE))
 			return false;
 		
 		JEXData data2 = inputs.get("Optional ROI");

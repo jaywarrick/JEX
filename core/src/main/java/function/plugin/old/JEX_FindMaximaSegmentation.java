@@ -242,12 +242,12 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 			JEXData imageData = inputs.get("Image");
 			// if/else to figure out whether or not valid image data has been given;
 			// ends run if not
-			if(imageData == null || !imageData.getTypeName().getType().equals(JEXData.IMAGE))
+			if(imageData == null || !imageData.getTypeName().getType().matches(JEXData.IMAGE))
 			{
 				return false;
 			}
 			JEXData roiData = inputs.get("ROI (optional)");
-			if(roiData != null && roiData.getTypeName().getType().equals(JEXData.ROI))
+			if(roiData != null && roiData.getTypeName().getType().matches(JEXData.ROI))
 			{
 				roiProvided = true;
 			}
