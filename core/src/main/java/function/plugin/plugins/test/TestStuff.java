@@ -64,6 +64,8 @@ import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.ValuePair;
 import rtools.R;
+import tables.Dim;
+import tables.DimTable;
 import tables.DimensionMap;
 
 public class TestStuff {
@@ -78,8 +80,22 @@ public class TestStuff {
 
 	public static void main (String[] args) throws Exception
 	{
-		tryParsingFileNames();
+		tryTableLooping();
 	}	
+	
+	public static void tryTableLooping()
+	{
+		DimTable dt = new DimTable();
+		Dim d1 = new Dim("Z", 10);
+		dt.add(d1);
+		for(DimTable blah : dt.getSubTableIterator(""))
+		{
+			for(DimensionMap map : blah.getMapIterator())
+			{
+				Logs.log("" + map, TestStuff.class);
+			}
+		}
+	}
 
 	public static void tryParsingFileNames()
 	{
