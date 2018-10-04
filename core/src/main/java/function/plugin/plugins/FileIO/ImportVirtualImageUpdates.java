@@ -280,7 +280,7 @@ public class ImportVirtualImageUpdates extends JEXPlugin {
 			}
 
 			// Set the flavor of the chunk to virtual chunk
-			chunkData.setDataObjectType(new Type(chunkData.getTypeName().getType().getType(), JEXData.FLAVOR_VIRTUAL + " " + JEXData.FLAVOR_CHUNK));
+			chunkData.setDataObjectType(new Type(chunkData.getTypeName().getType().getType(), JEXData.FLAVOR_VIRTUAL + " " + JEXData.FLAVOR_UPDATE));
 
 			// Merge the input data and the new virtual chunk
 			// Put the 'input' first in the list so its type takes precedence.

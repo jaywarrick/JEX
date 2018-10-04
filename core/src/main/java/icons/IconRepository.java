@@ -167,6 +167,7 @@ public class IconRepository {
 	public static String MISC_PLUS_GREY = "plusButton.png";
 	public static String MISC_PREFERENCES = "Preferences.png";
 	public static String MISC_DELETE = "Delete.png";
+	public static String MISC_CLEAR_UPDATES = "ClearUpdates.png";
 	public static String MISC_STAR = "Bookmark.png";
 	
 	public static String ROI_MOUSE_SELECTED = "ROImouseselected.png";

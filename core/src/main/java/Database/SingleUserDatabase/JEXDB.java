@@ -790,7 +790,34 @@ public class JEXDB implements Iterable<JEXEntry> {
 	/**
 	 * Return the JEXData of typename TN in entry ENTRY
 	 */
-	public JEXData getChunkFlavoredDataOfTypeNameInEntry(TypeName tn, JEXEntry entry)
+	public Vector<JEXData> getUpdateFlavoredDatasInEntry(JEXEntry entry)
+	{
+		if(entry == null)
+		{
+			return null;
+		}
+		
+		TreeMap<Type,TreeMap<String,JEXData>> tnmap = entry.getDataList();
+		if(tnmap == null)
+		{
+			return null;
+		}
+		
+		Vector<JEXData> ret = new Vector<>();
+		for(Entry<Type,TreeMap<String,JEXData>> e : tnmap.entrySet())
+		{
+			if(e.getKey().hasFlavor(JEXData.FLAVOR_UPDATE))
+			{
+				ret.addAll(e.getValue().values());
+			}
+		}
+		return ret;
+	}
+	
+	/**
+	 * Return the JEXData of typename TN in entry ENTRY
+	 */
+	public JEXData getUpdateFlavoredDataOfTypeNameInEntry(TypeName tn, JEXEntry entry)
 	{
 		if(tn == null || entry == null)
 		{
@@ -811,7 +838,7 @@ public class JEXDB implements Iterable<JEXEntry> {
 			{
 				break;
 			}
-			if(tnmapE.getKey().matches(tn.getType()) & tnmapE.getKey().hasFlavor(JEXData.FLAVOR_CHUNK))
+			if(tnmapE.getKey().matches(tn.getType()) & tnmapE.getKey().hasFlavor(JEXData.FLAVOR_UPDATE))
 			{
 				for(Entry<String,JEXData> nmapE : tnmapE.getValue().entrySet())
 				{

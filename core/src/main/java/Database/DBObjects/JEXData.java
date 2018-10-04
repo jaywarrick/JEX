@@ -34,7 +34,7 @@ public class JEXData {
 	
 	// Special JEXData flavors
 	public static final String FLAVOR_VIRTUAL = "Virtual";
-	public static final String FLAVOR_CHUNK = "Chunk";
+	public static final String FLAVOR_UPDATE = "Update";
 	
 	// JEXData fields
 	public static final String NAME = "Name";
@@ -254,7 +254,7 @@ public class JEXData {
 	
 	public boolean hasChunkFlavor()
 	{
-		return this.hasFlavor(FLAVOR_CHUNK);
+		return this.hasFlavor(FLAVOR_UPDATE);
 	}
 	
 	public boolean hasVirtualFlavor()

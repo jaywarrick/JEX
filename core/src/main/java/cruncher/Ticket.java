@@ -295,7 +295,7 @@ public class Ticket implements Callable<Integer>, Canceler{
 		HashSet<JEXData> ret = new HashSet<>();
 		// make the chunk versions
 		JEXData newData = new JEXData(data);
-		newData.setDataObjectType(new Type(newData.getTypeName().getType().getType(), JEXData.FLAVOR_CHUNK));
+		newData.setDataObjectType(new Type(newData.getTypeName().getType().getType(), JEXData.FLAVOR_UPDATE));
 		TreeMap<DimensionMap,JEXDataSingle> datamap = data.getDataMap();
 
 		// Copy referenced data in place
@@ -436,7 +436,7 @@ public class Ticket implements Callable<Integer>, Canceler{
 			TypeName tn = inputs.get(inputName);
 
 			// Prepare the JEXData for the input to the function
-			JEXData data = JEXStatics.jexManager.getChunkFlavoredDataOfTypeNameInEntry(tn, entry);
+			JEXData data = JEXStatics.jexManager.getUpdateFlavoredDataOfTypeNameInEntry(tn, entry);
 			if(data == null)
 			{
 				data = JEXStatics.jexManager.getDataOfTypeNameInEntry(tn, entry);

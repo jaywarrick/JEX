@@ -154,7 +154,7 @@ public class ImportImages_SCIFIO extends JEXPlugin {
 			// We have a single output to return.
 			this.output = imagesAndMetaData.p1.get(0);
 			// TODO
-			this.output.setDataObjectType(new Type(this.output.getDataObjectType(), JEXData.FLAVOR_CHUNK));
+			this.output.setDataObjectType(new Type(this.output.getDataObjectType(), JEXData.FLAVOR_UPDATE));
 		}
 		else
 		{

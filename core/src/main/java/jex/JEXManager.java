@@ -1180,9 +1180,9 @@ public class JEXManager {
 	 * @param entry
 	 * @return
 	 */
-	public JEXData getChunkFlavoredDataOfTypeNameInEntry(TypeName tn, JEXEntry entry)
+	public JEXData getUpdateFlavoredDataOfTypeNameInEntry(TypeName tn, JEXEntry entry)
 	{
-		JEXData result = this.getCurrentDatabase().getChunkFlavoredDataOfTypeNameInEntry(tn, entry);
+		JEXData result = this.getCurrentDatabase().getUpdateFlavoredDataOfTypeNameInEntry(tn, entry);
 		return result;
 	}
 	
@@ -1209,6 +1209,12 @@ public class JEXManager {
 	public Vector<JEXData> getDatasOfTypeWithNameContainingInEntry(TypeName tn, JEXEntry entry)
 	{
 		Vector<JEXData> result = this.getCurrentDatabase().getDatasOfTypeWithNameContainingInEntry(tn, entry);
+		return result;
+	}
+	
+	public Vector<JEXData> getUpdateFlavoredDatasInEntry(JEXEntry entry)
+	{
+		Vector<JEXData> result = this.getCurrentDatabase().getUpdateFlavoredDatasInEntry(entry);
 		return result;
 	}
 	
