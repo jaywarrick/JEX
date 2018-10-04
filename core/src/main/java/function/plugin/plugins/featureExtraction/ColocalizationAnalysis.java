@@ -11,6 +11,7 @@ import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;
 import Database.DataReader.RoiReader;
+import Database.DataWriter.FileWriter;
 import Database.SingleUserDatabase.JEXReader;
 import function.ops.featuresets.wrappers.WriterWrapper;
 import function.ops.stats.DefaultPearsonsCorrelationCoefficient;
@@ -62,7 +63,7 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 
 	public final String CIRCLE_SMALLEST_ENCLOSING = "Smallest Enclosing", CIRCLE_SMALLEST_AT_CENTER_OF_MASS = "Smallest Enclosing Circle at Center of Mass";
 
-	public WriterWrapper wrapWriter = new WriterWrapper();
+	public WriterWrapper wrapWriter;
 
 	private Img<UnsignedByteType> wholeCellMaskImage;
 	private Img<UnsignedByteType> mask;
@@ -116,34 +117,37 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 	@ParameterMarker(uiOrder = 0, name = "Mask and Image Channel Dim Name", description = "Channel dimension name.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "Channel")
 	String channelName;
 
-	@ParameterMarker(uiOrder = 1, name = "Channel Offsets <Val1>,<Val2>,...<Valn>", description = "Set a single offset for all channels (e.g., positive 5.0 to subtract off 5.0 before doing calculations) or a different offset for each channel. Must have 1 value for each channel comma separated (e.g., '<Val1>,<Val2>,...<Valn>').", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "0.0")
+	@ParameterMarker(uiOrder = 1, name = "Time dim name (optional)", description = "Time dimension name in mask data.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "Time")
+	String timeName;
+
+	@ParameterMarker(uiOrder = 2, name = "Channel Offsets <Val1>,<Val2>,...<Valn>", description = "Set a single offset for all channels (e.g., positive 5.0 to subtract off 5.0 before doing calculations) or a different offset for each channel. Must have 1 value for each channel comma separated (e.g., '<Val1>,<Val2>,...<Valn>').", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "0.0")
 	String channelOffsets;
 
-	@ParameterMarker(uiOrder = 2, name = "'Whole Cell' mask channel value", description = "Which channel value of the mask image represents the whole cell that has a 1-to-1 mapping with the maxima points.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "WholeCell")
+	@ParameterMarker(uiOrder = 3, name = "'Whole Cell' mask channel value", description = "Which channel value of the mask image represents the whole cell that has a 1-to-1 mapping with the maxima points.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "WholeCell")
 	String maskWholeCellChannelValue;
 
-	@ParameterMarker(uiOrder = 3, name = "** Connectedness Features", description = "The structuring element or number of neighbors to require to be part of the neighborhood.", ui = MarkerConstants.UI_DROPDOWN, choices = {"4 Connected", "8 Connected" }, defaultChoice = 0)
+	@ParameterMarker(uiOrder = 4, name = "** Connectedness Features", description = "The structuring element or number of neighbors to require to be part of the neighborhood.", ui = MarkerConstants.UI_DROPDOWN, choices = {"4 Connected", "8 Connected" }, defaultChoice = 0)
 	String connectedness;
 
-	@ParameterMarker(uiOrder = 4, name = "Transform Data to 'Similarity'", description = "This takes the correlation metrics and transoforms them using Similarity=ln((1+R)/(1-R)). Recommended.", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
+	@ParameterMarker(uiOrder = 5, name = "Transform Data to 'Similarity'", description = "This takes the correlation metrics and transoforms them using Similarity=ln((1+R)/(1-R)). Recommended.", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
 	boolean transform;
 
-	@ParameterMarker(uiOrder = 5, name = "Save ARFF version as well?", description = "Initially, the file is written as a CSV and can be also saved as a .arff file as well. Should the .arff file be saved (it takes longer)?", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	@ParameterMarker(uiOrder = 6, name = "Save ARFF version as well?", description = "Initially, the file is written as a CSV and can be also saved as a .arff file as well. Should the .arff file be saved (it takes longer)?", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean saveArff;
 
-	@ParameterMarker(uiOrder = 6, name = "Image Channels to Exclude (optional)", description = "Which channels of the intensity images to be measured should be excluded (this can dramatically reduce the number of combinations to be quantified).", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
+	@ParameterMarker(uiOrder = 7, name = "Image Channels to Exclude (optional)", description = "Which channels of the intensity images to be measured should be excluded (this can dramatically reduce the number of combinations to be quantified).", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
 	String imageExcludeString;
 
-	@ParameterMarker(uiOrder = 7, name = "Mask Channels to Exclude (optional)", description = "Which channels of the mask images to be applied should be excluded (this can dramatically reduce the number of combinations to be quantified).", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
+	@ParameterMarker(uiOrder = 8, name = "Mask Channels to Exclude (optional)", description = "Which channels of the mask images to be applied should be excluded (this can dramatically reduce the number of combinations to be quantified).", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
 	String maskExcludeString;
 
-	@ParameterMarker(uiOrder = 8, name = "Calc. Pearson's Corr. Coef.?", description = "Should the Pearsons's Correlation Coefficient be calculated?", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
+	@ParameterMarker(uiOrder = 9, name = "Calc. Pearson's Corr. Coef.?", description = "Should the Pearsons's Correlation Coefficient be calculated?", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
 	boolean doPearsons;
 
-	@ParameterMarker(uiOrder = 9, name = "Calc. Spearman's Corr. Coef.?", description = "Should the Spearman's Correlation Coefficient be calculated?", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	@ParameterMarker(uiOrder = 10, name = "Calc. Spearman's Corr. Coef.?", description = "Should the Spearman's Correlation Coefficient be calculated?", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean doSpearmans;
 
-	@ParameterMarker(uiOrder = 10, name = "Calc. Radial Localization?", description = "Should the Radial Localization metric be calculated?", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
+	@ParameterMarker(uiOrder = 11, name = "Calc. Radial Localization?", description = "Should the Radial Localization metric be calculated?", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
 	boolean doRadial;
 
 	/////////// Define Outputs here ///////////
@@ -160,6 +164,10 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 	public int getMaxThreads() {
 		return 10;
 	}
+
+	TreeMap<DimensionMap,String> csvFiles = new TreeMap<>();
+	TreeMap<DimensionMap,String> arffFiles = new TreeMap<>();
+	Dim timeDim = null;
 
 	@Override
 	public boolean run(JEXEntry optionalEntry) {
@@ -208,60 +216,79 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 			}
 		}
 
-		// For each whole cell mask
-		for(DimensionMap mapMask_NoChannelTemp : maskDimTable_NoChannel.getMapIterator())
+		// For each time
+		for(DimTable maskDimTable_NoChannel_1Time : maskDimTable_NoChannel.getSubTableIterator(this.timeName))
 		{
-			if (this.isCanceled()) { this.close(); return false; }
-
-			this.mapMask_NoChannel = mapMask_NoChannelTemp;
-			DimensionMap mapMask_WholeCell = this.mapMask_NoChannel.copyAndSet(channelName + "=" + maskWholeCellChannelValue);
-
-			this.setWholeCellMask(mapMask_WholeCell);
-			if(this.wholeCellMaskImage == null)
+			// Start a new WriterWrapper
+			this.timeDim = maskDimTable_NoChannel_1Time.getDimWithName(this.timeName);
+			this.wrapWriter = new WriterWrapper();
+					
+			// For each whole cell mask
+			for(DimensionMap mapMask_NoChannelTemp : maskDimTable_NoChannel_1Time.getMapIterator())
 			{
-				continue;
-			}
-			if (this.isCanceled()) { this.close(); return false; }
+				if (this.isCanceled()) { this.close(); return false; }
 
-			this.setMaximaRoi(mapMask_WholeCell);
+				this.mapMask_NoChannel = mapMask_NoChannelTemp;
+				DimensionMap mapMask_WholeCell = this.mapMask_NoChannel.copyAndSet(channelName + "=" + maskWholeCellChannelValue);
 
-			this.setIdToLabelMap(mapMask_WholeCell);
-			if (this.isCanceled()) { this.close(); return false; }
-
-			// Get the subDimTable corresponding to the images for this whole cell mask (i.e., corresponding image but all channels)
-			DimTable imageSubsetTable = imageDimTable.getSubTable(this.mapMask_NoChannel);
-
-			
-
-			// Loop over the image channel combinations to measure
-			// and if doRadial, then store info about the masks as well
-			// Use the TreeMap to accumulate mask info and eliminate duplicate info
-			maskInfo = new TreeMap<>();
-			for(Pair<String,String> channelCombo : channelCombos)
-			{
-				// Set the images to measure
-				Pair<DimensionMap,DimensionMap> combo = this.getMapsForCombo(imageSubsetTable, channelCombo);
-				this.setImagesToMeasure(combo.p1, combo.p2);
-
-				// Then quantify other masks
-				for(String maskChannelValue : maskChannelDim.dimValues)
+				this.setWholeCellMask(mapMask_WholeCell);
+				if(this.wholeCellMaskImage == null)
 				{
-					if(this.isCanceled()) return false;
-					if(!maskThingsToExclude.containsValue(maskChannelValue))
+					continue;
+				}
+				if (this.isCanceled()) { this.close(); return false; }
+
+				this.setMaximaRoi(mapMask_WholeCell);
+
+				this.setIdToLabelMap(mapMask_WholeCell);
+				if (this.isCanceled()) { this.close(); return false; }
+
+				// Get the subDimTable corresponding to the images for this whole cell mask (i.e., corresponding image but all channels)
+				DimTable imageSubsetTable = imageDimTable.getSubTable(this.mapMask_NoChannel);
+
+				// Loop over the image channel combinations to measure
+				// and if doRadial, then store info about the masks as well
+				// Use the TreeMap to accumulate mask info and eliminate duplicate info
+				maskInfo = new TreeMap<>();
+				for(Pair<String,String> channelCombo : channelCombos)
+				{
+					// Set the images to measure
+					Pair<DimensionMap,DimensionMap> combo = this.getMapsForCombo(imageSubsetTable, channelCombo);
+					this.setImagesToMeasure(combo.p1, combo.p2);
+
+					// Then quantify other masks
+					for(String maskChannelValue : maskChannelDim.dimValues)
 					{
-						if(!this.quantifyColocalizations(maskChannelValue))
-							return false;
-						this.updateStatus();
+						if(this.isCanceled()) return false;
+						if(!maskThingsToExclude.containsValue(maskChannelValue))
+						{
+							if(!this.quantifyColocalizations(maskChannelValue))
+								return false;
+							this.updateStatus();
+						}
 					}
 				}
+				// Then write the unique mask info to the file.
+				for(Entry<DimensionMap,Double> e : maskInfo.entrySet())
+				{
+					this.write(e.getKey(), e.getValue());
+				}
 			}
-			// Then write the unique mask info to the file.
-			for(Entry<DimensionMap,Double> e : maskInfo.entrySet())
+			if(this.timeDim == null)
 			{
-				this.write(e.getKey(), e.getValue());
+				Pair<String, String> results = WriterWrapper.close(this.wrapWriter, saveArff);
+				csvFiles.put(new DimensionMap(), results.p1);
+				arffFiles.put(new DimensionMap(), results.p2);
+			}
+			else
+			{
+				Pair<String, String> results = WriterWrapper.close(this.wrapWriter, saveArff);
+				csvFiles.put(new DimensionMap(this.timeDim.name() + "=" + this.timeDim.valueAt(0)), results.p1);
+				arffFiles.put(new DimensionMap(this.timeDim.name() + "=" + this.timeDim.valueAt(0)), results.p2);
 			}
 		}
-		this.close();
+		this.outputCSV = FileWriter.makeFileObject("temp", null, csvFiles);
+		this.outputARFF = FileWriter.makeFileObject("temp", null, arffFiles);
 		return true;
 	}
 
@@ -532,9 +559,19 @@ public class ColocalizationAnalysis<T extends RealType<T>> extends JEXPlugin {
 
 	public void close()
 	{
-		Pair<JEXData, JEXData> results = WriterWrapper.close(this.wrapWriter, saveArff);
-		outputCSV = results.p1;
-		outputARFF = results.p2;
+		Pair<String, String> results = WriterWrapper.close(this.wrapWriter, saveArff);
+		if(this.timeDim == null)
+		{
+			csvFiles.put(new DimensionMap(), results.p1);
+			arffFiles.put(new DimensionMap(), results.p2);
+		}
+		else
+		{
+			csvFiles.put(new DimensionMap(this.timeDim.name() + "=" + this.timeDim.valueAt(0)), results.p1);
+			arffFiles.put(new DimensionMap(this.timeDim.name() + "=" + this.timeDim.valueAt(0)), results.p2);
+		}
+		this.outputCSV = FileWriter.makeFileObject("temp", null, csvFiles);
+		this.outputARFF = FileWriter.makeFileObject("temp", null, arffFiles);
 	}
 
 	public void write(DimensionMap map, Double value)
