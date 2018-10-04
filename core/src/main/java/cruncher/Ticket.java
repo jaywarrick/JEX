@@ -244,7 +244,7 @@ public class Ticket implements Callable<Integer>, Canceler{
 				boolean makeChunks = false;
 				for(Entry<String, JEXData> chunkE : fcs.get(entry).inputs.entrySet())
 				{
-					if(chunkE.getValue() != null && chunkE.getValue().hasChunkFlavor())
+					if(chunkE.getValue() != null && chunkE.getValue().hasUpdateFlavor())
 					{
 						makeChunks=true;
 					}

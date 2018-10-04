@@ -252,7 +252,7 @@ public class JEXData {
 		return this.getTypeName().getType().hasFlavor(flavor);
 	}
 	
-	public boolean hasChunkFlavor()
+	public boolean hasUpdateFlavor()
 	{
 		return this.hasFlavor(FLAVOR_UPDATE);
 	}

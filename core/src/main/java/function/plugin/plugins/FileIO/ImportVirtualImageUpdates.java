@@ -16,6 +16,7 @@ import Database.DataReader.FileReader;
 import Database.DataReader.ImageReader;
 import Database.DataWriter.ImageWriter;
 import Database.Definition.Type;
+import Database.Definition.TypeName;
 import Database.SingleUserDatabase.JEXWriter;
 import cruncher.Ticket;
 import function.plugin.mechanism.InputMarker;
@@ -91,8 +92,14 @@ public class ImportVirtualImageUpdates extends JEXPlugin {
 	@Override
 	public boolean run(JEXEntry optionalEntry)
 	{
+		if(input.hasUpdateFlavor())
+		{
+			input = JEXStatics.jexManager.getDataOfTypeNameInEntry(new TypeName(new Type(input.getDataObjectType().getType(), JEXData.FLAVOR_VIRTUAL), input.getDataObjectName()), optionalEntry);
+		}
+		
 		if(input != null && input.getDataObjectType().matches(JEXData.IMAGE) && input.hasVirtualFlavor())
 		{
+			
 			JEXDataSingle ds = input.getFirstSingle();
 			File firstData = FileReader.readToFile(ds, input.hasVirtualFlavor());
 			this.inDir = firstData.getParent();
@@ -159,7 +166,7 @@ public class ImportVirtualImageUpdates extends JEXPlugin {
 		double total = ticket.getOutputList().size();
 		double percentage = 0;
 
-		if(inputDatas.firstEntry().getValue().hasChunkFlavor())
+		if(inputDatas.firstEntry().getValue().hasUpdateFlavor())
 		{
 			int answer = JEXDialog.getChoice("Continue?", "A 'chunk' flavored object of the same name exists and is being used as the input. Typically you don't want this for this function. Should the function continue anyway?", new String[] {"Yes", "No"}, 1);
 			if(answer == 1)
