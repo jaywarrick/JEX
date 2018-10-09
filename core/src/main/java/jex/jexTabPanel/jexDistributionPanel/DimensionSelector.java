@@ -12,6 +12,7 @@ import javax.swing.JTextField;
 
 import jex.statics.DisplayStatics;
 import logs.Logs;
+import miscellaneous.StringUtility;
 import net.miginfocom.swing.MigLayout;
 
 public class DimensionSelector extends JPanel implements ActionListener {
@@ -22,10 +23,12 @@ public class DimensionSelector extends JPanel implements ActionListener {
 	public int num;
 	public String[] possibilities;
 	public int sizeOfDimension = 1;
+	public String token = "";
 	JLabel numLabel;
 	JLabel nameLabel;
 	JComboBox<String> values;
 	JTextField sizeField;
+	JTextField tokenField;
 	
 	DimensionSelector(int num, String name, String[] possibilities)
 	{
@@ -47,7 +50,8 @@ public class DimensionSelector extends JPanel implements ActionListener {
 		values.setBackground(foregroundColor);
 		values.addActionListener(this);
 		values.setSelectedIndex(num - 1);
-		sizeField = new JTextField(100);
+		sizeField = new JTextField(70);
+		tokenField = new JTextField(70);
 		// sizeField.setPreferredSize(new Dimension(15,
 		// sizeField.getPreferredSize().height));
 		// sizeField.setMaximumSize(new Dimension(15,
@@ -55,8 +59,13 @@ public class DimensionSelector extends JPanel implements ActionListener {
 		Logs.log("Size of sizeField " + sizeField.getMaximumSize(), 0, this);
 		sizeField.setText("" + sizeOfDimension);
 		sizeField.setBackground(foregroundColor);
-		JLabel temp = new JLabel("of size");
+		JLabel temp = new JLabel("size:");
 		temp.setBackground(foregroundColor);
+		
+		tokenField.setText(token);
+		tokenField.setBackground(foregroundColor);
+		JLabel temp2 = new JLabel("token:");
+		temp2.setBackground(foregroundColor);
 		
 		// this.setMaximumSize(new Dimension(250,20));
 		// this.add(Box.createHorizontalGlue());
@@ -64,6 +73,8 @@ public class DimensionSelector extends JPanel implements ActionListener {
 		this.add(values, "growx");
 		this.add(temp);
 		this.add(sizeField);
+		this.add(temp2);
+		this.add(tokenField);
 		// this.add(Box.createHorizontalGlue());
 	}
 	
@@ -78,6 +89,12 @@ public class DimensionSelector extends JPanel implements ActionListener {
 		String s = sizeField.getText();
 		Integer i = Integer.parseInt(s);
 		return i;
+	}
+	
+	public String getDimensionToken()
+	{
+		String s = tokenField.getText();
+		return StringUtility.removeAllWhitespace(s);
 	}
 	
 	public void setRestrictedPossibilityList(List<String> removeThesePossibilities)

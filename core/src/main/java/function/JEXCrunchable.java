@@ -323,4 +323,9 @@ public abstract class JEXCrunchable implements Canceler, Cancelable {
 	{
 		return new Parameter(THREADS, "Number of parallel threads to run this function on.", Parameter.DROPDOWN, getStringArrayIntegerList(1, maxThreads), numThreads-1);
 	}
+
+	public Boolean getInputUpdatableStatus(String inputName)
+	{
+		return true;
+	}
 }

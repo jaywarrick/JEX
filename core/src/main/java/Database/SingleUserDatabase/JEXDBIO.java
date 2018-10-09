@@ -998,7 +998,7 @@ public class JEXDBIO {
 						data.getDataMap();
 					}
 				}
-				if(!data.getDataObjectType().equals(JEXData.HIERARCHY))
+				if(!data.getDataObjectType().matches(JEXData.HIERARCHY))
 				{
 					Pair<XData,Vector<Update>> dataUpdates = JEXDBIO.DatabaseObjectToXData(data);
 					XData xdata = dataUpdates.p1;

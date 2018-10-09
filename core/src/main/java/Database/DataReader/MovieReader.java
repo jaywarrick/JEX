@@ -16,7 +16,7 @@ public class MovieReader {
 	 */
 	public static String readMovieObject(JEXData data)
 	{
-		if(!data.getDataObjectType().equals(JEXData.MOVIE))
+		if(!data.getDataObjectType().matches(JEXData.MOVIE))
 			return null;
 		JEXDataSingle ds = data.getFirstSingle();
 		String result = FileReader.readToPath(ds);
@@ -30,7 +30,7 @@ public class MovieReader {
 	
 	public static TreeMap<DimensionMap,String> readMovieObjects(JEXData data)
 	{
-		if(!data.getDataObjectType().equals(JEXData.MOVIE))
+		if(!data.getDataObjectType().matches(JEXData.MOVIE))
 			return null;
 		TreeMap<DimensionMap,String> result = new TreeMap<DimensionMap,String>();
 		JEXDataSingle ds = data.getFirstSingle();

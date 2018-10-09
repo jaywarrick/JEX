@@ -23,7 +23,7 @@ public class TrackReader {
 	 */
 	public static String readTrackObject(JEXData data)
 	{
-		if(!data.getDataObjectType().equals(JEXData.TRACK))
+		if(!data.getDataObjectType().matches(JEXData.TRACK))
 			return null;
 		JEXDataSingle ds = data.getFirstSingle();
 		String result = FileReader.readToPath(ds);
@@ -43,7 +43,7 @@ public class TrackReader {
 	 */
 	public static XTrajectorySet readObjectToTrajectorySet(JEXData data)
 	{
-		if(!data.getDataObjectType().equals(JEXData.TRACK))
+		if(!data.getDataObjectType().matches(JEXData.TRACK))
 			return null;
 		JEXDataSingle ds = data.getFirstSingle();
 		String result = FileReader.readToPath(ds);
@@ -67,7 +67,7 @@ public class TrackReader {
 	 */
 	public static List<Trajectory> readObjectToTrajectories(JEXData data)
 	{
-		if(!data.getDataObjectType().equals(JEXData.TRACK))
+		if(!data.getDataObjectType().matches(JEXData.TRACK))
 			return null;
 		JEXDataSingle ds = data.getFirstSingle();
 		String result = FileReader.readToPath(ds);

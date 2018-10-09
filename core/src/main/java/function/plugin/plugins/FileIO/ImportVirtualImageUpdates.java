@@ -16,7 +16,6 @@ import Database.DataReader.FileReader;
 import Database.DataReader.ImageReader;
 import Database.DataWriter.ImageWriter;
 import Database.Definition.Type;
-import Database.Definition.TypeName;
 import Database.SingleUserDatabase.JEXWriter;
 import cruncher.Ticket;
 import function.plugin.mechanism.InputMarker;
@@ -51,7 +50,7 @@ public class ImportVirtualImageUpdates extends JEXPlugin {
 
 	/////////// Define Inputs ///////////
 
-	@InputMarker(uiOrder=1, name="Image or File Object (optional)", type=MarkerConstants.TYPE_ANY, description="An object to split on a dimension.", optional=false)
+	@InputMarker(uiOrder=1, name="Image or File Object (optional)", updatable=false, type=MarkerConstants.TYPE_ANY, description="An object to split on a dimension.", optional=false)
 	JEXData input;
 
 	/////////// Define Parameters ///////////
@@ -91,12 +90,7 @@ public class ImportVirtualImageUpdates extends JEXPlugin {
 
 	@Override
 	public boolean run(JEXEntry optionalEntry)
-	{
-		if(input.hasUpdateFlavor())
-		{
-			input = JEXStatics.jexManager.getDataOfTypeNameInEntry(new TypeName(new Type(input.getDataObjectType().getType(), JEXData.FLAVOR_VIRTUAL), input.getDataObjectName()), optionalEntry);
-		}
-		
+	{		
 		if(input != null && input.getDataObjectType().matches(JEXData.IMAGE) && input.hasVirtualFlavor())
 		{
 			

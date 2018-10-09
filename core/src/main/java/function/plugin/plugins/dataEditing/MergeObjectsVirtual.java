@@ -6,6 +6,8 @@ import org.scijava.plugin.Plugin;
 
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
+import Database.Definition.Type;
+import Database.Definition.TypeName;
 import Database.SingleUserDatabase.JEXWriter;
 import function.plugin.mechanism.InputMarker;
 import function.plugin.mechanism.JEXPlugin;
@@ -13,6 +15,7 @@ import function.plugin.mechanism.MarkerConstants;
 import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
 import jex.statics.JEXStatics;
+import logs.Logs;
 
 /**
  * This is a JEXperiment function template To use it follow the following instructions
@@ -43,13 +46,13 @@ public class MergeObjectsVirtual extends JEXPlugin {
 
 	@InputMarker(uiOrder = 2, name = "Object 2", type = MarkerConstants.TYPE_ANY, description = "Any object.", optional = false)
 	JEXData data2;
-	
+
 	@InputMarker(uiOrder = 3, name = "Object 3", type = MarkerConstants.TYPE_ANY, description = "Any object.", optional = false)
 	JEXData data3;
-	
+
 	@InputMarker(uiOrder = 4, name = "Object 4", type = MarkerConstants.TYPE_ANY, description = "Any object.", optional = false)
 	JEXData data4;
-	
+
 	@InputMarker(uiOrder = 5, name = "Object 5", type = MarkerConstants.TYPE_ANY, description = "Any object.", optional = false)
 	JEXData data5;
 
@@ -57,6 +60,9 @@ public class MergeObjectsVirtual extends JEXPlugin {
 
 	@ParameterMarker(uiOrder=0, name="New Object Name", description="Name to give the new Merged Object.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Merged Object")
 	String newName;
+
+	@ParameterMarker(uiOrder=1, name="Merge Result with Existing?", description="Should the result be merged with any possible existing object of the same name? This is useful in Auto-Updating mode.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
+	boolean mergeWithExisting;
 
 	/////////// Define Outputs here ///////////
 
@@ -103,19 +109,37 @@ public class MergeObjectsVirtual extends JEXPlugin {
 		{
 			datalist.add(data5);
 		}
-		
-		// Perform the merge.
-		JEXData ret = JEXWriter.performVirtualMerge(datalist, optionalEntry, this.newName, this);
-		output.add(ret);
+
+		Logs.log("yo", this);
+		JEXData update = JEXWriter.performVirtualMerge(datalist, optionalEntry, this.newName, this);
+		this.output.add(update);
 		
 		for(JEXData d : datalist)
 		{
-			if(!d.getDataObjectName().equals(ret.getDataObjectName()))
+			if(!d.getDataObjectName().equals(this.newName))
 			{
 				JEXStatics.jexDBManager.removeDataFromEntry(optionalEntry, d);
 			}
 		}
-
+		
+		// Perform the merge.
+		if(mergeWithExisting)
+		{			
+			TypeName existingTN = new TypeName(new Type(datalist.get(0).getTypeName().getType().getType(), null), this.newName);
+			JEXData existing = JEXStatics.jexManager.getDataOfTypeNameInEntry(existingTN, optionalEntry);
+			if(existing != null)
+			{
+				JEXData updateCopy = JEXWriter.copyData(update);
+				updateCopy.setDataObjectFlavor(null);
+				datalist.clear();
+				datalist.add(updateCopy);
+				datalist.add(existing);
+				JEXData ret = JEXWriter.performVirtualMerge(datalist, optionalEntry, this.newName, this);
+				ret.setDataObjectType(new Type(ret.getDataObjectType().getType(), null));
+				output.add(ret);
+			}
+		}
+		
 		// Return status
 		return true;
 	}

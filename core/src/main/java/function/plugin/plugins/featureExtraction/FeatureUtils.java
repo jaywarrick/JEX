@@ -1375,13 +1375,16 @@ public class FeatureUtils {
 		PointList toSave = new PointList();
 		
 		// Filter the points by cropping out any outside the region (or on the border)
-		Shape cropS = cropRegion.getShape();
-		PointList pl = maxima.getPointList();
-		for(IdPoint p : pl)
+		if(cropRegion != null)
 		{
-			if(cropS.contains(p))
+			Shape cropS = cropRegion.getShape();
+			PointList pl = maxima.getPointList();
+			for(IdPoint p : pl)
 			{
-				toSave.add(p);
+				if(cropS.contains(p))
+				{
+					toSave.add(p);
+				}
 			}
 		}
 		

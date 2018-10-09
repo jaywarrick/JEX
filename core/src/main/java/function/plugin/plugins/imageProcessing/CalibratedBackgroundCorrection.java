@@ -143,7 +143,7 @@ public class CalibratedBackgroundCorrection extends JEXPlugin {
 		}
 
 		TreeMap<DimensionMap,ROIPlus> roiMap = new TreeMap<DimensionMap,ROIPlus>();
-		if(roiData != null && roiData.getDataObjectType().equals(JEXData.ROI))
+		if(roiData != null && roiData.getDataObjectType().matches(JEXData.ROI))
 		{
 			roiMap = RoiReader.readObjectToRoiMap(roiData);
 		}

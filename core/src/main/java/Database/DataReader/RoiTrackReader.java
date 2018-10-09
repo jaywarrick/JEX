@@ -22,7 +22,7 @@ public class RoiTrackReader {
 	public static TreeMap<Integer,RoiTrack> readObjectToRoiTrackMap(JEXData data)
 	{
 		// Test the data type for error checking
-		if(data == null || !data.getDataObjectType().equals(JEXData.ROI_TRACK)) return null;
+		if(data == null || !data.getDataObjectType().matches(JEXData.ROI_TRACK)) return null;
 		
 		// Setup the variables
 		TreeMap<Integer,RoiTrack> result = new TreeMap<Integer,RoiTrack>();
@@ -74,7 +74,7 @@ public class RoiTrackReader {
 	public static List<RoiTrack> readObjectToRoiTrackList(JEXData data)
 	{
 		// Test the data type for error checking
-		if(data == null || !data.getDataObjectType().equals(JEXData.ROI_TRACK)) return null;
+		if(data == null || !data.getDataObjectType().matches(JEXData.ROI_TRACK)) return null;
 		
 		// Setup the variables
 		TreeMap<Integer,RoiTrack> result = new TreeMap<Integer,RoiTrack>();

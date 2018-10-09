@@ -88,7 +88,7 @@ public class TrackPoints extends JEXPlugin {
 	
 	/////////// Define Inputs ///////////
 	
-	@InputMarker(uiOrder=1, name="Maxima", type=MarkerConstants.TYPE_ROI, description="PointRois over time to be linked/tracked.", optional=false)
+	@InputMarker(uiOrder=1, name="Maxima", updatable=false, type=MarkerConstants.TYPE_ROI, description="PointRois over time to be linked/tracked.", optional=false)
 	JEXData roiData;
 	
 	/////////// Define Parameters ///////////

@@ -139,7 +139,7 @@ public class Ticket implements Callable<Integer>, Canceler{
 	{
 		this.outputList = outputList;
 	}
-	
+
 	public TreeMap<JEXEntry, FunctionCallable> getFunctionCallables()
 	{
 		TreeMap<JEXEntry,FunctionCallable> fcs = new TreeMap<>();
@@ -214,10 +214,8 @@ public class Ticket implements Callable<Integer>, Canceler{
 				Future<Integer> future = JEXStatics.cruncher.runFunction(e.getValue());
 				this.futures.put(e.getKey(),future);
 			}
-			
+
 			// Collect outputs and wait for them to finish
-			@SuppressWarnings("unused")
-			int done = 0;
 			for (JEXEntry e : this.futures.keySet())
 			{
 				if(this.isCanceled() == true)
@@ -239,30 +237,38 @@ public class Ticket implements Callable<Integer>, Canceler{
 				// Collect the data objects
 				Set<JEXData> datas = fcs.get(entry).getOutputtedData();
 
-				// If any inputs are Chunk flavored, then create a chunk copy of the output and
+				// If any inputs are Update flavored, then create a chunk copy of the output and
 				// merge regular output with current objects of the same TN in the entry.
-				boolean makeChunks = false;
-				for(Entry<String, JEXData> chunkE : fcs.get(entry).inputs.entrySet())
+				boolean makeUpdates = false;
+				for(Entry<String, JEXData> updateE : fcs.get(entry).inputs.entrySet())
 				{
-					if(chunkE.getValue() != null && chunkE.getValue().hasUpdateFlavor())
+					if(updateE.getValue() != null && updateE.getValue().hasUpdateFlavor())
 					{
-						makeChunks=true;
+						makeUpdates=true;
 					}
 				}
-				if(makeChunks)
+				// Except if the function itself output some updates itself (for finer control over behavior)
+				for(JEXData d : datas)
 				{
-					HashSet<JEXData> chunkedData = new HashSet<>();
+					if(d.hasUpdateFlavor())
+					{
+						makeUpdates=false;
+					}
+				}
+				if(makeUpdates)
+				{
+					HashSet<JEXData> updateData = new HashSet<>();
 					for(JEXData data : datas)
 					{
-						HashSet<JEXData> temp = this.makeChunks(data, entry);
+						HashSet<JEXData> temp = this.makeUpdates(data, entry);
 						if(temp == null)
 						{
-							Logs.log("Error!!! Couldn't chunkify output of function with chunk inputs. Aborting.", this);
+							Logs.log("Error!!! Couldn't create update object for function with despite having updates for inputs. Aborting.", this);
 							return this.finish(TICKETFLAG_ERROR);
 						}
-						chunkedData.addAll(temp);
+						updateData.addAll(temp);
 					}
-					datas = chunkedData;
+					datas = updateData;
 				}
 				output.put(entry, datas);
 			}
@@ -290,9 +296,25 @@ public class Ticket implements Callable<Integer>, Canceler{
 		}
 	}
 
-	private HashSet<JEXData> makeChunks(JEXData data, JEXEntry e)
+	private HashSet<JEXData> makeUpdates(JEXData data, JEXEntry e)
 	{
 		HashSet<JEXData> ret = new HashSet<>();
+
+		// Now we need to do a virtual merge of the regular data with
+		// existing data of the same TypeName already in the entry.
+		JEXData oldData = JEXStatics.jexManager.getDataOfTypeNameInEntry(data.getTypeName(), e);
+		if(oldData == null)
+		{
+			// Just convert current output to and 'update' flavor and return an empty list of updates
+			// This avoids making copies.
+			if(!data.hasUpdateFlavor())
+			{
+				data.setDataObjectType(new Type(data.getDataObjectType().getType(), JEXData.FLAVOR_UPDATE));
+			}
+			ret.add(data);
+			return ret;
+		}
+
 		// make the chunk versions
 		JEXData newData = new JEXData(data);
 		newData.setDataObjectType(new Type(newData.getTypeName().getType().getType(), JEXData.FLAVOR_UPDATE));
@@ -304,7 +326,7 @@ public class Ticket implements Callable<Integer>, Canceler{
 			String dbFolder = JEXWriter.getDatabaseFolder();
 			for (DimensionMap map : datamap.keySet())
 			{
-				
+
 				// For each JEXDataSingle, create a copy the referenced file and save it
 				// to the new data.
 				JEXDataSingle ds = datamap.get(map);
@@ -319,7 +341,7 @@ public class Ticket implements Callable<Integer>, Canceler{
 					// This can be deleted.
 					dst.delete();
 				}
-				Logs.log("Creating copy of chunk. Copying " + src.getPath() + " to: " + dst, 0, this);
+				Logs.log("Creating copy of Update. Copying " + src.getPath() + " to: " + dst, 0, this);
 				try
 				{
 					JEXWriter.copy(src, dst, true);
@@ -329,37 +351,28 @@ public class Ticket implements Callable<Integer>, Canceler{
 					Logs.log("Error copying chunk data. Aborting.", this);
 					return null;
 				}
-				
+
 				// Update the datasingle with current file location in
 				// updated JEXData to allow finishing of update
 				ds.put(JEXDataSingle.RELATIVEPATH, dstRelPath);
 			}
 		}
-		
+
 		// Now we have a chunk that is chunk flavored and has paths
 		// to new copies of the data.
 		// The chunk flavored item will be used in priority over the
 		// regular version of the output to the next item in the workflow.
 		// JEXStatics.jexDBManager.saveDataInEntry(e, newData, true);
 		ret.add(newData);
-		
-		// Now we need to do a virtual merge of the regular data with
-		// existing data of the same TypeName already in the entry.
-		JEXData oldData = JEXStatics.jexManager.getDataOfTypeNameInEntry(data.getTypeName(), e);
-		if(oldData == null)
-		{
-			// Then there is nothing else to do.
-			ret.add(data);
-		}
-		else
-		{
-			// Merge data and oldData.
-			Vector<JEXData> datalist = new Vector<>();
-			datalist.add(data);
-			datalist.add(oldData);
-			JEXData mergedData = JEXWriter.performVirtualMerge(datalist, e, oldData.getDataObjectName(), null);
-			ret.add(mergedData);
-		}
+
+
+		// Merge data and oldData.
+		Vector<JEXData> datalist = new Vector<>();
+		datalist.add(data);
+		datalist.add(oldData);
+		JEXData mergedData = JEXWriter.performVirtualMerge(datalist, e, oldData.getDataObjectName(), null);
+		ret.add(mergedData);
+
 		return ret;
 	}
 
@@ -436,12 +449,16 @@ public class Ticket implements Callable<Integer>, Canceler{
 			TypeName tn = inputs.get(inputName);
 
 			// Prepare the JEXData for the input to the function
-			JEXData data = JEXStatics.jexManager.getUpdateFlavoredDataOfTypeNameInEntry(tn, entry);
+			JEXData data = null;
+			if(function.getCrunch().getInputUpdatableStatus(inputName))
+			{
+				data = JEXStatics.jexManager.getUpdateFlavoredDataOfTypeNameInEntry(tn, entry);
+			}
 			if(data == null)
 			{
 				data = JEXStatics.jexManager.getDataOfTypeNameInEntry(tn, entry);
 			}
-			
+
 			// Set the data as input to the function (a null tn indicates the
 			// input is supposed to be optional)
 			collectedInputs.put(inputName, data);

@@ -66,5 +66,7 @@ public @interface InputMarker {
 	
 	/** Defines whether the parameter value must be non-null. */
 	boolean optional() default false;
+	
+	boolean updatable() default true;
 
 }

@@ -56,7 +56,7 @@ public class JEXDataUpdate implements Update {
 		Session session = JEXStatics.fileManager.session();
 		String dbFolder = JEXWriter.getDatabaseFolder();
 		String dataFolderRelativePath = JEXWriter.getDataFolder(data, true);
-		if(type.equals(JEXData.FILE) || type.equals(JEXData.IMAGE) || type.equals(JEXData.SOUND) || type.equals(JEXData.MOVIE) || type.equals(JEXData.TRACK) || type.equals(JEXData.WORKFLOW))
+		if(type.matches(JEXData.FILE) || type.matches(JEXData.IMAGE) || type.matches(JEXData.SOUND) || type.matches(JEXData.MOVIE) || type.matches(JEXData.TRACK) || type.matches(JEXData.WORKFLOW))
 		{
 			// The data has referenced files so those need to be moved along
 			// with the jxd

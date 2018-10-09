@@ -90,7 +90,7 @@ public class RoiReader {
 	public static TreeMap<DimensionMap,ROIPlus> readObjectToRoiMap(JEXData data)
 	{
 		TreeMap<DimensionMap,ROIPlus> result = new TreeMap<DimensionMap,ROIPlus>();
-		if(data == null || !data.getDataObjectType().equals(JEXData.ROI))
+		if(data == null || !data.getDataObjectType().matches(JEXData.ROI))
 			return result;
 		for (DimensionMap map : data.getDataMap().keySet())
 		{

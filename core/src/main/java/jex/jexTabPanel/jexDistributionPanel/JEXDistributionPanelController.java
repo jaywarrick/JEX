@@ -28,6 +28,7 @@ import jex.statics.JEXStatics;
 import logs.Logs;
 import miscellaneous.ArrayUtility;
 import miscellaneous.Pair;
+import miscellaneous.StringUtility;
 import signals.SSCenter;
 import tables.DimTable;
 import tables.DimensionMap;
@@ -173,12 +174,14 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 		int[] initial = new int[this.dimensions.size()];
 		int[] increments = new int[this.dimensions.size()];
 		int[] compteur = new int[this.dimensions.size()];
+		String[] tokens = new String[this.dimensions.size()];
 		int rowLoc = -1;
 		int colLoc = -1;
 		for (int i = 0, len = this.dimensions.size(); i < len; i++)
 		{
 			DimensionSelector selector = this.dimensions.get(new Integer(this.dimensions.size() - 1 - i));
 			dimVector[i] = selector.getDimensionName();
+			tokens[i] = selector.getDimensionToken();
 			maxIncr[i] = selector.getDimensionSize() - 1;
 			if(dimVector[i].equals("Array Column"))
 			{
@@ -338,7 +341,11 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 				richFileMap = new Vector<Pair<DimensionMap,String>>();
 				this.files.put(new Point(cellX + xmin, cellY + ymin), richFileMap);
 			}
-			DimensionMap map = this.makeMap(compteur, dimVector);
+			DimensionMap map = this.makeMap(compteur, dimVector, tokens, f.getAbsolutePath());
+			if(map == null)
+			{
+				return;
+			}
 			
 			if(!filter.testMapAsExclusionFilter(map))
 			{
@@ -497,7 +504,7 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 	 * @param args
 	 * @return rich file with dimension info
 	 */
-	private DimensionMap makeMap(int[] compteur, String[] dimVector)
+	private DimensionMap makeMap(int[] compteur, String[] dimVector, String[] tokens, String path)
 	{
 		DimensionMap map = new DimensionMap();
 
@@ -511,8 +518,18 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 			}
 
 			String dn = dimName;
-			Integer dv = compteur[i];
-			map.put(dn, "" + dv);
+			Object dv = new Integer(compteur[i]);
+			if(path != null && tokens[i] != null)
+			{
+				DimensionMap temp = StringUtility.getMapFromPath(path);
+				dv = temp.get(tokens[i]);
+				if(dv == null)
+				{
+					JEXDialog.messageDialog("The specified token '" + tokens[i] + "' could not be found in the filename.", this);
+					return null;
+				}
+			}
+			map.put(dn, "" + dv.toString());
 
 			// index++;
 		}

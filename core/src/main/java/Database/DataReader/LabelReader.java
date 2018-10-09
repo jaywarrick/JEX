@@ -7,14 +7,14 @@ public class LabelReader {
 	
 	public static String readLabelName(JEXData label)
 	{
-		if(!label.getDataObjectType().equals(JEXData.LABEL))
+		if(!label.getDataObjectType().matches(JEXData.LABEL))
 			return null;
 		return label.getDataObjectName();
 	}
 	
 	public static String readLabelValue(JEXData label)
 	{
-		if(!label.getDataObjectType().equals(JEXData.LABEL))
+		if(!label.getDataObjectType().matches(JEXData.LABEL))
 			return null;
 		JEXDataSingle ds = label.getFirstSingle();
 		String value = ds.get(JEXDataSingle.VALUE);
@@ -23,7 +23,7 @@ public class LabelReader {
 	
 	public static String readLabelUnit(JEXData label)
 	{
-		if(!label.getDataObjectType().equals(JEXData.LABEL))
+		if(!label.getDataObjectType().matches(JEXData.LABEL))
 			return null;
 		JEXDataSingle ds = label.getFirstSingle();
 		String value = ds.get(JEXDataSingle.UNIT);

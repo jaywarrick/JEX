@@ -86,6 +86,53 @@ public class JEXWriter {
 		return performVirtualMerge(datalist, e, mergedName, canceler);
 	}
 	
+	public static JEXData copyData(JEXData data)
+	{
+		JEXData ret = new JEXData(data);
+		
+		int count = 0;
+		int percentage = 0;
+		int tot = data.getDimTable().mapCount();
+		for(DimensionMap map : data.getDimTable().getMapIterator())
+		{
+			JEXDataSingle toAdd = null;
+			toAdd = data.getData(map).copy();
+			if(toAdd == null)
+			{
+				continue;
+			}
+			
+			if(data.getTypeName().getType().matches(JEXData.FILE) || data.getTypeName().getType().matches(JEXData.IMAGE) || data.getTypeName().getType().matches(JEXData.MOVIE) || data.getTypeName().getType().matches(JEXData.SOUND))
+			{
+				// Copy any additional file data if necessary, otherwise it is stored directly in the JEXDataSingle
+				File src = new File(JEXWriter.getDatabaseFolder() + File.separator + toAdd.get(JEXDataSingle.RELATIVEPATH));
+				String extension = FileUtility.getFileNameExtension(toAdd.get(JEXDataSingle.RELATIVEPATH));
+				String relativePath = JEXWriter.getUniqueRelativeTempPath(extension);
+				File dst = new File(JEXWriter.getDatabaseFolder() + File.separator + relativePath);
+				try {
+					if(!JEXWriter.copy(src, dst))
+					{
+						Logs.log("Failed to copy a file for the object! Aborting", JEXWriter.class);
+						return null;
+					}
+				} catch (IOException e) {
+					Logs.log("Failed to copy a file for the object! Aborting", JEXWriter.class);
+					return null;
+				}
+				toAdd.put(JEXDataSingle.RELATIVEPATH, relativePath);
+			}
+
+			ret.addData(map.copy(), toAdd.copy());
+			// Status bar
+			count = count + 1;
+			percentage = (int) (100 * ((double) count / (double) tot));
+			JEXStatics.statusBar.setProgressPercentage(percentage);
+		}
+		
+		ret.setDimTable(new DimTable(ret.getDataMap()));
+		return ret;
+	}
+	
 	/**
 	 * Merge newData into old data, replacing where necessary.
 	 * Data earlier in the list takes precedence.

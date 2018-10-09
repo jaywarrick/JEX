@@ -125,6 +125,12 @@ public class JEXCrunchablePlugin extends JEXCrunchable {
 	}
 	
 	@Override
+	public Boolean getInputUpdatableStatus(String inputName)
+	{
+		return this.info.iUpdatables.get(inputName);
+	}
+	
+	@Override
 	public ParameterSet requiredParameters()
 	{
 		ParameterSet ret = new ParameterSet();

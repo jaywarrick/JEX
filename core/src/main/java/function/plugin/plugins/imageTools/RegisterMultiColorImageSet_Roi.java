@@ -1,20 +1,22 @@
-package function.plugin.old;
+package function.plugin.plugins.imageTools;
 
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.util.HashMap;
 import java.util.TreeMap;
+
+import org.scijava.plugin.Plugin;
 
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;
 import Database.DataReader.RoiReader;
 import Database.DataWriter.RoiWriter;
-import Database.Definition.Parameter;
-import Database.Definition.ParameterSet;
-import Database.Definition.TypeName;
-import function.JEXCrunchable;
 import function.imageUtility.TurboReg_;
+import function.plugin.mechanism.InputMarker;
+import function.plugin.mechanism.JEXPlugin;
+import function.plugin.mechanism.MarkerConstants;
+import function.plugin.mechanism.OutputMarker;
+import function.plugin.mechanism.ParameterMarker;
 import ij.ImagePlus;
 import image.roi.ROIPlus;
 import jex.statics.JEXDialog;
@@ -35,58 +37,18 @@ import tables.DimensionMap;
  * @author erwinberthier
  * 
  */
-public class JEX_RegisterMultiColorImageSet_Roi extends JEXCrunchable {
+@Plugin(
+		type = JEXPlugin.class,
+		name="Register a Multi-color Image Set (Roi)",
+		menuPath="Image Tools",
+		visible=true,
+		description="Register a multi-color image set based on one color channel so ecah color stays perfectly registered with the others."
+		)
+public class RegisterMultiColorImageSet_Roi extends JEXPlugin {
 
 	// ----------------------------------------------------
 	// --------- INFORMATION ABOUT THE FUNCTION -----------
 	// ----------------------------------------------------
-
-	/**
-	 * Returns the name of the function
-	 * 
-	 * @return Name string
-	 */
-	@Override
-	public String getName()
-	{
-		String result = "Register a Multi-color Image Set (Roi)";
-		return result;
-	}
-
-	/**
-	 * This method returns a string explaining what this method does This is purely informational and will display in JEX
-	 * 
-	 * @return Information string
-	 */
-	@Override
-	public String getInfo()
-	{
-		String result = "Register a multi-color image set based on one color channel so ecah color stays perfectly registered with the others.";
-		return result;
-	}
-
-	/**
-	 * This method defines in which group of function this function will be shown in... Toolboxes (choose one, caps matter): Visualization, Image processing, Custom Cell Analysis, Cell tracking, Image tools Stack processing, Data Importing, Custom
-	 * image analysis, Matlab/Octave
-	 * 
-	 */
-	@Override
-	public String getToolbox()
-	{
-		String toolbox = "Image processing";
-		return toolbox;
-	}
-
-	/**
-	 * This method defines if the function appears in the list in JEX It should be set to true expect if you have good reason for it
-	 * 
-	 * @return true if function shows in JEX
-	 */
-	@Override
-	public boolean showInList()
-	{
-		return true;
-	}
 
 	/**
 	 * Returns true if the user wants to allow multithreding
@@ -94,91 +56,50 @@ public class JEX_RegisterMultiColorImageSet_Roi extends JEXCrunchable {
 	 * @return
 	 */
 	@Override
-	public boolean allowMultithreading()
+	public int getMaxThreads()
 	{
-		return true;
+		return 10;
 	}
 
 	// ----------------------------------------------------
 	// --------- INPUT OUTPUT DEFINITIONS -----------------
 	// ----------------------------------------------------
+	/////////// Define Inputs ///////////
+	
+	@InputMarker(uiOrder=1, name="Multicolor Image Set", updatable=false, type=MarkerConstants.TYPE_IMAGE, description="Horizontal alignment (L to R adjacent images) object obtained from the image aligner plugin on the plugins tab of JEX.", optional=false)
+	JEXData data;
+	
+	@InputMarker(uiOrder=2, name="Alignment Region ROI (optional, rect or point)", updatable=false, type=MarkerConstants.TYPE_IMAGE, description="Vertical alignment (Top to Bottom adjeacent images) object obtained from the image aligner plugin on the plugins tab of JEX.", optional=false)
+	JEXData roiData;
+	
+	/////////// Define Parameters ///////////
+	
 
-	/**
-	 * Return the array of input names
-	 * 
-	 * @return array of input names
-	 */
-	@Override
-	public TypeName[] getInputNames()
-	{
-		TypeName[] inputNames = new TypeName[2];
-		inputNames[0] = new TypeName(IMAGE, "Multicolor Image Set");
-		inputNames[1] = new TypeName(ROI, "Alignment Region ROI (optional, rect or point)");
-		return inputNames;
-	}
+	@ParameterMarker(uiOrder=1, name="Color Dim Name", description="Name of the color dimension", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Color")
+	String colorDimName;
+	
+	@ParameterMarker(uiOrder=2, name="Reference Color", description="Name or number of the color to use for determining registration", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0")
+	String referenceColor;
+	
+	@ParameterMarker(uiOrder=3, name="Time Dim Name", description="Name of the time dimension.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Time")
+	String timeDimName;
+	
+	@ParameterMarker(uiOrder=4, name="Other Dim Name to Split (optional)", description="Name of another dimension to split results on.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
+	String splitDimName;
+	
+	@ParameterMarker(uiOrder=5, name="Align To First Timepoint?", description="Each image timepoint will be aligned to the first if set to true. Otherwise, time t aligns to t-1.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
+	boolean firstTimer;
+	
+	@ParameterMarker(uiOrder=6, name="Just Convert Point Roi?", description="If a point roi is provided for the roi input, use the positions in the point roi to determine the output crop roi?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	boolean convertPoints;
+	
+	////////// Define Outputs ///////////
+	
+	@OutputMarker(uiOrder=1, name="Crop ROI", type=MarkerConstants.TYPE_ROI, flavor="", description="The resultant roi that can be used to crop images for stabalizing the image set.", enabled=true)
+	JEXData output;
 
-	/**
-	 * Return the number of outputs returned by this function
-	 * 
-	 * @return number of outputs
-	 */
-	@Override
-	public TypeName[] getOutputs()
-	{
-		this.defaultOutputNames = new TypeName[1];
-		this.defaultOutputNames[0] = new TypeName(ROI, "Crop ROI");
-
-		if(this.outputNames == null)
-		{
-			return this.defaultOutputNames;
-		}
-		return this.outputNames;
-	}
-
-	/**
-	 * Returns a list of parameters necessary for this function to run... Every parameter is defined as a line in a form that provides the ability to set how it will be displayed to the user and what options are available to choose from The simplest
-	 * FormLine can be written as: FormLine p = new FormLine(parameterName); This will provide a text field for the user to input the value of the parameter named parameterName More complex displaying options can be set by consulting the FormLine API
-	 * 
-	 * @return list of FormLine to create a parameter panel
-	 */
-	@Override
-	public ParameterSet requiredParameters()
-	{
-		Parameter pa1 = new Parameter("Color Dim Name", "Name of the color dimension", "Color");
-		Parameter pa2 = new Parameter("Reference Color", "Name or number of the color to use for determining registration", "0");
-		Parameter pa4 = new Parameter("Time Dim Name", "Name of the time dimension.", "Time");
-		Parameter pa3 = new Parameter("Other Dim Name to Split (optional)", "Name of another dimension to split results on.", "");
-		Parameter pa5 = new Parameter("Align To First Timepoint?", "Each image timepoint will be aligned to the first if set to true. Otherwise, time t aligns to t-1.", Parameter.CHECKBOX, true);
-		Parameter pa6 = new Parameter("Just Convert Point Roi?", "If a point roi is provided for the roi input, use the positions in the point roi to determine the output crop roi?", Parameter.CHECKBOX, false);
-		Parameter p4 = getNumThreadsParameter(10, 6);
-
-		// Make an array of the parameters and return it
-		ParameterSet parameterArray = new ParameterSet();
-		parameterArray.addParameter(p4);
-		parameterArray.addParameter(pa1);
-		parameterArray.addParameter(pa2);
-		parameterArray.addParameter(pa4);
-		parameterArray.addParameter(pa3);
-		parameterArray.addParameter(pa5);
-		parameterArray.addParameter(pa6);
-		return parameterArray;
-	}
-
-	// ----------------------------------------------------
-	// --------- ERROR CHECKING METHODS -------------------
-	// ----------------------------------------------------
-
-	/**
-	 * Returns the status of the input validity checking It is HIGHLY recommended to implement input checking however this can be over-rided by returning false If over-ridden ANY batch function using this function will not be able perform error
-	 * checking...
-	 * 
-	 * @return true if input checking is on
-	 */
-	@Override
-	public boolean isInputValidityCheckingEnabled()
-	{
-		return true;
-	}
+	public RegisterMultiColorImageSet_Roi()
+	{}
 
 	// ----------------------------------------------------
 	// --------- THE ACTUAL MEAT OF THIS FUNCTION ---------
@@ -189,10 +110,9 @@ public class JEX_RegisterMultiColorImageSet_Roi extends JEXCrunchable {
 	 * 
 	 */
 	@Override
-	public boolean run(JEXEntry entry, HashMap<String,JEXData> inputs)
+	public boolean run(JEXEntry optionalEntry)
 	{
 		// Collect the inputs
-		JEXData data = inputs.get("Multicolor Image Set");
 		if(data == null || !data.getTypeName().getType().matches(JEXData.IMAGE))
 		{
 			return false;
@@ -200,10 +120,9 @@ public class JEX_RegisterMultiColorImageSet_Roi extends JEXCrunchable {
 		// Run the function
 		TreeMap<DimensionMap,String> images = ImageReader.readObjectToImagePathTable(data);
 
-		JEXData roiData = inputs.get("Alignment Region ROI (optional, rect or point)");
 		TreeMap<DimensionMap,ROIPlus> roiMap = new TreeMap<DimensionMap,ROIPlus>();
 		boolean havePointRoi = false;
-		if(roiData != null && roiData.getDataObjectType().equals(JEXData.ROI))
+		if(roiData != null && roiData.getDataObjectType().matches(JEXData.ROI))
 		{
 			roiMap = RoiReader.readObjectToRoiMap(roiData);
 			if(roiMap.firstEntry().getValue().type == ROIPlus.ROI_POINT)
@@ -211,15 +130,6 @@ public class JEX_RegisterMultiColorImageSet_Roi extends JEXCrunchable {
 				havePointRoi = true;
 			}
 		}
-
-		// //// Get params
-		String colorDimName = this.parameters.getValueOfParameter("Color Dim Name");
-		String timeDimName = this.parameters.getValueOfParameter("Time Dim Name");
-		String splitDimName = this.parameters.getValueOfParameter("Other Dim Name to Split (optional)");
-		boolean convertPoints = Boolean.parseBoolean(this.parameters.getValueOfParameter("Just Convert Point Roi?"));
-
-		String referenceColor = this.parameters.getValueOfParameter("Reference Color");
-		boolean firstTimer = Boolean.parseBoolean(this.parameters.getValueOfParameter("Align To First Timepoint?"));
 
 		// Get a DimTable for calculating ROI crops.
 		if(!splitDimName.equals(""))
@@ -294,8 +204,8 @@ public class JEX_RegisterMultiColorImageSet_Roi extends JEXCrunchable {
 						if(convertPoints)
 						{
 							// Set the outputs
-							JEXData outputCropRoi = RoiWriter.makeRoiObject(this.outputNames[0].getName(), roiMap);
-							this.realOutputs.add(outputCropRoi);
+							JEXData outputCropRoi = RoiWriter.makeRoiObject("temp", roiMap);
+							this.output = outputCropRoi;
 							return true;
 						}
 					}
@@ -399,8 +309,8 @@ public class JEX_RegisterMultiColorImageSet_Roi extends JEXCrunchable {
 		TreeMap<DimensionMap,ROIPlus> crops = this.getCropROIs(sourcePts, targetPts, target.getWidth(), target.getHeight(), data.getDimTable(), colorDimName, timeDimName);
 
 		// Set the outputs
-		JEXData outputCropRoi = RoiWriter.makeRoiObject(this.outputNames[0].getName(), crops);
-		this.realOutputs.add(outputCropRoi);
+		JEXData outputCropRoi = RoiWriter.makeRoiObject("temp", crops);
+		this.output = outputCropRoi;
 
 		// Return status
 		return true;

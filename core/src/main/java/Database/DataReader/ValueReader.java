@@ -19,7 +19,7 @@ public class ValueReader {
 	 */
 	public static String readValueObject(JEXData data)
 	{
-		if(!data.getDataObjectType().equals(JEXData.VALUE))
+		if(!data.getDataObjectType().matches(JEXData.VALUE))
 			return null;
 		JEXDataSingle ds = data.getFirstSingle();
 		String value = ds.get(JEXDataSingle.VALUE);
@@ -34,7 +34,7 @@ public class ValueReader {
 	 */
 	public static String[] readValueStack(JEXData data)
 	{
-		if(!data.getDataObjectType().equals(JEXData.VALUE))
+		if(!data.getDataObjectType().matches(JEXData.VALUE))
 			return null;
 		List<String> resultList = new ArrayList<String>(0);
 		for (JEXDataSingle ds : data.getDataMap().values())
@@ -54,7 +54,7 @@ public class ValueReader {
 	 */
 	public static TreeMap<DimensionMap,String> readValueTable(JEXData data)
 	{
-		if(!data.getDataObjectType().equals(JEXData.VALUE))
+		if(!data.getDataObjectType().matches(JEXData.VALUE))
 			return null;
 		TreeMap<DimensionMap,String> result = new TreeMap<DimensionMap,String>();
 		for (DimensionMap map : data.getDataMap().keySet())
@@ -74,7 +74,7 @@ public class ValueReader {
 	 */
 	public static Double readObjectToDouble(JEXData data)
 	{
-		if(!data.getDataObjectType().equals(JEXData.VALUE))
+		if(!data.getDataObjectType().matches(JEXData.VALUE))
 			return null;
 		JEXDataSingle ds = data.getFirstSingle();
 		String value = ds.get(JEXDataSingle.VALUE);
@@ -90,7 +90,7 @@ public class ValueReader {
 	 */
 	public static Double[] readObjectToDoubleStack(JEXData data)
 	{
-		if(!data.getDataObjectType().equals(JEXData.VALUE))
+		if(!data.getDataObjectType().matches(JEXData.VALUE))
 			return null;
 		List<String> resultList = new ArrayList<String>(0);
 		for (JEXDataSingle ds : data.getDataMap().values())
@@ -116,7 +116,7 @@ public class ValueReader {
 	 */
 	public static TreeMap<DimensionMap,Double> readObjectToDoubleTable(JEXData data)
 	{
-		if(!data.getDataObjectType().equals(JEXData.VALUE))
+		if(!data.getDataObjectType().matches(JEXData.VALUE))
 			return null;
 		TreeMap<DimensionMap,Double> result = new TreeMap<DimensionMap,Double>();
 		for (DimensionMap map : data.getDataMap().keySet())

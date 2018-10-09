@@ -14,6 +14,8 @@ import miscellaneous.Cancelable;
 import miscellaneous.Canceler;
 
 public abstract class JEXPlugin implements SciJavaPlugin, Canceler, Cancelable {
+	
+	public static final String UPDATABLE="Updatable", NONUPDATABLE="Non-updatable";
 
 	public Canceler canceler = null;
 

@@ -34,6 +34,7 @@ public class JEXPluginInfo {
 	public SortedMap<String,String> iDescriptions;
 	public SortedMap<String,String> iOrder;
 	public SortedMap<String,Boolean> iOptionals;
+	public SortedMap<String,Boolean> iUpdatables;
 	
 	public SortedMap<String,Parameter> parameters;
 	public SortedMap<String,Field> pField;
@@ -142,6 +143,7 @@ public class JEXPluginInfo {
 		this.iDescriptions = new TreeMap<String,String>(new StringUtility());
 		this.iOrder = new TreeMap<String,String>(new StringUtility());
 		this.iOptionals = new TreeMap<String,Boolean>(new StringUtility());
+		this.iUpdatables = new TreeMap<String,Boolean>(new StringUtility());
 		for (final Field f : inputFields)
 		{
 			f.setAccessible(true); // expose private fields
@@ -163,18 +165,21 @@ public class JEXPluginInfo {
 			boolean optional = input.optional();
 			String description = input.description();
 			int order = input.uiOrder();
+			boolean updatable = input.updatable();
 			
 			this.inputs.put(name, new TypeName(new Type(type, flavor), name));
 			this.iFields.put(name, f);
 			this.iDescriptions.put(name, description);
 			this.iOrder.put("" + order + "_" + name, name);
 			this.iOptionals.put(name, optional);
+			this.iUpdatables.put(name, updatable);
 		}
 		this.inputs = Collections.unmodifiableSortedMap(this.inputs);
 		this.iFields = Collections.unmodifiableSortedMap(this.iFields);
 		this.iDescriptions = Collections.unmodifiableSortedMap(this.iDescriptions);
 		this.iOrder = Collections.unmodifiableSortedMap(this.iOrder);
 		this.iOptionals = Collections.unmodifiableSortedMap(this.iOptionals);
+		this.iUpdatables = Collections.unmodifiableSortedMap(this.iUpdatables);
 	}
 	
 	private void setParameters(List<Field> parameterFields)

@@ -12,14 +12,10 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map.Entry;
-
-import org.apache.commons.lang3.math.NumberUtils;
-
-import jex.statics.JEXDialog;
-
 import java.util.TreeMap;
 import java.util.Vector;
 
+import jex.statics.JEXDialog;
 import tables.Dim;
 import tables.DimTable;
 import tables.DimensionMap;
@@ -681,10 +677,14 @@ public class StringUtility implements Comparator<String> {
 			// If the current string is numeric and the last is not, then we have a key-value pair
 			if(Character.isDigit(s.charAt(0)) && !Character.isDigit(last.charAt(0)))
 			{
-				if(NumberUtils.isCreatable(s))
+				try
 				{
-					Number n = NumberUtils.createNumber(s);
+					Integer n = Integer.parseInt(s);
 					s = n.toString();
+				}
+				catch(NumberFormatException e)
+				{
+					// Leave s alone.
 				}
 				map.put(last, s);
 			}
