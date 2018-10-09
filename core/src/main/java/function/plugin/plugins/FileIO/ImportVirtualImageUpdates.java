@@ -70,11 +70,14 @@ public class ImportVirtualImageUpdates extends JEXPlugin {
 	@ParameterMarker(uiOrder=3, name="Time String Token", description="What set of characters in each filename denotes the Time index?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="t")
 	String timeToken;
 
-	@ParameterMarker(uiOrder=4, name="Old Token Names", description="List dimension names parsed from the file names that should be changed?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="t,xy,c,z")
+	@ParameterMarker(uiOrder=4, name="Old Token Names", description="List dimension names parsed from the file names that should be changed?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="t,xy,c")
 	String oldTokens;
 
-	@ParameterMarker(uiOrder=5, name="New Token Names", description="What should the parsed dimension names that are going to be renamed be changed to for saving in the database?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="T,XY,Channel,Z")
+	@ParameterMarker(uiOrder=5, name="New Token Names", description="What should the parsed dimension names that are going to be renamed be changed to for saving in the database?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="T,XY,Channel")
 	String newTokens;
+	
+	@ParameterMarker(uiOrder=6, name="Keep Other Parsed Dimensions?", description="Outside the specified list of dimensions above, should other dimensions be kept?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	boolean keepOthers;
 
 	/////////// Define Outputs ///////////
 
@@ -415,7 +418,7 @@ public class ImportVirtualImageUpdates extends JEXPlugin {
 		{
 			return null;
 		}
-		DimensionMap newMap = oldMap.copy();
+		DimensionMap newMap = new DimensionMap();
 		for(String key : oldMap.keySet())
 		{
 			if(daOld.contains(key))
@@ -424,7 +427,7 @@ public class ImportVirtualImageUpdates extends JEXPlugin {
 				newMap.remove(key);
 				newMap.put(daNew.get(i), oldMap.get(key));
 			}
-			else
+			else if(this.keepOthers)
 			{
 				newMap.put(key, oldMap.get(key));
 			}
