@@ -169,7 +169,7 @@ public class ImportImagesByCSVTable extends JEXPlugin {
 			Logs.log("Skipping this entry: x" + optionalEntry.getTrayX() + " y"  +optionalEntry.getTrayY() + ". No files found to import.", this);
 			for(JEXData label : labels)
 			{
-				Logs.log(label.getDataObjectName() + " = " + ((JEXLabel) label).getLabelValue(), this);
+				Logs.log(label.getDataObjectName() + " = " + LabelReader.readLabelValue(label), this);
 			}
 			return false;
 		}
