@@ -12,6 +12,7 @@ import ij.gui.OvalRoi;
 import ij.gui.PointRoi;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
+import logs.Logs;
 import miscellaneous.Copiable;
 import net.imglib2.roi.geometric.Polygon;
 
@@ -142,14 +143,26 @@ public class ROIPlus implements Copiable<ROIPlus>, Iterable<ROIPlus>, Comparable
 	{
 		if(this.isLine() || this.type == ROI_RECT || this.type == ROI_POINT)
 		{
+			if(this.pointList.size() == 0)
+			{
+				return null;
+			}
 			return this.pointList.getBounds();
 		}
 		if(this.type == ROI_ELLIPSE)
 		{
+			if(this.pointList.size() == 0)
+			{
+				return null;
+			}
 			return new Ellipse2D.Float(this.pointList.get(0).x, this.pointList.get(0).y, this.pointList.get(1).x - this.pointList.get(0).x, this.pointList.get(1).y - this.pointList.get(0).y);
 		}
 		if(this.type == ROI_POLYGON)
 		{
+			if(this.pointList.size() == 0)
+			{
+				return null;
+			}
 			return this.pointList.toPolygon();
 		}
 		return null;
