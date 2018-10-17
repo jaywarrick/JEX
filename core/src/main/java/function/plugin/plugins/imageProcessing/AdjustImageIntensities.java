@@ -96,6 +96,10 @@ public class AdjustImageIntensities extends JEXPlugin {
 		String tempPath;
 		for (DimensionMap map : imageMap.keySet())
 		{
+			if(this.isCanceled())
+			{
+				return false;
+			}
 			// Call helper method
 			tempPath = saveAdjustedImage(imageMap.get(map), oldMin, oldMax, newMin, newMax, gamma, bitDepth);
 			if(tempPath != null)
