@@ -194,6 +194,10 @@ public class JEX_InvertImage extends JEXCrunchable {
 		JEXStatics.statusBar.setProgressPercentage(0);
 		for (DimensionMap dim : images.keySet())
 		{
+			if(this.isCanceled())
+			{
+				return false;
+			}
 			String path = images.get(dim);
 			// File f = new File(path);
 			
