@@ -117,7 +117,7 @@ public class JEX_OverlayStack extends JEXCrunchable {
 	{
 		TypeName[] inputNames = new TypeName[2];
 		inputNames[0] = new TypeName(IMAGE, "Image Set");
-		inputNames[2] = new TypeName(ROI, "Crop Roi (optional)");
+		inputNames[1] = new TypeName(ROI, "Crop Roi (optional)");
 		return inputNames;
 	}
 	
