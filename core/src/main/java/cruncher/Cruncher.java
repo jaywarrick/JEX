@@ -220,6 +220,10 @@ public class Cruncher implements Canceler {
 	{
 		// Organize files by time
 		TreeMap<String,TreeMap<DimensionMap,String>> ret = new TreeMap<>();
+		if(newFiles.size()==0)
+		{
+			return ret;
+		}
 		DimTable newDT = new DimTable(newFiles);
 		for(DimTable timepoint : newDT.getSubTableIterator(timeToken))
 		{
