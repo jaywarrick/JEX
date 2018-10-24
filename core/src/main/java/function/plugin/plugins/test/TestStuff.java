@@ -3,6 +3,7 @@ package function.plugin.plugins.test;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.Ellipse2D;
+import java.io.File;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -74,14 +75,20 @@ public class TestStuff {
 
 	static
 	{
-		DirectoryManager.setHostDirectory("/Users/jwarrick/Downloads");
-		//DirectoryManager.setHostDirectory("C:/Users/User/Downloads");
+//		DirectoryManager.setHostDirectory("/Users/jwarrick/Downloads");
+		DirectoryManager.setHostDirectory("C:/Users/User/Downloads");
 	}
 
 	public static void main (String[] args) throws Exception
 	{
-		tryTableLooping();
+		tryTestDirectory();
 	}	
+	
+	public static void tryTestDirectory()
+	{
+		File f = new File("Y:\\Jay\\A JEX Databases\\20181016 - Pt 820\\Plate\\Cell_x1_yblah");
+		System.out.println(f.isDirectory());
+	}
 	
 	public static void tryTableLooping()
 	{
