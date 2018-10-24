@@ -1,9 +1,5 @@
 package jex.jexTabPanel.jexFunctionPanel;
 
-import function.JEXCrunchable;
-import function.plugin.mechanism.JEXCrunchablePlugin;
-import guiObject.FlatRoundedButton;
-
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Cursor;
@@ -37,17 +33,17 @@ import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import Database.Definition.ParameterSet;
+import Database.Definition.TypeName;
+import cruncher.JEXFunction;
+import function.JEXCrunchable;
+import function.plugin.mechanism.JEXCrunchablePlugin;
+import guiObject.FlatRoundedButton;
 import jex.statics.DisplayStatics;
-import jex.statics.JEXStatics;
 import logs.Logs;
 import miscellaneous.FontUtility;
 import net.miginfocom.swing.MigLayout;
 import transferables.TransferableTypeName;
-import Database.DBObjects.JEXEntry;
-import Database.Definition.ParameterSet;
-import Database.Definition.TypeName;
-import Database.SingleUserDatabase.tnvi;
-import cruncher.JEXFunction;
 
 public class FunctionBlockPanel implements ActionListener, MouseListener {
 
@@ -323,70 +319,76 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 		{
 			// Get the inputTN
 			TypeName inputTN = this.function.getInputs().get(inputName);
+			
+			// Decided to add all inputs anyway without checking
+			// It is so annoying for when functions don't have a named output
+			FunctionInputDrop in = this.inputPanes.get(inputName);
+			in.setInputTN(inputTN);
 
-			// Check if the object is in the database
-			if(this.isDataInDatabase(inputTN))
-			{
-				FunctionInputDrop in = this.inputPanes.get(inputName);
-				in.setInputTN(inputTN);
-			}
-
-			// Else check if the object is the output of a previous object
-			if(inputTN != null && this.isDataOutputOfFunction(inputTN))
-			{
-				FunctionInputDrop in = this.inputPanes.get(inputName);
-				in.setInputTN(inputTN);
-			}
+			//			// Check if the object is in the database
+			//			if(this.isDataInDatabase(inputTN))
+			//			{
+			//				FunctionInputDrop in = this.inputPanes.get(inputName);
+			//				in.setInputTN(inputTN);
+			//			}
+			//
+			//			// Else check if the object is the output of a previous object
+			//			if(inputTN != null && this.isDataOutputOfFunction(inputTN))
+			//			{
+			//				FunctionInputDrop in = this.inputPanes.get(inputName);
+			//				in.setInputTN(inputTN);
+			//			}
 		}
 
-		// Set the outputs
-		boolean canRun = (this.crunch.checkInputs() == JEXCrunchable.INPUTSOK);
-		for (FunctionOutputDrag outPane : this.outputPanes.values())
-		{
-			outPane.setCanRun(canRun);
-		}
+		// This always caused the outputs to be labeled green and had no functionality
+		//		// Set the outputs
+		//		boolean canRun = (this.crunch.checkInputs() == JEXCrunchable.INPUTSOK);
+		//		for (FunctionOutputDrag outPane : this.outputPanes.values())
+		//		{
+		//			outPane.setCanRun(canRun);
+		//		}
 	}
 
-	/**
-	 * Return true if the object exists in the database
-	 * 
-	 * @param tn
-	 * @return
-	 */
-	private boolean isDataInDatabase(TypeName tn)
-	{
-		if(tn == null)
-		{
-			return false;
-		}
+	//	/**
+	//	 * Return true if the object exists in the database
+	//	 * 
+	//	 * @param tn
+	//	 * @return
+	//	 */
+	//	private boolean isDataInDatabase(TypeName tn)
+	//	{
+	//		if(tn == null)
+	//		{
+	//			return false;
+	//		}
+	//
+	//		tnvi TNVI = JEXStatics.jexManager.getTNVI();
+	//
+	//		TreeMap<String,TreeMap<String,Set<JEXEntry>>> nvi = TNVI.get(tn.getType());
+	//		if(nvi == null)
+	//		{
+	//			return false;
+	//		}
+	//
+	//		TreeMap<String,Set<JEXEntry>> vi = nvi.get(tn.getName());
+	//		if(vi == null)
+	//		{
+	//			return false;
+	//		}
+	//
+	//		return true;
+	//	}
 
-		tnvi TNVI = JEXStatics.jexManager.getTNVI();
-
-		TreeMap<String,TreeMap<String,Set<JEXEntry>>> nvi = TNVI.get(tn.getType());
-		if(nvi == null)
-		{
-			return false;
-		}
-
-		TreeMap<String,Set<JEXEntry>> vi = nvi.get(tn.getName());
-		if(vi == null)
-		{
-			return false;
-		}
-
-		return true;
-	}
-
-	/**
-	 * Return true if the object is the output of another function of the function list
-	 * 
-	 * @param tn
-	 * @return
-	 */
-	private boolean isDataOutputOfFunction(TypeName tn)
-	{
-		return this.parent.isDataOutputOfFunction(tn);
-	}
+	//	/**
+	//	 * Return true if the object is the output of another function of the function list
+	//	 * 
+	//	 * @param tn
+	//	 * @return
+	//	 */
+	//	private boolean isDataOutputOfFunction(TypeName tn)
+	//	{
+	//		return this.parent.isDataOutputOfFunction(tn);
+	//	}
 
 	/**
 	 * Return the function in this functionblockpanel
