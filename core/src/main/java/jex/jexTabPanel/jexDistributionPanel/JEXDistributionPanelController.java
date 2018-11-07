@@ -519,7 +519,7 @@ public class JEXDistributionPanelController extends JEXTabPanelController {
 
 			String dn = dimName;
 			Object dv = new Integer(compteur[i]);
-			if(path != null && tokens[i] != null)
+			if(path != null && tokens[i] != null && !tokens[i].equals(""))
 			{
 				DimensionMap temp = StringUtility.getMapFromPath(path);
 				dv = temp.get(tokens[i]);
