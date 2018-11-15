@@ -335,7 +335,7 @@ public class ROIUtility {
 	}
 	
 	/**
-	 * Get the center of the centroid for this roi The function will need to build a default binary imageprocessor
+	 * Get the center of a ROIPlus
 	 * 
 	 * @param ip
 	 * @return
@@ -343,6 +343,17 @@ public class ROIUtility {
 	public static Point getRectangleCenter(ROIPlus myRoi)
 	{
 		return myRoi.getPointList().getCenter();
+	}
+	
+	/**
+	 * Get the center of a Rectangle
+	 * 
+	 * @param ip
+	 * @return
+	 */
+	public static Point getRectangleCenter(Rectangle myRoi)
+	{
+		return PointList.getCenter(myRoi);
 	}
 	
 }

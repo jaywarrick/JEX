@@ -69,7 +69,7 @@ public class RegisterMultiColorImageSet_Roi extends JEXPlugin {
 	@InputMarker(uiOrder=1, name="Multicolor Image Set", updatable=false, type=MarkerConstants.TYPE_IMAGE, description="Horizontal alignment (L to R adjacent images) object obtained from the image aligner plugin on the plugins tab of JEX.", optional=false)
 	JEXData data;
 	
-	@InputMarker(uiOrder=2, name="Alignment Region ROI (optional, rect or point)", updatable=false, type=MarkerConstants.TYPE_IMAGE, description="Vertical alignment (Top to Bottom adjeacent images) object obtained from the image aligner plugin on the plugins tab of JEX.", optional=false)
+	@InputMarker(uiOrder=2, name="Alignment Region ROI (or Median Deltas ROI, point roi)", updatable=false, type=MarkerConstants.TYPE_IMAGE, description="Either the region of the image to align between frames or a point roi of median deltas to calculate crop rois.", optional=false)
 	JEXData roiData;
 	
 	/////////// Define Parameters ///////////
@@ -89,10 +89,7 @@ public class RegisterMultiColorImageSet_Roi extends JEXPlugin {
 	
 	@ParameterMarker(uiOrder=5, name="Align To First Timepoint?", description="Each image timepoint will be aligned to the first if set to true. Otherwise, time t aligns to t-1.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
 	boolean firstTimer;
-	
-	@ParameterMarker(uiOrder=6, name="Just Convert Point Roi?", description="If a point roi is provided for the roi input, use the positions in the point roi to determine the output crop roi?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
-	boolean convertPoints;
-	
+
 	////////// Define Outputs ///////////
 	
 	@OutputMarker(uiOrder=1, name="Crop ROI", type=MarkerConstants.TYPE_ROI, flavor="", description="The resultant roi that can be used to crop images for stabalizing the image set.", enabled=true)
@@ -196,18 +193,15 @@ public class RegisterMultiColorImageSet_Roi extends JEXPlugin {
 					// Initialize the target image information
 					target = new ImagePlus(images.get(map));
 
-					// Convert the roiMap to regions if necessary fir the first time through
+					// Convert the roiMap to regions if necessary for the first time through
 
 					if(havePointRoi)
 					{
 						roiMap = convertPointsToRegions(roiMap, images, timeDimName, colorDimName, (double) target.getWidth(), (double) target.getHeight());
-						if(convertPoints)
-						{
-							// Set the outputs
-							JEXData outputCropRoi = RoiWriter.makeRoiObject("temp", roiMap);
-							this.output = outputCropRoi;
-							return true;
-						}
+						// Set the outputs
+						JEXData outputCropRoi = RoiWriter.makeRoiObject("temp", roiMap);
+						this.output = outputCropRoi;
+						return true;
 					}
 
 					roi = roiMap.get(map);

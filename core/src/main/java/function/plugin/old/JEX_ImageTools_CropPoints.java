@@ -65,7 +65,7 @@ public class JEX_ImageTools_CropPoints extends JEXCrunchable {
 	@Override
 	public String getInfo()
 	{
-		String result = "Function that allows you to crop a regions specified by a point ROI (e.g., cells identified by find maxima).";
+		String result = "Function that allows you to create crops of small regions surrounding point (e.g., cells identified by find maxima).";
 		return result;
 	}
 	
