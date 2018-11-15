@@ -17,7 +17,6 @@ import function.plugin.mechanism.JEXPlugin;
 import function.plugin.mechanism.MarkerConstants;
 import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
-import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import logs.Logs;
 import miscellaneous.FileUtility;
@@ -99,63 +98,73 @@ public class SliceObject extends JEXPlugin {
 		int count = 0;
 		int percentage = 0;
 		boolean success = false;
-		if(t.matches(JEXData.FILE) || t.matches(JEXData.IMAGE) || t.matches(JEXData.MOVIE) || t.matches(JEXData.SOUND))
+		for(DimensionMap map : inputData.getDimTable().getMapIterator())
 		{
-			for(DimensionMap map : inputData.getDimTable().getMapIterator())
+			if(this.isCanceled())
 			{
-				success = false;
-				JEXDataSingle toAdd = null;
-				if(inputData.getData(map) != null)
-				{
-					toAdd = inputData.getData(map).copy();
-				}
-				if(toAdd == null)
-				{
-					continue;
-				}
-
-				if(!keeping)
-				{
-					// Then we are trying to exclude data using the filter
-					if(!filter.testMapAsExclusionFilter(map))
-					{
-						// Then the data doesn't fit the exclusion filter and should be added to the new object
-						success = this.copyData(toAdd);
-						if(!success)
-						{
-							return false;
-						}
-					}
-				}
-				else
-				{
-					// Then we are trying to keep the data using the filter
-					if(filter.testOverdefinedMap(map))
-					{
-						// The data fits the 'keep' filter and should be added to the new object
-						success = this.copyData(toAdd);
-						if(!success)
-						{
-							return false;
-						}
-					}
-				}
-
-				if(success)
-				{
-					retMap.put(map.copy(), toAdd);
-				}
-				
-				// Status bar
-				count = count + 1;
-				percentage = (int) (100 * ((double) count / (double) tot));
-				JEXStatics.statusBar.setProgressPercentage(percentage);
+				return false;
 			}
-		}
-		else
-		{
-			JEXDialog.messageDialog("The data provided isn't currently one of the supported data types that can be used with this fuction (FILE, IMAGE, MOVIE, SOUND).", this);
-			return false;
+			
+			success = false;
+			JEXDataSingle toAdd = null;
+			if(inputData.getData(map) != null)
+			{
+				toAdd = inputData.getData(map).copy();
+			}
+			if(toAdd == null)
+			{
+				continue;
+			}
+
+			if(!keeping)
+			{
+				// Then we are trying to exclude data using the filter
+				if(!filter.testMapAsExclusionFilter(map))
+				{
+					// Then the data doesn't fit the exclusion filter and should be added to the new object
+					if(t.matches(JEXData.FILE) || t.matches(JEXData.IMAGE) || t.matches(JEXData.MOVIE) || t.matches(JEXData.SOUND))
+					{
+						success = this.copyData(toAdd);
+						if(!success)
+						{
+							return false;
+						}
+					}
+					else
+					{
+						success = true;
+					}
+				}
+			}
+			else
+			{
+				if(filter.testOverdefinedMap(map))
+				{
+					// Then the data doesn't fit the exclusion filter and should be added to the new object
+					if(t.matches(JEXData.FILE) || t.matches(JEXData.IMAGE) || t.matches(JEXData.MOVIE) || t.matches(JEXData.SOUND))
+					{
+						success = this.copyData(toAdd);
+						if(!success)
+						{
+							return false;
+						}
+					}
+					else
+					{
+						success = true;
+					}
+				}
+			}
+
+			if(success)
+			{
+				retMap.put(map.copy(), toAdd);
+			}
+
+			// Status bar
+			count = count + 1;
+			percentage = (int) (100 * ((double) count / (double) tot));
+			JEXStatics.statusBar.setProgressPercentage(percentage);
 		}
 
 		ret.setDimTable(new DimTable(retMap));
