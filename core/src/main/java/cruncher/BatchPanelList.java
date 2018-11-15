@@ -77,6 +77,7 @@ public class BatchPanelList implements MouseListener {
 	public void add(Batch batch)
 	{
 		BatchPanel bpanel = new BatchPanel(batch, this);
+		this.batchList.add(bpanel);
 		this.innerPanel.add(bpanel.panel(), "growx");
 		this.innerPanel.revalidate();
 		this.innerPanel.repaint();
@@ -85,6 +86,7 @@ public class BatchPanelList implements MouseListener {
 	public void remove(BatchPanel batchPanel)
 	{
 		this.innerPanel.remove(batchPanel.panel());
+		this.batchList.remove(batchPanel);
 		this.innerPanel.revalidate();
 		this.innerPanel.repaint();
 	}

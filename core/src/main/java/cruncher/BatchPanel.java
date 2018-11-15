@@ -51,11 +51,24 @@ public class BatchPanel implements ActionListener {
 	public void finish()
 	{
 		this.parent.remove(this);
+		this.parent = null;
 	}
 	
 	public JPanel panel()
 	{
 		return this.panel;
+	}
+	
+	public void cancel()
+	{
+		this.batch.cancel();
+		this.cancel.setText("Canceled...");
+	}
+	
+	public void uncancel()
+	{
+		this.batch.uncancel();
+		this.cancel.setText("Cancel (after current entry)");
 	}
 	
 	public void actionPerformed(ActionEvent e)
@@ -64,13 +77,11 @@ public class BatchPanel implements ActionListener {
 		{
 			if(this.batch.isCanceled())
 			{
-				this.batch.uncancel();
-				this.cancel.setText("Cancel (after current entry)");
+				this.uncancel();
 			}
 			else
 			{
-				this.batch.cancel();
-				this.cancel.setText("Canceled...");
+				this.cancel();
 			}
 		}
 	}

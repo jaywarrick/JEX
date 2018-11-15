@@ -359,12 +359,16 @@ public class JEXDBIO {
 	 */
 	private static void cleanDirectory(File f, TreeSet<File> keeperList, boolean isDatabaseFolder)
 	{
-		if(f.exists() && f.isDirectory() && !keeperList.contains(f))
+		if(f.isDirectory() && !keeperList.contains(f))
 		{
-			File[] children = f.listFiles();
-			for (File f2 : children)
+			Logs.log("Checking directory " + f.getAbsolutePath(), JEXDBIO.class);
+			if(f.exists())
 			{
-				cleanDirectory(f2, keeperList, false);
+				File[] children = f.listFiles();
+				for (File f2 : children)
+				{
+					cleanDirectory(f2, keeperList, false);
+				}
 			}
 		}
 		

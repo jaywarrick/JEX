@@ -76,9 +76,15 @@ public class JEXDataUpdate implements Update {
 				String dst = dbFolder + File.separator + dstRelativePath;
 				File src = new File(FileReader.readToPath(ds));
 				// Keep track through looping if we encounter a ds that needs to be copied.
-				this.hasReferencedFilesToCopy = this.hasReferencedFilesToCopy || session.fileExists(src) && !src.getPath().equals(dst); // Then we for sure have something to copy over
-				if(this.hasReferencedFilesToCopy && !src.getParent().equals(dbFolder + File.separator + JEXWriter.getTempFolderName())) // Don't uselessy recopy to the temp folder
+				//				this.hasReferencedFilesToCopy = this.hasReferencedFilesToCopy || session.fileExists(src) && !src.getPath().equals(dst); // Then we for sure have something to copy over
+				
+				if(src.getParent().equals(dbFolder + File.separator + JEXWriter.getTempFolderName())) // Don't uselessy recopy to the temp folder
 				{
+					this.hasReferencedFilesToCopy = true;
+				}
+				else if(session.fileExists(src) && !src.getPath().equals(dst)) 
+				{
+					this.hasReferencedFilesToCopy = true;
 					String tempRelativePath = JEXWriter.getUniqueRelativeTempPath(FileUtility.getFileNameExtension(src.getPath()));
 					String temp = dbFolder + File.separator + tempRelativePath;
 					File tempFile = new File(temp);

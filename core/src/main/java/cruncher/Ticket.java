@@ -305,7 +305,7 @@ public class Ticket implements Callable<Integer>, Canceler{
 		JEXData oldData = JEXStatics.jexManager.getDataOfTypeNameInEntry(data.getTypeName(), e);
 		if(oldData == null)
 		{
-			// Just convert current output to and 'update' flavor and return an empty list of updates
+			// Just convert current output to an 'update' flavor and return an empty list of updates
 			// This avoids making copies.
 			if(!data.hasUpdateFlavor())
 			{

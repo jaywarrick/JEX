@@ -12,7 +12,9 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 
+import cruncher.BatchPanel;
 import jex.statics.DisplayStatics;
+import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import net.miginfocom.swing.MigLayout;
 
@@ -28,6 +30,7 @@ public class FunctionLoadSaveAndRunPanel implements ActionListener, ItemListener
 	// private JButton addButton = new JButton();
 	private JButton saveJXWToDB = new JButton();
 	private JButton runAll = new JButton();
+	private JButton cancelAll = new JButton();
 	private JCheckBox autoSave = new JCheckBox();
 	private JCheckBox autoUpdate = new JCheckBox();
 
@@ -47,7 +50,7 @@ public class FunctionLoadSaveAndRunPanel implements ActionListener, ItemListener
 		this.panel = new JPanel();
 		this.panel.setBackground(DisplayStatics.lightBackground);
 		this.panel.setBorder(BorderFactory.createLineBorder(Color.GRAY));
-		this.panel.setLayout(new MigLayout("center, flowy, ins 3", "[fill, grow]", "[fill, grow]3[fill, grow]3[fill, grow]3[fill, grow]3[]"));
+		this.panel.setLayout(new MigLayout("center, flowy, ins 3", "[fill, grow]", "[fill, grow]3[fill, grow]3[fill, grow]3[fill, grow]3[fill, grow]3[]"));
 		this.panel.setMinimumSize(new Dimension(160,100));
 		// this.setPreferredSize(new Dimension(250,200));
 
@@ -84,6 +87,13 @@ public class FunctionLoadSaveAndRunPanel implements ActionListener, ItemListener
 		// runButton.setMaximumSize(new Dimension(60,500));
 		this.runAll.addActionListener(this);
 
+		// Create the run all button
+		this.cancelAll.setText("CANCEL ALL");
+		this.cancelAll.setToolTipText("Cancel (or uncancel) all the functions in the function queue.");
+		// runButton.setPreferredSize(new Dimension(60,30));
+		// runButton.setMaximumSize(new Dimension(60,500));
+		this.cancelAll.addActionListener(this);
+
 		// Create autoSave checkBox
 		this.autoSave.setText("Auto-Saving (ON)");
 		this.autoSave.setSelected(true);
@@ -101,6 +111,7 @@ public class FunctionLoadSaveAndRunPanel implements ActionListener, ItemListener
 		this.panel.add(this.saveButton, "growx, height 10:10:");
 		this.panel.add(this.saveJXWToDB, "growx, height 10:10:");
 		this.panel.add(this.runAll, "growx, height 10:10:");
+		this.panel.add(this.cancelAll, "growx, height 10:10:");
 		this.panel.add(this.autoSave);
 		this.panel.add(this.autoUpdate);
 	}
@@ -116,6 +127,26 @@ public class FunctionLoadSaveAndRunPanel implements ActionListener, ItemListener
 		{
 			this.parent.runAllFunctions(this.isAutoSavingOn(), this.isAutoUpdatingOn());
 		}
+		if(e.getSource() == this.cancelAll)
+		{
+			int choice = JEXDialog.getChoice("Cancel All", "Should all functions in the queue be canceled or uncanceled?", new String[] {"Canceled","Uncanceled"}, 0);
+			if(choice == 0)
+			{
+				for(BatchPanel bp : JEXStatics.cruncher.batchList.batchList)
+				{
+					bp.cancel();
+					this.autoUpdate.setSelected(false);
+					this.autoUpdate.setText("Auto-Updating (OFF)");
+				}
+			}
+			else if(choice == 1)
+			{
+				for(BatchPanel bp : JEXStatics.cruncher.batchList.batchList)
+				{
+					bp.uncancel();
+				}
+			}
+		}
 		else if(e.getSource() == this.loadButton)
 		{
 			this.parent.loadFunctionList();
@@ -130,7 +161,7 @@ public class FunctionLoadSaveAndRunPanel implements ActionListener, ItemListener
 	{
 		return this.autoSave.isSelected();
 	}
-	
+
 	public boolean isAutoUpdatingOn()
 	{
 		return this.autoUpdate.isSelected();
