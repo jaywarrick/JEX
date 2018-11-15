@@ -373,7 +373,7 @@ public class RScripter implements PlugInController, ActionListener, ClipboardOwn
 	{
 		Vector<Pair<String,String>> labels = getLabelsInEntry(e);
 		String listC = getListRCommand(labels);
-		String ret = "readJEXData(dbPath=" + R.sQuote(JEXWriter.getDatabaseFolder()) + ", ds=" + R.sQuote(e.getEntryExperiment()) + ", x=" + e.getTrayX() + ", y=" + e.getTrayY() + ", type=" + R.sQuote(tn.getType().getType()) + ", name=" + R.sQuote(tn.getName()) + ", " + listC + ")";
+		String ret = "readJEXData(dbPath=" + R.sQuote(JEXWriter.getDatabaseFolder()) + ", ds=" + R.sQuote(e.getEntryExperiment()) + ", e.x=" + e.getTrayX() + ", e.y=" + e.getTrayY() + ", type=" + R.sQuote(tn.getType().getType()) + ", name=" + R.sQuote(tn.getName()) + ", labels=" + listC + ")";
 		ret = ret.replace("\\", "/"); // R likes forward slashes.
 		return ret;
 	}
