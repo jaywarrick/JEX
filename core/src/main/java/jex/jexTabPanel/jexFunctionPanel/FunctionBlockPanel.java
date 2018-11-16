@@ -40,6 +40,7 @@ import function.JEXCrunchable;
 import function.plugin.mechanism.JEXCrunchablePlugin;
 import guiObject.FlatRoundedButton;
 import jex.statics.DisplayStatics;
+import jex.statics.JEXDialog;
 import logs.Logs;
 import miscellaneous.FontUtility;
 import net.miginfocom.swing.MigLayout;
@@ -320,24 +321,37 @@ public class FunctionBlockPanel implements ActionListener, MouseListener {
 			// Get the inputTN
 			TypeName inputTN = this.function.getInputs().get(inputName);
 			
-			// Decided to add all inputs anyway without checking
-			// It is so annoying for when functions don't have a named output
-			FunctionInputDrop in = this.inputPanes.get(inputName);
-			in.setInputTN(inputTN);
+			if(inputTN != null)
+			{
+				// Decided to add all inputs anyway without checking
+				// It is so annoying for when functions don't have a named output
+				FunctionInputDrop in = this.inputPanes.get(inputName);
+				if(in != null)
+				{
+					in.setInputTN(inputTN);
+				}
+				else
+				{
+					JEXDialog.messageDialog("Apparently we are loading an old version of this function '" + this.function.getFunctionName() + "'. The default input name has changed. Re-add this function.");
+				}
+				
 
-			//			// Check if the object is in the database
-			//			if(this.isDataInDatabase(inputTN))
-			//			{
-			//				FunctionInputDrop in = this.inputPanes.get(inputName);
-			//				in.setInputTN(inputTN);
-			//			}
-			//
-			//			// Else check if the object is the output of a previous object
-			//			if(inputTN != null && this.isDataOutputOfFunction(inputTN))
-			//			{
-			//				FunctionInputDrop in = this.inputPanes.get(inputName);
-			//				in.setInputTN(inputTN);
-			//			}
+				//			// Check if the object is in the database
+				//			if(this.isDataInDatabase(inputTN))
+				//			{
+				//				FunctionInputDrop in = this.inputPanes.get(inputName);
+				//				in.setInputTN(inputTN);
+				//			}
+				//
+				//			// Else check if the object is the output of a previous object
+				//			if(inputTN != null && this.isDataOutputOfFunction(inputTN))
+				//			{
+				//				FunctionInputDrop in = this.inputPanes.get(inputName);
+				//				in.setInputTN(inputTN);
+				//			}
+			}
+			
+			
 		}
 
 		// This always caused the outputs to be labeled green and had no functionality
