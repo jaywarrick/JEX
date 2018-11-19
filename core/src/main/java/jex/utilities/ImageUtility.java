@@ -110,6 +110,18 @@ public class ImageUtility {
 	{
 		Pair<Double,Double> thresholds = null;
 		
+		double tempMin = minPercentile;
+		double tempMax = maxPercentile;
+		
+		if(minPercentile < 0)
+		{
+			minPercentile = 0;
+		}
+		if(maxPercentile > 100)
+		{
+			maxPercentile = 100;
+		}
+		
 		if(sampleSize < 1)
 		{
 			FeatureUtils fu = new FeatureUtils();
@@ -134,6 +146,16 @@ public class ImageUtility {
 		else
 		{
 			return null;
+		}
+		
+		if(tempMin < 0)
+		{
+			thresholds.p1 = thresholds.p1 + (tempMin/100)*Math.abs(thresholds.p2 - thresholds.p1);
+		}
+		
+		if(tempMax > 100)
+		{
+			thresholds.p2 = thresholds.p2 + (tempMax/100)*Math.abs(thresholds.p2 - thresholds.p1);
 		}
 		
 		return thresholds;
