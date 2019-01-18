@@ -142,7 +142,7 @@ public class MergeObjects extends JEXPlugin {
 			}
 		}
 		
-		JEXData ret = new JEXData(data1.getTypeName().getType(), newName);
+		JEXData ret = new JEXData(new Type(data1.getTypeName().getType().getType(), data1.getTypeName().getType().getFlavor()), newName);
 
 		int tot = retDT.mapCount();
 		int count = 0;

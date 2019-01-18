@@ -21,6 +21,7 @@ import function.imageUtility.MaximumFinder;
 import function.plugin.plugins.imageProcessing.RankFilters2;
 import ij.ImagePlus;
 import ij.gui.Roi;
+import ij.plugin.filter.GaussianBlur;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
@@ -367,8 +368,10 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 				if(smoothR > 0)
 				{
 					// Smooth the image
-					RankFilters2 rF = new RankFilters2();
-					rF.rank(ip, smoothR, RankFilters2.MEAN);
+//					RankFilters2 rF = new RankFilters2();
+//					rF.rank(ip, smoothR, RankFilters2.MEAN);
+					GaussianBlur gb = new GaussianBlur();
+					gb.blurGaussian(ip, smoothR, smoothR, 0.0002); // Default accuracy = 0.0002
 				}
 				if(this.isCanceled())
 				{
@@ -452,8 +455,10 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 						if(waterDespeckleR > 0)
 						{
 							// Smooth the image
-							RankFilters2 rF = new RankFilters2();
-							rF.rank(toSeg, despeckleR, RankFilters2.MEDIAN);
+							//							RankFilters2 rF = new RankFilters2();
+							//							rF.rank(toSeg, despeckleR, RankFilters2.MEDIAN);
+							GaussianBlur gb = new GaussianBlur();
+							gb.blurGaussian(ip, smoothR, smoothR, 0.0002); // Default accuracy = 0.0002
 						}
 						if(this.isCanceled())
 						{
