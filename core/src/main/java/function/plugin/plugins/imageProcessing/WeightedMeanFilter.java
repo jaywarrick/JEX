@@ -53,6 +53,9 @@ public class WeightedMeanFilter extends JEXPlugin {
 
 	@InputMarker(uiOrder=1, name="Image", type=MarkerConstants.TYPE_IMAGE, description="Image to be adjusted.", optional=false)
 	JEXData imageData;
+	
+	@InputMarker(uiOrder=2, name="Mask (optional)", type=MarkerConstants.TYPE_IMAGE, description="Mask which defines objects (white) amidst background (black)", optional=true)
+	JEXData maskData;
 
 	/////////// Define Parameters ///////////
 
@@ -171,6 +174,11 @@ public class WeightedMeanFilter extends JEXPlugin {
 		
 		// Run the function
 		TreeMap<DimensionMap,String> imageMap = ImageReader.readObjectToImagePathTable(imageData);
+		TreeMap<DimensionMap,String> maskMap = null;
+		if(maskData != null)
+		{
+			maskMap = ImageReader.readObjectToImagePathTable(maskData);
+		}
 		TreeMap<DimensionMap,String> outputImageMap = new TreeMap<DimensionMap,String>();
 		TreeMap<DimensionMap,String> outputMaskMap = new TreeMap<DimensionMap,String>();
 		//TreeMap<DimensionMap,String> outputStDevMap = new TreeMap<DimensionMap,String>();
@@ -187,7 +195,7 @@ public class WeightedMeanFilter extends JEXPlugin {
 			// Skip if told to skip.
 			if(filterTable.testMapAsExclusionFilter(map))
 			{
-				if(this.keepExcluded)
+				if(this.keepExcluded && this.rows == 1 && this.cols == 1)
 				{
 					Logs.log("Skipping the processing of " + map.toString(), this);
 					ImagePlus out = new ImagePlus(imageMap.get(map));
@@ -218,17 +226,33 @@ public class WeightedMeanFilter extends JEXPlugin {
 			}
 			
 			FloatProcessor fp = (new ImagePlus(imageMap.get(map)).getProcessor().convertToFloatProcessor());
+			FloatProcessor mp = null;
+			if(maskData != null && maskMap != null)
+			{
+				mp = (new ImagePlus(maskMap.get(map)).getProcessor().convertToFloatProcessor());
+			}
 			TreeMap<DimensionMap,ImageProcessor> temp = new TreeMap<>();
+			TreeMap<DimensionMap,ImageProcessor> maskTemp = new TreeMap<>();
 			TreeMap<DimensionMap,ImageProcessor> tiles = new TreeMap<>();
+			TreeMap<DimensionMap,ImageProcessor> maskTiles = new TreeMap<>();
 			if(this.rows > 1 || this.cols > 1)
 			{
 				Logs.log("Splitting image into tiles", this);
 				temp.put(map.copy(), fp);
 				tiles.putAll(ImageWriter.separateTilesToProcessors(temp, overlap, rows, cols, this.getCanceler()));
+				if(mp != null)
+				{
+					maskTemp.put(map.copy(), mp);
+					maskTiles.putAll(ImageWriter.separateTilesToProcessors(maskTemp, overlap, rows, cols, this.getCanceler()));
+				}
 			}
 			else
 			{
 				tiles.put(map.copy(), fp);
+				if(mp != null)
+				{
+					maskTiles.put(map.copy(), mp);
+				}
 			}
 
 			// Get images and parameters
@@ -237,19 +261,27 @@ public class WeightedMeanFilter extends JEXPlugin {
 			
 			for(Entry<DimensionMap, ImageProcessor> e : tiles.entrySet())
 			{
-				Pair<FloatProcessor, ImageProcessor> images = ImageUtility.getWeightedMeanFilterImage((FloatProcessor) e.getValue(), doThreshold, doSubtraction, doBackgroundOnly, doDivision, this.meanRadius, this.varRadius, this.subScale, this.threshScale, this.operation, nominal, sigma, this.darkfield);
-				
-				if(images.p1 != null)
+				if(maskTiles.size() != 0)
 				{
-					String filteredImagePath = JEXWriter.saveImage(images.p1, this.outputBitDepth);
+					FloatProcessor fpToSave = ImageUtility.getWeightedMeanFilterImage((FloatProcessor) e.getValue(), (FloatProcessor) maskTiles.get(e.getKey()), doSubtraction, doBackgroundOnly, doDivision, this.meanRadius, this.varRadius, this.subScale, this.threshScale, this.operation, nominal, sigma, this.darkfield);
+					
+					String filteredImagePath = JEXWriter.saveImage(fpToSave, this.outputBitDepth);
 					outputImageMap.put(e.getKey().copy(), filteredImagePath);
 				}
-				if(images.p2 != null)
+				else
 				{
-					String maskPath = JEXWriter.saveImage(images.p2, this.maskBitDepth);
-					outputMaskMap.put(e.getKey().copy(), maskPath);
+					Pair<FloatProcessor, ImageProcessor> images = ImageUtility.getWeightedMeanFilterImage((FloatProcessor) e.getValue(), doThreshold, doSubtraction, doBackgroundOnly, doDivision, this.meanRadius, this.varRadius, this.subScale, this.threshScale, this.operation, nominal, sigma, this.darkfield);
+					if(images.p1 != null)
+					{
+						String filteredImagePath = JEXWriter.saveImage(images.p1, this.outputBitDepth);
+						outputImageMap.put(e.getKey().copy(), filteredImagePath);
+					}
+					if(images.p2 != null)
+					{
+						String maskPath = JEXWriter.saveImage(images.p2, this.maskBitDepth);
+						outputMaskMap.put(e.getKey().copy(), maskPath);
+					}
 				}
-				
 
 				// Update the progress bar.
 				count = count + 1;
