@@ -154,7 +154,7 @@ public class MicrowellConvolver extends JEXPlugin {
 		String kernelImage = null;
 		String radiusFilteredImage = null;
 		String edgeFilteredImage = null;
-		String convolutionImage = null;
+		//		String convolutionImage = null;
 		
 		int count = 0;
 		int total = subTable.mapCount();
@@ -216,7 +216,7 @@ public class MicrowellConvolver extends JEXPlugin {
 						paths.add("");
 					}
 				}
-				convolutionImage = finalPath;
+				//				convolutionImage = finalPath;
 				kernelImage = paths.get(0);
 				radiusFilteredImage = paths.get(1);
 				edgeFilteredImage = paths.get(2);
