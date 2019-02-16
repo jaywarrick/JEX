@@ -393,6 +393,10 @@ public class JEXWriter {
 	 */
 	public static ImageProcessor convertToBitDepthIfNecessary(ImageProcessor imp, int bitDepth)
 	{
+		if(imp.getBitDepth() == 32 && bitDepth < 32)
+		{
+			imp.setMinAndMax(0, Math.pow(2, bitDepth)-1);
+		}
 		if(bitDepth != imp.getBitDepth())
 		{
 			if(bitDepth == 8)

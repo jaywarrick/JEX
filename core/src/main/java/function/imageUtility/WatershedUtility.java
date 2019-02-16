@@ -89,7 +89,7 @@ public class WatershedUtility {
 		ip.invert();
 		FloatProcessor floatEdm = this.makeFloatEDM(ip, 0, false);
 		floatEdm.multiply(-1); // Voronoi starts from minima of EDM
-		ByteProcessor maxIp = (ByteProcessor) this.maxFinder.findMaxima(floatEdm, MAXFINDER_TOLERANCE, ImageProcessor.NO_THRESHOLD, MaximumFinder.SEGMENTED, false, false, null, false);
+		ByteProcessor maxIp = (ByteProcessor) this.maxFinder.findMaxima(floatEdm, MAXFINDER_TOLERANCE, ImageProcessor.NO_THRESHOLD, MaximumFinder.SEGMENTED, false, false, null, false, false);
 		ip.invert();
 		return maxIp;
 	}
@@ -125,7 +125,7 @@ public class WatershedUtility {
 	public ByteProcessor watershed(ByteProcessor ip)
 	{
 		FloatProcessor floatEdm = this.makeFloatEDM(ip, 0, false);
-		ByteProcessor maxIp = (ByteProcessor) this.maxFinder.findMaxima(floatEdm, MAXFINDER_TOLERANCE, ImageProcessor.NO_THRESHOLD, MaximumFinder.SEGMENTED, false, true, null, false);
+		ByteProcessor maxIp = (ByteProcessor) this.maxFinder.findMaxima(floatEdm, MAXFINDER_TOLERANCE, ImageProcessor.NO_THRESHOLD, MaximumFinder.SEGMENTED, false, true, null, false, false);
 		if(maxIp != null)
 		{
 			maxIp.copyBits(ip, 0, 0, Blitter.AND);

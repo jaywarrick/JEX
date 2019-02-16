@@ -217,9 +217,13 @@ public class JEX_ImageTools_ExcludePoints extends JEXCrunchable {
 		{
 			Logs.log("Dimensions of objects didn't match enough to perform exclusion. Returning false", this);
 		}
-		if(intersection.size() == pointTable.size())
+		if( regionTable.size() >= pointTable.size())
 		{
 			iterateOverPoints = false;
+		}
+		else
+		{
+			iterateOverPoints = true;
 		}
 		
 		TreeMap<DimensionMap,ROIPlus> pointROI = RoiReader.readObjectToRoiMap(pointData);

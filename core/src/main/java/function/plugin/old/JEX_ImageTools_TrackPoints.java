@@ -18,9 +18,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.TreeMap;
+import java.util.Vector;
 
 import jex.statics.JEXStatics;
 import miscellaneous.Pair;
+import miscellaneous.StatisticsUtility;
 import tables.Dim;
 import tables.DimTable;
 import tables.DimensionMap;
@@ -37,14 +39,14 @@ import weka.core.converters.JEXTableReader;
  * 
  */
 public class JEX_ImageTools_TrackPoints extends JEXCrunchable {
-	
+
 	public JEX_ImageTools_TrackPoints()
 	{}
-	
+
 	// ----------------------------------------------------
 	// --------- INFORMATION ABOUT THE FUNCTION -----------
 	// ----------------------------------------------------
-	
+
 	/**
 	 * Returns the name of the function
 	 * 
@@ -56,7 +58,7 @@ public class JEX_ImageTools_TrackPoints extends JEXCrunchable {
 		String result = "Track Points";
 		return result;
 	}
-	
+
 	/**
 	 * This method returns a string explaining what this method does This is purely informational and will display in JEX
 	 * 
@@ -68,7 +70,7 @@ public class JEX_ImageTools_TrackPoints extends JEXCrunchable {
 		String result = "Use a nearest neighbor approach for creating tracks from point rois in each frame of a stack (i.e. along one dimension)";
 		return result;
 	}
-	
+
 	/**
 	 * This method defines in which group of function this function will be shown in... Toolboxes (choose one, caps matter): Visualization, Image processing, Custom Cell Analysis, Cell tracking, Image tools Stack processing, Data Importing, Custom
 	 * image analysis, Matlab/Octave
@@ -80,7 +82,7 @@ public class JEX_ImageTools_TrackPoints extends JEXCrunchable {
 		String toolbox = "Image tools";
 		return toolbox;
 	}
-	
+
 	/**
 	 * This method defines if the function appears in the list in JEX It should be set to true expect if you have good reason for it
 	 * 
@@ -91,7 +93,7 @@ public class JEX_ImageTools_TrackPoints extends JEXCrunchable {
 	{
 		return true;
 	}
-	
+
 	/**
 	 * Returns true if the user wants to allow multithreding
 	 * 
@@ -100,13 +102,13 @@ public class JEX_ImageTools_TrackPoints extends JEXCrunchable {
 	@Override
 	public boolean allowMultithreading()
 	{
-		return false;
+		return true;
 	}
-	
+
 	// ----------------------------------------------------
 	// --------- INPUT OUTPUT DEFINITIONS -----------------
 	// ----------------------------------------------------
-	
+
 	/**
 	 * Return the array of input names
 	 * 
@@ -119,7 +121,7 @@ public class JEX_ImageTools_TrackPoints extends JEXCrunchable {
 		inputNames[0] = new TypeName(ROI, "Points");
 		return inputNames;
 	}
-	
+
 	/**
 	 * Return the array of output names defined for this function
 	 * 
@@ -128,17 +130,18 @@ public class JEX_ImageTools_TrackPoints extends JEXCrunchable {
 	@Override
 	public TypeName[] getOutputs()
 	{
-		this.defaultOutputNames = new TypeName[2];
+		this.defaultOutputNames = new TypeName[3];
 		this.defaultOutputNames[0] = new TypeName(ROI, "Tracks Roi");
 		this.defaultOutputNames[1] = new TypeName(ROI, "Maxima (Tracked)");
-		
+		this.defaultOutputNames[2] = new TypeName(ROI, "Median Deltas Roi");
+
 		if(this.outputNames == null)
 		{
 			return this.defaultOutputNames;
 		}
 		return this.outputNames;
 	}
-	
+
 	/**
 	 * Returns a list of parameters necessary for this function to run... Every parameter is defined as a line in a form that provides the ability to set how it will be displayed to the user and what options are available to choose from The simplest
 	 * FormLine can be written as: FormLine p = new FormLine(parameterName); This will provide a text field for the user to input the value of the parameter named parameterName More complex displaying options can be set by consulting the FormLine API
@@ -151,29 +154,31 @@ public class JEX_ImageTools_TrackPoints extends JEXCrunchable {
 		// Parameter p0 = new
 		// Parameter("Dummy Parameter","Lets user know that the function has been selected.",FormLine.DROPDOWN,new
 		// String[] {"true"},0);
+		Parameter p2 = getNumThreadsParameter(10, 6);
 		Parameter p3 = new Parameter("Radius of Search", "The number of pixels left, rigth, up, and down to search for a nearest neighbor match.", "25");
 		Parameter p4 = new Parameter("Time Dim", "Name of the dimension along which points will be linked (typicall time)", "Time");
 		Parameter p5 = new Parameter("Track Dim Name", "Tracks will be grouped into new rois and indexed with a new dim of this name.", "Track");
 		Parameter p6 = new Parameter("Max Track Start Time Index", "Remove tracks that start after this time index (leave blank to ignore)", "");
 		Parameter p7 = new Parameter("Min Track End Time Index", "Remove tracks that end before this time index (leave blank to ignore)", "");
 		Parameter p8 = new Parameter("Min Track Duration", "Remove tracks that exist for fewer than this many time indicies (leave blank to ignore)", "");
-		
+
 		// Make an array of the parameters and return it
 		ParameterSet parameterArray = new ParameterSet();
+		parameterArray.addParameter(p2);
 		parameterArray.addParameter(p3);
 		parameterArray.addParameter(p4);
 		parameterArray.addParameter(p5);
 		parameterArray.addParameter(p6);
 		parameterArray.addParameter(p7);
 		parameterArray.addParameter(p8);
-		
+
 		return parameterArray;
 	}
-	
+
 	// ----------------------------------------------------
 	// --------- ERROR CHECKING METHODS -------------------
 	// ----------------------------------------------------
-	
+
 	/**
 	 * Returns the status of the input validity checking It is HIGHLY recommended to implement input checking however this can be over-ridden by returning false If over-ridden ANY batch function using this function will not be able perform error
 	 * checking...
@@ -185,11 +190,11 @@ public class JEX_ImageTools_TrackPoints extends JEXCrunchable {
 	{
 		return false;
 	}
-	
+
 	// ----------------------------------------------------
 	// --------- THE ACTUAL MEAT OF THIS FUNCTION ---------
 	// ----------------------------------------------------
-	
+
 	/**
 	 * Perform the algorithm here
 	 * 
@@ -197,16 +202,16 @@ public class JEX_ImageTools_TrackPoints extends JEXCrunchable {
 	@Override
 	public boolean run(JEXEntry entry, HashMap<String,JEXData> inputs)
 	{
-		
+
 		JEXStatics.statusBar.setProgressPercentage(0);
-		
+
 		// Collect the inputs
 		JEXData roiData = inputs.get("Points");
 		if(roiData == null || !roiData.getTypeName().getType().matches(JEXData.ROI))
 		{
 			return false;
 		}
-		
+
 		// Gather parameters
 		int radius = Integer.parseInt(this.parameters.getValueOfParameter("Radius of Search"));
 		String timeDimName = this.parameters.getValueOfParameter("Time Dim");
@@ -229,26 +234,27 @@ public class JEX_ImageTools_TrackPoints extends JEXCrunchable {
 		{
 			trackLength = Integer.parseInt(trackLengthString);
 		}
-		
+
 		// Run the function
 		DimTable roiTable = roiData.getDimTable();
 		Dim timeDim = roiTable.getDimWithName(timeDimName);
 		// DimTable timeTable = new DimTable();
 		// timeTable.add(timeDim);
 		roiTable.remove(timeDim);
-		
+
 		List<DimensionMap> loopDims = roiTable.getDimensionMaps();
 		// List<DimensionMap> timeDims = timeTable.getDimensionMaps();
-		
+
 		TreeMap<DimensionMap,ROIPlus> maximaRois = RoiReader.readObjectToRoiMap(roiData);
 		int count = 0, percentage = 0;
-		
+
 		// Rois currently contains all the points for a given time, reorganize
 		// into tracks by finding nearest neighbors
 		// Loop through time and for each time, compare to next time and choose
 		// nearest neighbors and store in temp list of neighbors
 		TreeMap<DimensionMap,ROIPlus> trackRois = new TreeMap<DimensionMap,ROIPlus>();
 		TreeMap<DimensionMap,ROIPlus> newMaximaRois = new TreeMap<DimensionMap,ROIPlus>();
+		TreeMap<DimensionMap, ROIPlus> diffRois = new TreeMap<>();
 		if(loopDims.size() == 0)
 		{
 			Pair<TreeMap<DimensionMap,ROIPlus>,TreeMap<DimensionMap,ROIPlus>> results = JEX_ImageTools_TrackPoints.trackPointsForAGivenLoopMap(maximaRois, new DimensionMap(), trackDimName, timeDim, radius, trackStart, trackEnd, trackLength);
@@ -262,25 +268,38 @@ public class JEX_ImageTools_TrackPoints extends JEXCrunchable {
 				Pair<TreeMap<DimensionMap,ROIPlus>,TreeMap<DimensionMap,ROIPlus>> results = JEX_ImageTools_TrackPoints.trackPointsForAGivenLoopMap(maximaRois, loopMap, trackDimName, timeDim, radius, trackStart, trackEnd, trackLength);
 				trackRois.putAll(results.p1);
 				newMaximaRois.putAll(results.p2);
-				
+
 				// Update status indicator
 				count = count + 1;
 				percentage = (int) (100 * ((double) (count) / ((double) loopDims.size())));
 				JEXStatics.statusBar.setProgressPercentage(percentage);
 			}
 		}
-		
+
+		// Get diffs... the dimension maps returned have a time dim.
+		TreeMap<DimensionMap,Vector<Pair<Double,Double>>> diffs = StatisticsUtility.getDiffVectors(newMaximaRois, timeDimName);
+
+		for(Entry<DimensionMap,Vector<Pair<Double,Double>>> e2 : diffs.entrySet())
+		{
+			Pair<Double,Double> diff = StatisticsUtility.getMedianDiff(e2.getValue());
+			PointList p = new PointList();
+			p.add(new IdPoint((int) Math.round(diff.p1), (int) Math.round(diff.p2), 0));
+			diffRois.put(e2.getKey().copy(), new ROIPlus(p, ROIPlus.ROI_POINT));
+		}
+
 		JEXData output0 = RoiWriter.makeRoiObject(this.outputNames[0].getName(), trackRois);
 		JEXData output1 = RoiWriter.makeRoiObject(this.outputNames[1].getName(), newMaximaRois);
-		
+		JEXData output2 = RoiWriter.makeRoiObject(this.outputNames[2].getName(), diffRois);
+
 		// Set the outputs
 		this.realOutputs.add(output0);
 		this.realOutputs.add(output1);
-		
+		this.realOutputs.add(output2);
+
 		// Return status
 		return true;
 	}
-	
+
 	public static Pair<TreeMap<DimensionMap,ROIPlus>,TreeMap<DimensionMap,ROIPlus>> trackPointsForAGivenLoopMap(TreeMap<DimensionMap,ROIPlus> maximaRois, DimensionMap loopMap, String trackDimName, Dim timeDim, Integer radius, Integer start, Integer end, Integer length)
 	{
 		// Rois currently contains all the points for a given time, reorganize
@@ -303,39 +322,39 @@ public class JEX_ImageTools_TrackPoints extends JEXCrunchable {
 			lastDim.putAll(loopMap);
 			lastDim.put(timeDim.dimName, timeDim.dimValues.get(nt - 1));
 			lastPoints = maximaRois.get(lastDim).getPointList();
-			
+
 			// Pair the points from the last timepoint to this timepoint
 			List<Pair<IdPoint,IdPoint>> pairs = HashedPointList.getNearestNeighbors(lastPoints, thisPoints, radius, false);
 			pairs = HashedPointList.filterConflicts(pairs);
-			
+
 			// Add the appropriate points to the accruing tracks
 			for (Pair<IdPoint,IdPoint> pair : pairs)
 			{
 				IdPoint lastPoint = pair.p1;
 				IdPoint thisPoint = pair.p2;
 				lastPoint.id = nt - 1;
-				
+
 				if(thisPoint != null)
 				{
 					thisPoint.id = nt;
-					tracks.putPoint(loopMap, lastPoint, thisPoint);
 				}
+				tracks.putPoint(loopMap, lastPoint, thisPoint);
 				// Logs.log(pair.toString(), 0, this);
 			}
 			// Logs.log("\n", 0, this);
-			
+
 			// Update the hash table in tracks to be keyed by the newest
 			// points added to the pointLists
 			tracks.updateTracks(loopMap);
 		}
-		
+
 		// Convert the PointLists to PointRois and save them in trackRois
 		int trackNum = 1;
 		// Store the PointLists by track number as we create the trackRois
 		TreeMap<DimensionMap,IdPoint> newMaximaPointLists = new TreeMap<DimensionMap,IdPoint>();
 		for (PointList pl : tracks.getTracksList(loopMap)) // getTrackList
-		// sorts by position
-		// of first point;
+			// sorts by position
+			// of first point;
 		{
 			boolean keep = true;
 			if(start != null && pl.get(0).id > start)
@@ -350,7 +369,7 @@ public class JEX_ImageTools_TrackPoints extends JEXCrunchable {
 			{
 				keep = false;
 			}
-			
+
 			if(keep)
 			{
 				DimensionMap newDim = new DimensionMap();
@@ -362,23 +381,23 @@ public class JEX_ImageTools_TrackPoints extends JEXCrunchable {
 				ROIPlus roi = new ROIPlus(temp, ROIPlus.ROI_POINT);
 				roi.setPattern(pl.copy());
 				trackRois.put(newDim.copy(), roi);
-				
+
 				for (IdPoint p : pl)
 				{
-					newDim.put(timeDim.dimName, "" + p.id);
+					newDim.put(timeDim.dimName, "" + timeDim.values().get(p.id));
 					newMaximaPointLists.put(newDim.copy(), p.copy());
 				}
 				trackNum = trackNum + 1;
 			}
 		}
-		
+
 		// Make new maxima rois with id's that actually match for different times
 		for (String time : timeDim.dimValues)
 		{
 			// for each time
 			DimensionMap newMap = loopMap.copy();
 			newMap.put(timeDim.dimName, "" + time);
-			
+
 			TreeMap<DimensionMap,IdPoint> filteredPoints = JEXTableReader.filter(newMaximaPointLists, newMap);
 			PointList temp = new PointList();
 			for (Entry<DimensionMap,IdPoint> e : filteredPoints.entrySet())
@@ -390,7 +409,7 @@ public class JEX_ImageTools_TrackPoints extends JEXCrunchable {
 			ROIPlus newMaximaRoi = new ROIPlus(temp, ROIPlus.ROI_POINT);
 			newMaximaRois.put(newMap, newMaximaRoi);
 		}
-		
+
 		return new Pair<TreeMap<DimensionMap,ROIPlus>,TreeMap<DimensionMap,ROIPlus>>(trackRois, newMaximaRois);
 	}
 }

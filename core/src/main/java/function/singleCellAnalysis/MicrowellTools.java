@@ -1,19 +1,5 @@
 package function.singleCellAnalysis;
 
-import function.imageUtility.MaximumFinder;
-import function.plugin.old.JEX_ImageFilters;
-import ij.ImagePlus;
-import ij.gui.Roi;
-import ij.io.FileSaver;
-import ij.plugin.filter.Convolver;
-import ij.plugin.filter.RankFilters;
-import ij.process.FloatProcessor;
-import ij.process.ImageProcessor;
-import image.roi.HashedPointList;
-import image.roi.IdPoint;
-import image.roi.PointList;
-import image.roi.ROIPlus;
-
 import java.awt.Point;
 import java.awt.Shape;
 import java.util.Collections;
@@ -23,6 +9,19 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.Vector;
 
+import function.imageUtility.MaximumFinder;
+import ij.ImagePlus;
+import ij.gui.Roi;
+import ij.io.FileSaver;
+import ij.plugin.filter.Convolver;
+import ij.plugin.filter.GaussianBlur;
+import ij.process.FloatProcessor;
+import ij.process.ImageProcessor;
+import ij.process.ImageStatistics;
+import image.roi.HashedPointList;
+import image.roi.IdPoint;
+import image.roi.PointList;
+import image.roi.ROIPlus;
 import jex.utilities.FunctionUtility;
 import logs.Logs;
 import miscellaneous.Copiable;
@@ -31,12 +30,12 @@ import miscellaneous.FileUtility;
 import miscellaneous.Pair;
 import miscellaneous.VectorUtility;
 
-public class MicrowellFinder implements Comparator<IdPoint> {
+public class MicrowellTools implements Comparator<IdPoint> {
 	
 	public static void main(String[] args)
 	{
 		DirectoryManager.setHostDirectory("/Users/jaywarrick/Desktop");
-		FloatProcessor imp = makeKernel(20, 13, false);
+		FloatProcessor imp = makeKernel(20, 13, false, true, 0);
 		ImagePlus im = FunctionUtility.makeImageToSave(imp, "false", 8);
 		FileSaver fs = new FileSaver(im);
 		String path = null;
@@ -53,7 +52,15 @@ public class MicrowellFinder implements Comparator<IdPoint> {
 		}
 	}
 	
-	public static FloatProcessor makeKernel(int outerRad, int innerRad, boolean inverted)
+	/**
+	 * Default is white outer and black inner. If inverted, you get a white inner and black outer.
+	 * 
+	 * @param outerRad
+	 * @param innerRad
+	 * @param inverted
+	 * @return
+	 */
+	public static FloatProcessor makeKernel(int outerRad, int innerRad, boolean inverted, boolean normalizeWeights, double preSmoothRadius)
 	{
 		int out = outerRad * 2 + 1;
 		// int in = innerRad*2+1;
@@ -103,15 +110,30 @@ public class MicrowellFinder implements Comparator<IdPoint> {
 		}
 		
 		ret.setFloatArray(pixels);
+		
+		if(preSmoothRadius > 0)
+		{
+			GaussianBlur gb = new GaussianBlur();
+			gb.blurGaussian(ret, preSmoothRadius, preSmoothRadius, 0.0002); // Default accuracy = 0.0002
+		}
+		
+		if(normalizeWeights)
+		{
+			ImageStatistics is = ImageStatistics.getStatistics(ret);
+			ret.subtract(is.mean);
+			ret.multiply(1.0/((double) out*out));
+			ret.resetMinAndMax();
+		}
+		
 		return ret;
 	}
 	
-	@SuppressWarnings("deprecation")
 	public static Vector<FloatProcessor> filterAndConvolve(FloatProcessor imp, double radius, boolean edgeFilter, FloatProcessor kernel, boolean isTest)
 	{
 		Vector<FloatProcessor> results = null;
+		
 		if(isTest)
-	{
+		{
 			results = new Vector<FloatProcessor>();
 			results.add(kernel);
 		}
@@ -120,12 +142,10 @@ public class MicrowellFinder implements Comparator<IdPoint> {
 		// Otherwise, it is fluorescence and we would like to perform a mean radius and edge finding filter.
 		if(radius > 0)
 		{
-			// Filter the image using the given radius
-			RankFilters rF = new RankFilters();
-			rF.setup(JEX_ImageFilters.MEAN, new ImagePlus("filtered", imp));
-			rF.makeKernel(radius);
-			rF.run(imp);
+			GaussianBlur gb = new GaussianBlur();
+			gb.blurGaussian(imp, radius, radius, 0.0002); // Default accuracy = 0.0002
 		}
+		
 		if(isTest)
 		{
 			results.add(new FloatProcessor(imp.getFloatArray()));
@@ -135,6 +155,7 @@ public class MicrowellFinder implements Comparator<IdPoint> {
 		{
 			imp.findEdges();
 		}
+		
 		if(isTest)
 		{
 			results.add(new FloatProcessor(imp.getFloatArray()));
@@ -147,6 +168,7 @@ public class MicrowellFinder implements Comparator<IdPoint> {
 		// e.printStackTrace();
 		// }
 		Convolver con = new Convolver();
+		con.setNormalize(false);
 		con.convolveFloat(imp, (float[]) kernel.getPixels(), kernel.getWidth(), kernel.getHeight());
 		if(isTest)
 		{
@@ -171,7 +193,7 @@ public class MicrowellFinder implements Comparator<IdPoint> {
 			r = roi.getRoi();
 			imp.setRoi(r);
 		}
-		ROIPlus points = (ROIPlus) mf.findMaxima(imp, tol, threshold, MaximumFinder.ROI, true, false, r, false);
+		ROIPlus points = (ROIPlus) mf.findMaxima(imp, tol, threshold, MaximumFinder.ROI, true, false, r, false, true);
 		
 		// The findMaxima algorithm treats all ROIs as a rectangle; thus, we have to filter the points
 		// further in case the roi is a polygon or some other non-rectangular shape.
@@ -191,7 +213,7 @@ public class MicrowellFinder implements Comparator<IdPoint> {
 		{
 			ret = points.getPointList();
 		}
-		Logs.log("Found " + ret.size() + " maxima.", 0, MicrowellFinder.class.getSimpleName());
+		Logs.log("Found " + ret.size() + " maxima.", 0, MicrowellTools.class.getSimpleName());
 		return ret;
 	}
 	
@@ -228,7 +250,7 @@ public class MicrowellFinder implements Comparator<IdPoint> {
 			grid.clear();
 		}
 		
-		Logs.log("Found " + grid.size() + " grid points.", 0, MicrowellFinder.class.getSimpleName());
+		Logs.log("Found " + grid.size() + " grid points.", 0, MicrowellTools.class.getSimpleName());
 		
 		// interpolate grid points if possible and add them to grid
 		if(interpolate)
@@ -318,7 +340,7 @@ public class MicrowellFinder implements Comparator<IdPoint> {
 		}
 		
 		// Sort the points by id and return the pointlist
-		Collections.sort(ret, new MicrowellFinder());
+		Collections.sort(ret, new MicrowellTools());
 		return ret;
 	}
 	

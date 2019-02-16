@@ -9,9 +9,10 @@ import Database.Definition.ParameterSet;
 import Database.Definition.TypeName;
 import Database.SingleUserDatabase.JEXWriter;
 import function.JEXCrunchable;
-import function.singleCellAnalysis.MicrowellFinder;
+import function.singleCellAnalysis.MicrowellTools;
 import ij.ImagePlus;
 import ij.process.FloatProcessor;
+import ij.process.ImageStatistics;
 
 import java.util.HashMap;
 import java.util.TreeMap;
@@ -83,7 +84,7 @@ public class JEX_SingleCell_MicrowellConvolve extends JEXCrunchable {
 	@Override
 	public boolean showInList()
 	{
-		return true;
+		return false;
 	}
 	
 	/**
@@ -258,7 +259,11 @@ public class JEX_SingleCell_MicrowellConvolve extends JEXCrunchable {
 		
 		int count = 0;
 		int total = subTable.mapCount();
-		FloatProcessor kernel = MicrowellFinder.makeKernel(outerRad, innerRad, inverted);
+		FloatProcessor kernel = MicrowellTools.makeKernel(outerRad, innerRad, inverted, true, 0.0);
+		ImageStatistics is = ImageStatistics.getStatistics(kernel);
+		kernel.subtract(is.mean);
+		kernel.resetMinAndMax();
+//		kernel.multiply(1/kernel.getWidth()*kernel.getHeight());
 		JEXStatics.statusBar.setProgressPercentage(0);
 		for (DimensionMap map : subTable.getMapIterator())
 		{
@@ -272,7 +277,7 @@ public class JEX_SingleCell_MicrowellConvolve extends JEXCrunchable {
 			FloatProcessor imp = (FloatProcessor) (new ImagePlus(path)).getProcessor().convertToFloat();
 			
 			// Convolve the image
-			Vector<FloatProcessor> results = MicrowellFinder.filterAndConvolve(imp, radius, edgeFilter, kernel, isTest);
+			Vector<FloatProcessor> results = MicrowellTools.filterAndConvolve(imp, radius, edgeFilter, kernel, isTest);
 			
 			// Save the image
 			ImagePlus im = FunctionUtility.makeImageToSave(imp, norm, 1, depth, false);

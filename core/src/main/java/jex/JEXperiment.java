@@ -958,6 +958,7 @@ public class JEXperiment extends JFrame implements ActionListener, WindowListene
 	
 	public void cleanDB()
 	{
+		this.displayFunctionPane();
 		JEXDBIO.cleanDB(JEXStatics.jexManager.getCurrentDatabase());
 	}
 	

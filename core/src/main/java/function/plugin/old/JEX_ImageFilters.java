@@ -17,7 +17,10 @@ import ij.ImagePlus;
 import ij.plugin.filter.GaussianBlur;
 import ij.process.Blitter;
 import ij.process.ImageProcessor;
+import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
+import miscellaneous.CSVList;
+import miscellaneous.StringUtility;
 import tables.DimTable;
 import tables.DimensionMap;
 
@@ -33,7 +36,7 @@ import tables.DimensionMap;
  */
 public class JEX_ImageFilters extends JEXCrunchable {
 
-	public static String MEAN = "mean", MIN = "min", MAX = "max", MEDIAN = "median", VARIANCE = "variance", STDEV = "std. dev.", OUTLIERS="outliers", DESPECKLE="despeckle", REMOVE_NAN="remove NaN", OPEN="open", CLOSE="close", OPEN_TOPHAT="open top-hat", CLOSE_TOPHAT="close top-hat", SUM="sum", SNR="Signal:Noise Ratio", NSR="Noise:Signal Ratio", GAUSSIAN="Gaussian";
+	public static String MEAN = "mean", MIN = "min", MAX = "max", MEDIAN = "median", VARIANCE = "variance", STDEV = "std. dev.", OUTLIERS="outliers", DESPECKLE="despeckle", REMOVE_NAN="remove NaN", OPEN="open", CLOSE="close", OPEN_TOPHAT="open top-hat", CLOSE_TOPHAT="close top-hat", SUM="sum", SNR="Signal:Noise Ratio", NSR="Noise:Signal Ratio", GAUSSIAN="Gaussian", DOG="DoG";
 	public static String OP_NONE = "None", OP_LOG = "Natural Log", OP_EXP="Exp", OP_SQRT="Square Root", OP_SQR="Square", OP_INVERT="Invert";
 
 	public JEX_ImageFilters()
@@ -146,10 +149,10 @@ public class JEX_ImageFilters extends JEXCrunchable {
 		// Parameter p0 = new
 		// Parameter("Dummy Parameter","Lets user know that the function has been selected.",FormLine.DROPDOWN,new
 		// String[] {"true"},0);
-		Parameter p1 = new Parameter("Filter Type", "Type of filter to apply.", Parameter.DROPDOWN, new String[] { MEAN, MIN, MAX, MEDIAN, VARIANCE, STDEV, OUTLIERS, DESPECKLE, REMOVE_NAN, OPEN, CLOSE, OPEN_TOPHAT, CLOSE_TOPHAT, SUM, SNR, NSR, GAUSSIAN}, 0);
+		Parameter p1 = new Parameter("Filter Type", "Type of filter to apply.", Parameter.DROPDOWN, new String[] { MEAN, MIN, MAX, MEDIAN, VARIANCE, STDEV, OUTLIERS, DESPECKLE, REMOVE_NAN, OPEN, CLOSE, OPEN_TOPHAT, CLOSE_TOPHAT, SUM, SNR, NSR, GAUSSIAN, DOG}, 0);
 		Parameter p7 = new Parameter("Exclusion Filter Table", "<DimName>=<Val1>,<Val2>,...<Valn>;<DimName2>=<Val1>,<Val2>,...<Valn>, Specify the dimension and dimension values to exclude. Leave blank to process all.", "");
 		Parameter p8 = new Parameter("Keep Unprocessed Images?", "Should the images within the object that are exlcluded from analysis by the Dimension Filter be kept in the result?", Parameter.CHECKBOX, true);
-		Parameter p2 = new Parameter("Radius", "Radius of filter in pixels.", "2.0");
+		Parameter p2 = new Parameter("Radius", "Radius/Sigma of filter in pixels. (CSV list of 2 radii of increasing size for DoG <Val1>,<Val2>, whitespace ok)", "2.0");
 		Parameter p3 = new Parameter("Output Bit-Depth", "Bit-Depth of the output image", Parameter.DROPDOWN, new String[] { "8", "16", "32" }, 2);
 		Parameter p4 = getNumThreadsParameter(10, 6);
 		Parameter p5 = new Parameter("Post-math Operation", "Choose a post math operation to perform if desired. Otherwise, leave as 'None'.", Parameter.DROPDOWN, new String[] { OP_NONE, OP_LOG, OP_EXP, OP_SQRT, OP_SQR, OP_INVERT}, 0);
@@ -201,7 +204,8 @@ public class JEX_ImageFilters extends JEXCrunchable {
 			return false;
 
 		// Gather parameters
-		double radius = Double.parseDouble(parameters.getValueOfParameter("Radius"));
+		CSVList radii = new CSVList(StringUtility.removeAllWhitespace(parameters.getValueOfParameter("Radius")));
+		double radius = Double.parseDouble(radii.get(0));
 		String method = parameters.getValueOfParameter("Filter Type");
 		String filterString = parameters.getValueOfParameter("Exclusion Filter Table");
 		DimTable filterTable = new DimTable(filterString);
@@ -240,15 +244,18 @@ public class JEX_ImageFilters extends JEXCrunchable {
 			ImageProcessor ip = im.getProcessor().convertToFloat();
 			ImageProcessor orig = null;
 			
-			if(method.equals(OPEN_TOPHAT) || method.equals(CLOSE_TOPHAT) || method.equals(SNR) || method.equals(NSR))
+			if(method.equals(OPEN_TOPHAT) || method.equals(CLOSE_TOPHAT) || method.equals(SNR) || method.equals(NSR) || method.equals(DOG))
 			{
 				orig = ip.duplicate();
 			}
 
 			// //// Begin Actual Function
 			RankFilters2 rF = new RankFilters2();
-			rF.rank(ip, radius, getMethodInt(method));
 			GaussianBlur gb = new GaussianBlur();
+			if(!(method.equals(GAUSSIAN) || method.equals(DOG)))
+			{
+				rF.rank(ip, radius, getMethodInt(method));
+			}
 			
 			if(method.equals(OPEN_TOPHAT) || method.equals(CLOSE_TOPHAT))
 			{
@@ -259,6 +266,22 @@ public class JEX_ImageFilters extends JEXCrunchable {
 			else if(method.equals(GAUSSIAN))
 			{
 				gb.blurGaussian(ip, radius, radius, 0.0002); // Default accuracy = 0.0002
+			}
+			else if(method.equals(DOG))
+			{
+				if(radii.size() > 1)
+				{
+					double radius2 = Double.parseDouble(radii.get(1));
+					gb.blurGaussian(orig, radius, radius, 0.0002); // Default accuracy = 0.0002
+					gb.blurGaussian(ip, radius2, radius2, 0.0002); // Default accuracy = 0.0002
+					orig.copyBits(ip, 0, 0, Blitter.SUBTRACT);
+					ip = orig;
+					orig = null;
+				}
+				else
+				{
+					JEXDialog.messageDialog("The DoG filter requires two radii as a CSV list. Supply as a simple CSV list, 'radius1, radius2'", this);
+				}
 			}
 			else if(method.equals(NSR))
 			{

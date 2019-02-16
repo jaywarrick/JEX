@@ -721,7 +721,7 @@ public class ImportFlowImages extends JEXPlugin {
 		
 		// Get Maxima
 		MaximumFinder mf = new MaximumFinder();
-		ROIPlus maxima = (ROIPlus) mf.findMaxima(bp, 25, 125, MaximumFinder.ROI, true, false, roi, false);
+		ROIPlus maxima = (ROIPlus) mf.findMaxima(bp, 25, 125, MaximumFinder.ROI, true, false, roi, false, true);
 
 		// Get Regions
 		Img<UnsignedByteType> img = ImageJFunctions.wrapByte(new ImagePlus("Duh", bp));

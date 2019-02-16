@@ -38,7 +38,7 @@ import tables.DimensionMap;
  */
 public class JEX_StackProjection extends JEXCrunchable {
 
-	public static final String METHOD_MEAN = "mean", METHOD_MIN = "min", METHOD_MAX = "max", METHOD_MEDIAN = "median", METHOD_SUM = "sum", METHOD_STDEV = "std. dev.", METHOD_DIFF = "diff (final-initial)", METHOD_ABSDIFF = "absolute diff [abs(final-initial)]", METHOD_MULT = "multiply";
+	public static final String METHOD_MEAN = "mean", METHOD_MIN = "min", METHOD_MAX = "max", METHOD_MEDIAN = "median", METHOD_SUM = "sum", METHOD_STDEV = "std. dev.", METHOD_DIFF = "diff (final-initial)", METHOD_DIFF2 = "diff (initial-final)", METHOD_ABSDIFF = "absolute diff [abs(final-initial)]", METHOD_MULT = "multiply";
 
 	public JEX_StackProjection()
 	{}
@@ -148,7 +148,7 @@ public class JEX_StackProjection extends JEXCrunchable {
 	public ParameterSet requiredParameters()
 	{
 		Parameter p0 = new Parameter("Dimension", "Name of dimension to perform the operation (case and whitespace sensitive).", "Z");
-		Parameter p1 = new Parameter("Math Operation", "Type of math operation to perform.", Parameter.DROPDOWN, new String[] { METHOD_MEAN, METHOD_MAX, METHOD_MIN, METHOD_SUM, METHOD_STDEV, METHOD_MEDIAN, METHOD_DIFF, METHOD_ABSDIFF, METHOD_MULT}, 5);
+		Parameter p1 = new Parameter("Math Operation", "Type of math operation to perform.", Parameter.DROPDOWN, new String[] { METHOD_MEAN, METHOD_MAX, METHOD_MIN, METHOD_SUM, METHOD_STDEV, METHOD_MEDIAN, METHOD_DIFF, METHOD_DIFF2, METHOD_ABSDIFF, METHOD_MULT}, 5);
 		Parameter p2 = new Parameter("Sliding Window Projection", "Perform the projection for the whole stack or for N number of images at a time, shifting by 1 each time.", Parameter.DROPDOWN, new String[] { "true", "false" }, 1);
 		Parameter p3 = new Parameter("N", "Number of images in sliding window (ignored if not sliding window).", "2");
 		Parameter p4 = getNumThreadsParameter(10, 6);
@@ -249,11 +249,15 @@ public class JEX_StackProjection extends JEXCrunchable {
 					ImageProcessor finalImp = null;
 					if(mathOperation.equals(METHOD_DIFF))
 					{
-						finalImp = evaluate(stackMaps, imageData, false);
+						finalImp = evaluate(stackMaps, imageData, false, true);
 					}
-					if(mathOperation.equals(METHOD_ABSDIFF))
+					else if(mathOperation.equals(METHOD_DIFF2))
 					{
-						finalImp = evaluate(stackMaps, imageData, true);
+						finalImp = evaluate(stackMaps, imageData, false, false);
+					}
+					else if(mathOperation.equals(METHOD_ABSDIFF))
+					{
+						finalImp = evaluate(stackMaps, imageData, true, true);
 					}
 					else if(mathOperation.equals(METHOD_MULT))
 					{
@@ -286,11 +290,15 @@ public class JEX_StackProjection extends JEXCrunchable {
 				ImageProcessor finalImp = null;
 				if(mathOperation.equals(METHOD_DIFF))
 				{
-					finalImp = evaluate(stackMaps, imageData, false);
+					finalImp = evaluate(stackMaps, imageData, false, true);
+				}
+				else if(mathOperation.equals(METHOD_DIFF2))
+				{
+					finalImp = evaluate(stackMaps, imageData, false, false);
 				}
 				else if(mathOperation.equals(METHOD_ABSDIFF))
 				{
-					finalImp = evaluate(stackMaps, imageData, true);
+					finalImp = evaluate(stackMaps, imageData, true, true);
 				}
 				else if(mathOperation.equals(METHOD_MULT))
 				{
@@ -345,7 +353,7 @@ public class JEX_StackProjection extends JEXCrunchable {
 		return true;
 	}
 
-	public static ImageProcessor evaluate(List<DimensionMap> stack, JEXData image, boolean abs)
+	public static ImageProcessor evaluate(List<DimensionMap> stack, JEXData image, boolean abs, boolean finalMinusInitial)
 	{
 
 		String pathToGet = ImageReader.readImagePath(image.getData(stack.get(0)), image.hasVirtualFlavor());
@@ -355,7 +363,20 @@ public class JEX_StackProjection extends JEXCrunchable {
 		pathToGet = ImageReader.readImagePath(image.getData(stack.get(stack.size()-1)), image.hasVirtualFlavor());
 		ImageProcessor ret = (new ImagePlus(pathToGet)).getProcessor();
 		ret = ret.convertToFloatProcessor();
-		Blitter b = new FloatBlitter((FloatProcessor) ret);
+		
+		Blitter b = null;
+		if(finalMinusInitial)
+		{
+			b = new FloatBlitter((FloatProcessor) ret);
+			b.copyBits(initial, 0, 0, Blitter.SUBTRACT);
+		}
+		else
+		{
+			b = new FloatBlitter((FloatProcessor) initial);
+			b.copyBits(ret, 0, 0, Blitter.SUBTRACT);
+			ret = initial;
+		}
+		
 //		Blitter b = null;
 //		if(bitDepth == 8)
 //		{
@@ -369,13 +390,13 @@ public class JEX_StackProjection extends JEXCrunchable {
 //		{
 //			b = new FloatBlitter((FloatProcessor) ret);
 //		}
-		b.copyBits(initial, 0, 0, Blitter.SUBTRACT);
+		
 		ret.resetMinAndMax();
 		if(abs)
 		{
 			((FloatProcessor) ret).abs();
 		}
-		if(ret.getMin() < 0)
+		if(ret.getMin() < 0 && bitDepth == 32)
 		{
 			return ret;
 		}
