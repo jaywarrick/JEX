@@ -399,6 +399,18 @@ public class ImageUtility {
 
 		return new Pair<>(weightImages, ip2);
 	}
+	
+	private static FloatProcessor getImageMaskWeights(FloatProcessor ip)
+	{
+		float[] pixels = (float[]) ip.getPixels();
+		for(int j = 0; j < pixels.length; j++)
+		{
+			// Invert the Mask for weighting as we assume that the objects are white.
+			if(pixels[j] <= 0) pixels[j] = 1;
+			else if(pixels[j] > 0) pixels[j] = 0.0000001f;
+		}
+		return(ip);
+	}
 
 	private static FloatProcessor[] transformToWeights(FloatProcessor ip, double wMed, double wMad, double...scaling)
 	{
@@ -612,6 +624,72 @@ public class ImageUtility {
 		}
 		
 		return ret;
+	}
+	
+	public static FloatProcessor getWeightedMeanFilterImage(FloatProcessor original, FloatProcessor mask, boolean doSubtraction, boolean doBackgroundOnly, boolean doDivision, double meanRadius, double varRadius, double subScale, double threshScale, String operation, Double nominal, Double sigma, double darkfield)
+	{
+		//	FloatProcessor original = im.getProcessor().convertToFloatProcessor();
+		FloatProcessor copyOfOriginal = null, subLocalMean = null;
+		if(doSubtraction || doDivision)
+		{
+			copyOfOriginal = (FloatProcessor) original.duplicate(); // We need this 'original' image regardless of whether we are only doing subtraction, thresholding, or both.
+		}
+
+		// Get the Variance weighted image
+		FloatProcessor subWeights = ImageUtility.getImageMaskWeights(mask);
+
+		// Debug
+		//FileUtility.showImg(w, true);
+
+		//RankFilters2 rF = new RankFilters2();
+		GaussianBlur gb = new GaussianBlur();
+
+		// Perform the final division with the summed weights to get weighted means for each pixel (i.e., sum(w*ret)/sum(w)).
+		if(doBackgroundOnly || doSubtraction || doDivision)
+		{
+			subLocalMean = original;
+
+			// Multiply the original image by the weights and sum
+			subLocalMean.copyBits(subWeights, 0, 0, Blitter.MULTIPLY); 		// subLocalMean (Multiplied)
+			gb.blurGaussian(subLocalMean, 0.4*meanRadius, 0.4*meanRadius, 0.0002);
+			//rF.rank(subLocalMean, meanRadius, RankFilters2.SUM);  		// subLocalMean (Multiplied, Summed)
+			gb.blurGaussian(subWeights, 0.4*meanRadius, 0.4*meanRadius, 0.0002);
+			//rF.rank(subWeights, meanRadius, RankFilters2.SUM);    		// subWeights   (Summed)
+			subLocalMean.copyBits(subWeights, 0, 0, Blitter.DIVIDE);   		// subLocalMean (Multiplied, Summed, Divided)
+		}
+
+		// Save the subtracted or filtered image
+		if(doSubtraction)
+		{
+			//				FileUtility.showImg(copyOfOriginal, true);
+			//				FileUtility.showImg(subLocalMean, true);
+			copyOfOriginal.copyBits(subLocalMean, 0, 0, Blitter.SUBTRACT);	// copyOfOriginal (Subtracted)
+			//				FileUtility.showImg(copyOfOriginal, true);
+			if(nominal != 0)
+			{
+				copyOfOriginal.add(nominal);								// copyOfOriginal (Subtracted, Offset)
+			}
+		}
+		else if(doDivision)
+		{
+			ImageStatistics stats = subLocalMean.getStats();
+			double meanI = stats.mean - darkfield;
+			copyOfOriginal.subtract(darkfield);
+			subLocalMean.subtract(darkfield);
+			copyOfOriginal.copyBits(subLocalMean, 0, 0, Blitter.DIVIDE);	// copyOfOriginal (Divided)
+			copyOfOriginal.multiply(meanI);
+			copyOfOriginal.subtract(meanI);									// copyOfOriginal (Divided, Scaled)
+			if(nominal != 0)
+			{
+				copyOfOriginal.add(nominal);								// copyOfOriginal (Divided, Scaled Offset)
+			}
+		}
+		else
+		{
+			copyOfOriginal = subLocalMean;
+		}
+
+		return copyOfOriginal;
 	}
 
 	/**

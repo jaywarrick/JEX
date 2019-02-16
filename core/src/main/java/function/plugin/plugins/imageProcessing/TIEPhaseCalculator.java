@@ -360,14 +360,14 @@ public class TIEPhaseCalculator extends JEXPlugin {
 							return false;
 						}
 						
-						if(filterTable.testMapAsExclusionFilter(tileMap))
-						{
-							Logs.log("Skipping the processing and saving of " + tileMap.toString(), this);
-							count = count + 1;
-							percentage = (int) (100 * ((double) (count) / ((double) total * this.rows * this.cols)));
-							JEXStatics.statusBar.setProgressPercentage(percentage);
-							continue;
-						}
+						//						if(filterTable.testMapAsExclusionFilter(tileMap))
+						//						{
+						//							Logs.log("Skipping the processing and saving of " + tileMap.toString(), this);
+						//							count = count + 1;
+						//							percentage = (int) (100 * ((double) (count) / ((double) total * this.rows * this.cols)));
+						//							JEXStatics.statusBar.setProgressPercentage(percentage);
+						//							continue;
+						//						}
 						
 						if(tie == null)
 						{

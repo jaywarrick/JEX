@@ -214,6 +214,25 @@ public class ImageStackStitcherFixedGrid extends JEXPlugin {
 			try
 			{
 				List<DimensionMap> mapsToGet = ImageStackStitcher.getMapsForStitching(locDim, partialMap);
+				Vector<DimensionMap> temp = new Vector<>();
+				int tileCount = locDim.size();
+				for(DimensionMap tempMap : mapsToGet)
+				{
+					if(filterTable.testMapAsExclusionFilter(tempMap))
+					{
+						Logs.log("Skipping the processing and saving of " + partialMap.toString(), this);
+						tileCount = tileCount - 1;
+						rows = (int)Math.ceil(((double) tileCount)/((double) cols));
+						rowsPerPage = (int)Math.ceil(((double) rows)/((double) pages));
+						// Run the function
+						imageCoords = getPageMovements(horDxImage, horDyImage, verDxImage, verDyImage, rows, cols, horizontal, snaking, startPt, scale, pages);
+					}
+					else
+					{
+						temp.add(tempMap);
+					}
+				}
+				mapsToGet = temp;
 				for(int p = 0; p < pages; p++)
 				{
 					List<DimensionMap> pageOfMapsToGet = getPageOfMapsToGet(mapsToGet, cols, rowsPerPage, p);

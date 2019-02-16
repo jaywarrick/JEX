@@ -268,11 +268,11 @@ public class JEXFunction {
 			{
 				savedOutput.add(d);
 			}
-			else
+			else if(d != null)
 			{
 				for(Integer i : this.outputs.keySet())
 				{
-					if(this.outputs.get(i).equals(d.getTypeName()))
+					if(this.outputs.get(i) != null && this.outputs.get(i).equals(d.getTypeName()))
 					{
 						if(this.savingSelections.get(i))
 						{

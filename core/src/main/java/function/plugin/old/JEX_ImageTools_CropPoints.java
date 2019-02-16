@@ -21,6 +21,7 @@ import java.awt.Point;
 import java.util.HashMap;
 import java.util.TreeMap;
 
+import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import jex.utilities.FunctionUtility;
 import logs.Logs;
@@ -259,9 +260,17 @@ public class JEX_ImageTools_CropPoints extends JEXCrunchable {
 				boolean isLine = pointROI.isLine();
 				if(isLine || pointROI.type != ROIPlus.ROI_POINT)
 				{
+					JEXDialog.messageDialog("The roi provided is not a point roi. Aborting.");
 					return false;
 				}
 				pl = pointROI.getPointList();
+				if(pl.size() == 0)
+				{
+					Logs.log("No points were found at " + map.toString() + ". Skipping.", this);
+					count = count + 1;
+					JEXStatics.statusBar.setProgressPercentage(count * 100 / total);
+					continue;
+				}
 				for (IdPoint p : pl)
 				{
 					if(this.isCanceled())
