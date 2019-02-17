@@ -179,7 +179,7 @@ public class UnmixingParameterExtraction extends JEXPlugin implements Comparator
 
 			Vector<Vector<Double>> samples = fu.hexagonallySampleNFromImages(roi, true, this.pixels, impa);
 			
-			SimplexOptimizer optimizer = new SimplexOptimizer(1e-3, 1e-3);
+			SimplexOptimizer optimizer = new SimplexOptimizer(1e-5, 1e-5);
 			try
 			{
 				PointValuePair optimum = optimizer.optimize(new MaxEval(1000),
@@ -277,7 +277,6 @@ class ErrorFunction implements MultivariateFunction, OptimizationData
 	{
 		double ret = 0;
 		double[] ts = this.getTrueSignal(point);
-		Logs.log("", this);
 		for(int i = 0; i < samples; i++)
 		{
 			ret = ret + this.getHeavisideWeights(ts[i]);
