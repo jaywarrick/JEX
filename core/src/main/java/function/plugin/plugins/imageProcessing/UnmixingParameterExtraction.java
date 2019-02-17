@@ -29,6 +29,7 @@ import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
 import function.plugin.plugins.featureExtraction.FeatureUtils;
 import ij.ImagePlus;
+import ij.plugin.filter.GaussianBlur;
 import ij.process.ImageProcessor;
 import image.roi.ROIPlus;
 import jex.statics.JEXDialog;
@@ -93,6 +94,12 @@ public class UnmixingParameterExtraction extends JEXPlugin implements Comparator
 	@ParameterMarker(uiOrder=6, name="Calculate N Times", description="If desired, one can calculate the unmixing parameters for all images (default, 0) or for just N sets of the multi-channel images (enter number here).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0")
 	int N;
 	
+	@ParameterMarker(uiOrder=7, name="Presmoothing Radius", description="If desired, presmooth the image before calculating the parameters (reducing the influence of noise). (Use 0 to skip step).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0")
+	double radius;
+	
+	@ParameterMarker(uiOrder=8, name="Report Median Results", description="If desired, summarize results by channel using the median of results.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
+	boolean summarize;
+	
 	/////////// Define Outputs ///////////
 	
 	@OutputMarker(uiOrder=1, name="Unmixing Parameters", type=MarkerConstants.TYPE_FILE, flavor="", description="Table of unmixing parameters (Alphas and a Beta) where Final = Signal - Alpha1*bg1 - Alpha2*bg2 ... - Beta", enabled=true)
@@ -119,7 +126,7 @@ public class UnmixingParameterExtraction extends JEXPlugin implements Comparator
 		TreeMap<DimensionMap,Double> outputParams = new TreeMap<DimensionMap,Double>();
 		
 		DimTable itrDT = imageData.getDimTable().getSubTable(channelDimName);
-		int total = itrDT.mapCount();
+		int total = Math.min(itrDT.mapCount(), this.N);
 		Dim channelDim = imageData.getDimTable().getDimWithName(channelDimName);
 		
 		// Get Channel Names to work with
@@ -157,6 +164,12 @@ public class UnmixingParameterExtraction extends JEXPlugin implements Comparator
 			for(int i = 0; i < bgNames.size(); i++)
 			{
 				impa[i+1] = new ImagePlus(imageMap.get(map.copyAndSet(channelDimName + "=" + bgNames.get(i)))).getProcessor();
+				if(this.radius > 0)
+				{
+					// //// Begin Actual Function
+					GaussianBlur gb = new GaussianBlur();
+					gb.blurGaussian(impa[i+1], radius, radius, 0.0002); // Default accuracy = 0.0002
+				}
 			}
 			
 			if(this.isCanceled())
@@ -199,7 +212,7 @@ public class UnmixingParameterExtraction extends JEXPlugin implements Comparator
 			JEXStatics.statusBar.setProgressPercentage(percentage);
 		}
 		
-		if(this.N > 0)
+		if(this.summarize)
 		{
 			TreeMap<DimensionMap,Double> newOutput = new TreeMap<>();
 			// find the median of the parameter values.
