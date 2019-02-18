@@ -44,8 +44,9 @@ public class BatchPanelList implements MouseListener {
 		title1.setFont(FontUtility.boldFont);
 		headerPane1.add(title1);
 		
-		System.setOut(consolePS);
-		System.setErr(consolePS);
+		this.consoleTitle.setText("CONSOLE (ON)");
+		System.setOut(this.consolePS);
+		System.setErr(this.consolePS);
 		consoleOn = true;
 		
 		this.console.panel().addMouseListener(this);

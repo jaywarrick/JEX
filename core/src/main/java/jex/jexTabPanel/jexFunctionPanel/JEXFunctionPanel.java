@@ -58,7 +58,7 @@ public class JEXFunctionPanel extends JPanel {
 		this.centerBottomHalf = new JPanel();
 		this.centerBottomHalf.setLayout(new MigLayout("flowx, ins 0", "[fill, grow, 10:1000]0", "[fill, grow]"));
 		this.centerBottomHalf.setBackground(DisplayStatics.lightBackground);
-		this.centerBottomHalf.add(JEXStatics.cruncher.batchList.panel(), "grow");
+		this.centerBottomHalf.add(JEXStatics.cruncher.getBatchViewer().panel(), "grow");
 		this.centerBottomHalf.add(paramPanel.panel(), "grow");
 
 		centerTopHalf = new FunctionListPanel(this);

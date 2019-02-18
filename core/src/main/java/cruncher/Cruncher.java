@@ -43,7 +43,7 @@ public class Cruncher implements Canceler {
 
 	public static int STANDARD_NUM_THREADS = 4;
 
-	public BatchPanelList batchList = new BatchPanelList();
+	public BatchPanelList batchList = null;
 
 	List<Callable<Integer>> guiTasks;
 	Vector<Pair<String,Vector<Ticket>>> tickets; // Tickets
@@ -90,6 +90,10 @@ public class Cruncher implements Canceler {
 
 	public BatchPanelList getBatchViewer()
 	{
+		if(this.batchList == null)
+		{
+			this.batchList = new BatchPanelList();
+		}
 		return this.batchList;
 	}
 

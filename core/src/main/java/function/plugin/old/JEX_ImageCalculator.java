@@ -280,14 +280,13 @@ public class JEX_ImageCalculator extends JEXCrunchable {
 		{
 			ImagePlus savedImB = new ImagePlus(imageBMap.firstEntry().getValue());
 			FloatProcessor savedImpB = (FloatProcessor) savedImB.getProcessor().convertToFloat();
-			FloatProcessor impB;
 			for (DimensionMap map : imageAMap.keySet())
 			{
 				if(this.isCanceled())
 				{
 					return false;
 				}
-				impB = new FloatProcessor(savedImpB.getWidth(), savedImpB.getHeight(), (float[]) savedImpB.getPixelsCopy(), null);
+				//				impB = new FloatProcessor(savedImpB.getWidth(), savedImpB.getHeight(), (float[]) savedImpB.getPixelsCopy(), null);
 				String pathA = imageAMap.get(map);
 				if(pathA == null)
 					continue;
@@ -296,7 +295,7 @@ public class JEX_ImageCalculator extends JEXCrunchable {
 				FloatProcessor impA = (FloatProcessor) imA.getProcessor().convertToFloat();
 				
 				FloatBlitter blit = new FloatBlitter(impA);
-				blit.copyBits(impB, 0, 0, methodInt);
+				blit.copyBits(savedImpB, 0, 0, methodInt);
 				ImageProcessor toSave = impA;
 				if(bitDepth == 8)
 				{
