@@ -9,7 +9,7 @@ import Database.Definition.Parameter;
 import Database.Definition.ParameterSet;
 import Database.Definition.TypeName;
 import function.JEXCrunchable;
-import function.singleCellAnalysis.MicrowellFinder;
+import function.singleCellAnalysis.MicrowellTools;
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
 import image.roi.PointList;
@@ -85,7 +85,7 @@ public class JEX_SingleCell_MicrowellFinder extends JEXCrunchable {
 	@Override
 	public boolean showInList()
 	{
-		return true;
+		return false;
 	}
 	
 	/**
@@ -249,7 +249,7 @@ public class JEX_SingleCell_MicrowellFinder extends JEXCrunchable {
 				roip = roiMap.get(map);
 				
 				Logs.log("Finding microwells for " + map, 0, JEX_SingleCell_MicrowellFinder.class);
-				PointList points = MicrowellFinder.findMicrowellCentersInConvolvedImage(imp, roip, convThresh, convTol, gridSpacing, gridTol, excludeGridBorder, minNumberOfWells, interpolate, smoothingTolerance);
+				PointList points = MicrowellTools.findMicrowellCentersInConvolvedImage(imp, roip, convThresh, convTol, gridSpacing, gridTol, excludeGridBorder, minNumberOfWells, interpolate, smoothingTolerance);
 				
 				ROIPlus newRoip = new ROIPlus(points, ROIPlus.ROI_POINT);
 				

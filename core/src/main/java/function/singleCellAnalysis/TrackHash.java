@@ -45,7 +45,10 @@ public class TrackHash implements Comparator<PointList> {
 			track = new PointList();
 			track.add(lastPoint);
 		}
-		track.add(thisPoint);
+		if(thisPoint != null)
+		{
+			track.add(thisPoint);
+		}
 		tracks.put(lastPoint, track);
 		this.trackHash.put(lDim, tracks);
 	}

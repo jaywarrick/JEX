@@ -398,7 +398,7 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 				}
 				
 				// // Find the Maxima
-				ROIPlus points = (ROIPlus) mf.findMaxima(im.getProcessor(), tolerance, threshold, MaximumFinder.ROI, excludePtsOnEdges, isEDM, roi, lightBackground);
+				ROIPlus points = (ROIPlus) mf.findMaxima(im.getProcessor(), tolerance, threshold, MaximumFinder.ROI, excludePtsOnEdges, isEDM, roi, lightBackground, true);
 				// // Retain maxima within the optional roi
 				PointList filteredPoints = new PointList();
 				if(roiProvided && roip.getPointList().size() != 0)
@@ -494,7 +494,7 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 						// // Find the Maxima again with the correct exclusion criteria
 						if(newWatershed)
 						{
-							ImageProcessor markerPoints = (ByteProcessor) mf.findMaxima(im.getProcessor(), tolerance, threshold, MaximumFinder.SINGLE_POINTS, excludeSegsOnEdges, isEDM, roi, lightBackground);
+							ImageProcessor markerPoints = (ByteProcessor) mf.findMaxima(im.getProcessor(), tolerance, threshold, MaximumFinder.SINGLE_POINTS, excludeSegsOnEdges, isEDM, roi, lightBackground, true);
 							toSeg.invert();
 							markerPoints = BinaryImages.componentsLabeling(markerPoints, 4, 32);
 							ImageProcessor seg = Watershed.computeWatershed(toSeg, markerPoints, connectedness, true);
@@ -504,7 +504,7 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 						}
 						else
 						{
-							points = (ROIPlus) mf.findMaxima(im.getProcessor(), tolerance, threshold, MaximumFinder.ROI, excludeSegsOnEdges, isEDM, roi, lightBackground);
+							points = (ROIPlus) mf.findMaxima(im.getProcessor(), tolerance, threshold, MaximumFinder.ROI, excludeSegsOnEdges, isEDM, roi, lightBackground, true);
 							segmentedImage = mf.segmentImageUsingMaxima(toSeg, excludeSegsOnEdges);
 						}
 					}

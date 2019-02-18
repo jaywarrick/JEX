@@ -10,7 +10,6 @@ import org.scijava.plugin.Plugin;
 
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
-import Database.DBObjects.JEXLabel;
 import Database.DataReader.LabelReader;
 import Database.DataWriter.FileWriter;
 import Database.DataWriter.ValueWriter;

@@ -127,7 +127,7 @@ public class JEX_SingleCell_MicrowellAnalysis extends JEXCrunchable {
 		inputNames[2] = new TypeName(FILE, "Microwell Intensities");
 		inputNames[3] = new TypeName(IMAGE, "IF-DF");
 		inputNames[4] = new TypeName(ROI, "Crop ROI (optional)");
-		return inputNames;
+		return inputNames;	
 	}
 
 	/**

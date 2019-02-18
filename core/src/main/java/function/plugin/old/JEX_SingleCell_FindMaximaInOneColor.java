@@ -280,7 +280,7 @@ public class JEX_SingleCell_FindMaximaInOneColor extends JEXCrunchable {
 					imp.setRoi(roi);
 				}
 				MaximumFinder mf = new MaximumFinder();
-				ROIPlus points = (ROIPlus) mf.findMaxima(imp, tolerance, threshold, MaximumFinder.ROI, excludeOnEdges, isEDM, roi, lightBackground);
+				ROIPlus points = (ROIPlus) mf.findMaxima(imp, tolerance, threshold, MaximumFinder.ROI, excludeOnEdges, isEDM, roi, lightBackground, true);
 				PointList filteredPoints = new PointList();
 				
 				if(roiProvided)

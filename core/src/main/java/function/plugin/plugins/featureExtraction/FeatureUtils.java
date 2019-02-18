@@ -685,6 +685,103 @@ public class FeatureUtils {
 		return new Pair<>(samples, weights);
 	}
 	
+	public <T extends RealType<T>> Vector<Vector<Double>> hexagonallySampleNFromImages(ROIPlus roi, boolean inside, long numberOfSpeckles, ImageProcessor... impa)
+	{
+		// hexagonal closepacked is horizontal spacing of one diameter (2*r) and vertical spacing of dia * sqrt(3)/2
+		// The number of unit rectangles in the horizontal direction is width/(2*r)
+		// The number of unit rectangles in the vertical direction is height / (2* dia * sqrt(3)/2)
+		// The number of points per unit square is 2
+		// Area_image is width * height
+		// Area_unit is dia * (2 * dia * sqrt(3)/2)
+		// Number of unit squares N_unit = Area_image/Area_unit
+		// N_points = 2 * N_unit
+		// N_unit = N_points/2
+		// Area_image/Area_unit = N_points/2 = (w * h) / ( dia^2 * sqrt(3) )
+		// Solve this for diameter to start putting points in the image.
+		// dia = sqrt( N_points / (2*sqrt(3)))
+		double w = impa[0].getWidth();
+		double h = impa[0].getHeight();
+		double dia = Math.sqrt( ( 2 * (w * h) / numberOfSpeckles ) / Math.sqrt(3) );
+		double dx = dia;
+		double dy = dia * Math.sqrt(3) / 2;
+
+		// Make a separate method that returns the list of random locations within the interval
+		// Then just offset the locations by the min of each dimension.
+		boolean oddRow = true;
+		long tot = 0L;
+		Vector<Vector<Double>> ret = new Vector<>((int) impa.length);
+		for(int i = 0; i < impa.length; i++)
+		{
+			ret.add(new Vector<Double>((int) numberOfSpeckles));
+		}
+		Shape s = null;
+		if(roi != null)
+		{
+			s = roi.getShape();
+		}
+		if(s != null)
+		{
+			for(double y=0; y <= h; y = y + dy)
+			{
+				for(double x=0; x <= w; x = x + dx)
+				{
+					if(oddRow)
+					{
+						if((inside && s.contains(x, y)) || (!inside && !s.contains(x,  y)))
+						{
+							for(int i = 0; i < impa.length; i++)
+							{
+								ret.get(i).add(new Double(impa[i].getPixelValue((int) x, (int) y)));
+							}
+							tot = tot + 1;
+						}
+					}
+					else
+					{
+						if((inside && s.contains(x, y)) || (!inside && !s.contains(x,  y)))
+						{
+							for(int i = 0; i < impa.length; i++)
+							{
+								ret.get(i).add(new Double(impa[i].getPixelValue((int) (x + dx/2.0), (int) y)));
+							}
+							tot = tot + 1;
+						}
+					}
+				}
+				oddRow = !oddRow;
+			}
+		}
+		else
+		{
+			for(double y=0; y <= h; y = y + dy)
+			{
+				for(double x=0; x <= w; x = x + dx)
+				{
+					if(oddRow)
+					{
+						for(int i = 0; i < impa.length; i++)
+						{
+							ret.get(i).add(new Double(impa[i].getPixelValue((int) x, (int) y)));
+						}
+						tot = tot + 1;
+					}
+					else
+					{
+						for(int i = 0; i < impa.length; i++)
+						{
+							ret.get(i).add(new Double(impa[i].getPixelValue((int) (x + dx/2.0), (int) y)));
+						}
+						tot = tot + 1;
+					}
+				}
+				oddRow = !oddRow;
+			}
+		}
+		
+		return ret;
+		//System.out.println("Tried to make " + numberOfSpeckles + " but actually made " + tot);
+	}
+	
 	public <T extends RealType<T>> Vector<Double> sampleFromShape(ImageProcessor img, ROIPlus roi, boolean inside)
 	{
 		double w = img.getWidth();

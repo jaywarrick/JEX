@@ -197,33 +197,7 @@ public class JEX_ImageCalculator extends JEXCrunchable {
 		// Gather parameters
 		int bitDepth = Integer.parseInt(parameters.getValueOfParameter("Output Bit-Depth"));
 		String method = parameters.getValueOfParameter("Math Operation");
-		int methodInt = Blitter.DIVIDE;
-		if(method.equals("A+B"))
-			methodInt = Blitter.ADD;
-		else if(method.equals("AND"))
-			methodInt = Blitter.AND;
-		else if(method.equals("AVERAGE"))
-			methodInt = Blitter.AVERAGE;
-		else if(method.equals("COPY"))
-			methodInt = Blitter.COPY;
-		else if(method.equals("COPY_ZERO_TRANSPARENT"))
-			methodInt = Blitter.COPY_ZERO_TRANSPARENT;
-		else if(method.equals("|A-B|"))
-			methodInt = Blitter.DIFFERENCE;
-		else if(method.equals("A/B"))
-			methodInt = Blitter.DIVIDE;
-		else if(method.equals("MAX"))
-			methodInt = Blitter.MAX;
-		else if(method.equals("MIN"))
-			methodInt = Blitter.MIN;
-		else if(method.equals("A*B"))
-			methodInt = Blitter.MULTIPLY;
-		else if(method.equals("OR"))
-			methodInt = Blitter.OR;
-		else if(method.equals("A-B"))
-			methodInt = Blitter.SUBTRACT;
-		else if(method.equals("XOR"))
-			methodInt = Blitter.XOR;
+		int methodInt = getBlitterMethodInt(method);
 		
 		// Run the function
 		TreeMap<DimensionMap,String> imageAMap = ImageReader.readObjectToImagePathTable(imageAData);
@@ -250,7 +224,6 @@ public class JEX_ImageCalculator extends JEXCrunchable {
 				if(pathB == null)
 					continue;
 				ImagePlus imB = new ImagePlus(pathB);
-				
 				FloatProcessor ipB = (FloatProcessor) imB.getProcessor().convertToFloat();
 				
 				FloatBlitter blit = new FloatBlitter(impA);
@@ -369,6 +342,39 @@ public class JEX_ImageCalculator extends JEXCrunchable {
 		
 		// Return status
 		return true;
+	}
+	
+	public static int getBlitterMethodInt(String method)
+	{
+		int methodInt = Blitter.DIVIDE;
+		if(method.equals("A+B"))
+			methodInt = Blitter.ADD;
+		else if(method.equals("AND"))
+			methodInt = Blitter.AND;
+		else if(method.equals("AVERAGE"))
+			methodInt = Blitter.AVERAGE;
+		else if(method.equals("COPY"))
+			methodInt = Blitter.COPY;
+		else if(method.equals("COPY_ZERO_TRANSPARENT"))
+			methodInt = Blitter.COPY_ZERO_TRANSPARENT;
+		else if(method.equals("|A-B|"))
+			methodInt = Blitter.DIFFERENCE;
+		else if(method.equals("A/B"))
+			methodInt = Blitter.DIVIDE;
+		else if(method.equals("MAX"))
+			methodInt = Blitter.MAX;
+		else if(method.equals("MIN"))
+			methodInt = Blitter.MIN;
+		else if(method.equals("A*B"))
+			methodInt = Blitter.MULTIPLY;
+		else if(method.equals("OR"))
+			methodInt = Blitter.OR;
+		else if(method.equals("A-B"))
+			methodInt = Blitter.SUBTRACT;
+		else if(method.equals("XOR"))
+			methodInt = Blitter.XOR;
+		
+		return methodInt;
 	}
 	
 }

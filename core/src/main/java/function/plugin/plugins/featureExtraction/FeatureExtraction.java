@@ -176,29 +176,32 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
 	@ParameterMarker(uiOrder = 6, name = "** Compute Stats Features?", description = "Whether to quantify first order statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
 	boolean stats;
+	
+	@ParameterMarker(uiOrder = 7, name = "** Compute Symmetry Features?", description = "Whether to quantify symmetry statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	boolean symmetry;
 
-	@ParameterMarker(uiOrder = 7, name = "** Compute 2D Geometric Features?", description = "Whether to quantify geometric statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	@ParameterMarker(uiOrder = 8, name = "** Compute 2D Geometric Features?", description = "Whether to quantify geometric statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean geometric;
 
-	@ParameterMarker(uiOrder = 8, name = "** Compute 2D Haralick Features?", description = "Whether to quantify Haralick texture statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	@ParameterMarker(uiOrder = 9, name = "** Compute 2D Haralick Features?", description = "Whether to quantify Haralick texture statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean haralick2D;
 
-	@ParameterMarker(uiOrder = 9, name = "** Compute Histogram Features?", description = "Whether to quantify histogram statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	@ParameterMarker(uiOrder = 10, name = "** Compute Histogram Features?", description = "Whether to quantify histogram statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean histogram;
 
-	@ParameterMarker(uiOrder = 10, name = "** Compute Moments Features?", description = "Whether to quantify image moment statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	@ParameterMarker(uiOrder = 11, name = "** Compute Moments Features?", description = "Whether to quantify image moment statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean moments;
 
-	@ParameterMarker(uiOrder = 11, name = "** Compute LBP Features?", description = "Whether to quantify linear binary pattern (LBP) statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	@ParameterMarker(uiOrder = 12, name = "** Compute LBP Features?", description = "Whether to quantify linear binary pattern (LBP) statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean lbp;
 
-	@ParameterMarker(uiOrder = 12, name = "** Compute Tamura Features?", description = "Whether to quantify Tamura statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	@ParameterMarker(uiOrder = 13, name = "** Compute Tamura Features?", description = "Whether to quantify Tamura statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean tamura;
 
-	@ParameterMarker(uiOrder = 13, name = "** Compute Zernike Features?", description = "Whether to quantify Zernike shape statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	@ParameterMarker(uiOrder = 14, name = "** Compute Zernike Features?", description = "Whether to quantify Zernike shape statistics", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean zernike;
 
-	@ParameterMarker(uiOrder = 14, name = "** Connectedness Features", description = "The structuring element or number of neighbors to require to be part of the neighborhood.", ui = MarkerConstants.UI_DROPDOWN, choices = {"4 Connected", "8 Connected" }, defaultChoice = 0)
+	@ParameterMarker(uiOrder = 15, name = "** Connectedness Features", description = "The structuring element or number of neighbors to require to be part of the neighborhood.", ui = MarkerConstants.UI_DROPDOWN, choices = {"4 Connected", "8 Connected" }, defaultChoice = 0)
 	String connectedness;
 
 	// Feature set parameters
@@ -578,36 +581,39 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
 	public void putSymmetryFeatures(DimensionMap mapM_Intensity, boolean firstTimeThrough)
 	{
-		if(symcoOp == null)
+		if(symmetry)
 		{
-			symcoOp = Functions.binary(IJ2PluginUtility.ij().op(), DefaultSymmetryCoefficients.class, TreeMap.class, (RandomAccessibleInterval<FloatType>) this.image, this.combinedSubCellRegion, 4);
-		}
+			if(symcoOp == null)
+			{
+				symcoOp = Functions.binary(IJ2PluginUtility.ij().op(), DefaultSymmetryCoefficients.class, TreeMap.class, (RandomAccessibleInterval<FloatType>) this.image, this.combinedSubCellRegion, 4);
+			}
 
-		if(firstTimeThrough)
-		{
-			// Then get info relate to the mask
+			if(firstTimeThrough)
+			{
+				// Then get info relate to the mask
+				@SuppressWarnings("unchecked")
+				TreeMap<String,Double> maskSymmetryData = (TreeMap<String,Double>) symcoOp.calculate(null, this.combinedSubCellRegion);
+				for(Entry<String,Double> e : maskSymmetryData.entrySet())
+				{
+					DimensionMap newMap = mapM_Intensity.copyAndSet("Measurement=" + e.getKey());
+					newMap.put("Id", "" + this.pId);
+					newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
+					newMap.put("ImageChannel", "None"); // Overwrite mask channel
+					this.write(newMap, e.getValue());
+				}
+			}
+
+
+			// Quantify this combination of mask and image
 			@SuppressWarnings("unchecked")
-			TreeMap<String,Double> maskSymmetryData = (TreeMap<String,Double>) symcoOp.calculate(null, this.combinedSubCellRegion);
-			for(Entry<String,Double> e : maskSymmetryData.entrySet())
+			TreeMap<String,Double> imageSymmetryData = (TreeMap<String,Double>) symcoOp.calculate(this.image, this.combinedSubCellRegion);
+			for(Entry<String,Double> e : imageSymmetryData.entrySet())
 			{
 				DimensionMap newMap = mapM_Intensity.copyAndSet("Measurement=" + e.getKey());
 				newMap.put("Id", "" + this.pId);
 				newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
-				newMap.put("ImageChannel", "None"); // Overwrite mask channel
 				this.write(newMap, e.getValue());
 			}
-		}
-
-
-		// Quantify this combination of mask and image
-		@SuppressWarnings("unchecked")
-		TreeMap<String,Double> imageSymmetryData = (TreeMap<String,Double>) symcoOp.calculate(this.image, this.combinedSubCellRegion);
-		for(Entry<String,Double> e : imageSymmetryData.entrySet())
-		{
-			DimensionMap newMap = mapM_Intensity.copyAndSet("Measurement=" + e.getKey());
-			newMap.put("Id", "" + this.pId);
-			newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
-			this.write(newMap, e.getValue());
 		}
 	}
 
@@ -648,10 +654,13 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 		//	QuantifyZernike (circle = fixed@thisCOM)
 		//	QuantifyZernike (circle = thisSEC@thisCOM)
 
-		this.putZernike(mapM_Intensity, ii, new Circle(this.combinedSubCellRegion.getCenterOfMass(), this.zernikeFixedDiameter/2.0), "_THISwFIXED", firstTimeThrough); 
-		if (this.isCanceled()) { this.close(); return false;}
-		this.putZernike(mapM_Intensity, ii, utils.getCircle(this.combinedSubCellRegion, this.combinedSubCellRegion.getCenterOfMass()), "_THISwSEC", firstTimeThrough);
-		if (this.isCanceled()) { this.close(); return false;}
+		if(zernike)
+		{
+			this.putZernike(mapM_Intensity, ii, new Circle(this.combinedSubCellRegion.getCenterOfMass(), this.zernikeFixedDiameter/2.0), "_THISwFIXED", firstTimeThrough); 
+			if (this.isCanceled()) { this.close(); return false;}
+			this.putZernike(mapM_Intensity, ii, utils.getCircle(this.combinedSubCellRegion, this.combinedSubCellRegion.getCenterOfMass()), "_THISwSEC", firstTimeThrough);
+			if (this.isCanceled()) { this.close(); return false;}
+		}
 
 		//	if(NucMASK)
 		//	
@@ -659,8 +668,11 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
 		if(mapMask.get(channelName).equals(this.maskNuclearChannelValue) && this.nuclearInfo.get(this.pId) != null)
 		{
-			this.putZernike(mapM_Intensity, ii, new Circle(this.combinedSubCellRegion.getCenterOfMass(), this.nuclearInfo.get(this.pId).p1 * (this.zernikeFixedDiameter / this.zernikeNucDiameter)), "_NUCwPADDEDNUC", firstTimeThrough);
-			if (this.isCanceled()) { this.close(); return false;}
+			if(zernike)
+			{
+				this.putZernike(mapM_Intensity, ii, new Circle(this.combinedSubCellRegion.getCenterOfMass(), this.nuclearInfo.get(this.pId).p1 * (this.zernikeFixedDiameter / this.zernikeNucDiameter)), "_NUCwPADDEDNUC", firstTimeThrough);
+				if (this.isCanceled()) { this.close(); return false;}
+			}
 		}
 
 		//	else if(WholeCellMASK && circle != null)
@@ -672,14 +684,17 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
 		else if(mapMask.get(channelName).equals(this.maskWholeCellChannelValue) && this.nucExists && this.nuclearInfo.get(this.pId) != null)
 		{
-			this.putZernike(mapM_Intensity, ii, new Circle(this.nuclearInfo.get(this.pId).p2, this.zernikeFixedDiameter/2.0), "_NUCwFIXED", firstTimeThrough);
-			if (this.isCanceled()) { this.close(); return false;}
-			this.putZernike(mapM_Intensity, ii, utils.getCircle(this.combinedSubCellRegion, this.nuclearInfo.get(this.pId).p2), "_NUCwSEC", firstTimeThrough);
-			if (this.isCanceled()) { this.close(); return false;}
-			this.putZernike(mapM_Intensity, ii, new Circle(this.nuclearInfo.get(this.pId).p2, this.nuclearInfo.get(this.pId).p1 * (this.zernikeFixedDiameter / this.zernikeNucDiameter)), "_NUCwPADDEDNUC", firstTimeThrough);
-			if (this.isCanceled()) { this.close(); return false;}
-			this.putDNZernike(mapM_Intensity, ii, new Circle(this.nuclearInfo.get(this.pId).p2, this.nuclearInfo.get(this.pId).p1), new Circle(this.nuclearInfo.get(pId).p2, this.getEquivalentRadius(this.combinedSubCellRegion)), firstTimeThrough);
-			if (this.isCanceled()) { this.close(); return false;}
+			if(zernike)
+			{
+				this.putZernike(mapM_Intensity, ii, new Circle(this.nuclearInfo.get(this.pId).p2, this.zernikeFixedDiameter/2.0), "_NUCwFIXED", firstTimeThrough);
+				if (this.isCanceled()) { this.close(); return false;}
+				this.putZernike(mapM_Intensity, ii, utils.getCircle(this.combinedSubCellRegion, this.nuclearInfo.get(this.pId).p2), "_NUCwSEC", firstTimeThrough);
+				if (this.isCanceled()) { this.close(); return false;}
+				this.putZernike(mapM_Intensity, ii, new Circle(this.nuclearInfo.get(this.pId).p2, this.nuclearInfo.get(this.pId).p1 * (this.zernikeFixedDiameter / this.zernikeNucDiameter)), "_NUCwPADDEDNUC", firstTimeThrough);
+				if (this.isCanceled()) { this.close(); return false;}
+				this.putDNZernike(mapM_Intensity, ii, new Circle(this.nuclearInfo.get(this.pId).p2, this.nuclearInfo.get(this.pId).p1), new Circle(this.nuclearInfo.get(pId).p2, this.getEquivalentRadius(this.combinedSubCellRegion)), firstTimeThrough);
+				if (this.isCanceled()) { this.close(); return false;}
+			}
 		}
 
 		//	else if(!NucMASK && circle != null)
@@ -690,17 +705,18 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
 		else if(!mapMask.get(channelName).equals(this.maskNuclearChannelValue) && this.nucExists && this.nuclearInfo.get(this.pId) != null)
 		{
-			this.putZernike(mapM_Intensity, ii, new Circle(this.nuclearInfo.get(this.pId).p2, this.zernikeFixedDiameter/2.0), "_NUCwFIXED", firstTimeThrough);
-			if (this.isCanceled()) { this.close(); return false;}
-			this.putZernike(mapM_Intensity, ii, utils.getCircle(this.combinedSubCellRegion, this.nuclearInfo.get(this.pId).p2), "_NUCwSEC", firstTimeThrough);
-			if (this.isCanceled()) { this.close(); return false;}
-			this.putZernike(mapM_Intensity, ii, new Circle(this.nuclearInfo.get(this.pId).p2, this.nuclearInfo.get(this.pId).p1 * (this.zernikeFixedDiameter / this.zernikeNucDiameter)), "_NUCwPADDEDNUC", firstTimeThrough);
-			if (this.isCanceled()) { this.close(); return false;}
+			if(zernike)
+			{
+				this.putZernike(mapM_Intensity, ii, new Circle(this.nuclearInfo.get(this.pId).p2, this.zernikeFixedDiameter/2.0), "_NUCwFIXED", firstTimeThrough);
+				if (this.isCanceled()) { this.close(); return false;}
+				this.putZernike(mapM_Intensity, ii, utils.getCircle(this.combinedSubCellRegion, this.nuclearInfo.get(this.pId).p2), "_NUCwSEC", firstTimeThrough);
+				if (this.isCanceled()) { this.close(); return false;}
+				this.putZernike(mapM_Intensity, ii, new Circle(this.nuclearInfo.get(this.pId).p2, this.nuclearInfo.get(this.pId).p1 * (this.zernikeFixedDiameter / this.zernikeNucDiameter)), "_NUCwPADDEDNUC", firstTimeThrough);
+				if (this.isCanceled()) { this.close(); return false;}
+			}
 		}
 
 		// Now do the binary texture patter stats
-
-
 		return true;
 	}
 

@@ -64,6 +64,8 @@ public class MaximumFinder {
 	private int[] dirOffset; // addressing
 	final static int[] DIR_X_OFFSET = new int[] { 0, 1, 1, 1, 0, -1, -1, -1 };
 	final static int[] DIR_Y_OFFSET = new int[] { -1, -1, 0, 1, 1, 1, 0, -1 };
+	final static int[] DIR_X_OFFSET2 = new int[] { 0, 1, 0, -1 };
+	final static int[] DIR_Y_OFFSET2 = new int[] { -1, 0, 1, 0 };
 	/**
 	 * the following constants are used to set bits corresponding to pixel types
 	 */
@@ -99,7 +101,7 @@ public class MaximumFinder {
 	 * @return A new byteProcessor with a normal (uninverted) LUT where the marked points are set to 255 (Background 0). Pixels outside of the roi of the input ip are not set. Returns null if outputType does not require an output or if cancelled by
 	 *         escape If ROI or COUNT is selected for the output type a RoiPlus or Integer is returned.
 	 */
-	public Object findMaxima(ImageProcessor ip, double tolerance, double threshold, int outputType, boolean excludeOnEdges, boolean isEDM, Roi roiArg, boolean lightBackground)
+	public Object findMaxima(ImageProcessor ip, double tolerance, double threshold, int outputType, boolean excludeOnEdges, boolean isEDM, Roi roiArg, boolean lightBackground, boolean fourConnected)
 	{
 		// Setup up the local variables and invert if necessary
 		boolean invertedLut = ip.isInvertedLut();
@@ -112,7 +114,7 @@ public class MaximumFinder {
 		}
 		if(this.dirOffset == null)
 		{
-			this.makeDirectionOffsets(ip);
+			this.makeDirectionOffsets(ip, fourConnected);
 		}
 		Rectangle roi;
 		if(roiArg == null)
@@ -365,7 +367,7 @@ public class MaximumFinder {
 				// isWithin
 				for (int d = 0; d < 8; d++)
 				{ // compare with the 8 neighbor pixels
-					if(isInner || this.isWithin(x, y, d))
+					if(isInner || this.isWithin(x, y, d, false))
 					{
 						float vNeighbor = ip.getPixelValue(x + DIR_X_OFFSET[d], y + DIR_Y_OFFSET[d]);
 						float vNeighborTrue = isEDM ? this.trueEdmHeight(x + DIR_X_OFFSET[d], y + DIR_Y_OFFSET[d], ip) : vNeighbor;
@@ -510,11 +512,11 @@ public class MaximumFinder {
 					// faster
 					// than
 					// isWithin
-					for (int d = 0; d < 8; d++)
+					for (int d = 0; d < this.dirOffset.length; d++)
 					{ // analyze all neighbors (in 8 directions) at the same
 					  // level
 						int offset2 = offset + this.dirOffset[d];
-						if((isInner || this.isWithin(x, y, d)) && (types[offset2] & LISTED) == 0)
+						if((isInner || this.isWithin(x, y, d, this.dirOffset.length==4)) && (types[offset2] & LISTED) == 0)
 						{
 							if((types[offset2] & PROCESSED) != 0)
 							{
@@ -527,6 +529,11 @@ public class MaximumFinder {
 							}
 							int x2 = x + DIR_X_OFFSET[d];
 							int y2 = y + DIR_Y_OFFSET[d];
+							if(this.dirOffset.length==4)
+							{
+								x2 = x + DIR_X_OFFSET2[d];
+								y2 = y + DIR_Y_OFFSET2[d];
+							}
 							float v2 = isEDM ? this.trueEdmHeight(x2, y2, ip) : ip.getPixelValue(x2, y2);
 							if(v2 > v0 + maxSortingError)
 							{
@@ -842,7 +849,7 @@ public class MaximumFinder {
 					{ // analyze all neighbors (in 8 directions) at the same
 					  // level
 						int offset2 = offset + this.dirOffset[d];
-						if((isInner || this.isWithin(x, y, d)) && (types[offset2] & LISTED) == 0)
+						if((isInner || this.isWithin(x, y, d, false)) && (types[offset2] & LISTED) == 0)
 						{
 							if((types[offset2] & MAX_AREA) != 0 || (((types[offset2] & ELIMINATED) != 0) && (pixels[offset2] & 255) >= loLevel))
 							{
@@ -938,7 +945,7 @@ public class MaximumFinder {
 			// isWithin
 			for (int d = 0; d < 8; d += 2)
 			{ // analyze 4-connected neighbors
-				if(isInner || this.isWithin(x, y, d))
+				if(isInner || this.isWithin(x, y, d, false))
 				{
 					int v = pixels[x + this.width * y + this.dirOffset[d]];
 					if(v != (byte) 255 && v != 0)
@@ -988,7 +995,7 @@ public class MaximumFinder {
 		for (int d = 0; d < 8; d++)
 		{ // walk around the point and note every no-line->line transition
 			boolean pixelSet = prevPixelSet;
-			if(isInner || this.isWithin(x, y, d))
+			if(isInner || this.isWithin(x, y, d, false))
 			{
 				boolean isSet = (pixels[offset + this.dirOffset[d]] != (byte) 255);
 				if((d & 1) == 0)
@@ -1238,7 +1245,7 @@ public class MaximumFinder {
 						{
 							for (int d = 0; d < 8; d++)
 							{
-								if(this.isWithin(x, y, d) && pixels[pOffset + this.dirOffset[d]] == 0)
+								if(this.isWithin(x, y, d, false) && pixels[pOffset + this.dirOffset[d]] == 0)
 								{
 									addToNext = true; // border of area below
 									// threshold
@@ -1413,7 +1420,7 @@ public class MaximumFinder {
 	 * single ints for watershed: intEncodeXMask, intEncodeYMask and intEncodeShift. E.g., for width between 129 and 256, xMask=0xff and yMask = 0xffffff00 are bitwise masks for x and y, respectively, and shift=8 is the bit shift to get y from the
 	 * y-masked value Returns as class variables: the arrays of the offsets to the 8 neighboring pixels and the array maskAndShift for watershed
 	 */
-	void makeDirectionOffsets(ImageProcessor ip)
+	void makeDirectionOffsets(ImageProcessor ip, boolean fourConnected)
 	{
 		this.width = ip.getWidth();
 		this.height = ip.getHeight();
@@ -1428,7 +1435,15 @@ public class MaximumFinder {
 		this.intEncodeYMask = ~this.intEncodeXMask;
 		this.intEncodeShift = shift;
 		// IJ.log("masks (hex):"+Integer.toHexString(xMask)+","+Integer.toHexString(xMask)+"; shift="+shift);
-		this.dirOffset = new int[] { -this.width, -this.width + 1, +1, +this.width + 1, +this.width, +this.width - 1, -1, -this.width - 1 };
+		if(fourConnected)
+		{
+			this.dirOffset = new int[] { -this.width, +1, +this.width, -1};
+		}
+		else
+		{
+			this.dirOffset = new int[] { -this.width, -this.width + 1, +1, +this.width + 1, +this.width, +this.width - 1, -1, -this.width - 1 };
+		}
+		
 		// dirOffset is created last, so check for it being null before
 		// makeDirectionOffsets
 		// (in case we have multiple threads using the same MaximumFinder)
@@ -1445,29 +1460,47 @@ public class MaximumFinder {
 	 *            the direction from the pixel towards the neighbor (see makeDirectionOffsets)
 	 * @return true if the neighbor is within the image (provided that x, y is within)
 	 */
-	boolean isWithin(int x, int y, int direction)
+	boolean isWithin(int x, int y, int direction, boolean fourConnected)
 	{
 		int xmax = this.width - 1;
 		int ymax = this.height - 1;
-		switch (direction)
+		if(fourConnected)
 		{
-			case 0:
-				return (y > 0);
-			case 1:
-				return (x < xmax && y > 0);
-			case 2:
-				return (x < xmax);
-			case 3:
-				return (x < xmax && y < ymax);
-			case 4:
-				return (y < ymax);
-			case 5:
-				return (x > 0 && y < ymax);
-			case 6:
-				return (x > 0);
-			case 7:
-				return (x > 0 && y > 0);
+			switch (direction)
+			{
+				case 0:
+					return (y > 0);
+				case 1:
+					return (x < xmax);
+				case 2:
+					return (y < ymax);
+				case 3:
+					return (x > 0);
+			}
 		}
+		else
+		{
+			switch (direction)
+			{
+				case 0:
+					return (y > 0);
+				case 1:
+					return (x < xmax && y > 0);
+				case 2:
+					return (x < xmax);
+				case 3:
+					return (x < xmax && y < ymax);
+				case 4:
+					return (y < ymax);
+				case 5:
+					return (x > 0 && y < ymax);
+				case 6:
+					return (x > 0);
+				case 7:
+					return (x > 0 && y > 0);
+			}
+		}
+		
 		return false; // to make the compiler happy :-)
 	} // isWithin
 	

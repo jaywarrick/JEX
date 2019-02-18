@@ -1442,6 +1442,18 @@ public class StatisticsUtility {
 		}
 		return medianCalculator.evaluate(temp);
 	}
+	
+	public static Double median(TreeMap<DimensionMap,Double> values)
+	{
+		double[] v = new double[values.size()];
+		int count = 0;
+		for (Entry<DimensionMap,Double> d : values.entrySet())
+		{
+			v[count] = d.getValue();
+			count++;
+		}
+		return median(v);
+	}
 
 	public static Double median(Collection<Double> values)
 	{

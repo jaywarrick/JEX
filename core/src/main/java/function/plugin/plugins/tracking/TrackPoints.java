@@ -395,7 +395,7 @@ public class TrackPoints extends JEXPlugin {
 		// Linking
 		settings.put(KEY_LINKING_FEATURE_PENALTIES, DEFAULT_LINKING_FEATURE_PENALTIES);
 		// Gap closing
-		settings.put(KEY_ALLOW_GAP_CLOSING, true);
+		settings.put(KEY_ALLOW_GAP_CLOSING, maxGapDistance > 0 && maxGapFrames > 0);
 		settings.put(KEY_GAP_CLOSING_FEATURE_PENALTIES, DEFAULT_GAP_CLOSING_FEATURE_PENALTIES);
 		// Track splitting
 		settings.put(KEY_ALLOW_TRACK_SPLITTING, false);

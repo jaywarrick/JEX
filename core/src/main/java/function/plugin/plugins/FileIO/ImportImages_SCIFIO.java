@@ -16,7 +16,6 @@ import Database.DBObjects.JEXEntry;
 import Database.DataWriter.FileWriter;
 import Database.DataWriter.ImageWriter;
 import Database.DataWriter.ValueWriter;
-import Database.Definition.Type;
 import Database.SingleUserDatabase.JEXWriter;
 import function.plugin.IJ2.IJ2PluginUtility;
 import function.plugin.mechanism.JEXPlugin;

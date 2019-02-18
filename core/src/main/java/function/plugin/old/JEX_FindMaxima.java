@@ -151,20 +151,25 @@ public class JEX_FindMaxima extends JEXCrunchable {
 		// Parameter p0 = new
 		// Parameter("Dummy Parameter","Lets user know that the function has been selected.",FormLine.DROPDOWN,new
 		// String[] {"true"},0);
+		Parameter p0 = getNumThreadsParameter(10, 6);
 		Parameter p1 = new Parameter("Tolerance", "Local intensity increase threshold.", "20");
 		Parameter p2 = new Parameter("Threshold", "Minimum hieght of a maximum.", "0");
 		Parameter p3 = new Parameter("Exclude on Edges?", "Exclude particles on the edge of the image?", Parameter.DROPDOWN, new String[] { "True", "False" }, 0);
 		Parameter p4 = new Parameter("Is EDM?", "Is the image being analyzed already a Euclidean Distance Measurement?", Parameter.DROPDOWN, new String[] { "True", "False" }, 1);
 		Parameter p5 = new Parameter("Particles Are White?", "Are the particles displayed as white on a black background?", Parameter.DROPDOWN, new String[] { "True", "False" }, 0);
+		Parameter p6 = new Parameter("4-Connected?", "Should a 4-connected search be performed to determine maxima (This is needed to separate 8-connected mask regions).", Parameter.CHECKBOX, false);
 		
 		// Make an array of the parameters and return it
 		ParameterSet parameterArray = new ParameterSet();
 		// parameterArray.addParameter(p0);
+		parameterArray.addParameter(p0);
+		parameterArray.addParameter(p3);
 		parameterArray.addParameter(p1);
 		parameterArray.addParameter(p2);
 		parameterArray.addParameter(p3);
 		parameterArray.addParameter(p4);
 		parameterArray.addParameter(p5);
+		parameterArray.addParameter(p6);
 		return parameterArray;
 	}
 	
@@ -216,6 +221,7 @@ public class JEX_FindMaxima extends JEXCrunchable {
 			boolean excludeOnEdges = Boolean.parseBoolean(this.parameters.getValueOfParameter("Exclude on Edges?"));
 			boolean isEDM = Boolean.parseBoolean(this.parameters.getValueOfParameter("Is EDM?"));
 			boolean lightBackground = !Boolean.parseBoolean(this.parameters.getValueOfParameter("Particles Are White?"));
+			boolean fourConnected = Boolean.parseBoolean(this.parameters.getValueOfParameter("4-Connected?"));
 			
 			TreeMap<DimensionMap,ROIPlus> roiMap;
 			// Run the function
@@ -255,7 +261,7 @@ public class JEX_FindMaxima extends JEXCrunchable {
 					ip.setRoi(roi);
 				}
 				MaximumFinder mf = new MaximumFinder();
-				ROIPlus points = (ROIPlus) mf.findMaxima(ip.getProcessor(), tolerance, threshold, MaximumFinder.ROI, excludeOnEdges, isEDM, roi, lightBackground);
+				ROIPlus points = (ROIPlus) mf.findMaxima(ip.getProcessor(), tolerance, threshold, MaximumFinder.ROI, excludeOnEdges, isEDM, roi, lightBackground, fourConnected);
 				PointList filteredPoints = new PointList();
 				
 				if(roiProvided && roip.getPointList().size() != 0)

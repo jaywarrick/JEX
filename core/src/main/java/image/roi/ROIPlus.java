@@ -12,7 +12,6 @@ import ij.gui.OvalRoi;
 import ij.gui.PointRoi;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
-import logs.Logs;
 import miscellaneous.Copiable;
 import net.imglib2.roi.geometric.Polygon;
 

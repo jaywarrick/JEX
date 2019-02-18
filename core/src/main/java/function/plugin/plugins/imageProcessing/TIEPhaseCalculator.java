@@ -234,7 +234,7 @@ public class TIEPhaseCalculator extends JEXPlugin {
 				DimensionMap toGet = map.copyAndSet(this.zDimName + "=" + zDim.valueAt(i));
 				if(filterTable.testMapAsExclusionFilter(toGet))
 				{
-					if(this.keepExcluded)
+					if(this.keepExcluded && this.rows == 1 || this.cols == 1)
 					{
 						Logs.log("Skipping the processing of " + toGet.toString(), this);
 						ImagePlus out = new ImagePlus(imageMap.get(toGet));
@@ -249,6 +249,10 @@ public class TIEPhaseCalculator extends JEXPlugin {
 					}
 					else
 					{
+						if(keepExcluded)
+						{
+							Logs.log("Warning - Can't keep excluded images when splitting the image", this);
+						}
 						Logs.log("Skipping the processing and saving of " + toGet.toString(), this);
 						count = count + 1;
 						percentage = (int) (100 * ((double) (count) / ((double) total * this.rows * this.cols)));
