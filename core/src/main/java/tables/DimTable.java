@@ -661,13 +661,8 @@ public class DimTable extends ArrayList<Dim> implements Copiable<DimTable> {
 		{
 			if(table2.getDimWithName(d.name()) != null)
 			{
-				ret.add(d); // will copy dim during next intersection step.
+				ret.add(Dim.intersect(d, table2.getDimWithName(d.name()))); 
 			}
-		}
-		// then intersect those dims with matching names
-		for (Dim d : ret)
-		{
-			d = Dim.intersect(d, table2.getDimWithName(d.name())); // d is now replaced by a standalone fresh Dim (deep copy)
 		}
 		return ret;
 	}
