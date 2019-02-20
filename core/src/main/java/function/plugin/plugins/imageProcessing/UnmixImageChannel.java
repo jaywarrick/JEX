@@ -24,6 +24,7 @@ import ij.process.ImageProcessor;
 import jex.statics.JEXStatics;
 import miscellaneous.Pair;
 import tables.Dim;
+import tables.DimTable;
 import tables.DimensionMap;
 import tables.Table;
 import weka.core.converters.JEXTableReader;
@@ -63,8 +64,11 @@ public class UnmixImageChannel extends JEXPlugin {
 
 	@ParameterMarker(uiOrder=1, name="Channel Dim Name", description="Which dimension represents the channel dimension in the dataset?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Channel")
 	String channelDimName;
-
-	@ParameterMarker(uiOrder=1, name="Output Bitdepth", description="What bitdepth should the result be saved as.", ui=MarkerConstants.UI_DROPDOWN, choices={"8", "16", "32"}, defaultChoice=1)
+	
+	@ParameterMarker(uiOrder=2, name="Output Offset", description="How much should be added back to the image when done.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0")
+	int offset;
+	
+	@ParameterMarker(uiOrder=3, name="Output Bit-Depth", description="What bitdepth should the result be saved as.", ui=MarkerConstants.UI_DROPDOWN, choices={"8", "16", "32"}, defaultChoice=1)
 	int bitDepth;
 
 	/////////// Define Outputs ///////////
@@ -94,19 +98,33 @@ public class UnmixImageChannel extends JEXPlugin {
 		Dim channelDim = imageData.getDimTable().getDimWithName(channelDimName);
 		Dim tableChannelDim = inputParams.dimTable.getDimWithName(channelDimName);
 		Pair<String,Vector<String>> channels = this.getChannels(channelDim, tableChannelDim);
-
+		DimTable loopTable = imageData.getDimTable();
+		if(imageData.getDimTable().size() == inputParams.dimTable.size())
+		{
+			DimTable intersection = DimTable.intersect(imageData.getDimTable(), inputParams.dimTable);
+			if(intersection.size() == loopTable.size())
+			{
+				loopTable = intersection;
+				loopTable.removeDimWithName(channelDimName);
+				loopTable.add(new Dim(channelDimName, new String[] {channels.p1}));
+			}
+		}
+		else
+		{
+			loopTable = loopTable.getSubTable(new DimensionMap(channelDimName + "=" + channels.p1));
+		}
+		
 		int count = 0, percentage = 0;
-		TreeMap<DimensionMap,String> imageAMap = Table.getFilteredData(imageMap, channelDimName + "=" + channels.p1);
 		
 		// Run the function
 		TreeMap<DimensionMap,String> outputMap = new TreeMap<DimensionMap,String>();
-		for (DimensionMap map : imageAMap.keySet())
+		for (DimensionMap map : loopTable.getMapIterator())
 		{
 			if(this.isCanceled())
 			{
 				return false;
 			}
-			ImagePlus imA = new ImagePlus(imageAMap.get(map));
+			ImagePlus imA = new ImagePlus(imageMap.get(map));
 			FloatProcessor ipA = (FloatProcessor) imA.getProcessor().convertToFloat();
 			FloatBlitter blit = new FloatBlitter(ipA);
 			
@@ -120,7 +138,7 @@ public class UnmixImageChannel extends JEXPlugin {
 				ipB.multiply(alpha);
 				blit.copyBits(ipB, 0, 0, Blitter.SUBTRACT);
 			}
-			ipA.subtract(inputParams.getData(map.copyAndSet(channelDimName + "=" + "Beta")));
+			ipA.add(inputParams.getData(map.copyAndSet(channelDimName + "=" + "Beta")) + this.offset);
 			
 			ImageProcessor toSave = ipA;
 			if(bitDepth == 8)
@@ -139,7 +157,7 @@ public class UnmixImageChannel extends JEXPlugin {
 				outputMap.put(map, path);
 			}
 			count = count + 1;
-			percentage = (int) (100 * ((double) (count) / ((double) imageAMap.size())));
+			percentage = (int) (100 * ((double) (count) / ((double) loopTable.mapCount())));
 			JEXStatics.statusBar.setProgressPercentage(percentage);
 		}
 
