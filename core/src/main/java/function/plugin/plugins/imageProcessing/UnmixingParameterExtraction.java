@@ -76,28 +76,31 @@ public class UnmixingParameterExtraction extends JEXPlugin implements Comparator
 	
 	/////////// Define Parameters ///////////
 	
-	@ParameterMarker(uiOrder=1, name="Penalty Factor", description="How much to penalize negative intensities in the final image. Typically 2-50.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="5.0")
-	double factor;
+	@ParameterMarker(uiOrder=1, name="Penalty Factor, A", description="A only penalizes negative intensities. For x < 0: Penalty = A*(abs(x)+abs(x)^B). For x > 0: Penalty = (abs(x)+abs(x)^B) (i.e., )", ui=MarkerConstants.UI_TEXTFIELD, defaultText="10")
+	double factorA;
 	
-	@ParameterMarker(uiOrder=2, name="Channel Dim Name", description="Which dimension represents the channel dimension in the dataset?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Channel")
+	@ParameterMarker(uiOrder=2, name="Penalty Exponent, B", description="B penalizes both positive and negative intensities. For x < 0: Penalty = A*(abs(x)+abs(x)^B). For x > 0: Penalty = (abs(x)+abs(x)^B)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1.5")
+	double factorB;
+	
+	@ParameterMarker(uiOrder=3, name="Channel Dim Name", description="Which dimension represents the channel dimension in the dataset?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Channel")
 	String channelDimName;
 	
-	@ParameterMarker(uiOrder=3, name="Signal Channel", description="Which channel has the desired signal?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
+	@ParameterMarker(uiOrder=4, name="Signal Channel", description="Which channel has the desired signal?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
 	String signalValue;
 	
-	@ParameterMarker(uiOrder=4, name="Bleeding Channels", description="Which channels need to be subtracted from the signal channel? Enter is as CSV list. (Usually shorter wavelength channels bleed into longer wavelength channels)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
+	@ParameterMarker(uiOrder=5, name="Bleeding Channels", description="Which channels need to be subtracted from the signal channel? Enter is as CSV list. (Usually shorter wavelength channels bleed into longer wavelength channels)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
 	String bgValues;
 	
-	@ParameterMarker(uiOrder=5, name="Pixel Sample Size", description="Which channels need to be subtracted from the signal channel? Enter is as CSV list. (Usually shorter wavelength channels bleed into longer wavelength channels)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="3000")
+	@ParameterMarker(uiOrder=6, name="Pixel Sample Size", description="Which channels need to be subtracted from the signal channel? Enter is as CSV list. (Usually shorter wavelength channels bleed into longer wavelength channels)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="3000")
 	int pixels;
 	
-	@ParameterMarker(uiOrder=6, name="Calculate N Times", description="If desired, one can calculate the unmixing parameters for all images (default, 0) or for just N sets of the multi-channel images (enter number here).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0")
+	@ParameterMarker(uiOrder=7, name="Calculate N Times", description="If desired, one can calculate the unmixing parameters for all images (default, 0) or for just N sets of the multi-channel images (enter number here).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0")
 	int N;
 	
-	@ParameterMarker(uiOrder=7, name="Presmoothing Radius", description="If desired, presmooth the image before calculating the parameters (reducing the influence of noise). (Use 0 to skip step).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0")
+	@ParameterMarker(uiOrder=8, name="Presmoothing Radius", description="If desired, presmooth the image before calculating the parameters (reducing the influence of noise). (Use 0 to skip step).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0")
 	double radius;
 	
-	@ParameterMarker(uiOrder=8, name="Report Median Results", description="If desired, summarize results by channel using the median of results.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
+	@ParameterMarker(uiOrder=9, name="Report Median Results", description="If desired, summarize results by channel using the median of results.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
 	boolean summarize;
 	
 	/////////// Define Outputs ///////////
@@ -183,7 +186,7 @@ public class UnmixingParameterExtraction extends JEXPlugin implements Comparator
 			try
 			{
 				PointValuePair optimum = optimizer.optimize(new MaxEval(1000),
-                        new ObjectiveFunction(new ErrorFunction(this.factor, samples)),
+                        new ObjectiveFunction(new ErrorFunction(this.factorA, this.factorB, samples)),
                         GoalType.MINIMIZE,
                         new InitialGuess(new double[1+bgNames.size()]),
                         new NelderMeadSimplex(1+bgNames.size()));
@@ -208,7 +211,7 @@ public class UnmixingParameterExtraction extends JEXPlugin implements Comparator
 			count++;
 			
 			// Status bar
-			int percentage = (int) (100 * ((double) count / (double) imageMap.size()));
+			int percentage = (int) (100 * ((double) count / (double) total));
 			JEXStatics.statusBar.setProgressPercentage(percentage);
 		}
 		
@@ -245,12 +248,13 @@ class ErrorFunction implements MultivariateFunction, OptimizationData
 {
 	
 	Vector<double[]> data;
-	double penalty = 5;
+	double factorA = 1, factorB=1;
 	int samples = 0;
 
-	public ErrorFunction(double penalty, Vector<Vector<Double>> data)
+	public ErrorFunction(double factorA, double factorB, Vector<Vector<Double>> data)
 	{
-		this.penalty = penalty;
+		this.factorA = factorA;
+		this.factorB = factorB;
 		
 		// Load the data
 		this.data = new Vector<>(data.size());
@@ -286,7 +290,15 @@ class ErrorFunction implements MultivariateFunction, OptimizationData
 	
 	private double getHeavisideWeights(double x)
 	{
-		return Math.abs(x*(1+(this.penalty-1)/(1+Math.exp(-2*this.penalty*(-1*x-(1)/(2*this.penalty)*Math.log((this.penalty-1)/(1.1-1)-1) )))));
+		if(x < 0)
+		{
+			return(this.factorA*(-x + Math.pow(-x,this.factorB)));
+		}
+		else
+		{
+			return(x+Math.pow(x, this.factorB));
+		}
+		//return Math.abs(x*(1+(this.penalty-1)/(1+Math.exp(-2*this.penalty*(-1*x-(1)/(2*this.penalty)*Math.log((this.penalty-1)/(1.1-1)-1) )))));
 	}
 	
 	public double[] getTrueSignal(double[] point)
@@ -303,7 +315,7 @@ class ErrorFunction implements MultivariateFunction, OptimizationData
 		// then do the subtraction of the offset term (the last term in point)
 		for(int j=0; j < this.samples; j++)
 		{
-			ret[j] = ret[j] - point[point.length-1];
+			ret[j] = ret[j] + point[point.length-1];
 		}
 		return ret;
 	}
