@@ -16,6 +16,8 @@ import function.plugin.mechanism.MarkerConstants;
 import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
 import ij.ImagePlus;
+import ij.process.Blitter;
+import ij.process.FloatBlitter;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import jex.statics.JEXDialog;
@@ -56,6 +58,9 @@ public class WeightedMeanFilter extends JEXPlugin {
 	
 	@InputMarker(uiOrder=2, name="Mask (optional)", type=MarkerConstants.TYPE_IMAGE, description="Mask which defines objects (white) amidst background (black)", optional=true)
 	JEXData maskData;
+	
+	@InputMarker(uiOrder=3, name="IF (optional)", type=MarkerConstants.TYPE_IMAGE, description="Illumination correction image (typically has a mean of 1)", optional=true)
+	JEXData IFData;
 
 	/////////// Define Parameters ///////////
 
@@ -105,6 +110,9 @@ public class WeightedMeanFilter extends JEXPlugin {
 
 	@ParameterMarker(uiOrder=15, name="Dark Field Intensity", description="What is the intensity of an image without any illumination (i.e., the dark field). This is subtracted prior to division for division options.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="100.0")
 	double darkfield;
+	
+	@ParameterMarker(uiOrder=16, name="IF is One Tile?", description="Is the (optional) IF image provided a single tile (vs one large stitched IF image)?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	boolean oneTile;
 
 	//	@ParameterMarker(uiOrder=12, name="Output Std. Dev. Images?", description="Should the locally weighted standard deviation images be output?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	//	boolean outputStdDev;
@@ -179,6 +187,11 @@ public class WeightedMeanFilter extends JEXPlugin {
 		{
 			maskMap = ImageReader.readObjectToImagePathTable(maskData);
 		}
+		TreeMap<DimensionMap,String> IFMap = null;
+		if(IFData != null)
+		{
+			IFMap = ImageReader.readObjectToImagePathTable(IFData);
+		}
 		TreeMap<DimensionMap,String> outputImageMap = new TreeMap<DimensionMap,String>();
 		TreeMap<DimensionMap,String> outputMaskMap = new TreeMap<DimensionMap,String>();
 		//TreeMap<DimensionMap,String> outputStDevMap = new TreeMap<DimensionMap,String>();
@@ -231,10 +244,17 @@ public class WeightedMeanFilter extends JEXPlugin {
 			{
 				mp = (new ImagePlus(maskMap.get(map)).getProcessor().convertToFloatProcessor());
 			}
+			FloatProcessor IFp = null;
+			if(IFData != null && IFMap != null)
+			{
+				IFp = (new ImagePlus(IFMap.get(map)).getProcessor().convertToFloatProcessor());
+			}
 			TreeMap<DimensionMap,ImageProcessor> temp = new TreeMap<>();
 			TreeMap<DimensionMap,ImageProcessor> maskTemp = new TreeMap<>();
 			TreeMap<DimensionMap,ImageProcessor> tiles = new TreeMap<>();
 			TreeMap<DimensionMap,ImageProcessor> maskTiles = new TreeMap<>();
+			TreeMap<DimensionMap,ImageProcessor> IFTemp = new TreeMap<>();
+			TreeMap<DimensionMap,ImageProcessor> IFTiles = new TreeMap<>();
 			if(this.rows > 1 || this.cols > 1)
 			{
 				Logs.log("Splitting image into tiles", this);
@@ -245,6 +265,18 @@ public class WeightedMeanFilter extends JEXPlugin {
 					maskTemp.put(map.copy(), mp);
 					maskTiles.putAll(ImageWriter.separateTilesToProcessors(maskTemp, overlap, rows, cols, this.getCanceler()));
 				}
+				if(IFp != null & !this.oneTile)
+				{
+					IFTemp.put(map.copy(), IFp);
+					maskTiles.putAll(ImageWriter.separateTilesToProcessors(IFTemp, overlap, rows, cols, this.getCanceler()));
+				}
+				else
+				{
+					if(IFp != null)
+					{
+						IFTiles.put(map.copy(), IFp);
+					}
+				}
 			}
 			else
 			{
@@ -252,6 +284,10 @@ public class WeightedMeanFilter extends JEXPlugin {
 				if(mp != null)
 				{
 					maskTiles.put(map.copy(), mp);
+				}
+				if(IFp != null)
+				{
+					IFTiles.put(map.copy(), IFp);
 				}
 			}
 
@@ -263,16 +299,27 @@ public class WeightedMeanFilter extends JEXPlugin {
 			{
 				if(maskTiles.size() != 0)
 				{
-					FloatProcessor fpToSave = ImageUtility.getWeightedMeanFilterImage((FloatProcessor) e.getValue(), (FloatProcessor) maskTiles.get(e.getKey()), doSubtraction, doBackgroundOnly, doDivision, this.meanRadius, this.varRadius, this.subScale, this.threshScale, this.operation, nominal, sigma, this.darkfield);
-					
+					FloatProcessor fpToSave = ImageUtility.getWeightedMeanFilterImage((FloatProcessor) e.getValue(), (FloatProcessor) maskTiles.get(e.getKey()), doSubtraction, doBackgroundOnly, doDivision, this.meanRadius, this.varRadius, this.subScale, this.threshScale, this.operation, 0d, sigma, this.darkfield);
+					if(IFTiles.get(e.getKey()) != null)
+					{
+						FloatBlitter blit = new FloatBlitter(fpToSave);
+						blit.copyBits(IFTiles.get(e.getKey()), 0, 0, Blitter.DIVIDE);
+					}
+					fpToSave.add(nominal);
 					String filteredImagePath = JEXWriter.saveImage(fpToSave, this.outputBitDepth);
 					outputImageMap.put(e.getKey().copy(), filteredImagePath);
 				}
 				else
 				{
-					Pair<FloatProcessor, ImageProcessor> images = ImageUtility.getWeightedMeanFilterImage((FloatProcessor) e.getValue(), doThreshold, doSubtraction, doBackgroundOnly, doDivision, this.meanRadius, this.varRadius, this.subScale, this.threshScale, this.operation, nominal, sigma, this.darkfield);
+					Pair<FloatProcessor, ImageProcessor> images = ImageUtility.getWeightedMeanFilterImage((FloatProcessor) e.getValue(), doThreshold, doSubtraction, doBackgroundOnly, doDivision, this.meanRadius, this.varRadius, this.subScale, this.threshScale, this.operation, 0d, sigma, this.darkfield);
 					if(images.p1 != null)
 					{
+						if(IFTiles.get(e.getKey()) != null)
+						{
+							FloatBlitter blit = new FloatBlitter(images.p1);
+							blit.copyBits(IFTiles.get(e.getKey()), 0, 0, Blitter.DIVIDE);
+						}
+						images.p1.add(nominal);
 						String filteredImagePath = JEXWriter.saveImage(images.p1, this.outputBitDepth);
 						outputImageMap.put(e.getKey().copy(), filteredImagePath);
 					}
