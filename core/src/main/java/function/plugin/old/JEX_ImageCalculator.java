@@ -146,6 +146,13 @@ public class JEX_ImageCalculator extends JEXCrunchable {
 		// String[] {"true"},0);
 		Parameter p1 = new Parameter("Math Operation", "Math operation to perform using the pixel information from Image A and B.", Parameter.DROPDOWN, new String[] { "A+B", "A-B", "A*B", "A/B", "|A-B|", "MAX", "MIN", "AVERAGE", "AND", "OR", "XOR", "COPY", "COPY Transparent 0" }, 4);
 		Parameter p2 = new Parameter("Output Bit-Depth", "Bit-Depth of the output image", Parameter.DROPDOWN, new String[] { "8", "16", "32" }, 2);
+		Parameter p3 = new Parameter("A: Pre-operation", "How to alter image before calculation.", Parameter.DROPDOWN, new String[] { "None", "Addition", "Multiplication", "log", "exp", "+1 then log", "exp then -1"}, 0);
+		Parameter p4 = new Parameter("A: Pre-operation Value", "Value to use for the operation.", Parameter.TEXTFIELD, "0");
+		Parameter p5 = new Parameter("B: Pre-operation", "How to alter image before calculation.", Parameter.DROPDOWN, new String[] { "None", "Addition", "Multiplication", "log", "exp", "+1 then log", "exp then -1"}, 0);
+		Parameter p6 = new Parameter("B: Pre-operation Value", "Value to use for the operation.", Parameter.TEXTFIELD, "0");
+		Parameter p7 = new Parameter("Result: Post-operation", "How to alter image after calculation", Parameter.DROPDOWN, new String[] { "None", "Addition", "Multiplication", "log", "exp", "+1 then log", "exp then -1"}, 0);
+		Parameter p8 = new Parameter("Result: Post-operation Value", "Value to use for the operation.", Parameter.TEXTFIELD, "0");
+		
 		Parameter p0 = getNumThreadsParameter(10, 6);
 		
 		// Make an array of the parameters and return it
@@ -153,6 +160,12 @@ public class JEX_ImageCalculator extends JEXCrunchable {
 		parameterArray.addParameter(p0);
 		parameterArray.addParameter(p1);
 		parameterArray.addParameter(p2);
+		parameterArray.addParameter(p3);
+		parameterArray.addParameter(p4);
+		parameterArray.addParameter(p5);
+		parameterArray.addParameter(p6);
+		parameterArray.addParameter(p7);
+		parameterArray.addParameter(p8);
 		;
 		
 		return parameterArray;
@@ -198,6 +211,12 @@ public class JEX_ImageCalculator extends JEXCrunchable {
 		int bitDepth = Integer.parseInt(parameters.getValueOfParameter("Output Bit-Depth"));
 		String method = parameters.getValueOfParameter("Math Operation");
 		int methodInt = getBlitterMethodInt(method);
+		String preOpA = this.parameters.getValueOfParameter("A: Pre-operation");
+		double preOpAValue = Double.parseDouble(this.parameters.getValueOfParameter("A: Pre-operation Value"));
+		String preOpB = this.parameters.getValueOfParameter("B: Pre-operation");
+		double preOpBValue = Double.parseDouble(this.parameters.getValueOfParameter("B: Pre-operation Value"));
+		String postOp = this.parameters.getValueOfParameter("Result: Post-operation");
+		double postOpValue = Double.parseDouble(this.parameters.getValueOfParameter("Result: Post-operation Value"));
 		
 		// Run the function
 		TreeMap<DimensionMap,String> imageAMap = ImageReader.readObjectToImagePathTable(imageAData);
@@ -212,6 +231,8 @@ public class JEX_ImageCalculator extends JEXCrunchable {
 			}
 			ImagePlus savedImA = new ImagePlus(imageAMap.firstEntry().getValue());
 			FloatProcessor savedImpA = (FloatProcessor) savedImA.getProcessor().convertToFloat();
+			// Do the preOp once on A
+			this.performOp(savedImpA, preOpA, preOpAValue);
 			FloatProcessor impA;
 			for (DimensionMap map : imageBMap.keySet())
 			{
@@ -226,8 +247,15 @@ public class JEX_ImageCalculator extends JEXCrunchable {
 				ImagePlus imB = new ImagePlus(pathB);
 				FloatProcessor ipB = (FloatProcessor) imB.getProcessor().convertToFloat();
 				
+				// Do the preOp on B
+				this.performOp(ipB, preOpB, preOpBValue);
+				
 				FloatBlitter blit = new FloatBlitter(impA);
 				blit.copyBits(ipB, 0, 0, methodInt);
+				
+				// Do postOp
+				this.performOp(impA, postOp, postOpValue);
+				
 				ImageProcessor toSave = impA;
 				if(bitDepth == 8)
 				{
@@ -253,6 +281,8 @@ public class JEX_ImageCalculator extends JEXCrunchable {
 		{
 			ImagePlus savedImB = new ImagePlus(imageBMap.firstEntry().getValue());
 			FloatProcessor savedImpB = (FloatProcessor) savedImB.getProcessor().convertToFloat();
+			// Do the preOp once on B
+			this.performOp(savedImpB, preOpB, preOpBValue);
 			for (DimensionMap map : imageAMap.keySet())
 			{
 				if(this.isCanceled())
@@ -264,11 +294,17 @@ public class JEX_ImageCalculator extends JEXCrunchable {
 				if(pathA == null)
 					continue;
 				ImagePlus imA = new ImagePlus(pathA);
-				
 				FloatProcessor impA = (FloatProcessor) imA.getProcessor().convertToFloat();
+				
+				// Do the preOp on A
+				this.performOp(impA, preOpA, preOpAValue);
 				
 				FloatBlitter blit = new FloatBlitter(impA);
 				blit.copyBits(savedImpB, 0, 0, methodInt);
+				
+				// Do postOp
+				this.performOp(impA, postOp, postOpValue);
+				
 				ImageProcessor toSave = impA;
 				if(bitDepth == 8)
 				{
@@ -306,8 +342,16 @@ public class JEX_ImageCalculator extends JEXCrunchable {
 				FloatProcessor ipA = (FloatProcessor) imA.getProcessor().convertToFloat();
 				FloatProcessor ipB = (FloatProcessor) imB.getProcessor().convertToFloat();
 				
+				// Do preops
+				this.performOp(ipA, preOpA, preOpAValue);
+				this.performOp(ipB, preOpB, preOpBValue);
+				
 				FloatBlitter blit = new FloatBlitter(ipA);
 				blit.copyBits(ipB, 0, 0, methodInt);
+				
+				// Do postOp
+				this.performOp(ipA, postOp, postOpValue);
+				
 				ImageProcessor toSave = ipA;
 				if(bitDepth == 8)
 				{
@@ -375,6 +419,38 @@ public class JEX_ImageCalculator extends JEXCrunchable {
 			methodInt = Blitter.XOR;
 		
 		return methodInt;
+	}
+	
+	public void performOp(FloatProcessor fp, String method, double value)
+	{
+		
+		if(method.equals("Addition"))
+		{
+			fp.add(value);
+		}
+		else if(method.equals("Multiplication"))
+		{
+			fp.multiply(value);
+		}
+		else if(method.equals("log"))
+		{
+			fp.ln();
+		}
+		else if(method.equals("exp"))
+		{
+			fp.exp();
+		}
+		else if(method.equals("+1 then log"))
+		{
+			fp.add(1d);
+			fp.ln();
+		}
+		else if(method.equals("exp then -1"))
+		{
+			fp.exp();
+			fp.add(-1d);
+		}
+		
 	}
 	
 }
