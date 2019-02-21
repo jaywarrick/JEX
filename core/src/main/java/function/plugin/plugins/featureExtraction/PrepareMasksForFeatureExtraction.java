@@ -201,13 +201,27 @@ public class PrepareMasksForFeatureExtraction<T extends RealType<T>> extends JEX
 			Logs.log("Getting union images for subMap: " + subMap.toString(), this);
 			Img<UnsignedByteType> union = getUnion(subMap.copy(), namesToUnion, maskMap);
 			
-			// Get the regions in the union image that correspond to maxima
-			Logs.log("Getting regions corresponding to maxima", this);
 			if(union == null)
 			{
 				continue;
 			}
+			try
+			{
+				@SuppressWarnings("unused")
+				boolean is8bit = !UnsignedByteType.class.isAssignableFrom(union.firstElement().getClass());
+			}
+			catch(ClassCastException e)
+			{
+				e.printStackTrace();
+				JEXDialog.messageDialog("Mask must be 8-bit. Aborting");
+				return false;
+			}
+			
+			// Get the regions in the union image that correspond to maxima
+			Logs.log("Getting regions corresponding to maxima", this);
+			// utils.show(union, true);
 			Pair<Img<UnsignedByteType>,TreeMap<Integer,PointList>> temp = utils.keepRegionsWithMaxima(union, connectedness.equals("4 Connected"), roiMap.get(subMap), removeClumps, this.getCanceler());
+			// utils.show(temp.p1, true);
 			union = temp.p1;
 			
 			// Get the filtered ROI

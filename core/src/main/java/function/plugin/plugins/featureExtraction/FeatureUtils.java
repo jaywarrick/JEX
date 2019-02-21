@@ -1396,7 +1396,7 @@ public class FeatureUtils {
 		ImgLabeling<Integer, IntType> labeling = this.getLabeling(mask, fourConnected);
 		//		ImageJFunctions.show(mask);
 		//		this.show(mask);
-		//		this.show(labeling);
+		//		this.show(labeling, true);
 		LabelRegions<Integer> regions = new LabelRegions<Integer>(labeling);
 
 		TreeMap<Integer, PointList> labelToPointsMap = new TreeMap<Integer,PointList>();
