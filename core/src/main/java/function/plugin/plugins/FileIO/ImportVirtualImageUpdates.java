@@ -78,6 +78,9 @@ public class ImportVirtualImageUpdates extends JEXPlugin {
 	
 	@ParameterMarker(uiOrder=6, name="Keep Other Parsed Dimensions?", description="Outside the specified list of dimensions above, should other dimensions be kept?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
 	boolean keepOthers;
+	
+	@ParameterMarker(uiOrder=7, name="Dim Filter Table", description="Specify any dimension-values that should be skipped during update.(Use following format: <Dim1>=<V1>,<V2>;<Dim2>=<V1>,<V2>,...,<VN>)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
+	String filterTableString;
 
 	/////////// Define Outputs ///////////
 
@@ -90,6 +93,7 @@ public class ImportVirtualImageUpdates extends JEXPlugin {
 	public static TreeMap<DimensionMap,String> files = null;
 	public static DimTable dt = null;
 	public static TreeMap<JEXEntry,JEXData> inputDatas = new TreeMap<>();
+	public static DimTable filterTable = null;
 
 	@Override
 	public boolean run(JEXEntry optionalEntry)
@@ -115,6 +119,9 @@ public class ImportVirtualImageUpdates extends JEXPlugin {
 			JEXDialog.messageDialog("Warning! The file or folder specified could not be found.");
 			return false;
 		}
+		
+		filterTable = new DimTable(this.filterTableString);
+		
 		if(files == null)
 		{
 			if (filePath.isDirectory()) { // multiple files
@@ -172,6 +179,7 @@ public class ImportVirtualImageUpdates extends JEXPlugin {
 				files = null;
 				dt = null;
 				inputDatas.clear();
+				filterTable = null;
 				return;
 			}
 		}
@@ -209,10 +217,15 @@ public class ImportVirtualImageUpdates extends JEXPlugin {
 			
 			// Generate a DimTable for this entry and data.
 			DimTable entryTable = this.getEntryTable(entry.getKey(), input, xyTokens);
+			Logs.log(entryTable.toString(), this);
 			
 			// Use the entryTable to only grab the appropriate files.
 			for(DimensionMap map : entryTable.getMapIterator())
 			{
+				if(filterTable.testMapAsExclusionFilter(map))
+				{
+					continue;
+				}
 				String path = files.get(map);
 				if(path == null)
 				{
@@ -228,6 +241,13 @@ public class ImportVirtualImageUpdates extends JEXPlugin {
 		if(files.size() != dt.mapCount()*validEntries)
 		{
 			JEXDialog.messageDialog("We expected " + dt.mapCount()*validEntries + " files but only found " + files.size() + ". Since the timepoint is not complete for these entries, we are aborting and stopping Auto-Updater.", this);
+			
+			// Remember to reset the static variable again so this data isn't carried over to other function runs
+			files = null;
+			dt = null;
+			inputDatas.clear();
+			filterTable = null;
+			
 			return;
 		}
 
@@ -246,6 +266,10 @@ public class ImportVirtualImageUpdates extends JEXPlugin {
 			TreeMap<DimensionMap,String> entryFiles = new TreeMap<>();
 			for(DimensionMap map : entryTable.getMapIterator())
 			{
+				if(filterTable.testMapAsExclusionFilter(map))
+				{
+					continue;
+				}
 				entryFiles.put(map, files.get(map)); // possibility of null file path eliminated in loops above.
 			}
 			
@@ -315,6 +339,7 @@ public class ImportVirtualImageUpdates extends JEXPlugin {
 		files = null;
 		dt = null;
 		inputDatas.clear();
+		filterTable = null;
 	}
 	
 	public DimTable getEntryTable(JEXEntry entry, JEXData input, CSVList xyTokens)
@@ -354,6 +379,15 @@ public class ImportVirtualImageUpdates extends JEXPlugin {
 		{
 			dirDT.removeDimWithName(xyToken);
 		}
+		
+		for(Dim d : filterTable)
+		{
+			if(dirDT.getDimWithName(d.name()) != null)
+			{
+				int i = dirDT.indexOfDimWithName(d.name());
+				dirDT.set(i, Dim.subtract(dirDT.getDimWithName(d.name()), d));
+			}
+		}
 
 		// Just grab new files
 		Dim dirTimes = dirDT.getDimWithName(timeToken);
@@ -363,7 +397,7 @@ public class ImportVirtualImageUpdates extends JEXPlugin {
 		System.out.println();
 		if(newTimes.size() == 0)
 		{
-			JEXDialog.messageDialog("New new timepoints detected in directory. Aborting.", this);
+			JEXDialog.messageDialog("No new timepoints detected in directory. Aborting.", this);
 			return false;
 		}
 		if(nextOnly)
