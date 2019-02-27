@@ -234,7 +234,7 @@ public class TIEPhaseCalculator extends JEXPlugin {
 				DimensionMap toGet = map.copyAndSet(this.zDimName + "=" + zDim.valueAt(i));
 				if(filterTable.testMapAsExclusionFilter(toGet))
 				{
-					if(this.keepExcluded && this.rows == 1 || this.cols == 1)
+					if(this.keepExcluded && this.rows == 1 && this.cols == 1)
 					{
 						Logs.log("Skipping the processing of " + toGet.toString(), this);
 						ImagePlus out = new ImagePlus(imageMap.get(toGet));
