@@ -1,5 +1,8 @@
 package function.plugin.old;
 
+import java.util.HashMap;
+import java.util.TreeMap;
+
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;
@@ -12,11 +15,9 @@ import function.JEXCrunchable;
 import function.imageUtility.WatershedUtility;
 import ij.ImagePlus;
 import ij.process.ByteProcessor;
-
-import java.util.HashMap;
-import java.util.TreeMap;
-
 import jex.statics.JEXStatics;
+import logs.Logs;
+import tables.DimTable;
 import tables.DimensionMap;
 
 /**
@@ -144,12 +145,17 @@ public class JEX_Watershed extends JEXCrunchable {
 		// Parameter p0 = new
 		// Parameter("Dummy Parameter","Lets user know that the function has been selected.",FormLine.DROPDOWN,new
 		// String[] {"true"},0);
+		Parameter p0 = getNumThreadsParameter(10, 6);
 		Parameter p1 = new Parameter("Output", "Should the watershed output be provided or the euclidean distance map.", Parameter.DROPDOWN, new String[] { "Watershed", "Euclidian Distance Map" }, 0);
+		Parameter p2 = new Parameter("Exclusion Filter DimTable", "Exclude combinatoins of Dimension Names and values. (Use following notation '<DimName1>=<a1,a2,...>;<DimName2>=<b1,b2,...>' e.g., 'Channel=0,100,100; Time=1,2,3,4,5' (spaces are ok).", Parameter.TEXTFIELD, "");
+		Parameter p3 = new Parameter("Keep Excluded Images?", "Should images excluded by the filter be copied to the new object?", Parameter.CHECKBOX, false);
 		
 		// Make an array of the parameters and return it
 		ParameterSet parameterArray = new ParameterSet();
-		// parameterArray.addParameter(p0);
+		parameterArray.addParameter(p0);
 		parameterArray.addParameter(p1);
+		parameterArray.addParameter(p2);
+		parameterArray.addParameter(p3);
 		return parameterArray;
 	}
 	
@@ -188,6 +194,9 @@ public class JEX_Watershed extends JEXCrunchable {
 		// Get Parameters
 		String op = this.parameters.getValueOfParameter("Output");
 		boolean doWatershed = op.equals("Watershed");
+		boolean keepExcluded = Boolean.parseBoolean(this.parameters.getValueOfParameter("Keep Excluded Images?"));
+		String exclusionFilterString = this.parameters.getValueOfParameter("Exclusion Filter DimTable");
+		DimTable filterTable = new DimTable(exclusionFilterString);
 		
 		TreeMap<DimensionMap,String> imageMap = ImageReader.readObjectToImagePathTable(imageData);
 		TreeMap<DimensionMap,String> outputMap = new TreeMap<DimensionMap,String>();
@@ -199,6 +208,35 @@ public class JEX_Watershed extends JEXCrunchable {
 		ImagePlus in;
 		for (DimensionMap map : imageMap.keySet())
 		{
+			if(this.isCanceled())
+			{
+				Logs.log("Function canceled.", this);
+				return false;
+			}
+
+			// Skip if told to skip.
+			if(filterTable.testMapAsExclusionFilter(map))
+			{
+				if(keepExcluded)
+				{
+					Logs.log("Skipping the processing of " + map.toString(), this);
+					ImagePlus temp = new ImagePlus(imageMap.get(map));
+					String tempPath = JEXWriter.saveImage(temp);
+					if(tempPath != null)
+					{
+						outputMap.put(map, tempPath);
+					}
+				}
+				else
+				{
+					Logs.log("Skipping the processing and saving of " + map.toString(), this);
+				}
+				count = count + 1;
+				percentage = (int) (100 * ((double) (count) / ((double) imageMap.size())));
+				JEXStatics.statusBar.setProgressPercentage(percentage);
+				continue;
+			}
+			
 			in = new ImagePlus(imageMap.get(map));
 			ByteProcessor ip = (ByteProcessor) in.getProcessor();
 			
