@@ -144,7 +144,7 @@ public class JEX_Watershed extends JEXCrunchable {
 		// Parameter p0 = new
 		// Parameter("Dummy Parameter","Lets user know that the function has been selected.",FormLine.DROPDOWN,new
 		// String[] {"true"},0);
-		Parameter p1 = new Parameter("Dummy Parameter", "Here to indicate that you have successfully chosen the function.", Parameter.DROPDOWN, new String[] { "True" }, 0);
+		Parameter p1 = new Parameter("Output", "Should the watershed output be provided or the euclidean distance map.", Parameter.DROPDOWN, new String[] { "Watershed", "Euclidian Distance Map" }, 0);
 		
 		// Make an array of the parameters and return it
 		ParameterSet parameterArray = new ParameterSet();
@@ -185,6 +185,10 @@ public class JEX_Watershed extends JEXCrunchable {
 		if(imageData == null || !imageData.getTypeName().getType().matches(JEXData.IMAGE))
 			return false;
 		
+		// Get Parameters
+		String op = this.parameters.getValueOfParameter("Output");
+		boolean doWatershed = op.equals("Watershed");
+		
 		TreeMap<DimensionMap,String> imageMap = ImageReader.readObjectToImagePathTable(imageData);
 		TreeMap<DimensionMap,String> outputMap = new TreeMap<DimensionMap,String>();
 		
@@ -199,7 +203,15 @@ public class JEX_Watershed extends JEXCrunchable {
 			ByteProcessor ip = (ByteProcessor) in.getProcessor();
 			
 			WatershedUtility ws = new WatershedUtility();
-			out = ws.watershed(ip);
+			if(doWatershed)
+			{
+				out = ws.watershed(ip);
+			}
+			else
+			{
+				out = (ByteProcessor) ws.makeEDM(ip, WatershedUtility.BYTE);
+			}
+			
 			outputPath = JEXWriter.saveImage(out);
 			outputMap.put(map, outputPath);
 			
