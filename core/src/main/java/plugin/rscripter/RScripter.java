@@ -252,6 +252,7 @@ public class RScripter implements PlugInController, ActionListener, ClipboardOwn
 		lsv.add("library(data.table)");
 		lsv.add("library(bit64)");
 		lsv.add("sourceGitHubFile('jaywarrick','R-General','master','.Rprofile')");
+		lsv.add("sourceGitHubFile('jaywarrick','R-Cytoprofiling','master','PreProcessingHelpers.R')");
 		lsv.add("jData <- list()");
 		for (JEXEntry e : entries)
 		{
