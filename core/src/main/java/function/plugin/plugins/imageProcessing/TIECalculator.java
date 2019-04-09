@@ -144,6 +144,10 @@ public class TIECalculator {
 	 */
 	public FloatProcessor calculatePhase(FloatProcessor I, FloatProcessor lo, FloatProcessor hi)
 	{
+		if(!this.simple && I == null)
+		{
+			return null;
+		}
 		//		if(this.simple)
 		//		{
 		//			FloatProcessor kdIdz = getkdIdz(lo, hi, this.dz, this.wavelength);
