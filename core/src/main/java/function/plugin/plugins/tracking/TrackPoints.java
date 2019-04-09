@@ -105,8 +105,11 @@ public class TrackPoints extends JEXPlugin {
 	@ParameterMarker(uiOrder=4, name="Time Dim Name", description="Name of the time dimension in the ROI object.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="T")
 	String timeDimName;
 	
-	@ParameterMarker(uiOrder=4, name="New Track Dim Name", description="Name of the track dimension to create in the output ROI object.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Track")
+	@ParameterMarker(uiOrder=5, name="New Track Dim Name", description="Name of the track dimension to create in the output ROI object.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Track")
 	String trackDimName;
+	
+	@ParameterMarker(uiOrder=6, name="(Expt'l) Two Pass Algorithm", description="Should LAP tracking be performed twice? First pass will be used to calculate population shifts. Second will be used to link.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	boolean twoPass;
 	
 	/////////// Define Outputs ///////////
 	
@@ -141,7 +144,7 @@ public class TrackPoints extends JEXPlugin {
 		}
 		
 		// Create the SpotCollections
-		TreeMap<DimensionMap,SpotCollection> spotCollections = getSpotCollections();
+		TreeMap<DimensionMap,SpotCollection> spotCollections = getSpotCollections(null);
 		
 		// Link the spots to create the segments
 		// For each SpotCollection, track the Spots to create segments
@@ -153,6 +156,11 @@ public class TrackPoints extends JEXPlugin {
 		TreeMap<DimensionMap, ROIPlus> diffRois = new TreeMap<>();
 		
 		int count = 0, percentage = 0;
+		int total = spotCollections.size();
+		if(twoPass)
+		{
+			total = total * 2;
+		}
 		for(Entry<DimensionMap,SpotCollection> e : spotCollections.entrySet())
 		{
 			DimensionMap segmentMap = e.getKey(); // This map doesn't have a time dim. Time info is in the SpotCollections
@@ -168,21 +176,23 @@ public class TrackPoints extends JEXPlugin {
 			tracker.process();
 			
 			// Convert to trackRois and maximaRois (these maps have timeDims in them)
-			Pair<TreeMap<DimensionMap, ROIPlus>,TreeMap<DimensionMap, ROIPlus>> rois = this.getMaximaRois(tracker, segmentMap, roiData.getDimTable().getDimWithName(timeDimName));
+			Pair<TreeMap<DimensionMap, ROIPlus>,TreeMap<DimensionMap, ROIPlus>> rois = this.getMaximaRois(tracker, segmentMap, roiData.getDimTable().getDimWithName(timeDimName), null);
 			
-			// Get the positions csv table
-			for(Entry<DimensionMap, ROIPlus> e3 : rois.p2.entrySet())
+			if(!twoPass)
 			{
-				for(IdPoint p : e3.getValue().pointList)
+				// Get the positions csv table
+				for(Entry<DimensionMap, ROIPlus> e3 : rois.p2.entrySet())
 				{
-					positionTable.put(e3.getKey().copyAndSet("Id=" + p.id + ",Measurement=x"), (double) p.x);
-					positionTable.put(e3.getKey().copyAndSet("Id=" + p.id + ",Measurement=y"), (double) p.y);
+					for(IdPoint p : e3.getValue().pointList)
+					{
+						positionTable.put(e3.getKey().copyAndSet("Id=" + p.id + ",Measurement=x"), (double) p.x);
+						positionTable.put(e3.getKey().copyAndSet("Id=" + p.id + ",Measurement=y"), (double) p.y);
+					}
 				}
 			}
 			
 			// Get diffs... the dimension maps returned have a time dim.
 			TreeMap<DimensionMap,Vector<Pair<Double,Double>>> diffs = StatisticsUtility.getDiffVectors(rois.p2, timeDimName);
-			
 			for(Entry<DimensionMap,Vector<Pair<Double,Double>>> e2 : diffs.entrySet())
 			{
 				Pair<Double,Double> diff = StatisticsUtility.getMedianDiff(e2.getValue());
@@ -191,13 +201,68 @@ public class TrackPoints extends JEXPlugin {
 				diffRois.put(e2.getKey().copy(), new ROIPlus(p, ROIPlus.ROI_POINT));
 			}
 			
-			// Store them in the finalTrackRois map
-			finalTrackRois.putAll(rois.p1);
-			finalMaximaRois.putAll(rois.p2);
+			if(!twoPass)
+			{
+				// Store them in the finalTrackRois map
+				finalTrackRois.putAll(rois.p1);
+				finalMaximaRois.putAll(rois.p2);
+			}
 			
 			count = count + 1;
-			percentage = (int) (100 * ((double) (count) / ((double) spotCollections.size())));
+			percentage = (int) (100 * ((double) (count) / ((double) total)));
 			JEXStatics.statusBar.setProgressPercentage(percentage);
+		}
+		
+		if(twoPass)
+		{
+			diffRois = convertDeltasToBeRelativeToTime0(diffRois, this.timeDimName);
+			// Create the SpotCollections
+			spotCollections = getSpotCollections(diffRois);
+			for(Entry<DimensionMap,SpotCollection> e : spotCollections.entrySet())
+			{
+				DimensionMap segmentMap = e.getKey(); // This map doesn't have a time dim. Time info is in the SpotCollections
+				
+				if(this.isCanceled())
+				{
+					return false;
+				}
+				
+				// Track the spots to create segments
+				Logs.log("Tracking points for " + e.getKey(), this);
+				FastLAPTracker tracker = new FastLAPTracker(e.getValue(), this.getSimpleTrackerSettings(maxLinkDistance, maxGapDistance, maxGapFrames));
+				tracker.process();
+				
+				// Convert to trackRois and maximaRois (these maps have timeDims in them)
+				Pair<TreeMap<DimensionMap, ROIPlus>,TreeMap<DimensionMap, ROIPlus>> rois = this.getMaximaRois(tracker, segmentMap, roiData.getDimTable().getDimWithName(timeDimName), diffRois);
+				
+				// Get the positions csv table
+				for(Entry<DimensionMap, ROIPlus> e3 : rois.p2.entrySet())
+				{
+					for(IdPoint p : e3.getValue().pointList)
+					{
+						positionTable.put(e3.getKey().copyAndSet("Id=" + p.id + ",Measurement=x"), (double) p.x);
+						positionTable.put(e3.getKey().copyAndSet("Id=" + p.id + ",Measurement=y"), (double) p.y);
+					}
+				}
+				
+				// Get diffs... the dimension maps returned have a time dim.
+				TreeMap<DimensionMap,Vector<Pair<Double,Double>>> diffs = StatisticsUtility.getDiffVectors(rois.p2, timeDimName);
+				for(Entry<DimensionMap,Vector<Pair<Double,Double>>> e2 : diffs.entrySet())
+				{
+					Pair<Double,Double> diff = StatisticsUtility.getMedianDiff(e2.getValue());
+					PointList p = new PointList();
+					p.add(new IdPoint((int) Math.round(diff.p1), (int) Math.round(diff.p2), 0));
+					diffRois.put(e2.getKey().copy(), new ROIPlus(p, ROIPlus.ROI_POINT));
+				}
+				
+				// Store them in the finalTrackRois map
+				finalTrackRois.putAll(rois.p1);
+				finalMaximaRois.putAll(rois.p2);
+				
+				count = count + 1;
+				percentage = (int) (100 * ((double) (count) / ((double) total)));
+				JEXStatics.statusBar.setProgressPercentage(percentage);
+			}
 		}
 
 		// Create the JEXData and assign the outputs
@@ -212,12 +277,39 @@ public class TrackPoints extends JEXPlugin {
 		return true;
 	}
 	
+	public TreeMap<DimensionMap,ROIPlus> convertDeltasToBeRelativeToTime0(TreeMap<DimensionMap,ROIPlus> points, String timeDimName)
+	{
+		DimTable dt = new DimTable(points);
+
+		TreeMap<DimensionMap,ROIPlus> ret = new TreeMap<>();
+		DimTable dt2 = dt.getSubTable(timeDimName);
+		for(DimensionMap filter : dt2.getMapIterator())
+		{
+			double x = 0, y = 0;
+			for(DimensionMap map2 : dt.getSubTable(filter).getMapIterator())
+			{
+				ROIPlus r = points.get(map2);
+				if(r != null)
+				{
+					Logs.log(map2.toString(), this);
+					x = x + r.getPointList().get(0).x;
+					y = y + r.getPointList().get(0).y;
+					PointList pl = new PointList();
+					pl.add(new IdPoint((int) Math.round(x), (int) Math.round(y), r.getPointList().get(0).id));
+					ret.put(map2, new ROIPlus(pl, ROIPlus.ROI_POINT));
+				}
+			}
+		}
+		
+		return ret;
+	}
+	
 	public String getSpot(Spot s)
 	{
 		return s.getName() + "," + s.getFeature(Spot.FRAME);
 	}
 	
-	public Pair<TreeMap<DimensionMap,ROIPlus>,TreeMap<DimensionMap,ROIPlus>> getMaximaRois(LAPTracker tracker, DimensionMap segmentMap, Dim timeDim)
+	public Pair<TreeMap<DimensionMap,ROIPlus>,TreeMap<DimensionMap,ROIPlus>> getMaximaRois(LAPTracker tracker, DimensionMap segmentMap, Dim timeDim, TreeMap<DimensionMap,ROIPlus> diffRois)
 	{
 		SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = tracker.getResult();
 		
@@ -272,13 +364,25 @@ public class TrackPoints extends JEXPlugin {
 		{
 			DimensionMap newMap = segmentMap.copy();
 			newMap.put(trackDimName, ""+idCounter);
-			ROIPlus track = this.getTrackRoi(pl);
-			trackRois.put(newMap.copy(), track);
 			for(IdPoint p : pl)
 			{
 				newMap.put(timeDimName, ""+p.id);
-				allPoints.put(newMap.copy(), p);
+				if(diffRois != null)
+				{
+					ROIPlus shift = diffRois.get(newMap);
+					if(shift == null || shift.getPointList().size() == 0)
+					{
+						Logs.log("No shift found for " + newMap.toString() + ". Skipping.", Logs.ERROR, this);
+					}
+					else
+					{
+						p.translate(shift.getPointList().firstElement().x, shift.getPointList().firstElement().y);
+					}
+				}
+				allPoints.put(newMap.copy(), p.copy());
 			}
+			ROIPlus track = this.getTrackRoi(pl);
+			trackRois.put(newMap.copy(), track);
 			idCounter++;
 		}
 		
@@ -330,7 +434,7 @@ public class TrackPoints extends JEXPlugin {
 	//		return trackRois;
 	//	}
 	
-	public TreeMap<DimensionMap,SpotCollection> getSpotCollections()
+	public TreeMap<DimensionMap,SpotCollection> getSpotCollections(TreeMap<DimensionMap,ROIPlus> diffRois)
 	{
 		// Prepare to store a spotCollection for each time-series defined by the dimTable
 		TreeMap<DimensionMap,SpotCollection> ret = new TreeMap<DimensionMap,SpotCollection>();
@@ -352,9 +456,29 @@ public class TrackPoints extends JEXPlugin {
 				{
 					for(IdPoint p : roi.getPointList())
 					{
-						Spot theSpot = this.getSpot(p, time);
-						//Logs.log(""+theSpot.getFeatures(), this);
-						spots.add(theSpot, Integer.parseInt(time));
+						if(diffRois == null)
+						{
+							Spot theSpot = this.getSpot(p, time);
+							//Logs.log(""+theSpot.getFeatures(), this);
+							spots.add(theSpot, Integer.parseInt(time));
+						}
+						else
+						{
+							IdPoint p2 = p.copy();
+							IdPoint shift = diffRois.get(fullMap).getPointList().firstElement();
+							if(shift == null)
+							{
+								Logs.log("No median shift found for " + map.toString() + ". Setting to [0,0].", Logs.ERROR, this);
+							}
+							else if(shift.x > 0 || shift.y > 0)
+							{
+								p2.translate(-shift.x, -shift.y);
+							}
+							Spot theSpot = this.getSpot(p2, time);
+							//Logs.log(""+theSpot.getFeatures(), this);
+							spots.add(theSpot, Integer.parseInt(time));
+						}
+						
 					}
 				}
 			}
@@ -377,9 +501,22 @@ public class TrackPoints extends JEXPlugin {
 	
 	public Spot getSpot(IdPoint pt, String frame)
 	{
+		return getSpot(pt, frame, null);
+	}
+	
+	public Spot getSpot(IdPoint pt, String frame, IdPoint shift)
+	{
 		// For reference
 		// public Spot( final double x, final double y, final double z, final double radius, final double quality, final String name )
-		Spot ret = new Spot( pt.x, pt.y, 0.0, 1.0, 1.0, ""+pt.id );
+		Spot ret = null;
+		if(shift != null)
+		{
+			ret = new Spot( pt.x + shift.x, pt.y + shift.y, 0.0, 1.0, 1.0, ""+pt.id );
+		}
+		else
+		{
+			ret = new Spot( pt.x, pt.y, 0.0, 1.0, 1.0, ""+pt.id );
+		}
 		ret.putFeature(Spot.FRAME, Double.parseDouble(frame));
 		return ret;
 	}
