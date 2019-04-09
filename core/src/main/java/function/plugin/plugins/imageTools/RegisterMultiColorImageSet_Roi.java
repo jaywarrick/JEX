@@ -349,7 +349,10 @@ public class RegisterMultiColorImageSet_Roi extends JEXPlugin {
 					ROIPlus region = new ROIPlus(roi);
 					region.pointList.translate(x, y);
 					DimensionMap temp = map2.copy();
-					temp.remove(colorDimName);
+					if(colorDimName != null)
+					{
+						temp.remove(colorDimName);
+					}
 					ret.put(temp, region);
 				}
 			}
