@@ -316,7 +316,7 @@ public class ImageWriter implements Cancelable {
 			Logs.log("Getting image at " + path, ImageWriter.class);
 			ImagePlus im = new ImagePlus(path);
 			
-			cropRois = splitter.getCropRois(im.getWidth(), im.getHeight(), rows, cols);
+			cropRois = splitter.getCropRois(im.getWidth(), im.getHeight(), rows, cols, overlap);
 			TreeMap<DimensionMap,String> toSave = splitter.getCropImages(cropRois, map, im.getProcessor());
 			outputMap.putAll(toSave);
 			
@@ -346,7 +346,7 @@ public class ImageWriter implements Cancelable {
 			}
 			ImageProcessor imp = images.get(map);
 			
-			cropRois = splitter.getCropRois(imp.getWidth(), imp.getHeight(), rows, cols);
+			cropRois = splitter.getCropRois(imp.getWidth(), imp.getHeight(), rows, cols, overlap);
 			TreeMap<DimensionMap,ImageProcessor> toSave = splitter.getCropImageProcessors(cropRois, map, imp);
 			outputMap.putAll(toSave);
 			

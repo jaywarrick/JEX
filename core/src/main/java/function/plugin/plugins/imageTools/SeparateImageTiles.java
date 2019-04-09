@@ -110,7 +110,7 @@ public class SeparateImageTiles extends JEXPlugin {
 			// get the image
 			ImagePlus im = new ImagePlus(path);
 			
-			cropRois = getCropRois(im.getWidth(), im.getHeight(), this.rows, this.cols);
+			cropRois = getCropRois(im.getWidth(), im.getHeight(), this.rows, this.cols, this.overlap);
 			TreeMap<DimensionMap,String> toSave = this.getCropImages(cropRois, map, im.getProcessor());
 			outputMap.putAll(toSave);
 			
@@ -131,7 +131,7 @@ public class SeparateImageTiles extends JEXPlugin {
 		return true;
 	}
 	
-	public TreeMap<DimensionMap,ROIPlus> getCropRois(int w, int h, int rs, int cs)
+	public TreeMap<DimensionMap,ROIPlus> getCropRois(int w, int h, int rs, int cs, double overlap)
 	{
 		Dim rows = new Dim("ImRow", 0, rs-1);
 		Dim cols = new Dim("ImCol", 0, cs-1);
@@ -139,8 +139,8 @@ public class SeparateImageTiles extends JEXPlugin {
 		dt.add(rows);
 		dt.add(cols);
 		double w0, h0;
-		w0 = w/(cs - (cs - 1)*this.overlap);
-		h0 = h/(rs - (rs - 1)*this.overlap);
+		w0 = w/(cs - (cs - 1)*overlap);
+		h0 = h/(rs - (rs - 1)*overlap);
 		double overlapX = w0*overlap;
 		double overlapY = h0*overlap;
 		w0 = w0 - 2*overlapX;
