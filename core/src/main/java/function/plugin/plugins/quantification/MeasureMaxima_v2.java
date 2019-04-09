@@ -148,6 +148,11 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 
 		// Create useful Dim's and DimTable's
 		DimTable imageTable = imageData.getDimTable();
+		String firstChannel = "";
+		if(!this.colorDimName.equals(""))
+		{
+			firstChannel = this.imageData.getDimTable().getDimWithName(this.colorDimName).valueAt(0);
+		}
 		DimTable dataTable = imageTable.copy();
 		// dataTable.removeDimWithName(this.colorDimName);
 		// dataTable.add(trackDim.copy());
@@ -316,7 +321,7 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 							}
 							ROIPlus maximaSubset = new ROIPlus(subset, ROIPlus.ROI_POINT);
 							measuredPoints.addAll(subset);
-							this.quantifyPoints(im, maximaSubset, templateRoi, formatD, imMap, writer, regionId);
+							this.quantifyPoints(im, maximaSubset, templateRoi, formatD, imMap, firstChannel, writer, regionId);
 						}
 					}
 					measuredRois.put(imMap, new ROIPlus(measuredPoints, ROIPlus.ROI_POINT));
@@ -325,7 +330,7 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 				{
 					// Just do all the points. This catches the case where no region roi is provided.
 					// It also avoids, when regionRoiData != null but there is no regionRoi object for a particular image.
-					this.quantifyPoints(im, maximaRoi, templateRoi, formatD, imMap, writer, -1);
+					this.quantifyPoints(im, maximaRoi, templateRoi, formatD, imMap, firstChannel, writer, -1);
 					measuredRois.put(imMap, maximaRoi.copy());
 				}
 
@@ -354,7 +359,7 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 		}
 	}
 
-	private void quantifyPoints(ImagePlus im, ROIPlus maximaRoi, ROIPlus templateRoi, DecimalFormat formatD, DimensionMap imMap, JEXTableWriter writer, int regionId)
+	private void quantifyPoints(ImagePlus im, ROIPlus maximaRoi, ROIPlus templateRoi, DecimalFormat formatD, DimensionMap imMap, String firstChannel, JEXTableWriter writer, int regionId)
 	{
 		// Create a copy of the templateRoi and move it to the correct location for measurement.
 		IdPoint pointToMeasure = new IdPoint(-1, -1, 0);
@@ -387,7 +392,7 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 					}
 
 					// Write the data to the ongoing file
-					this.writeData(writer, mapToSave, stats, pointToMeasure, nominal, measurementType);
+					this.writeData(writer, mapToSave, firstChannel, stats, pointToMeasure, nominal, measurementType);
 				}
 			}
 		}
@@ -400,7 +405,7 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 		return(name);
 	}
 
-	private void writeData(JEXTableWriter writer, DimensionMap mapToSave, ImageStatistics stats, IdPoint p, double nominal, String measurementType)
+	private void writeData(JEXTableWriter writer, DimensionMap mapToSave, String firstChannel, ImageStatistics stats, IdPoint p, double nominal, String measurementType)
 	{
 		// DimensionMap mapToSave = map.copy();
 		String color = mapToSave.remove(this.colorDimName);
@@ -412,7 +417,7 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 		}
 
 		// Write the data to the ongoing file
-		if(color == null || color.equals(this.measurementDim.dimValues.get(0)))
+		if(color == null || color.equals(firstChannel))
 		{
 			mapToSave.put("Measurement", SingleCellUtility.x);
 			writer.writeData(mapToSave, new Double(p.x));
