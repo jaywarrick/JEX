@@ -144,6 +144,7 @@ public class JEX_AdjustImageSimple extends JEXCrunchable {
 		// Parameter p0 = new
 		// Parameter("Dummy Parameter","Lets user know that the function has been selected.",FormLine.DROPDOWN,new
 		// String[] {"true"},0);
+		Parameter p0 = getNumThreadsParameter(10, 4);
 		Parameter p1 = new Parameter("Old Min", "Image Intensity Value", "0.0");
 		Parameter p2 = new Parameter("Old Max", "Image Intensity Value", "4095.0");
 		Parameter p3 = new Parameter("New Min", "Image Intensity Value", "0.0");
@@ -153,7 +154,7 @@ public class JEX_AdjustImageSimple extends JEXCrunchable {
 		
 		// Make an array of the parameters and return it
 		ParameterSet parameterArray = new ParameterSet();
-		// parameterArray.addParameter(p0);
+		parameterArray.addParameter(p0);
 		parameterArray.addParameter(p1);
 		parameterArray.addParameter(p2);
 		parameterArray.addParameter(p3);
@@ -213,6 +214,10 @@ public class JEX_AdjustImageSimple extends JEXCrunchable {
 		String tempPath;
 		for (DimensionMap map : imageMap.keySet())
 		{
+			if(this.isCanceled())
+			{
+				return false;
+			}
 			tempPath = saveAdjustedImage(imageMap.get(map), oldMin, oldMax, newMin, newMax, gamma, bitDepth);
 			if(tempPath != null)
 			{
