@@ -306,7 +306,7 @@ public class RScripter implements PlugInController, ActionListener, ClipboardOwn
 			}
 		}
 		lsv.add("jData <- rbindlist(jData)");
-		lsv.add("x <- readJEXDataTables(jData)");
+		lsv.add("l(x, time.col, idCols, imageDims, labelDims) %=% readJEXDataTables(jData)");
 		//		Dim exptDim = new Dim("Experiment");
 		//		exptDim.dimValues.addAll(expts);
 		//		// Dim trayDim = new Dim("Tray");
