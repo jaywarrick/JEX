@@ -144,10 +144,7 @@ public class TIECalculator {
 	 */
 	public FloatProcessor calculatePhase(FloatProcessor I, FloatProcessor lo, FloatProcessor hi)
 	{
-		if(!this.simple && I == null)
-		{
-			return null;
-		}
+		
 		//		if(this.simple)
 		//		{
 		//			FloatProcessor kdIdz = getkdIdz(lo, hi, this.dz, this.wavelength);
@@ -169,9 +166,9 @@ public class TIECalculator {
 		//		kdIdz_double=-k*dIdz_double;
 		FloatProcessor kdIdz = getkdIdz(lo, hi);
 		//viewImage(kdIdz);
-		
+
 		kdIdz = replicate(kdIdz);
-		
+
 		//		Fleft=fft2(kdIdz_double);
 		float[][] Fleft_c = fft(kdIdz);
 		// viewImage(kdIdz);	
@@ -187,19 +184,32 @@ public class TIECalculator {
 		//		bigphi=real(ifft2((Fphi)));
 		float[][] bigphi_r = ifft_array(Fphi_c, true);
 		//viewArray(bigphi_r);
-		
-		if(simple)
+
+		if(this.simple)
 		{
 			//	phi=phi(1:end/2,1:end/2);
 			FloatProcessor ret = getULAsFloatProcessor(bigphi_r);
-			ret.resetMinAndMax();
-			return ret;
+			
+			if(I != null)
+			{
+				double mean = (I.getStats().mean);
+				ret.multiply(1 / mean);
+				ret.resetMinAndMax();
+				return ret;
+			}
+			else
+			{
+				double mean = (hi.getStats().mean + lo.getStats().mean)/2;
+				ret.multiply(1 / mean);
+				ret.resetMinAndMax();
+				return ret;
+			}
 		} // else do long calculation
 
 		//		Fbigphi=fft2(bigphi);
 		float[][] Fbigphi_c = fft_real(bigphi_r);
 
-		
+
 		//		Fphi=(Fbigphi).*(2*1i*pi*(uu));
 		Fphi_c = multComplexByComplex(Fbigphi_c, this.uu);
 		//viewMag(Fphi_c);
@@ -219,6 +229,12 @@ public class TIECalculator {
 		//viewArray(dybigphi_r);
 
 
+		if(I==null)
+		{
+			I = (FloatProcessor) lo.duplicate();
+			I.copyBits(hi, 0, 0, Blitter.AVERAGE);
+		}
+		
 		// Do this before replicating to save time
 		//		I0_double(find(I0_double<threshold*max(max(I0_double))))=threshold*max(max(I0_double));
 		threshold(I, this.thresh);
@@ -233,7 +249,6 @@ public class TIECalculator {
 		//		dybigphi=dybigphi./I0_double;
 		divideRealByFloatProcessor(dxbigphi_r, I);
 		divideRealByFloatProcessor(dybigphi_r, I);
-
 
 		//		Fbigphi=fft2(dxbigphi);
 		//		Fphi=(Fbigphi).*(2*1i*pi*(uu));
@@ -279,11 +294,11 @@ public class TIECalculator {
 		FloatProcessor ret = (FloatProcessor) hi.duplicate();
 		FloatBlitter b = new FloatBlitter(ret);
 		b.copyBits(lo, 0, 0, Blitter.SUBTRACT);
-		double factor = (2*Math.PI/(wavelength))*(1/(2*this.dz)); 
+		double factor = (2*Math.PI/(wavelength))*(1/(this.dz)); 
 		ret.multiply(factor);
 		return ret;
 	}
-	
+
 	public void viewArray(float[][] a)
 	{
 		int R = a.length;

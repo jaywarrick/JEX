@@ -59,34 +59,37 @@ public class TIEPhaseCalculator extends JEXPlugin {
 	boolean simple;
 
 	@ParameterMarker(uiOrder = 1, name = "dI/dz Calc", description = "Should dI/dz be calculated using successive frames, (Z(n)-Z(n-1))/dz, or skip a frame, (Z(n+1)-Z(n-1))/(2dz).", ui = MarkerConstants.UI_DROPDOWN, choices = {
-			"(Z(n)-Z(n-1))/dz (Simple only)", "(Z(n+1)-Z(n-1))/(2dz)" }, defaultChoice = 1)
+			"2-Plane Method", "3-Plane Method" }, defaultChoice = 0)
 	String dIdzAlg;
 
 	@ParameterMarker(uiOrder = 2, name = "Z Dim Name", description = "Name of the 'Z' dimension for this image object.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "Z")
 	String zDimName;
+	
+	@ParameterMarker(uiOrder = 3, name = "z-GAP", description = "Should the z-planes being used be separated by a gap (e.g., 0-GAP = planes 1,2,3 then 2,3,4 vs 1-GAP = planes 1,3,5 then 2,4,6)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "0")
+	int zGAP;
 
-	@ParameterMarker(uiOrder = 3, name = "z-step [µm]", description = "What is the step distance between z planes.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "1.0")
+	@ParameterMarker(uiOrder = 4, name = "z-step per plane [µm]", description = "What is the step distance between z planes (total distance between analyzed planes will be adjusted for different gaps, so just enter distance between captured planes).", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "1.0")
 	float dz;
-
-	@ParameterMarker(uiOrder = 4, name = "Camera Pixel Size [µm]", description = "The camera pixel size in microns. This is needed for 'absolute' quantitation and is not necessary if all you want is 'relative' quantitation (e.g., something is twice the other thing).", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "6.45")
+	
+	@ParameterMarker(uiOrder = 5, name = "Camera Pixel Size [µm]", description = "The camera pixel size in microns. This is needed for 'absolute' quantitation and is not necessary if all you want is 'relative' quantitation (e.g., something is twice the other thing).", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "6.45")
 	float pixelSize;
 
-	@ParameterMarker(uiOrder = 5, name = "Image Magnification", description = "The magnification at which the images were taken. Used with the camera pixel size to determine the pixel width. (width = camera pixel size / magnification)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "20.0")
+	@ParameterMarker(uiOrder = 6, name = "Image Magnification", description = "The magnification at which the images were taken. Used with the camera pixel size to determine the pixel width. (width = camera pixel size / magnification)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "20.0")
 	float mag;
 
-	@ParameterMarker(uiOrder = 6, name = "Wavelength of Light [nm]", description = "This is the spectrally weighted average wavelength of the bright-field illumination. This is needed for 'absolute' quantitation and is not necessary if all you want is 'relative' quantitation (e.g., something is twice the other thing).", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "600")
+	@ParameterMarker(uiOrder = 7, name = "Wavelength of Light [nm]", description = "This is the spectrally weighted average wavelength of the bright-field illumination. This is needed for 'absolute' quantitation and is not necessary if all you want is 'relative' quantitation (e.g., something is twice the other thing).", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "600")
 	float lambda;
 
-	@ParameterMarker(uiOrder = 7, name = "Regularization Parameter (~0-2)", description = "The regularization parameter for the equation is essentially the cuttoff a high-pass filter that takes values that typically range from 0.1-1 but needs to be >=0. This can generally be set low (0.1) and the resulting phase image can be filtered to 'remove background'.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "0.1")
+	@ParameterMarker(uiOrder = 8, name = "Regularization Parameter (~0-2)", description = "The regularization parameter for the equation is essentially the cuttoff a high-pass filter that takes values that typically range from 0.1-1 but needs to be >=0. This can generally be set low (0.01) and the resulting phase image can be filtered to 'remove background'.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "0.01")
 	float r;
 
-	@ParameterMarker(uiOrder = 8, name = "Threshold Parameter", description = "The threshold parameter is expressed as a fraction of the max image intensity. All pixels below this min value are set to the min value to avoid dividing by 0. Typically 0.01 or 0.001.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "0.001")
+	@ParameterMarker(uiOrder = 9, name = "Threshold Parameter", description = "The threshold parameter is expressed as a fraction of the max image intensity. All pixels below this min value are set to the min value to avoid dividing by 0. Typically 0.01 or 0.001.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "0.001")
 	float thresh;
 
-	@ParameterMarker(uiOrder = 9, name = "Filter and Scale Result?", description = "Should the result be FFT filtered to remove noise and then scaled for saving at a particular bit depth?", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
+	@ParameterMarker(uiOrder = 10, name = "Filter and Scale Result?", description = "Should the result be FFT filtered to remove noise and then scaled for saving at a particular bit depth?", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
 	boolean doFilteringAndScaling;
 
-	@ParameterMarker(uiOrder = 10, name = "Filter: Feature Size Cutoff", description = "The filter removes low frequency fluctuations (e.g., background) and keeps small features (higher frequency items). What is the feature size cutoff? [pixels].", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "50.0")
+	@ParameterMarker(uiOrder = 11, name = "Filter: Feature Size Cutoff", description = "The filter removes low frequency fluctuations (e.g., background) and keeps small features (higher frequency items). What is the feature size cutoff? [pixels].", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "50.0")
 	double filterLargeDia;
 
 	// @ParameterMarker(uiOrder=11, name="FFT Post-Filter: Min Size", description="The smallest features to keep [pixels].", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
@@ -135,9 +138,6 @@ public class TIEPhaseCalculator extends JEXPlugin {
 	@ParameterMarker(uiOrder = 19, name = "Exclusion Filter DimTable", description = "Filter specific dimension combinations from analysis. (Format: <DimName1>=<a1,a2,...>;<DimName2>=<b1,b2...>)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
 	String filterDimTableString;
 
-	@ParameterMarker(uiOrder = 20, name = "Keep Excluded Images?", description = "Should images excluded by the filter be copied to the new object?", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
-	boolean keepExcluded;
-
 	/////////// Define Outputs ///////////
 
 	@OutputMarker(uiOrder = 1, name = "Phase", type = MarkerConstants.TYPE_IMAGE, flavor = "", description = "The resultant phase image", enabled = true)
@@ -165,12 +165,12 @@ public class TIEPhaseCalculator extends JEXPlugin {
 
 		boolean successive = this.dIdzAlg.equals("(Z(n)-Z(n-1))/dz (Simple only)");
 
-		if (successive && !this.simple) {
-			JEXDialog.messageDialog(
-					"The box for the 'simple' method must be checked if using successive frames to calculate dI/dz. Aborting",
-					this);
-			return false;
-		}
+//		if (successive && !this.simple) {
+//			JEXDialog.messageDialog(
+//					"The box for the 'simple' method must be checked if using successive frames to calculate dI/dz. Aborting",
+//					this);
+//			return false;
+//		}
 
 		DimTable filterTable = new DimTable(this.filterDimTableString);
 
@@ -189,6 +189,20 @@ public class TIEPhaseCalculator extends JEXPlugin {
 					this);
 			return false;
 		}
+		Dim zFilter = filterTable.removeDimWithName(this.zDimName);
+		Vector<String> zVals = new Vector<String>();
+		if(zFilter != null)
+		{
+			for(String zVal : zDim.dimValues)
+			{
+				if(!zFilter.containsValue(zVal))
+				{
+					zVals.add(zVal);
+				}
+			}
+			zDim = new Dim(this.zDimName, zVals);
+		}
+		
 		DimTable dt = imageData.getDimTable().getSubTable(this.zDimName);
 
 		// // Filter the zDim values if necessary.
@@ -230,12 +244,22 @@ public class TIEPhaseCalculator extends JEXPlugin {
 		fft.toleranceDia = this.toleranceDia;
 		fft.filterDC = this.filterDC;
 
-		int total = dt.mapCount() * (zDim.size() - 2);
-		if (successive) {
-			total = dt.mapCount() * (zDim.size() - 1);
+		int total = dt.mapCount() * (zDim.size() - 2 - 2*zGAP);
+		if (successive)
+		{
+			total = dt.mapCount() * (zDim.size() - 1 - 1*zGAP);
 		}
 		int originalBitDepth = 0;
-		for (DimensionMap map : dt.getMapIterator()) {
+		for (DimensionMap map : dt.getMapIterator())
+		{
+			if (filterTable.testMapAsExclusionFilter(map))
+			{
+				Logs.log("Skipping the processing and saving of " + map.toString(), this);
+				count = count + 1;
+				percentage = (int) (100 * ((double) (count) / ((double) total * this.rows * this.cols)));
+				JEXStatics.statusBar.setProgressPercentage(percentage);
+				continue;
+			}
 			// get the med and hi float processors
 			// FloatProcessor fpHi = null;
 			// FloatProcessor fpMed = null;
@@ -243,122 +267,212 @@ public class TIEPhaseCalculator extends JEXPlugin {
 			TreeMap<DimensionMap, ImageProcessor> tiles = new TreeMap<>();
 			DimensionMap toSave = null;
 
-			for (int i = 0; i < zDim.size(); i++) {
-				DimensionMap toGet = map.copyAndSet(this.zDimName + "=" + zDim.valueAt(i));
-				if (filterTable.testMapAsExclusionFilter(toGet)) {
-					if (this.keepExcluded && this.rows == 1 && this.cols == 1) {
-						Logs.log("Skipping the processing of " + toGet.toString(), this);
-						ImagePlus out = new ImagePlus(imageMap.get(toGet));
-						tempPath = JEXWriter.saveImage(out);
-						if (tempPath != null) {
-							outputImageMap.put(toGet, tempPath);
-						}
-						count = count + 1;
-						percentage = (int) (100 * ((double) (count) / ((double) total * this.rows * this.cols)));
-						JEXStatics.statusBar.setProgressPercentage(percentage);
-					} else {
-						if (keepExcluded) {
-							Logs.log("Warning - Can't keep excluded images when splitting the image", this);
-						}
-						Logs.log("Skipping the processing and saving of " + toGet.toString(), this);
-						count = count + 1;
-						percentage = (int) (100 * ((double) (count) / ((double) total * this.rows * this.cols)));
-						JEXStatics.statusBar.setProgressPercentage(percentage);
-					}
-					continue;
+			int maxZ = zDim.size()-2-2*this.zGAP;
+			if(successive)
+			{
+				maxZ = zDim.size()-1-1*this.zGAP;
+			}
+			
+			for (int i = 0; i < maxZ; i++)
+			{
+				DimensionMap loToGet = map.copyAndSet(this.zDimName + "=" + zDim.valueAt(i));
+				DimensionMap medToGet = map.copyAndSet(this.zDimName + "=" + zDim.valueAt(i+this.zGAP+1));
+				DimensionMap hiToGet = map.copyAndSet(this.zDimName + "=" + zDim.valueAt(i+this.zGAP+1));
+				if(!successive)
+				{
+					hiToGet = map.copyAndSet(this.zDimName + "=" + zDim.valueAt(i+this.zGAP+1+this.zGAP+1));
 				}
+				
 				// Check if canceled
 				if (this.isCanceled()) {
 					return false;
 				}
 
-				if (tiles.get(new DimensionMap("TIEZ=Lo,ImRow=0,ImCol=0")) == null) {
-					ImagePlus tempIm = new ImagePlus(imageMap.get(toGet));
-					FloatProcessor fp = tempIm.getProcessor().convertToFloatProcessor();
-					if (originalBitDepth == 0) {
+				if (tiles.get(new DimensionMap("TIEZ=Hi,ImRow=0,ImCol=0")) == null)
+				{
+					// Then need to initialize things.
+					ImagePlus tempIm = new ImagePlus(imageMap.get(loToGet));
+					FloatProcessor fpLo = tempIm.getProcessor().convertToFloatProcessor();
+					if (originalBitDepth == 0)
+					{
 						originalBitDepth = tempIm.getBitDepth();
 					}
 					TreeMap<DimensionMap, ImageProcessor> temp = new TreeMap<>();
-					if (this.rows > 1 || this.cols > 1) {
+					if (this.rows > 1 || this.cols > 1)
+					{
 						Logs.log("Splitting image into tiles", this);
-						temp.put(new DimensionMap("TIEZ=Lo"), fp);
-						tiles.putAll(
-								ImageWriter.separateTilesToProcessors(temp, overlap, rows, cols, this.getCanceler()));
-					} else {
-						tiles.put(new DimensionMap("TIEZ=Lo,ImRow=0,ImCol=0"), fp);
+						temp.put(new DimensionMap("TIEZ=Lo"), fpLo);
+						tiles.putAll(ImageWriter.separateTilesToProcessors(temp, overlap, rows, cols, this.getCanceler()));
+					}
+					else
+					{
+						tiles.put(new DimensionMap("TIEZ=Lo,ImRow=0,ImCol=0"), fpLo);
 					}
 					tempIm = null;
-					continue;
-				} else if (tiles.get(new DimensionMap("TIEZ=Med,ImRow=0,ImCol=0")) == null && !successive) {
-					FloatProcessor fp = (new ImagePlus(imageMap.get(toGet)).getProcessor().convertToFloatProcessor());
-					TreeMap<DimensionMap, ImageProcessor> temp = new TreeMap<>();
-					if (this.rows > 1 || this.cols > 1) {
+					
+					if(!successive)
+					{
+						FloatProcessor fpMed = (new ImagePlus(imageMap.get(medToGet)).getProcessor().convertToFloatProcessor());
+						temp = new TreeMap<>();
+						if (this.rows > 1 || this.cols > 1)
+						{
+							Logs.log("Splitting image into tiles", this);
+							temp.put(new DimensionMap("TIEZ=Med"), fpMed);
+							tiles.putAll(ImageWriter.separateTilesToProcessors(temp, overlap, rows, cols, this.getCanceler()));
+						}
+						else
+						{
+							tiles.put(new DimensionMap("TIEZ=Med,ImRow=0,ImCol=0"), fpMed);
+						}
+						toSave = medToGet.copy();
+					}
+					
+					
+					FloatProcessor fpHi = (new ImagePlus(imageMap.get(hiToGet)).getProcessor().convertToFloatProcessor());
+					temp = new TreeMap<>();
+					if (this.rows > 1 || this.cols > 1)
+					{
 						Logs.log("Splitting image into tiles", this);
-						temp.put(new DimensionMap("TIEZ=Med"), fp);
-						tiles.putAll(
-								ImageWriter.separateTilesToProcessors(temp, overlap, rows, cols, this.getCanceler()));
-					} else {
-						tiles.put(new DimensionMap("TIEZ=Med,ImRow=0,ImCol=0"), fp);
+						temp.put(new DimensionMap("TIEZ=Hi"), fpHi);
+						tiles.putAll(ImageWriter.separateTilesToProcessors(temp, overlap, rows, cols, this.getCanceler()));
 					}
-					toSave = toGet.copy();
-					continue;
-				} else if (tiles.get(new DimensionMap("TIEZ=Hi,ImRow=0,ImCol=0")) == null) {
-					FloatProcessor fp = (new ImagePlus(imageMap.get(toGet)).getProcessor().convertToFloatProcessor());
-					TreeMap<DimensionMap, ImageProcessor> temp = new TreeMap<>();
-					if (this.rows > 1 || this.cols > 1) {
-						Logs.log("Splitting image into tiles", this);
-						temp.put(new DimensionMap("TIEZ=Hi"), fp);
-						tiles.putAll(
-								ImageWriter.separateTilesToProcessors(temp, overlap, rows, cols, this.getCanceler()));
-					} else {
-						tiles.put(new DimensionMap("TIEZ=Hi,ImRow=0,ImCol=0"), fp);
+					else
+					{
+						tiles.put(new DimensionMap("TIEZ=Hi,ImRow=0,ImCol=0"), fpHi);
 					}
-					if (successive) {
-						toSave = toGet.copy();
+					
+					
+					if (successive)
+					{
+						toSave = hiToGet.copy();
 					}
-				} else {
+					
+					//FileUtility.showImg(fpLo, true);
+					//FileUtility.showImg(fpHi, true);
+				}
+				else
+				{
+					// Shift images and load newest
 					DimTable tilesDT = new DimTable(tiles);
-					if (successive) {
-						for (DimensionMap tempMap : tilesDT.getSubTable(new DimensionMap("TIEZ=Hi")).getMapIterator()) {
-							tiles.put(tempMap.copyAndSet("TIEZ=Lo"), tiles.get(tempMap)); // fpMed = fpHi;
+					if (successive)
+					{
+						FloatProcessor fpLo = null, fpHi = null;
+						
+						if(this.zGAP==0)
+						{
+							// Transfer Hi images to Lo
+							for (DimensionMap tempMap : tilesDT.getSubTable(new DimensionMap("TIEZ=Hi")).getMapIterator())
+							{
+								fpLo = (FloatProcessor) tiles.get(tempMap);
+								tiles.put(tempMap.copyAndSet("TIEZ=Lo"), tiles.get(tempMap)); // fpLo = fpHi;
+							}
 						}
-						FloatProcessor fp = (new ImagePlus(imageMap.get(toGet)).getProcessor()
-								.convertToFloatProcessor());
+						else
+						{
+							// Read in new Lo images
+							fpLo = (new ImagePlus(imageMap.get(loToGet)).getProcessor().convertToFloatProcessor());
+							TreeMap<DimensionMap, ImageProcessor> temp = new TreeMap<>();
+							if (this.rows > 1 || this.cols > 1)
+							{
+								Logs.log("Splitting image into tiles", this);
+								temp.put(new DimensionMap("TIEZ=Lo"), fpLo);
+								tiles.putAll(ImageWriter.separateTilesToProcessors(temp, overlap, rows, cols,
+										this.getCanceler()));
+							}
+							else
+							{
+								tiles.put(new DimensionMap("TIEZ=Lo,ImRow=0,ImCol=0"), fpLo);
+							}
+						}
+						
+						// Get new Hi images
+						fpHi = (new ImagePlus(imageMap.get(hiToGet)).getProcessor().convertToFloatProcessor());
 						TreeMap<DimensionMap, ImageProcessor> temp = new TreeMap<>();
-						if (this.rows > 1 || this.cols > 1) {
+						if (this.rows > 1 || this.cols > 1)
+						{
 							Logs.log("Splitting image into tiles", this);
-							temp.put(new DimensionMap("TIEZ=Hi"), fp);
+							temp.put(new DimensionMap("TIEZ=Hi"), fpHi);
 							tiles.putAll(ImageWriter.separateTilesToProcessors(temp, overlap, rows, cols,
 									this.getCanceler()));
-						} else {
-							tiles.put(new DimensionMap("TIEZ=Hi,ImRow=0,ImCol=0"), fp);
 						}
-					} else {
-						for (DimensionMap tempMap : tilesDT.getSubTable(new DimensionMap("TIEZ=Med"))
-								.getMapIterator()) {
-							tiles.put(tempMap.copyAndSet("TIEZ=Lo"), tiles.get(tempMap)); // fpLo = fpMed;
+						else
+						{
+							tiles.put(new DimensionMap("TIEZ=Hi,ImRow=0,ImCol=0"), fpHi);
 						}
-						for (DimensionMap tempMap : tilesDT.getSubTable(new DimensionMap("TIEZ=Hi")).getMapIterator()) {
-							tiles.put(tempMap.copyAndSet("TIEZ=Med"), tiles.get(tempMap)); // fpMed = fpHi;
-						}
-						FloatProcessor fp = (new ImagePlus(imageMap.get(toGet)).getProcessor()
-								.convertToFloatProcessor());
-						TreeMap<DimensionMap, ImageProcessor> temp = new TreeMap<>();
-						if (this.rows > 1 || this.cols > 1) {
-							Logs.log("Splitting image into tiles", this);
-							temp.put(new DimensionMap("TIEZ=Hi"), fp);
-							tiles.putAll(ImageWriter.separateTilesToProcessors(temp, overlap, rows, cols,
-									this.getCanceler()));
-						} else {
-							tiles.put(new DimensionMap("TIEZ=Hi,ImRow=0,ImCol=0"), fp);
-						}
+						toSave = hiToGet.copy();
+						
+						//FileUtility.showImg(fpLo, true);
+						//FileUtility.showImg(fpHi, true);
 					}
-
+					else
+					{
+						FloatProcessor fpLo = null, fpMed=null, fpHi = null;
+						
+						if(this.zGAP == 0)
+						{
+							// Transfer Med to Lo
+							for (DimensionMap tempMap : tilesDT.getSubTable(new DimensionMap("TIEZ=Med")).getMapIterator())
+							{
+								fpLo = (FloatProcessor) tiles.get(tempMap);
+								tiles.put(tempMap.copyAndSet("TIEZ=Lo"), tiles.get(tempMap)); // fpLo = fpMed;
+							}
+							// Transfer Hi to Med
+							for (DimensionMap tempMap : tilesDT.getSubTable(new DimensionMap("TIEZ=Hi")).getMapIterator())
+							{
+								tiles.put(tempMap.copyAndSet("TIEZ=Med"), tiles.get(tempMap)); // fpMed = fpHi;
+							}
+						}
+						else
+						{
+							// Read in new Lo images
+							fpLo = (new ImagePlus(imageMap.get(loToGet)).getProcessor().convertToFloatProcessor());
+							TreeMap<DimensionMap, ImageProcessor> temp = new TreeMap<>();
+							if (this.rows > 1 || this.cols > 1)
+							{
+								Logs.log("Splitting image into tiles", this);
+								temp.put(new DimensionMap("TIEZ=Lo"), fpLo);
+								tiles.putAll(ImageWriter.separateTilesToProcessors(temp, overlap, rows, cols, this.getCanceler()));
+							}
+							else
+							{
+								tiles.put(new DimensionMap("TIEZ=Lo,ImRow=0,ImCol=0"), fpLo);
+							}
+							// Read in new Med images
+							fpMed = (new ImagePlus(imageMap.get(medToGet)).getProcessor().convertToFloatProcessor());
+							TreeMap<DimensionMap, ImageProcessor> temp2 = new TreeMap<>();
+							if (this.rows > 1 || this.cols > 1)
+							{
+								Logs.log("Splitting image into tiles", this);
+								temp2.put(new DimensionMap("TIEZ=Med"), fpMed);
+								tiles.putAll(ImageWriter.separateTilesToProcessors(temp2, overlap, rows, cols, this.getCanceler()));
+							}
+							else
+							{
+								tiles.put(new DimensionMap("TIEZ=Med,ImRow=0,ImCol=0"), fpMed);
+							}
+						}
+						
+						// Get new Hi images
+						fpHi = (new ImagePlus(imageMap.get(hiToGet)).getProcessor().convertToFloatProcessor());
+						TreeMap<DimensionMap, ImageProcessor> temp = new TreeMap<>();
+						if (this.rows > 1 || this.cols > 1)
+						{
+							Logs.log("Splitting image into tiles", this);
+							temp.put(new DimensionMap("TIEZ=Hi"), fpHi);
+							tiles.putAll(ImageWriter.separateTilesToProcessors(temp, overlap, rows, cols, this.getCanceler()));
+						}
+						else
+						{
+							tiles.put(new DimensionMap("TIEZ=Hi,ImRow=0,ImCol=0"), fpHi);
+						}
+						toSave = medToGet.copy();
+						
+						//FileUtility.showImg(fpLo, true);
+						//FileUtility.showImg(fpHi, true);
+					}
 				}
 
-				// FileUtility.showImg(fpLo, true);
-				// FileUtility.showImg(fpMed, true);
-				// FileUtility.showImg(fpHi, true);
+				
 
 				DimTable subt = new DimTable(tiles).getSubTable("TIEZ");
 				for (DimTable subsubt : subt.getSubTableIterator("ImRow")) {
@@ -368,22 +482,23 @@ public class TIEPhaseCalculator extends JEXPlugin {
 							return false;
 						}
 
-						// if(filterTable.testMapAsExclusionFilter(tileMap))
-						// {
-						// Logs.log("Skipping the processing and saving of " + tileMap.toString(),
-						// this);
-						// count = count + 1;
-						// percentage = (int) (100 * ((double) (count) / ((double) total * this.rows *
-						// this.cols)));
-						// JEXStatics.statusBar.setProgressPercentage(percentage);
-						// continue;
-						// }
-
-						if (tie == null) {
-							// Initialize TIE Calculator first time through
-							tie = new TIECalculator(tiles.get(tileMap.copyAndSet("TIEZ=Lo")).getWidth(),
-									tiles.get(tileMap.copyAndSet("TIEZ=Lo")).getHeight(), this.r, this.thresh, this.mag,
-									this.pixelSize, this.dz, this.lambda, this.simple);
+						if (tie == null)
+						{
+							if(successive)
+							{
+								// Initialize TIE Calculator first time through
+								tie = new TIECalculator(tiles.get(tileMap.copyAndSet("TIEZ=Lo")).getWidth(),
+										tiles.get(tileMap.copyAndSet("TIEZ=Lo")).getHeight(), this.r, this.thresh, this.mag,
+										this.pixelSize, this.dz*(1+this.zGAP), this.lambda, this.simple);
+							}
+							else
+							{
+								// Initialize TIE Calculator first time through
+								tie = new TIECalculator(tiles.get(tileMap.copyAndSet("TIEZ=Lo")).getWidth(),
+										tiles.get(tileMap.copyAndSet("TIEZ=Lo")).getHeight(), this.r, this.thresh, this.mag,
+										this.pixelSize, 2*this.dz*(1+this.zGAP), this.lambda, this.simple);
+							}
+							
 						}
 						// Logs.log("" + tiles.get(tileMap.copyAndSet("Z=Med")).getWidth() + " : "
 						// +tiles.get(tileMap.copyAndSet("Z=Med")).getHeight(), this);
@@ -405,16 +520,33 @@ public class TIEPhaseCalculator extends JEXPlugin {
 									"Subtract Background", 0d, this.sigma, 100d);
 							phi = images.p1;
 							double max = 1;
-							double originalMax = 1;
+//							double originalMax = 1;
 							if (this.bitDepth < 32) {
 								max = Math.pow(2, this.bitDepth) - 1;
 
 							}
-							if (originalBitDepth < 32) {
-								originalMax = Math.pow(2, originalBitDepth) - 1;
-							}
-							phi.multiply(max / (originalMax * this.scale)); // mimic preadjusting all images to range of
-																			// 0-1 with '1/originalMax'
+//							if (originalBitDepth < 32) {
+//								originalMax = Math.pow(2, originalBitDepth) - 1;
+//							}
+							
+							phi.multiply(max / this.scale); // Original data is essentially adjusted to range of
+							// 0-1 in TIECalculator by dividing by middle plane (or equivalent). This then maps
+							// the range of +/- this.scale to span the full range of the output bitdepth 
+							
+//							if(this.simple)
+//							{
+////								double median1 = ImageStatistics.getStatistics(tiles.get(tileMap.copyAndSet("TIEZ=Hi")), ImageStatistics.MEDIAN, null).median;
+////								double median2 = ImageStatistics.getStatistics(tiles.get(tileMap.copyAndSet("TIEZ=Lo")), ImageStatistics.MEDIAN, null).median;
+//								double mean = (tiles.get(tileMap.copyAndSet("TIEZ=Hi")).getStats().median + tiles.get(tileMap.copyAndSet("TIEZ=Lo")).getStats().median)/2;
+//								phi.multiply(max / (mean * this.scale)); // mimic preadjusting all images to range of
+//								// 0-1 with '1/originalMax'
+//							}
+//							else
+//							{
+//								 // mimic preadjusting all images to range of
+//								// 0-1 with '1/originalMax'
+//							}
+							
 							if (this.bitDepth < 32) {
 								phi.add(max / 2);
 							}
@@ -467,7 +599,6 @@ public class TIEPhaseCalculator extends JEXPlugin {
 						JEXStatics.statusBar.setProgressPercentage(percentage);
 					}
 				}
-				toSave = toGet.copy();
 			}
 		}
 
