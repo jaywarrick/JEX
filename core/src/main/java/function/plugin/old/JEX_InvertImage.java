@@ -136,11 +136,13 @@ public class JEX_InvertImage extends JEXCrunchable {
 	@Override
 	public ParameterSet requiredParameters()
 	{
+		Parameter p0 = getNumThreadsParameter(10, 4);
 		Parameter p1 = new Parameter("Output Bit Depth", "Depth of the outputted image", Parameter.DROPDOWN, new String[] { "8", "16", "32" }, 1);
 		Parameter p2 = new Parameter("Only LUT?", "Invert the LUT or the pixel values", Parameter.DROPDOWN, new String[] { "true", "false" }, 1);
 		
 		// Make an array of the parameters and return it
 		ParameterSet parameterArray = new ParameterSet();
+		parameterArray.addParameter(p0);
 		parameterArray.addParameter(p1);
 		parameterArray.addParameter(p2);
 		return parameterArray;
