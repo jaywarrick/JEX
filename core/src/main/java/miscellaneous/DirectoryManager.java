@@ -3,12 +3,15 @@ package miscellaneous;
 import java.awt.Component;
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.JFileChooser;
 
 import logs.Logs;
 
 import org.apache.commons.io.FileUtils;
+
+import jex.statics.JEXDialog;
 
 public class DirectoryManager {
 	
@@ -33,8 +36,25 @@ public class DirectoryManager {
 	{
 		if(hostDirectory == null || !hostDirectory.exists())
 		{
-			Logs.log("Need a non-null or existing host directory... asking user.", 0, DirectoryManager.class);
-			hostDirectory = getDirectoryFromUser(null);
+			if(hostDirectory != null)
+			{
+				// Try and wait a few seconds and see if the connection reestablishes itself.
+				try
+				{
+					TimeUnit.SECONDS.sleep(10);
+					JEXDialog.messageDialog("Couldn't find the host directory... waiting 5 seconds.", DirectoryManager.class);
+				}
+				catch (InterruptedException e)
+				{
+					e.printStackTrace();
+				}
+			}
+			// Then test one last time...
+			if(hostDirectory == null || !hostDirectory.exists())
+			{
+				Logs.log("Need a non-null or existing host directory... asking user.", 0, DirectoryManager.class);
+				hostDirectory = getDirectoryFromUser(null);
+			}
 		}
 		return hostDirectory;
 	}
