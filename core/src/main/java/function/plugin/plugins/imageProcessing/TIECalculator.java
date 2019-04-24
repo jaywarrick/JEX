@@ -164,7 +164,7 @@ public class TIECalculator {
 		//		dIdz_double=[dIdz,fliplr(dIdz)];
 		//		dIdz_double=[dIdz_double',(flipud(dIdz_double))']';
 		//		kdIdz_double=-k*dIdz_double;
-		FloatProcessor kdIdz = getkdIdz(lo, hi);
+		FloatProcessor kdIdz = getkdIdz(lo, hi); // Multiplying by -k is built into this step
 		//viewImage(kdIdz);
 		
 		if(this.simple)
@@ -173,13 +173,11 @@ public class TIECalculator {
 			{
 				double mean = (I.getStats().mean);
 				kdIdz.multiply(1 / mean);
-				kdIdz.resetMinAndMax();
 			}
 			else
 			{
 				double mean = (hi.getStats().mean + lo.getStats().mean)/2;
 				kdIdz.multiply(1 / mean);
-				kdIdz.resetMinAndMax();
 			}
 		}
 
