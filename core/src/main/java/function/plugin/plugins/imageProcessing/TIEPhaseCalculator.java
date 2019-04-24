@@ -163,7 +163,7 @@ public class TIEPhaseCalculator extends JEXPlugin {
 			return false;
 		}
 
-		boolean successive = this.dIdzAlg.equals("(Z(n)-Z(n-1))/dz (Simple only)");
+		boolean successive = this.dIdzAlg.equals("2-Plane Method");
 
 //		if (successive && !this.simple) {
 //			JEXDialog.messageDialog(
@@ -249,6 +249,11 @@ public class TIEPhaseCalculator extends JEXPlugin {
 		{
 			total = dt.mapCount() * (zDim.size() - 1 - 1*zGAP);
 		}
+		if(total < 1)
+		{
+			Logs.log("\n\nNot enough images for specified GAP parameter.\n\n", Logs.ERROR, this);
+		}
+		
 		int originalBitDepth = 0;
 		for (DimensionMap map : dt.getMapIterator())
 		{
