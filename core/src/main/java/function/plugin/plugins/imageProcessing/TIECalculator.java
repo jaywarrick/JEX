@@ -166,6 +166,22 @@ public class TIECalculator {
 		//		kdIdz_double=-k*dIdz_double;
 		FloatProcessor kdIdz = getkdIdz(lo, hi);
 		//viewImage(kdIdz);
+		
+		if(this.simple)
+		{
+			if(I != null)
+			{
+				double mean = (I.getStats().mean);
+				kdIdz.multiply(1 / mean);
+				kdIdz.resetMinAndMax();
+			}
+			else
+			{
+				double mean = (hi.getStats().mean + lo.getStats().mean)/2;
+				kdIdz.multiply(1 / mean);
+				kdIdz.resetMinAndMax();
+			}
+		}
 
 		kdIdz = replicate(kdIdz);
 
@@ -189,21 +205,8 @@ public class TIECalculator {
 		{
 			//	phi=phi(1:end/2,1:end/2);
 			FloatProcessor ret = getULAsFloatProcessor(bigphi_r);
-			
-			if(I != null)
-			{
-				double mean = (I.getStats().mean);
-				ret.multiply(1 / mean);
-				ret.resetMinAndMax();
-				return ret;
-			}
-			else
-			{
-				double mean = (hi.getStats().mean + lo.getStats().mean)/2;
-				ret.multiply(1 / mean);
-				ret.resetMinAndMax();
-				return ret;
-			}
+			ret.resetMinAndMax();
+			return ret;
 		} // else do long calculation
 
 		//		Fbigphi=fft2(bigphi);
