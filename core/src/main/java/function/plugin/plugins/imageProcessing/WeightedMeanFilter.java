@@ -66,52 +66,55 @@ public class WeightedMeanFilter extends JEXPlugin {
 
 	@ParameterMarker(uiOrder=1, name="Mean Filter Radius", description="Radius of the weighted mean filter. Should be large enough to encompass features of interest.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="50")
 	double meanRadius;
+	
+	@ParameterMarker(uiOrder=2, name="Kernal Outer Weighting Factor", description="How much weight should the outer portion of the kernel be given relative to the inner portion (Kernel = Gaussian * (1-Gaussian)^factor). Typically 0 (standard Gaussian) to 5 (weighted to outer portion), but can go higher with diminishing impact.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0")
+	double outerWeighting;
 
-	@ParameterMarker(uiOrder=2, name="Std. Dev. Filter Radius", description="Radius of the std. dev. filter used to generate the pixel weights. Keep small to preserve edges.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="2.0")
+	@ParameterMarker(uiOrder=3, name="Std. Dev. Filter Radius", description="Radius of the std. dev. filter used to generate the pixel weights. Keep small to preserve edges.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="2.0")
 	double varRadius;
 
-	@ParameterMarker(uiOrder=3, name="Subtraction Weight Scaling Factor", description="Typically 0.5-3 but can increase or decrease to make the weighting more drastic or less drastic, respectively. A little higher seems to work better for subtraction relative to thresholding.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="2.0")
+	@ParameterMarker(uiOrder=4, name="Subtraction Weight Scaling Factor", description="Typically 0.5-3 but can increase or decrease to make the weighting more drastic or less drastic, respectively. A little higher seems to work better for subtraction relative to thresholding.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="2.0")
 	double subScale;
 
-	@ParameterMarker(uiOrder=4, name="Threshold Weight Scaling Factor", description="Typically 0.5-3 but can increase or decrease to make the weighting more drastic or less drastic, respectively. A little lower seems to work better for thresholding relative to subtraction.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.75")
+	@ParameterMarker(uiOrder=5, name="Threshold Weight Scaling Factor", description="Typically 0.5-3 but can increase or decrease to make the weighting more drastic or less drastic, respectively. A little lower seems to work better for thresholding relative to subtraction.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.75")
 	double threshScale;
 
-	@ParameterMarker(uiOrder=5, name="Operation", description="What should be done?", ui=MarkerConstants.UI_DROPDOWN, choices={"Get Background", "Subtract Background", "Threshold Image", "Subtract and Threshold", "Divide by Background", "Divide and Threshold"}, defaultChoice = 3)
+	@ParameterMarker(uiOrder=6, name="Operation", description="What should be done?", ui=MarkerConstants.UI_DROPDOWN, choices={"Get Background", "Subtract Background", "Threshold Image", "Subtract and Threshold", "Divide by Background", "Divide and Threshold"}, defaultChoice = 3)
 	String operation;
 
-	@ParameterMarker(uiOrder=6, name="Nominal Value to Add/Mult Back", description="Nominal value to add (or multiply by if doing division with background) to all pixels after background subtraction/division. (Use following notation to specify different parameters for differen dimension values, '<Dim Name>'=<val1>,<val2>,<val3>' e.g., 'Channel=0,100,100'. The values will be applied in that order for the ordered dim values.) ", ui=MarkerConstants.UI_TEXTFIELD, defaultText="100")
+	@ParameterMarker(uiOrder=7, name="Nominal Value to Add/Mult Back", description="Nominal value to add (or multiply by if doing division with background) to all pixels after background subtraction/division. (Use following notation to specify different parameters for differen dimension values, '<Dim Name>'=<val1>,<val2>,<val3>' e.g., 'Channel=0,100,100'. The values will be applied in that order for the ordered dim values.) ", ui=MarkerConstants.UI_TEXTFIELD, defaultText="100")
 	String nominalsString;
 
-	@ParameterMarker(uiOrder=7, name="Threshold Sigmas", description="Sigma (i.e., Std. Dev.) for thresholding after background subtraction etc. 0 outputs signal-to-noise ratio instead of thresholded image (Use following notation to specify different parameters for differen dimension values, '<Dim Name>'=<val1>,<val2>,<val3>' e.g., 'Channel=0,100,100'. The values will be applied in that order for the ordered dim values.) ", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0")
+	@ParameterMarker(uiOrder=8, name="Threshold Sigmas", description="Sigma (i.e., Std. Dev.) for thresholding after background subtraction etc. 0 outputs signal-to-noise ratio instead of thresholded image (Use following notation to specify different parameters for differen dimension values, '<Dim Name>'=<val1>,<val2>,<val3>' e.g., 'Channel=0,100,100'. The values will be applied in that order for the ordered dim values.) ", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0")
 	String sigmasString;
 	
-	@ParameterMarker(uiOrder=8, name="Mask Output Bit Depth", description="What bit depth should the mask be saved as.", ui=MarkerConstants.UI_DROPDOWN, choices={"8","16","32"}, defaultChoice=0)
+	@ParameterMarker(uiOrder=9, name="Mask Output Bit Depth", description="What bit depth should the mask be saved as.", ui=MarkerConstants.UI_DROPDOWN, choices={"8","16","32"}, defaultChoice=0)
 	int maskBitDepth;
 
 	double nominalVal;
 
-	@ParameterMarker(uiOrder=9, name="Image Output Bit Depth", description="What bit depth should the main image output be saved as.", ui=MarkerConstants.UI_DROPDOWN, choices={"8","16","32"}, defaultChoice=1)
+	@ParameterMarker(uiOrder=10, name="Image Output Bit Depth", description="What bit depth should the main image output be saved as.", ui=MarkerConstants.UI_DROPDOWN, choices={"8","16","32"}, defaultChoice=1)
 	int outputBitDepth;
 
-	@ParameterMarker(uiOrder=10, name="Exclusion Filter DimTable", description="Exclude combinatoins of Dimension Names and values. (Use following notation '<DimName1>=<a1,a2,...>;<DimName2>=<b1,b2,...>' e.g., 'Channel=0,100,100; Time=1,2,3,4,5' (spaces are ok).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
+	@ParameterMarker(uiOrder=11, name="Exclusion Filter DimTable", description="Exclude combinatoins of Dimension Names and values. (Use following notation '<DimName1>=<a1,a2,...>;<DimName2>=<b1,b2,...>' e.g., 'Channel=0,100,100; Time=1,2,3,4,5' (spaces are ok).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
 	String exclusionFilterString;
 	
-	@ParameterMarker(uiOrder=11, name="Tiles: Rows", description="If desired, the images can be split into tiles before processing by setting the number of tile rows here to > 1.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
+	@ParameterMarker(uiOrder=12, name="Tiles: Rows", description="If desired, the images can be split into tiles before processing by setting the number of tile rows here to > 1.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
 	int rows;
 	
-	@ParameterMarker(uiOrder=12, name="Tiles: Cols", description="If desired, the images can be split into tiles before processing by setting the number of tile cols here to > 1.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
+	@ParameterMarker(uiOrder=13, name="Tiles: Cols", description="If desired, the images can be split into tiles before processing by setting the number of tile cols here to > 1.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1")
 	int cols;
 	
-	@ParameterMarker(uiOrder=13, name="Tiles: Overlap", description="Set the percent overlap of the tiles", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1.0")
+	@ParameterMarker(uiOrder=14, name="Tiles: Overlap", description="Set the percent overlap of the tiles", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1.0")
 	double overlap;
 
-	@ParameterMarker(uiOrder=14, name="Keep Excluded Images?", description="Should images excluded by the filter be copied to the new object?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
+	@ParameterMarker(uiOrder=15, name="Keep Excluded Images?", description="Should images excluded by the filter be copied to the new object?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
 	boolean keepExcluded;
 
-	@ParameterMarker(uiOrder=15, name="Dark Field Intensity", description="What is the intensity of an image without any illumination (i.e., the dark field). This is subtracted prior to division for division options.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="100.0")
+	@ParameterMarker(uiOrder=16, name="Dark Field Intensity", description="What is the intensity of an image without any illumination (i.e., the dark field). This is subtracted prior to division for division options.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="100.0")
 	double darkfield;
 	
-	@ParameterMarker(uiOrder=16, name="IF is One Tile?", description="Is the (optional) IF image provided a single tile (vs one large stitched IF image)?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	@ParameterMarker(uiOrder=17, name="IF is One Tile?", description="Is the (optional) IF image provided a single tile (vs one large stitched IF image)?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
 	boolean oneTile;
 
 	//	@ParameterMarker(uiOrder=12, name="Output Std. Dev. Images?", description="Should the locally weighted standard deviation images be output?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
@@ -311,7 +314,7 @@ public class WeightedMeanFilter extends JEXPlugin {
 				}
 				else
 				{
-					Pair<FloatProcessor, ImageProcessor> images = ImageUtility.getWeightedMeanFilterImage((FloatProcessor) e.getValue(), doThreshold, doSubtraction, doBackgroundOnly, doDivision, this.meanRadius, this.varRadius, this.subScale, this.threshScale, this.operation, 0d, sigma, this.darkfield);
+					Pair<FloatProcessor, ImageProcessor> images = ImageUtility.getWeightedMeanFilterImage((FloatProcessor) e.getValue(), doThreshold, doSubtraction, doBackgroundOnly, doDivision, this.meanRadius, this.outerWeighting, this.varRadius, this.subScale, this.threshScale, this.operation, 0d, sigma, this.darkfield);
 					if(images.p1 != null)
 					{
 						if(IFTiles.get(e.getKey()) != null)

@@ -91,6 +91,12 @@ public class TIEPhaseCalculator extends JEXPlugin {
 
 	@ParameterMarker(uiOrder = 11, name = "Filter: Feature Size Cutoff", description = "The filter removes low frequency fluctuations (e.g., background) and keeps small features (higher frequency items). What is the feature size cutoff? [pixels].", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "50.0")
 	double filterLargeDia;
+	
+	@ParameterMarker(uiOrder = 12, name = "Filter: Kernal Outer Weighting Factor", description="How much weight should the outer portion of the kernel be given relative to the inner portion (Kernel = Gaussian * (1-Gaussian)^factor). Typically 0 (standard Gaussian) to 5 (weighted to outer portion), but can go higher with diminishing impact.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0")
+	double outerWeighting;
+	
+	@ParameterMarker(uiOrder = 13, name = "Filter: Sharpness Parameter", description="How sharp a difference should there be between the weights of background and foreground pixels. A higher number causes a sharper transition in weighting. A sharper transition means less dark shadow around bright features (typically 0.5-3).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="2.0")
+	double subtractionPower = 0;
 
 	// @ParameterMarker(uiOrder=11, name="FFT Post-Filter: Min Size", description="The smallest features to keep [pixels].", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
 	double filterSmallDia = 0;
@@ -113,29 +119,29 @@ public class TIEPhaseCalculator extends JEXPlugin {
 	// @ParameterMarker(uiOrder=7, name="Saturate autoscaling?", description="If autoscaled, should the result be saturated (1% at tails) to better fill the dynamic range?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
 	boolean saturateDia = false;
 
-	@ParameterMarker(uiOrder = 12, name = "Scale: Output Bit Depth", description = "Depth of the outputted image for all channels.", ui = MarkerConstants.UI_DROPDOWN, choices = {
+	@ParameterMarker(uiOrder = 14, name = "Scale: Output Bit Depth", description = "Depth of the outputted image for all channels.", ui = MarkerConstants.UI_DROPDOWN, choices = {
 			"8", "16", "32" }, defaultChoice = 1)
 	int bitDepth;
 
-	@ParameterMarker(uiOrder = 13, name = "Scale: +/- Scale", description = "The result will be scaled such that -Scale to +Scale in the initial phase result will be scaled to fill the range of the bit depth selected. Therefore 0 will be the middlest value of the final image range. (32-bit results in no scaling)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "5.0")
+	@ParameterMarker(uiOrder = 15, name = "Scale: +/- Scale", description = "The result will be scaled such that -Scale to +Scale in the initial phase result will be scaled to fill the range of the bit depth selected. Therefore 0 will be the middlest value of the final image range. (32-bit results in no scaling)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "5.0")
 	double scale;
 
-	@ParameterMarker(uiOrder = 14, name = "Save Thresholded Filter Result?", description = "Should a thresholded image be generated from the filtered and scaled phase image?", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	@ParameterMarker(uiOrder = 16, name = "Save Thresholded Filter Result?", description = "Should a thresholded image be generated from the filtered and scaled phase image?", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean saveThresholdImage;
 
-	@ParameterMarker(uiOrder = 15, name = "Threshold: Sigma", description = "How many sigma above background should the threshold cutoff be? Use 0 to save the 'signal-to-noise' image which can be then thresholded or used to determine the best sigma.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "0.0")
+	@ParameterMarker(uiOrder = 17, name = "Threshold: Sigma", description = "How many sigma above background should the threshold cutoff be? Use 0 to save the 'signal-to-noise' image which can be then thresholded or used to determine the best sigma.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "0.0")
 	double sigma;
 
-	@ParameterMarker(uiOrder = 16, name = "Tiles: Rows", description = "If desired, the images can be split into tiles before processing by setting the number of tile rows here to > 1.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "1")
+	@ParameterMarker(uiOrder = 18, name = "Tiles: Rows", description = "If desired, the images can be split into tiles before processing by setting the number of tile rows here to > 1.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "1")
 	int rows;
 
-	@ParameterMarker(uiOrder = 17, name = "Tiles: Cols", description = "If desired, the images can be split into tiles before processing by setting the number of tile cols here to > 1.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "1")
+	@ParameterMarker(uiOrder = 19, name = "Tiles: Cols", description = "If desired, the images can be split into tiles before processing by setting the number of tile cols here to > 1.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "1")
 	int cols;
 
-	@ParameterMarker(uiOrder = 18, name = "Tiles: Overlap", description = "Set the percent overlap of the tiles", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "1.0")
+	@ParameterMarker(uiOrder = 20, name = "Tiles: Overlap", description = "Set the percent overlap of the tiles", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "1.0")
 	double overlap;
 
-	@ParameterMarker(uiOrder = 19, name = "Exclusion Filter DimTable", description = "Filter specific dimension combinations from analysis. (Format: <DimName1>=<a1,a2,...>;<DimName2>=<b1,b2...>)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
+	@ParameterMarker(uiOrder = 21, name = "Exclusion Filter DimTable", description = "Filter specific dimension combinations from analysis. (Format: <DimName1>=<a1,a2,...>;<DimName2>=<b1,b2...>)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
 	String filterDimTableString;
 
 	/////////// Define Outputs ///////////
@@ -521,7 +527,7 @@ public class TIEPhaseCalculator extends JEXPlugin {
 						if (this.doFilteringAndScaling) {
 							fft.filter(phi);
 							Pair<FloatProcessor, ImageProcessor> images = ImageUtility.getWeightedMeanFilterImage(phi,
-									this.saveThresholdImage, true, true, false, this.filterLargeDia, 2d, 2d, 0.75,
+									this.saveThresholdImage, true, true, false, this.filterLargeDia, this.outerWeighting, 2d, this.subtractionPower, this.subtractionPower,
 									"Subtract Background", 0d, this.sigma, 100d);
 							phi = images.p1;
 							double max = 1;
