@@ -251,7 +251,7 @@ public class DimpledGaussianBlur {
                 kernel[0][r1] = (float)((kRadius-r1)*(kRadius-r1)*sqrtSlope*sqrtSlope);
         }
         double sum;                                 // sum over all kernel elements for normalization
-        if (outerWeighting != 1 || kRadius < maxRadius) {
+        if (outerWeighting != 0 || kRadius < maxRadius) {
             sum = kernel[0][0];
             for (int i=1; i<kRadius; i++)
                 sum += 2*kernel[0][i];

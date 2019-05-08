@@ -80,7 +80,7 @@ public class TIEPhaseCalculator extends JEXPlugin {
 	@ParameterMarker(uiOrder = 7, name = "Wavelength of Light [nm]", description = "This is the spectrally weighted average wavelength of the bright-field illumination. This is needed for 'absolute' quantitation and is not necessary if all you want is 'relative' quantitation (e.g., something is twice the other thing).", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "600")
 	float lambda;
 
-	@ParameterMarker(uiOrder = 8, name = "Regularization Parameter (~0-2)", description = "The regularization parameter for the equation is essentially the cuttoff a high-pass filter that takes values that typically range from 0.1-1 but needs to be >=0. This can generally be set low (0.01) and the resulting phase image can be filtered to 'remove background'.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "0.01")
+	@ParameterMarker(uiOrder = 8, name = "Regularization Parameter (~0-2)", description = "The regularization parameter for the equation is essentially the cuttoff a high-pass filter that takes values that typically range from 0.01-1 but needs to be >=0. This can generally be set low (0.01) and the resulting phase image can be filtered to 'remove background'.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "0.01")
 	float r;
 
 	@ParameterMarker(uiOrder = 9, name = "Threshold Parameter", description = "The threshold parameter is expressed as a fraction of the max image intensity. All pixels below this min value are set to the min value to avoid dividing by 0. Typically 0.01 or 0.001.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "0.001")
@@ -244,7 +244,7 @@ public class TIEPhaseCalculator extends JEXPlugin {
 		fft.choiceDia = this.choiceDia;
 		fft.displayFilter = this.saveFilter;
 		fft.doScalingDia = false;
-		fft.filterLargeDia = 2 * this.filterLargeDia;
+		fft.filterLargeDia = 2*this.filterLargeDia; // lightly prefilter image with large feature size cutoff
 		fft.filterSmallDia = this.filterSmallDia;
 		fft.saturateDia = false;
 		fft.toleranceDia = this.toleranceDia;
@@ -526,10 +526,16 @@ public class TIEPhaseCalculator extends JEXPlugin {
 
 						if (this.doFilteringAndScaling) {
 							fft.filter(phi);
-							Pair<FloatProcessor, ImageProcessor> images = ImageUtility.getWeightedMeanFilterImage(phi,
-									this.saveThresholdImage, true, true, false, this.filterLargeDia, this.outerWeighting, 2d, this.subtractionPower, this.subtractionPower,
-									"Subtract Background", 0d, this.sigma, 100d);
-							phi = images.p1;
+							Pair<FloatProcessor, ImageProcessor> images = null;
+							if(this.outerWeighting >= 0)
+							{
+								images = ImageUtility.getWeightedMeanFilterImage(phi,
+										this.saveThresholdImage, true, true, false, 0.4*this.filterLargeDia, this.outerWeighting, 2d, this.subtractionPower, this.subtractionPower,
+										"Subtract Background", 0d, this.sigma, 100d);
+								phi = images.p1;
+							}
+							
+							
 							double max = 1;
 //							double originalMax = 1;
 							if (this.bitDepth < 32) {
@@ -569,7 +575,7 @@ public class TIEPhaseCalculator extends JEXPlugin {
 							if (this.cols > 1) {
 								mapToSave.put("ImCol", tileMap.get("ImCol"));
 							}
-							if (images.p2 != null) {
+							if (images != null && images.p2 != null) {
 								String maskPath = JEXWriter.saveImage(images.p2, 8);
 								maskMap.put(mapToSave, maskPath);
 							}
