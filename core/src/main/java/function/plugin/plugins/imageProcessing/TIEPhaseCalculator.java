@@ -16,6 +16,7 @@ import function.plugin.mechanism.MarkerConstants;
 import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
 import ij.ImagePlus;
+import ij.plugin.filter.BackgroundSubtracter;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import jex.statics.JEXDialog;
@@ -89,14 +90,32 @@ public class TIEPhaseCalculator extends JEXPlugin {
 	@ParameterMarker(uiOrder = 10, name = "Filter and Scale Result?", description = "Should the result be FFT filtered to remove noise and then scaled for saving at a particular bit depth?", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
 	boolean doFilteringAndScaling;
 
-	@ParameterMarker(uiOrder = 11, name = "Filter: Feature Size Cutoff", description = "The filter removes low frequency fluctuations (e.g., background) and keeps small features (higher frequency items). What is the feature size cutoff? [pixels].", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "50.0")
+	@ParameterMarker(uiOrder = 11, name = "Filter (All): Feature Size Cutoff", description = "The filter removes low frequency fluctuations (e.g., background) and keeps small features (higher frequency items). What is the feature size cutoff? [pixels].", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "50.0")
 	double filterLargeDia;
 	
-	@ParameterMarker(uiOrder = 12, name = "Filter: Kernal Outer Weighting Factor", description="How much weight should the outer portion of the kernel be given relative to the inner portion (Kernel = Gaussian * (1-Gaussian)^factor). Typically 0 (standard Gaussian) to 5 (weighted to outer portion), but can go higher with diminishing impact.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0")
-	double outerWeighting;
+//	@ParameterMarker(uiOrder = 12, name = "Filter (WM): Kernal Outer Weighting Factor", description="How much weight should the outer portion of the kernel be given relative to the inner portion (Kernel = Gaussian * (1-Gaussian)^factor). Typically 0 (standard Gaussian) to 5 (weighted to outer portion), but can go higher with diminishing impact.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0")
+	double outerWeighting=0;
 	
-	@ParameterMarker(uiOrder = 13, name = "Filter: Sharpness Parameter", description="How sharp a difference should there be between the weights of background and foreground pixels. A higher number causes a sharper transition in weighting. A sharper transition means less dark shadow around bright features (typically 0.5-3).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="2.0")
-	double subtractionPower = 0;
+	@ParameterMarker(uiOrder = 12, name = "Filter (WMF): Do weighted mean filtering step?", description="Should the weighted mean filtering step be performed at all?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
+	boolean doWMF;
+	
+	@ParameterMarker(uiOrder = 13, name = "Filter (WMF): Sharpness Parameter", description="How sharp a difference should there be between the weights of background and foreground pixels. A higher number causes a sharper transition in weighting. A sharper transition means less dark shadow around bright features (typically 0.5-3).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="2.0")
+	double subtractionPower;
+	
+	@ParameterMarker(uiOrder = 14, name = "Filter (WMF): Do rolling ball filtering step?", description="Should the rolling ball filtering step be performed at all?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
+	boolean doRBF;
+	
+//	@ParameterMarker(uiOrder=2, name="Filter (RBF): Light background?", description="Generally false for fluroescent images and true for bright-field etc.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	boolean lightBackground = false;
+
+//	@ParameterMarker(uiOrder=3, name="Filter (RBF): Create background (don't subtract)?", description="Output an 'image' of the background instead of subtracting from the original and outputing the result?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	boolean createBackground = false;
+
+	@ParameterMarker(uiOrder = 15, name = "Filter (RBF): Sliding parabaloid?", description="Parabaloid is generally a little faster and has less artifacts than rolling ball.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	boolean paraboloid;
+
+	@ParameterMarker(uiOrder = 16, name = "Filter (RBF): Do presmoothing?", description="Should a 3x3 mean filter be applied prior to rolling ball subtraction (good for speckly/noisy images)", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	boolean presmooth;
 
 	// @ParameterMarker(uiOrder=11, name="FFT Post-Filter: Min Size", description="The smallest features to keep [pixels].", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
 	double filterSmallDia = 0;
@@ -119,29 +138,29 @@ public class TIEPhaseCalculator extends JEXPlugin {
 	// @ParameterMarker(uiOrder=7, name="Saturate autoscaling?", description="If autoscaled, should the result be saturated (1% at tails) to better fill the dynamic range?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
 	boolean saturateDia = false;
 
-	@ParameterMarker(uiOrder = 14, name = "Scale: Output Bit Depth", description = "Depth of the outputted image for all channels.", ui = MarkerConstants.UI_DROPDOWN, choices = {
+	@ParameterMarker(uiOrder = 17, name = "Scale: Output Bit Depth", description = "Depth of the outputted image for all channels.", ui = MarkerConstants.UI_DROPDOWN, choices = {
 			"8", "16", "32" }, defaultChoice = 1)
 	int bitDepth;
 
-	@ParameterMarker(uiOrder = 15, name = "Scale: +/- Scale", description = "The result will be scaled such that -Scale to +Scale in the initial phase result will be scaled to fill the range of the bit depth selected. Therefore 0 will be the middlest value of the final image range. (32-bit results in no scaling)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "5.0")
+	@ParameterMarker(uiOrder = 18, name = "Scale: +/- Scale", description = "The result will be scaled such that -Scale to +Scale in the initial phase result will be scaled to fill the range of the bit depth selected. Therefore 0 will be the middlest value of the final image range. (32-bit results in no scaling)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "5.0")
 	double scale;
 
-	@ParameterMarker(uiOrder = 16, name = "Save Thresholded Filter Result?", description = "Should a thresholded image be generated from the filtered and scaled phase image?", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	@ParameterMarker(uiOrder = 19, name = "Save Thresholded Filter Result?", description = "Should a thresholded image be generated from the filtered and scaled phase image?", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean saveThresholdImage;
 
-	@ParameterMarker(uiOrder = 17, name = "Threshold: Sigma", description = "How many sigma above background should the threshold cutoff be? Use 0 to save the 'signal-to-noise' image which can be then thresholded or used to determine the best sigma.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "0.0")
+	@ParameterMarker(uiOrder = 20, name = "Threshold: Sigma", description = "How many sigma above background should the threshold cutoff be? Use 0 to save the 'signal-to-noise' image which can be then thresholded or used to determine the best sigma.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "0.0")
 	double sigma;
 
-	@ParameterMarker(uiOrder = 18, name = "Tiles: Rows", description = "If desired, the images can be split into tiles before processing by setting the number of tile rows here to > 1.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "1")
+	@ParameterMarker(uiOrder = 21, name = "Tiles: Rows", description = "If desired, the images can be split into tiles before processing by setting the number of tile rows here to > 1.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "1")
 	int rows;
 
-	@ParameterMarker(uiOrder = 19, name = "Tiles: Cols", description = "If desired, the images can be split into tiles before processing by setting the number of tile cols here to > 1.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "1")
+	@ParameterMarker(uiOrder = 22, name = "Tiles: Cols", description = "If desired, the images can be split into tiles before processing by setting the number of tile cols here to > 1.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "1")
 	int cols;
 
-	@ParameterMarker(uiOrder = 20, name = "Tiles: Overlap", description = "Set the percent overlap of the tiles", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "1.0")
+	@ParameterMarker(uiOrder = 23, name = "Tiles: Overlap", description = "Set the percent overlap of the tiles", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "1.0")
 	double overlap;
 
-	@ParameterMarker(uiOrder = 21, name = "Exclusion Filter DimTable", description = "Filter specific dimension combinations from analysis. (Format: <DimName1>=<a1,a2,...>;<DimName2>=<b1,b2...>)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
+	@ParameterMarker(uiOrder = 24, name = "Exclusion Filter DimTable", description = "Filter specific dimension combinations from analysis. (Format: <DimName1>=<a1,a2,...>;<DimName2>=<b1,b2...>)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
 	String filterDimTableString;
 
 	/////////// Define Outputs ///////////
@@ -249,6 +268,8 @@ public class TIEPhaseCalculator extends JEXPlugin {
 		fft.saturateDia = false;
 		fft.toleranceDia = this.toleranceDia;
 		fft.filterDC = this.filterDC;
+		
+		BackgroundSubtracter bS = new BackgroundSubtracter();
 
 		int total = dt.mapCount() * (zDim.size() - 2 - 2*zGAP);
 		if (successive)
@@ -527,20 +548,18 @@ public class TIEPhaseCalculator extends JEXPlugin {
 						if (this.doFilteringAndScaling) {
 							fft.filter(phi);
 							Pair<FloatProcessor, ImageProcessor> images = null;
-							if(this.outerWeighting >= 0)
+							if(this.doWMF)
 							{
 								images = ImageUtility.getWeightedMeanFilterImage(phi,
 										this.saveThresholdImage, true, true, false, 0.4*this.filterLargeDia, this.outerWeighting, 2d, this.subtractionPower, this.subtractionPower,
-										"Subtract Background", 0d, this.sigma, 100d);
+										"Subtract Background", 0d, this.sigma, 0d);
 								phi = images.p1;
 							}
-							
 							
 							double max = 1;
 //							double originalMax = 1;
 							if (this.bitDepth < 32) {
 								max = Math.pow(2, this.bitDepth) - 1;
-
 							}
 //							if (originalBitDepth < 32) {
 //								originalMax = Math.pow(2, originalBitDepth) - 1;
@@ -586,6 +605,13 @@ public class TIEPhaseCalculator extends JEXPlugin {
 						}
 
 						ImageProcessor out = JEXWriter.convertToBitDepthIfNecessary(phi, this.bitDepth);
+						
+						if(this.doRBF)
+						{
+							// apply the function to imp
+							bS.rollingBallBackground(out, this.filterLargeDia/2, this.createBackground, this.lightBackground, this.paraboloid, this.presmooth, true);
+						}
+						
 						tempPath = JEXWriter.saveImage(out);
 						if (tempPath != null) {
 							DimensionMap mapToSave = toSave.copy();

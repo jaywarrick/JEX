@@ -440,7 +440,7 @@ public class ImageUtility {
 					if(pixels[j] > 0)
 					{
 						// else the pixel likely has relevant information, but catch conditions that result from rounding etc.
-						val = (1 / (1 + Math.abs(pixels[j] - wMed)/wMad));
+						val = (1 / (1 + Math.abs(pixels[j] - (wMed+2*wMad))/wMad));
 						if(Double.isFinite(val))
 						{
 							if(val < 0.0000001) val = 0.0000001;
@@ -465,7 +465,7 @@ public class ImageUtility {
 					if(pixels[j] > 0)
 					{
 						// else the pixel likely has relevant information, but catch conditions that result from rounding etc.
-						val = (1 / (1 + Math.pow(Math.abs(pixels[j] - wMed)/wMad, scaling[i])));
+						val = (1 / (1 + Math.pow(Math.abs(pixels[j] - (wMed+2*wMad))/wMad, scaling[i])));
 						if(Double.isFinite(val))
 						{
 							if(val < 0.0000001) val = 0.0000001;
