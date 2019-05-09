@@ -67,8 +67,8 @@ public class WeightedMeanFilter extends JEXPlugin {
 	@ParameterMarker(uiOrder=1, name="Mean Filter Radius", description="Radius of the weighted mean filter. Should be large enough to encompass features of interest.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="50")
 	double meanRadius;
 	
-	@ParameterMarker(uiOrder=2, name="Kernal Outer Weighting Factor", description="How much weight should the outer portion of the kernel be given relative to the inner portion (Kernel = Gaussian * (1-Gaussian)^factor). Typically 0 (standard Gaussian) to 5 (weighted to outer portion), but can go higher with diminishing impact.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0")
-	double outerWeighting;
+//	@ParameterMarker(uiOrder=2, name="Kernal Outer Weighting Factor", description="How much weight should the outer portion of the kernel be given relative to the inner portion (Kernel = Gaussian * (1-Gaussian)^factor). Typically 0 (standard Gaussian) to 5 (weighted to outer portion), but can go higher with diminishing impact.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0")
+//	double outerWeighting;
 
 	@ParameterMarker(uiOrder=3, name="Std. Dev. Filter Radius", description="Radius of the std. dev. filter used to generate the pixel weights. Keep small to preserve edges.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="2.0")
 	double varRadius;
@@ -314,7 +314,7 @@ public class WeightedMeanFilter extends JEXPlugin {
 				}
 				else
 				{
-					Pair<FloatProcessor, ImageProcessor> images = ImageUtility.getWeightedMeanFilterImage((FloatProcessor) e.getValue(), doThreshold, doSubtraction, doBackgroundOnly, doDivision, 0.4*this.meanRadius, this.outerWeighting, this.varRadius, this.subScale, this.threshScale, this.operation, 0d, sigma, this.darkfield);
+					Pair<FloatProcessor, ImageProcessor> images = ImageUtility.getWeightedMeanFilterImage((FloatProcessor) e.getValue(), doThreshold, doSubtraction, doBackgroundOnly, doDivision, 0.4*this.meanRadius, this.varRadius, this.subScale, this.threshScale, this.operation, 0d, sigma, this.darkfield);
 					if(images.p1 != null)
 					{
 						if(IFTiles.get(e.getKey()) != null)

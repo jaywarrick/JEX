@@ -16,7 +16,6 @@ import java.util.Vector;
 
 import function.ops.histogram.PolynomialRegression;
 import function.plugin.plugins.featureExtraction.FeatureUtils;
-import function.plugin.plugins.imageProcessing.DimpledGaussianBlur;
 import function.plugin.plugins.imageProcessing.RankFilters2;
 import function.singleCellAnalysis.SingleCellUtility;
 import ij.ImagePlus;
@@ -440,7 +439,7 @@ public class ImageUtility {
 					if(pixels[j] > 0)
 					{
 						// else the pixel likely has relevant information, but catch conditions that result from rounding etc.
-						val = (1 / (1 + Math.abs(pixels[j] - (wMed+2*wMad))/wMad));
+						val = (1 / (1 + Math.abs(pixels[j] - wMed)/wMad));
 						if(Double.isFinite(val))
 						{
 							if(val < 0.0000001) val = 0.0000001;
@@ -465,7 +464,7 @@ public class ImageUtility {
 					if(pixels[j] > 0)
 					{
 						// else the pixel likely has relevant information, but catch conditions that result from rounding etc.
-						val = (1 / (1 + Math.pow(Math.abs(pixels[j] - (wMed+2*wMad))/wMad, scaling[i])));
+						val = (1 / (1 + Math.pow(Math.abs(pixels[j] - wMed)/wMad, scaling[i])));
 						if(Double.isFinite(val))
 						{
 							if(val < 0.0000001) val = 0.0000001;
@@ -486,7 +485,7 @@ public class ImageUtility {
 		return(weightImages);
 	}
 	
-	public static Pair<FloatProcessor, ImageProcessor> getWeightedMeanFilterImage(FloatProcessor original, boolean doThreshold, boolean doSubtraction, boolean doBackgroundOnly, boolean doDivision, double meanRadius, double outerWeighting, double varRadius, double subScale, double threshScale, String operation, Double nominal, Double sigma, double darkfield)
+	public static Pair<FloatProcessor, ImageProcessor> getWeightedMeanFilterImage(FloatProcessor original, boolean doThreshold, boolean doSubtraction, boolean doBackgroundOnly, boolean doDivision, double meanRadius, double varRadius, double subScale, double threshScale, String operation, Double nominal, Double sigma, double darkfield)
 	{
 		Pair<FloatProcessor, ImageProcessor> ret = new Pair<>((FloatProcessor) null, (ImageProcessor) null);
 		//	FloatProcessor original = im.getProcessor().convertToFloatProcessor();
@@ -516,7 +515,7 @@ public class ImageUtility {
 		}
 
 		//RankFilters2 rF = new RankFilters2();
-		DimpledGaussianBlur gb = new DimpledGaussianBlur();
+		GaussianBlur gb = new GaussianBlur();
 
 
 		// If necessary, continue calculating the localSD by multiplying by weights and summing
@@ -525,7 +524,7 @@ public class ImageUtility {
 			//FileUtility.showImg(localSD, true);
 			localSD.copyBits(threshWeights, 0, 0, Blitter.MULTIPLY);		// localSD (Multiplied)
 			//FileUtility.showImg(localSD, true);
-			gb.blur(localSD, meanRadius, meanRadius, outerWeighting, 0.0002);
+			gb.blurGaussian(localSD, meanRadius, meanRadius, 0.0002);
 			//rF.rank(localSD, meanRadius, RankFilters2.SUM);     		// localSD (Multiplied, Summed)
 			//FileUtility.showImg(localSD, true);
 		}
@@ -542,9 +541,9 @@ public class ImageUtility {
 
 			// Multiply the original image by the weights and sum
 			subLocalMean.copyBits(subWeights, 0, 0, Blitter.MULTIPLY); 		// subLocalMean (Multiplied)
-			gb.blur(subLocalMean, meanRadius, meanRadius, outerWeighting, 0.0002);
+			gb.blurGaussian(subLocalMean, meanRadius, meanRadius, 0.0002);
 			//rF.rank(subLocalMean, meanRadius, RankFilters2.SUM);  		// subLocalMean (Multiplied, Summed)
-			gb.blur(subWeights, meanRadius, meanRadius, outerWeighting, 0.0002);
+			gb.blurGaussian(subWeights, meanRadius, meanRadius, 0.0002);
 			//rF.rank(subWeights, meanRadius, RankFilters2.SUM);    		// subWeights   (Summed)
 			subLocalMean.copyBits(subWeights, 0, 0, Blitter.DIVIDE);   		// subLocalMean (Multiplied, Summed, Divided)
 		}
@@ -553,10 +552,10 @@ public class ImageUtility {
 			// We can use localMean directly since we made a copy, if necessary, for subtraction calcs.
 			threshLocalMean = original;										// threshLocalMean == original
 			threshLocalMean.copyBits(threshWeights, 0, 0, Blitter.MULTIPLY);// threshLocalMean (Multiplied)
-			gb.blur(threshLocalMean, meanRadius, meanRadius, outerWeighting, 0.0002);
+			gb.blurGaussian(threshLocalMean, meanRadius, meanRadius, 0.0002);
 			//rF.rank(threshLocalMean, meanRadius, RankFilters2.SUM);  	// threshLocalMean (Multiplied, Summed)
 			//FileUtility.showImg(threshWeights, true);
-			gb.blur(threshWeights, meanRadius, meanRadius, outerWeighting, 0.0002);
+			gb.blurGaussian(threshWeights, meanRadius, meanRadius, 0.0002);
 			//rF.rank(threshWeights, meanRadius, RankFilters2.SUM);    	// threshWeights   (Summed)
 			//FileUtility.showImg(threshWeights, true);
 			threshLocalMean.copyBits(threshWeights, 0, 0, Blitter.DIVIDE);  // threshLocalMean (Multiplied, Summed, Divided)

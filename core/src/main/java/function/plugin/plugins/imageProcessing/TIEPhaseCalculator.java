@@ -94,7 +94,7 @@ public class TIEPhaseCalculator extends JEXPlugin {
 	double filterLargeDia;
 	
 //	@ParameterMarker(uiOrder = 12, name = "Filter (WM): Kernal Outer Weighting Factor", description="How much weight should the outer portion of the kernel be given relative to the inner portion (Kernel = Gaussian * (1-Gaussian)^factor). Typically 0 (standard Gaussian) to 5 (weighted to outer portion), but can go higher with diminishing impact.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0")
-	double outerWeighting=0;
+//	double outerWeighting=0;
 	
 	@ParameterMarker(uiOrder = 12, name = "Filter (WMF): Do weighted mean filtering step?", description="Should the weighted mean filtering step be performed at all?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
 	boolean doWMF;
@@ -102,7 +102,7 @@ public class TIEPhaseCalculator extends JEXPlugin {
 	@ParameterMarker(uiOrder = 13, name = "Filter (WMF): Sharpness Parameter", description="How sharp a difference should there be between the weights of background and foreground pixels. A higher number causes a sharper transition in weighting. A sharper transition means less dark shadow around bright features (typically 0.5-3).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="2.0")
 	double subtractionPower;
 	
-	@ParameterMarker(uiOrder = 14, name = "Filter (WMF): Do rolling ball filtering step?", description="Should the rolling ball filtering step be performed at all?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
+	@ParameterMarker(uiOrder = 14, name = "Filter (RBF): Do rolling ball filtering step?", description="Should the rolling ball filtering step be performed at all?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
 	boolean doRBF;
 	
 //	@ParameterMarker(uiOrder=2, name="Filter (RBF): Light background?", description="Generally false for fluroescent images and true for bright-field etc.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
@@ -551,7 +551,7 @@ public class TIEPhaseCalculator extends JEXPlugin {
 							if(this.doWMF)
 							{
 								images = ImageUtility.getWeightedMeanFilterImage(phi,
-										this.saveThresholdImage, true, true, false, 0.4*this.filterLargeDia, this.outerWeighting, 2d, this.subtractionPower, this.subtractionPower,
+										this.saveThresholdImage, true, true, false, 0.4*this.filterLargeDia, 2d, this.subtractionPower, 0.75,
 										"Subtract Background", 0d, this.sigma, 0d);
 								phi = images.p1;
 							}
