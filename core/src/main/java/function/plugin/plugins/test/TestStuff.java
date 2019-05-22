@@ -76,13 +76,23 @@ public class TestStuff {
 	static
 	{
 //		DirectoryManager.setHostDirectory("/Users/jwarrick/Downloads");
-		DirectoryManager.setHostDirectory("C:/Users/User/Downloads");
+//		DirectoryManager.setHostDirectory("C:/Users/User/Downloads");
 	}
 
 	public static void main (String[] args) throws Exception
 	{
-		tryTestDirectory();
+		tryFullPathToShare();
 	}	
+	
+	public static void tryFullPathToShare()
+	{
+		File f = new File("\\\\smph.drive.wisc.edu\\smph-data\\homedir\\warrick\\Raw Data\\New Mutants\\7hr\\R12");
+		File f2 = new File("H:/Raw Data/New Mutants/7hr/R12");
+		System.out.println(f.exists());
+		System.out.println(f.isDirectory());
+		System.out.println(f2.exists());
+		System.out.println(f2.isDirectory());
+	}
 	
 	public static void tryTestDirectory()
 	{
