@@ -45,7 +45,7 @@ import miscellaneous.CSVList;
 import miscellaneous.Pair;
 import net.imagej.ops.featuresets.NamedFeature;
 import net.imagej.ops.geom.geom2d.Circle;
-import net.imagej.ops.image.cooccurrencematrix.MatrixOrientation2D;
+import net.imagej.ops.image.cooccurrenceMatrix.MatrixOrientation2D;
 import net.imagej.ops.special.function.BinaryFunctionOp;
 import net.imagej.ops.special.function.Functions;
 import net.imglib2.IterableInterval;
@@ -55,7 +55,7 @@ import net.imglib2.RealLocalizable;
 import net.imglib2.RealPoint;
 import net.imglib2.img.Img;
 import net.imglib2.roi.Regions;
-import net.imglib2.roi.geometric.Polygon;
+import net.imglib2.roi.geom.real.Polygon2D;
 import net.imglib2.roi.labeling.ImgLabeling;
 import net.imglib2.roi.labeling.LabelRegion;
 import net.imglib2.roi.labeling.LabelRegions;
@@ -98,24 +98,24 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	private Vector<LabelRegion<Integer>> individualSubCellRegions;
 	private TreeMap<Integer, Pair<Double,RealLocalizable>> nuclearInfo;
 	private boolean nucExists = false;
-	private Vector<Polygon> polygons;
+	private Vector<Polygon2D> polygons;
 	private DimensionMap mapMask, mapImage, mapMask_NoChannel;
 	private TreeMap<DimensionMap,Double> channelOffsetValues;
 	private Integer pId;
 
-	public Geometric2DFeatureSet<Polygon, DoubleType> opGeometric = null;
-	public Haralick2DFeatureSet<FloatType, DoubleType> opHaralick2DHor = null;
-	public Haralick2DFeatureSet<FloatType, DoubleType> opHaralick2DVer = null;
-	public Haralick2DFeatureSet<FloatType, DoubleType> opHaralick2DDiag = null;
-	public Haralick2DFeatureSet<FloatType, DoubleType> opHaralick2DAntiDiag = null;
+	public Geometric2DFeatureSet<Polygon2D, ? extends RealType<?>> opGeometric = null;
+	public Haralick2DFeatureSet<FloatType, ? extends RealType<?>> opHaralick2DHor = null;
+	public Haralick2DFeatureSet<FloatType, ? extends RealType<?>> opHaralick2DVer = null;
+	public Haralick2DFeatureSet<FloatType, ? extends RealType<?>> opHaralick2DDiag = null;
+	public Haralick2DFeatureSet<FloatType, ? extends RealType<?>> opHaralick2DAntiDiag = null;
 	public HistogramFeatureSet<FloatType> opHistogram = null;
-	public ImageMomentsFeatureSet<FloatType, DoubleType> opMoments = null;
+	public ImageMomentsFeatureSet<FloatType, ? extends RealType<?>> opMoments = null;
 	public ZernikeFeatureSet<FloatType> opZernike = null;
 	public DoubleNormalizedZernikeFeatureSet<FloatType> opDNZernike = null;
 	// What about IntensityFeatureSet???
-	public StatsFeatureSet<FloatType, DoubleType> opStats = null;
+	public StatsFeatureSet<FloatType, ? extends RealType<?>> opStats = null;
 	public DefaultSmallestEnclosingCircle opEncircle = null;
-	public Tamura2DFeatureSet<FloatType,DoubleType> opTamura = null;
+	public Tamura2DFeatureSet<FloatType,? extends RealType<?>> opTamura = null;
 	public LBPHistogramFeatureSet<FloatType> opLBP = null;
 	@SuppressWarnings("rawtypes")
 	public BinaryFunctionOp<RandomAccessibleInterval<FloatType>, LabelRegion<?>, TreeMap> symcoOp = null;
@@ -487,7 +487,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			this.wholeCellRegion = this.wholeCellRegions.getLabelRegion(labelToGet);
 			this.combinedSubCellRegion = this.maskParentRegions.getLabelRegion(labelToGet);
 			this.individualSubCellRegions = this.getSubRegions(this.wholeCellRegion, this.mask);
-			this.polygons = new Vector<Polygon>();
+			this.polygons = new Vector<Polygon2D>();
 			for(LabelRegion<Integer> region : this.individualSubCellRegions)
 			{
 				this.polygons.add(utils.getPolygonFromBoolean(region));
@@ -874,20 +874,20 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			}
 			
 			int i = 1;
-			for(Polygon p : polygons)
+			for(Polygon2D p : polygons)
 			{
 				// TODO: Revisit whether to keep this in or not.
-				if(p.getVertices().size() < 5)
+				if(p.numVertices() < 5)
 				{
 					i = i + 1;
 					continue;
 				}
 				DimensionMap mapM_Geometry = this.mapMask_NoChannel.copyAndSet("MaskChannel=" + this.mapMask.get(channelName) + ".p" + i);
 				mapM_Geometry.put("ImageChannel", "None");
-				Map<NamedFeature, DoubleType> results = opGeometric.calculate(p);
+				Map<NamedFeature, ? extends RealType<?>> results = opGeometric.calculate(p);
 				// Map<NamedFeature, DoubleType> results =
 				// opGeometric.calculate(reg);
-				for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
+				for (Entry<NamedFeature, ? extends RealType<?>> result : results.entrySet()) {
 					DimensionMap newMap = mapM_Geometry.copyAndSet("Measurement=" + result.getKey().getName());
 					newMap.put("Id", "" + this.pId);
 					newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
@@ -952,12 +952,12 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			//this.utils.showRealII(vals, (Interval) this.wholeCellRegion, true);
 			//			this.utils.showRegion(this.wholeCellRegion);
 			//			this.utils.showRegion(this.subCellRegion);
-			Map<NamedFeature, DoubleType> results = opStats.calculate(vals);
-			for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
+			Map<NamedFeature, ? extends RealType<?>> results = opStats.calculate(vals);
+			for (Entry<NamedFeature, ? extends RealType<?>> result : results.entrySet()) {
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
 				newMap.put("Id", "" + this.pId);
 				newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
-				this.write(newMap, result.getValue().get());
+				this.write(newMap, result.getValue().getRealDouble());
 			}
 		}
 	}
@@ -965,11 +965,11 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 	@SuppressWarnings("unchecked")
 	public void putHaralick2D(DimensionMap mapM, IterableInterval<FloatType> vals)
 	{
-		Map<NamedFeature, DoubleType> results;
+		Map<NamedFeature, ? extends RealType<?>> results;
 
 		if (haralick2D) {
 			if (opHaralick2DHor == null || opHaralick2DVer == null) {
-				opHaralick2DHor = IJ2PluginUtility.ij().op().op(Haralick2DFeatureSet.class, vals, DoubleType.class,
+				opHaralick2DHor = IJ2PluginUtility.ij().op().op(Haralick2DFeatureSet.class, vals, RealType.class,
 						(int) haralickGrayLevels, (int) haralickDistance, MatrixOrientation2D.HORIZONTAL);
 				opHaralick2DVer = IJ2PluginUtility.ij().op().op(Haralick2DFeatureSet.class, vals,
 						(int) haralickGrayLevels, (int) haralickDistance, MatrixOrientation2D.VERTICAL);
@@ -986,7 +986,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			results = (Map<NamedFeature, DoubleType>) opHaralick2DHor.calculate(vals);
 
 			///// Horizontal /////
-			for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
+			for (Entry<NamedFeature, ? extends RealType<?>> result : results.entrySet()) {
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName() + "_Horizontal");
 				newMap.put("Id", "" + this.pId);
 				newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
@@ -995,7 +995,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
 			///// Vertical /////
 			results = opHaralick2DVer.calculate(vals);
-			for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
+			for (Entry<NamedFeature, ? extends RealType<?>> result : results.entrySet()) {
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName() + "_Vertical");
 				newMap.put("Id", "" + this.pId);
 				newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
@@ -1005,7 +1005,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			if (haralickNumDirections.equals("4")) {
 				///// Diagonal /////
 				results = opHaralick2DDiag.calculate(vals);
-				for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
+				for (Entry<NamedFeature, ? extends RealType<?>> result : results.entrySet()) {
 					DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName() + "_Diagonal");
 					newMap.put("Id", "" + this.pId);
 					newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
@@ -1014,7 +1014,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 
 				///// Antidiagonal /////
 				results = opHaralick2DAntiDiag.calculate(vals);
-				for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
+				for (Entry<NamedFeature, ? extends RealType<?>> result : results.entrySet()) {
 					DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName() + "_AntiDiagonal");
 					newMap.put("Id", "" + this.pId);
 					newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
@@ -1031,12 +1031,12 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			if (opTamura == null) {
 				opTamura = IJ2PluginUtility.ij().op().op(Tamura2DFeatureSet.class, vals, this.tamuraBins);
 			}
-			Map<NamedFeature, DoubleType> results = opTamura.calculate(vals);
-			for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
+			Map<NamedFeature, ? extends RealType<?>> results = opTamura.calculate(vals);
+			for (Entry<NamedFeature, ? extends RealType<?>> result : results.entrySet()) {
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
 				newMap.put("Id", "" + this.pId);
 				newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
-				this.write(newMap, result.getValue().get());
+				this.write(newMap, result.getValue().getRealDouble());
 			}
 		}
 	}
@@ -1083,12 +1083,12 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			if (opMoments == null) {
 				opMoments = IJ2PluginUtility.ij().op().op(ImageMomentsFeatureSet.class, vals);
 			}
-			Map<NamedFeature, DoubleType> results = opMoments.calculate(vals);
-			for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
+			Map<NamedFeature, ? extends RealType<?>> results = opMoments.calculate(vals);
+			for (Entry<NamedFeature, ? extends RealType<?>> result : results.entrySet()) {
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
 				newMap.put("Id", "" + this.pId);
 				newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
-				this.write(newMap, result.getValue().get());
+				this.write(newMap, result.getValue().getRealDouble());
 			}
 		}
 	}
@@ -1105,12 +1105,12 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			// Set the enclosing circle for this cell
 			opZernike.setEnclosingCircle(circle);
 
-			Map<NamedFeature, DoubleType> results = opZernike.calculate(vals);
-			for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
+			Map<NamedFeature, ? extends RealType<?>> results = opZernike.calculate(vals);
+			for (Entry<NamedFeature, ? extends RealType<?>> result : results.entrySet()) {
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName() + suffix);
 				newMap.put("Id", "" + this.pId);
 				newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
-				WriterWrapper.write(this.wrapWriter, newMap, result.getValue().get());
+				WriterWrapper.write(this.wrapWriter, newMap, result.getValue().getRealDouble());
 			}
 			if(firstTimeThrough)
 			{
@@ -1144,12 +1144,12 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 			// Set the enclosing circle for this cell
 			opDNZernike.setEnclosingCircles(innerCircle, outerCircle);
 
-			Map<NamedFeature, DoubleType> results = opDNZernike.calculate(vals);
-			for (Entry<NamedFeature, DoubleType> result : results.entrySet()) {
+			Map<NamedFeature, ? extends RealType<?>> results = opDNZernike.calculate(vals);
+			for (Entry<NamedFeature, ? extends RealType<?>> result : results.entrySet()) {
 				DimensionMap newMap = mapM.copyAndSet("Measurement=" + result.getKey().getName());
 				newMap.put("Id", "" + this.pId);
 				newMap.put("Label", "" + this.idToLabelMap.get(this.pId));
-				WriterWrapper.write(this.wrapWriter, newMap, result.getValue().get());
+				WriterWrapper.write(this.wrapWriter, newMap, result.getValue().getRealDouble());
 			}
 			if(firstTimeThrough)
 			{

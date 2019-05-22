@@ -20,7 +20,7 @@ import miscellaneous.SSVList;
 import net.imglib2.RealCursor;
 import net.imglib2.RealLocalizable;
 import net.imglib2.RealPoint;
-import net.imglib2.roi.geometric.Polygon;
+//import net.imglib2.roi.geometric.Polygon;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.IntType;
 import net.imglib2.util.Pair;
@@ -49,6 +49,15 @@ public class PointSamplerList<T extends RealType<T>> extends Vector<PointSampler
 		{
 			PointSample<T> toAdd = new PointSample<>(p);
 			super.add(toAdd);
+		}
+	}
+	
+	public PointSamplerList(net.imglib2.roi.geom.real.Polygon2D pl, T type)
+	{
+		this(type);
+		for (RealLocalizable p : new IterablePolygon2D(pl))
+		{
+			this.add(p);
 		}
 	}
 	
@@ -112,11 +121,6 @@ public class PointSamplerList<T extends RealType<T>> extends Vector<PointSampler
 	public PointSamplerList(Polygon2D pg, T type)
 	{
 		this(polygonToRealPointArray(pg), type);
-	}
-	
-	public PointSamplerList(Polygon pg, T type)
-	{
-		this(pg.getVertices(), type);
 	}
 	
 	// public RealPointList<T>(XRealPointList<T> pl)

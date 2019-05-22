@@ -52,7 +52,7 @@ import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.outofbounds.OutOfBoundsConstantValueFactory;
 import net.imglib2.outofbounds.OutOfBoundsFactory;
 import net.imglib2.roi.Regions;
-import net.imglib2.roi.geometric.Polygon;
+import net.imglib2.roi.geom.real.Polygon2D;
 import net.imglib2.roi.labeling.ImgLabeling;
 import net.imglib2.roi.labeling.LabelRegion;
 import net.imglib2.roi.labeling.LabelRegions;
@@ -114,7 +114,7 @@ public class FeatureUtils {
 		// Create a labeling the same size as the mask
 		long[] dims = new long[mask.numDimensions()];
 		mask.dimensions(dims);
-		ImgLabeling<T, I> ret = new ImgLabeling(new ArrayImgFactory< IntType >().create( dims, new IntType() ));
+		ImgLabeling<T, I> ret = new ImgLabeling(new ArrayImgFactory< IntType >(new IntType()).create(dims));
 
 		// Turn the mask into a Boolean type RAI
 		RandomAccess<BoolType> raMask = this.convertRealToBooleanTypeRAI(mask, new BoolType(false)).randomAccess();
@@ -532,38 +532,33 @@ public class FeatureUtils {
 	{
 		if(val instanceof UnsignedByteType)
 		{
-			ArrayImgFactory<UnsignedByteType> f = new ArrayImgFactory<>();
-			return (Img<T>) f.create(i, (UnsignedByteType) val);
+			ArrayImgFactory<UnsignedByteType> f = new ArrayImgFactory<>((UnsignedByteType) val);
+			return (Img<T>) f.create(i);
 		}
 		else if(val instanceof UnsignedShortType)
 		{
-			ArrayImgFactory<UnsignedShortType> f = new ArrayImgFactory<>();
-			return (Img<T>) f.create(i, (UnsignedShortType) val);
+			ArrayImgFactory<UnsignedShortType> f = new ArrayImgFactory<>((UnsignedShortType) val);
+			return (Img<T>) f.create(i);
 		}
 		else if(val instanceof FloatType)
 		{
-			ArrayImgFactory<FloatType> f = new ArrayImgFactory<>();
-			return (Img<T>) f.create(i, (FloatType) val);
+			ArrayImgFactory<FloatType> f = new ArrayImgFactory<>((FloatType) val);
+			return (Img<T>) f.create(i);
 		}
 		else if(val instanceof BitType)
 		{
-			ArrayImgFactory<BitType> f = new ArrayImgFactory<>();
-			return (Img<T>) f.create(i, (BitType) val);
+			ArrayImgFactory<BitType> f = new ArrayImgFactory<>((BitType) val);
+			return (Img<T>) f.create(i);
 		}
 		else if(val instanceof IntType)
 		{
-			ArrayImgFactory<IntType> f = new ArrayImgFactory<>();
-			return (Img<T>) f.create(i, (IntType) val);
+			ArrayImgFactory<IntType> f = new ArrayImgFactory<>((IntType) val);
+			return (Img<T>) f.create(i);
 		}
 		else if(val instanceof LongType)
 		{
-			ArrayImgFactory<LongType> f = new ArrayImgFactory<>();
-			return (Img<T>) f.create(i, (LongType) val);
-		}
-		else if(val instanceof LongType)
-		{
-			ArrayImgFactory<LongType> f = new ArrayImgFactory<>();
-			return (Img<T>) f.create(i, (LongType) val);
+			ArrayImgFactory<LongType> f = new ArrayImgFactory<>((LongType) val);
+			return (Img<T>) f.create(i);
 		}
 		else return null;
 	}
@@ -1220,15 +1215,15 @@ public class FeatureUtils {
 	/////////////////////////////////////////
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public <T extends BooleanType<T>> Polygon getPolygonFromBoolean(final RandomAccessibleInterval<T> src) {
+	public <T extends BooleanType<T>> Polygon2D getPolygonFromBoolean(final RandomAccessibleInterval<T> src) {
 		if (contourFunc == null) {
-			contourFunc = (UnaryFunctionOp) Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.Contour.class, Polygon.class, src, true);
+			contourFunc = (UnaryFunctionOp) Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.Contour.class, Polygon2D.class, src, true);
 		}
-		final Polygon p = (Polygon) contourFunc.calculate(src);
+		final Polygon2D p = (Polygon2D) contourFunc.calculate(src);
 		return p;
 	}
 
-	public <T extends RealType<T>> Polygon getPolygonFromReal(final RandomAccessibleInterval<T> src)
+	public <T extends RealType<T>> Polygon2D getPolygonFromReal(final RandomAccessibleInterval<T> src)
 	{
 		return this.getPolygonFromBoolean(this.convertRealToBooleanTypeRAI(src, new BoolType(false)));
 	}
@@ -1240,9 +1235,10 @@ public class FeatureUtils {
 	 * @param center
 	 * @return
 	 */
-	public Circle getCircle(Polygon pg, RealLocalizable center)
+	public Circle getCircle(Polygon2D pg, RealLocalizable center)
 	{
-		PointSamplerList<IntType> psl = new PointSamplerList<>(pg.getVertices(), new IntType(0));
+		
+		PointSamplerList<IntType> psl = new PointSamplerList<>(pg, new IntType(0));
 		if(this.cirOp == null)
 		{
 			cirOp = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.SmallestEnclosingCircle.class, Circle.class, psl.cursor(), center);
@@ -1253,7 +1249,7 @@ public class FeatureUtils {
 
 	public <T extends BooleanType<T>> Circle getCircle(RandomAccessibleInterval<T> region, RealLocalizable center)
 	{
-		Polygon p = this.getPolygonFromBoolean(region);
+		Polygon2D p = this.getPolygonFromBoolean(region);
 		return this.getCircle(p, center);
 	}
 
@@ -1387,10 +1383,10 @@ public class FeatureUtils {
 	public Pair<Img<UnsignedByteType>,TreeMap<Integer,PointList>> keepRegionsWithMaxima(Img<UnsignedByteType> mask, boolean fourConnected, ROIPlus maxima, boolean removeClumps, Canceler canceler)
 	{
 		// Create a blank image
-		ArrayImgFactory<UnsignedByteType> factory = new ArrayImgFactory<UnsignedByteType>();
+		ArrayImgFactory<UnsignedByteType> factory = new ArrayImgFactory<UnsignedByteType>(new UnsignedByteType(0));
 		long[] dims = new long[mask.numDimensions()];
 		mask.dimensions(dims);
-		Img<UnsignedByteType> blank = factory.create(dims, new UnsignedByteType(0));
+		Img<UnsignedByteType> blank = factory.create(dims);
 
 		// Get the regions
 		ImgLabeling<Integer, IntType> labeling = this.getLabeling(mask, fourConnected);
