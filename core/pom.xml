@@ -47,12 +47,10 @@
 		<dependency>
 			<groupId>commons-io</groupId>
 			<artifactId>commons-io</artifactId>
-			<version>2.5</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-logging</groupId>
 			<artifactId>commons-logging</artifactId>
-			<version>1.2</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
@@ -115,6 +113,12 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Auto_Threshold</artifactId>
+<!-- 			<version>1.16.0</version> -->
+		</dependency>
+		
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Auto_Local_Threshold</artifactId>
 <!-- 			<version>1.16.0</version> -->
 		</dependency>
 
@@ -200,10 +204,12 @@
 		<dependency>
 			<groupId>org.jfree</groupId>
 			<artifactId>jcommon</artifactId>
+			<version>1.0.21</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jfree</groupId>
 			<artifactId>jfreechart</artifactId>
+			<version>1.0.19</version>
 		</dependency>
 		<dependency>
 			<groupId>org.scijava</groupId>

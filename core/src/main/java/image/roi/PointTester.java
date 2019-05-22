@@ -78,9 +78,9 @@ import net.imagej.display.ImageDisplay;
 import net.imagej.display.OverlayView;
 import net.imagej.ops.Op;
 import net.imagej.ops.Ops;
-import net.imagej.ops.image.cooccurrencematrix.MatrixOrientation;
-import net.imagej.ops.image.cooccurrencematrix.MatrixOrientation2D;
-import net.imagej.ops.image.cooccurrencematrix.MatrixOrientation3D;
+import net.imagej.ops.image.cooccurrenceMatrix.MatrixOrientation;
+import net.imagej.ops.image.cooccurrenceMatrix.MatrixOrientation2D;
+import net.imagej.ops.image.cooccurrenceMatrix.MatrixOrientation3D;
 import net.imagej.ops.map.MapBinaryComputers.IIAndRAIToRAI;
 import net.imagej.ops.special.function.Functions;
 import net.imagej.ops.special.function.UnaryFunctionOp;
@@ -94,7 +94,8 @@ import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.meta.CalibratedAxis;
 import net.imglib2.meta.ImgPlus;
-import net.imglib2.roi.geometric.Polygon;
+import net.imglib2.roi.geom.real.DefaultWritablePolygon2D;
+import net.imglib2.roi.geom.real.Polygon2D;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.real.DoubleType;
@@ -176,9 +177,9 @@ public class PointTester {
 		pl.add(0, 1);
 		pl.add(1, 1);
 		pl.add(1, 0);
-		Polygon p = new Polygon(pl);
+		Polygon2D p = new DefaultWritablePolygon2D(pl);
 
-		UnaryFunctionOp<Polygon,DoubleType> op = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.Size.class, DoubleType.class,  p);
+		UnaryFunctionOp<Polygon2D,DoubleType> op = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.Size.class, DoubleType.class,  p);
 		DoubleType d = op.calculate(p);
 
 		Logs.log(d.toString(), PointTester.class);

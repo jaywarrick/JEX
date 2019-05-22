@@ -13,7 +13,7 @@ import ij.gui.PointRoi;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import miscellaneous.Copiable;
-import net.imglib2.roi.geometric.Polygon;
+import net.imglib2.roi.geom.real.Polygon2D;
 
 public class ROIPlus implements Copiable<ROIPlus>, Iterable<ROIPlus>, Comparable<ROIPlus> {
 	
@@ -98,7 +98,7 @@ public class ROIPlus implements Copiable<ROIPlus>, Iterable<ROIPlus>, Comparable
 		this.type = type;
 	}
 	
-	public ROIPlus(Polygon pg)
+	public ROIPlus(Polygon2D pg)
 	{
 		this(new PointList(pg), ROIPlus.ROI_POLYGON);
 	}

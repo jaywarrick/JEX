@@ -27,7 +27,7 @@ import function.plugin.plugins.imageProcessing.TIECalculator;
 import ij.ImagePlus;
 import ij.process.FloatProcessor;
 import ij.process.ImageStatistics;
-import image.roi.PointList;
+import image.roi.IterablePolygon2D;
 import image.roi.PointSample;
 import image.roi.PointSampler;
 import image.roi.PointSamplerII;
@@ -52,8 +52,7 @@ import net.imglib2.RealLocalizable;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.roi.geometric.PointCollection;
-import net.imglib2.roi.geometric.Polygon;
+import net.imglib2.roi.geom.real.Polygon2D;
 import net.imglib2.roi.labeling.ImgLabeling;
 import net.imglib2.roi.labeling.LabelRegion;
 import net.imglib2.roi.labeling.LabelRegions;
@@ -393,10 +392,10 @@ public class TestStuff {
 		Img<UnsignedByteType> img = ImageJFunctions.wrapByte(im);
 		PositionableRunningNeighborhood<UnsignedByteType> p = new PositionableRunningNeighborhood<>(new Ellipse2D.Double(0,0,41,11), img, PositionableRunningNeighborhood.BORDER);
 		Cursor<UnsignedByteType> c = new SnakingCursor<UnsignedByteType>(img);
-		ArrayImgFactory<FloatType> f = new ArrayImgFactory<>();
+		ArrayImgFactory<FloatType> f = new ArrayImgFactory<>(new FloatType(0));
 		long[] dims = new long[img.numDimensions()];
 		img.dimensions(dims);
-		Img<FloatType> img2 = f.create(dims, new FloatType(0));
+		Img<FloatType> img2 = f.create(dims);
 		RandomAccess<FloatType> ra2 = img2.randomAccess();
 		float sum = 0;
 		while(c.hasNext())
@@ -463,8 +462,8 @@ public class TestStuff {
 			ImgLabeling<Integer, IntType> temp = utils.getLabeling(crop, true);
 			LabelRegions<Integer> temp2 = new LabelRegions<Integer>(temp);
 			System.out.println("Region" + i + " size = " + temp2.getExistingLabels().size());
-			Polygon p = utils.getPolygonFromBoolean(r);
-			System.out.println(p.getVertices());
+			Polygon2D p = utils.getPolygonFromBoolean(r);
+			System.out.println(new IterablePolygon2D(p));
 		}
 	}
 
@@ -1034,20 +1033,20 @@ public class TestStuff {
 		return pl;
 	}
 
-	public static IterableInterval<Void> getIterableInterval(PointList pl)
-	{
-		IterableInterval<Void> p = new PointCollection(pl);
-		Cursor<Void> c = p.cursor();
-		long[] pos = new long[p.numDimensions()];
-		while(c.hasNext())
-		{
-			c.fwd();
-			c.localize(pos);
-			System.out.println(pos[0] + " " + pos[1]);
-		}
-
-		return p;
-	}
+//	public static IterableInterval<Void> getIterableInterval(PointList pl)
+//	{
+//		IterableInterval<Void> p = new PointCollection(pl);
+//		Cursor<Void> c = p.cursor();
+//		long[] pos = new long[p.numDimensions()];
+//		while(c.hasNext())
+//		{
+//			c.fwd();
+//			c.localize(pos);
+//			System.out.println(pos[0] + " " + pos[1]);
+//		}
+//
+//		return p;
+//	}
 
 	public static void plotAndShowResults(PointSamplerList<?> pl, double xCenter, double yCenter, double radius) throws Exception
 	{
