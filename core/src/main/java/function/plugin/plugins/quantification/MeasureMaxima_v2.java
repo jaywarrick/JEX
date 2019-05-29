@@ -175,6 +175,9 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 		{
 			this.measurementDim = new Dim("Measurement", this.measurementType);
 		}
+		this.measurementDim.dimValues.add("X");
+		this.measurementDim.dimValues.add("Y");
+		this.measurementDim.updateDimValueSet();
 		dataTable.add(this.measurementDim.copy());
 
 		// Get the input data
