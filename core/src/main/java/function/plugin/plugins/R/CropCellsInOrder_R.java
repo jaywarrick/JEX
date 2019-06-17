@@ -28,6 +28,7 @@ import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import jex.utilities.FunctionUtility;
 import logs.Logs;
+import miscellaneous.CSVList;
 import rtools.R;
 import tables.DimTable;
 import tables.DimensionMap;
@@ -66,17 +67,29 @@ public class CropCellsInOrder_R extends JEXPlugin {
 
 	@ParameterMarker(uiOrder=1, name="CSV Table", description="CSV Table with cell data containing column names and values that match entry 'ds' (dataset), 'x', and 'y' values; image and roi dimension names and values; and maxima 'Id' values for finding data for each cell).", ui=MarkerConstants.UI_FILECHOOSER, defaultText="")
 	String tableFilePath;
+	
+	@ParameterMarker(uiOrder=2, name="Id Column Name", description="Name of the column with the cell id.", ui=MarkerConstants.UI_FILECHOOSER, defaultText="Id")
+	String id;
+	
+	@ParameterMarker(uiOrder=3, name="Dataset Column Name", description="Name of the column with the appropriate dataset.", ui=MarkerConstants.UI_FILECHOOSER, defaultText="ds")
+	String ds;
+	
+	@ParameterMarker(uiOrder=4, name="Entry 'X' Column Name", description="Name of the column with the appropriate 'X' location in the dataset (i.e., Col).", ui=MarkerConstants.UI_FILECHOOSER, defaultText="e.x")
+	String ex;
+	
+	@ParameterMarker(uiOrder=5, name="Entry 'Y' Column Name", description="Name of the column with the appropriate 'Y' location in the dataset (i.e., Row)", ui=MarkerConstants.UI_FILECHOOSER, defaultText="e.y")
+	String ey;
 
-	@ParameterMarker(uiOrder=2, name="R Filter Statement", description="Statement to be substituted into 'x <- x[<Filter Statement>]'", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
+	@ParameterMarker(uiOrder=6, name="R Filter Statement", description="Statement to be substituted into 'x <- x[<Filter Statement>]'", ui=MarkerConstants.UI_TEXTFIELD, defaultText="")
 	String filterStatement;
 
-	@ParameterMarker(uiOrder=3, name="Data Column To Order By", description="Name of the column in the table by which to order the cropped cells.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Id")
+	@ParameterMarker(uiOrder=7, name="Data Column To Order By", description="Name of the column in the table by which to order the cropped cells.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Id")
 	String dataCol;
 
-	@ParameterMarker(uiOrder=4, name="Crop Width", description="Width of the cropped region surrounding point.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="50")
+	@ParameterMarker(uiOrder=8, name="Crop Width", description="Width of the cropped region surrounding point.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="50")
 	int width;
 
-	@ParameterMarker(uiOrder=5, name="Crop Height", description="Height of the cropped region surrounding point.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="50")
+	@ParameterMarker(uiOrder=9, name="Crop Height", description="Height of the cropped region surrounding point.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="50")
 	int height;
 
 
@@ -168,6 +181,9 @@ public class CropCellsInOrder_R extends JEXPlugin {
 				{
 					return false;
 				}
+				
+				// Set the keys of the data.table for faster repeated searching
+				this.setKeys(map);
 				pl = pointROI.getPointList();
 				for (IdPoint p : pl)
 				{
@@ -243,15 +259,19 @@ public class CropCellsInOrder_R extends JEXPlugin {
 				return false;
 			}
 		}
-		if(!R.getExpressionResultAsBoolean("'ds' %in% names(x)"))
+		if(!R.getExpressionResultAsBoolean(R.sQuote(id) + " %in% names(x)"))
 		{
 			return false;
 		}
-		if(!R.getExpressionResultAsBoolean("'x' %in% names(x)"))
+		if(!R.getExpressionResultAsBoolean(R.sQuote(ex) + " %in% names(x)"))
 		{
 			return false;
 		}
-		if(!R.getExpressionResultAsBoolean("'y' %in% names(x)"))
+		if(!R.getExpressionResultAsBoolean(R.sQuote(ex) + " %in% names(x)"))
+		{
+			return false;
+		}
+		if(!R.getExpressionResultAsBoolean(R.sQuote(ex) + " %in% names(x)"))
 		{
 			return false;
 		}
@@ -264,11 +284,11 @@ public class CropCellsInOrder_R extends JEXPlugin {
 	
 	private boolean filterTableToEntry(JEXEntry e)
 	{
-		if(R.getExpressionResultAsBoolean("!all(c('ds','x','y') %in% names(x1))"))
+		if(R.getExpressionResultAsBoolean("!all(c(" + R.sQuote(this.ds) + "," + R.sQuote(this.ex) + "," + R.sQuote(this.ey) + ") %in% names(x1))"))
 		{
 			return false;
 		}
-		R.eval("x1 <- x[ds==" + R.sQuote(e.getEntryExperiment()) + " & x==" + R.sQuote("" + e.getTrayX()) + " & y==" + R.sQuote("" + e.getTrayY()) + "]");
+		R.eval("x1 <- x[" + this.ds + "==" + R.sQuote(e.getEntryExperiment()) + " & " + this.ex + "==" + R.sQuote("" + e.getTrayX()) + " & " + this.ey + "==" + R.sQuote("" + e.getTrayY()) + "]");
 		return(R.getExpressionResultAsBoolean("exists('x1') && !is.null(x1) && is.data.table(x1) && nrow(x1) > 0"));
 	}
 	
@@ -281,9 +301,15 @@ public class CropCellsInOrder_R extends JEXPlugin {
 		return(R.getExpressionResultAsBoolean("exists('x1') && !is.null(x1) && is.data.table(x1) && nrow(x1) > 0"));
 	}
 	
+	private void setKeys(DimensionMap map)
+	{
+		CSVList keys = this.getKeys(map);
+		R.eval("setkeyv(x1, c(" + keys.toString() + "," + R.sQuote(this.id) + "))");
+	}
+	
 	private Double getCellDataValue(DimensionMap map, int id)
 	{
-		R.eval("val <- x1[" + getFilterStringFromMap(map) + " & Id==" + id + "][[" + R.sQuote(this.dataCol) + "]]");
+		R.eval("val <- x1[" + getFilterStringFromMap(map) + " & " + this.id + "==" + id + "][[" + R.sQuote(this.dataCol) + "]]");
 		if(R.getExpressionResultAsBoolean("exists('val') && !is.null(val) && is.numeric(val)"))
 		{
 			return R.getExpressionResultAsDouble("val"); // This checks for length=0 values and length > 1 values print a warning message.
@@ -308,6 +334,19 @@ public class CropCellsInOrder_R extends JEXPlugin {
 			count = count + 1;
 		}
 		return sb.toString();
+	}
+	
+	private CSVList getKeys(DimensionMap map)
+	{
+		CSVList ret = new CSVList();
+		for(String key : map.keySet())
+		{
+			if(!key.equals("Channel"))
+			{
+				ret.add(R.sQuote(key));
+			}
+		}
+		return ret;
 	}
 
 	private String saveImage(FloatProcessor imp, int bitDepth)

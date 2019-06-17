@@ -106,6 +106,61 @@ public class ImageUtility {
 		return temp;
 	}
 	
+	public static Pair<Double, Double> percentile(ImageProcessor imp, double minPercentile, double maxPercentile, int sampleSize, double ignoreBelow, double ignoreAbove)
+	{
+		Pair<Double,Double> thresholds = null;
+		
+		double tempMin = minPercentile;
+		double tempMax = maxPercentile;
+		
+		if(minPercentile < 0)
+		{
+			minPercentile = 0;
+		}
+		if(maxPercentile > 100)
+		{
+			maxPercentile = 100;
+		}
+		
+		if(sampleSize < 1)
+		{
+			FeatureUtils fu = new FeatureUtils();
+			Vector<Double> samples = fu.sampleFromShape(imp, new ROIPlus(new Roi(0,0,imp.getWidth(),imp.getHeight())), true);
+			double[] temp = StatisticsUtility.percentile(samples, new double[] {minPercentile, maxPercentile}, ignoreBelow, ignoreAbove);
+			return new Pair<>(temp[0],temp[1]);
+		}
+		
+		// Get the thresholds
+		if(imp instanceof ByteProcessor || imp.getBitDepth() == 8)
+		{
+			thresholds = StatisticsUtility.percentile((byte[]) imp.getPixelsCopy(), minPercentile, maxPercentile, ignoreBelow, ignoreAbove);
+		}
+		if(imp instanceof ShortProcessor || imp.getBitDepth() == 16)
+		{
+			thresholds = StatisticsUtility.percentile((short[]) imp.getPixelsCopy(), minPercentile, maxPercentile, ignoreBelow, ignoreAbove);
+		}
+		if(imp instanceof FloatProcessor || imp.getBitDepth() == 32)
+		{
+			thresholds = StatisticsUtility.percentile((float[]) imp.getPixelsCopy(), minPercentile, maxPercentile, ignoreBelow, ignoreAbove);
+		}
+		else
+		{
+			return null;
+		}
+		
+		if(tempMin < 0)
+		{
+			thresholds.p1 = thresholds.p1 + (tempMin/100)*Math.abs(thresholds.p2 - thresholds.p1);
+		}
+		
+		if(tempMax > 100)
+		{
+			thresholds.p2 = thresholds.p2 + (tempMax/100)*Math.abs(thresholds.p2 - thresholds.p1);
+		}
+		
+		return thresholds;
+	}
+	
 	public static Pair<Double, Double> percentile(ImageProcessor imp, double minPercentile, double maxPercentile, int sampleSize)
 	{
 		Pair<Double,Double> thresholds = null;

@@ -30,7 +30,7 @@ class Polygon2DIterator implements Iterator<RealLocalizable>
 	public Polygon2DIterator(Polygon2D pg)
 	{
 		this.pg = pg;
-		this.max = pg.numVertices();
+		this.max = pg.numVertices()-1;
 	}
 	@Override
 	public boolean hasNext() {

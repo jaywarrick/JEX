@@ -66,34 +66,40 @@ public class EnhanceContrast extends JEXPlugin {
 	@ParameterMarker(uiOrder=4, name="Max Percentile", description="Upper threshold (e.g., 99%)' of the image defined as a percentile of the current intensities in the image.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="99.0")
 	double maxPercentile;
 	
-	@ParameterMarker(uiOrder=5, name="New Min", description="Lower threshold (e.g., 0.5%)' of the image defined as a percentile of the current intensities in the image.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
+	@ParameterMarker(uiOrder=5, name="Ignore Pixels Below", description="Pixels below this threshold won't be considered in the percentile calculation.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="-1.0")
+	double ignoreBelow;
+
+	@ParameterMarker(uiOrder=6, name="Ignore Pixels Above", description="Pixels above this threshold won't be considered in the percentile calculation.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="65536.0")
+	double ignoreAbove;
+	
+	@ParameterMarker(uiOrder=7, name="New Min", description="The intensity to which the upper percentile pixel should be set.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
 	double newMin;
 
-	@ParameterMarker(uiOrder=6, name="New Max", description="Upper threshold (e.g., 99%)' of the image defined as a percentile of the current intensities in the image.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="99.0")
+	@ParameterMarker(uiOrder=8, name="New Max", description="The intensity to which the upper percentile pixel should be set.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="255")
 	double newMax;
 	
-	@ParameterMarker(uiOrder=7, name="Gamma (post)", description="Gamma adjustment applied post contrast adjustment.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1.0")
+	@ParameterMarker(uiOrder=9, name="Gamma (post)", description="Gamma adjustment applied post contrast adjustment.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1.0")
 	double gamma;
 
-	@ParameterMarker(uiOrder=8, name="Method", description="Should thresholds be determined for each individual image or by inidivual channel or one threshold for all?", ui=MarkerConstants.UI_DROPDOWN, choices={"per Image","per Channel","Uniform"}, defaultChoice=0)
+	@ParameterMarker(uiOrder=10, name="Method", description="Should thresholds be determined for each individual image or by inidivual channel or one threshold for all?", ui=MarkerConstants.UI_DROPDOWN, choices={"per Image","per Channel","Uniform"}, defaultChoice=0)
 	String method;
 
-	@ParameterMarker(uiOrder=9, name="Channel Dim Name", description="If creating a single threshold per channel, what is the name of the channel dimension?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Channel")
+	@ParameterMarker(uiOrder=11, name="Channel Dim Name", description="If creating a single threshold per channel, what is the name of the channel dimension?", ui=MarkerConstants.UI_TEXTFIELD, defaultText="Channel")
 	String channelDimName;
 
-	@ParameterMarker(uiOrder=10, name="(n) Number of Images to Sample", description="For large datasets, one can just analyze the first 'n' images to limit calculation time and just use threshold limits based on some of the images. A value < 1 results in use of all images. The per Image method ignores this setting.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="5")
+	@ParameterMarker(uiOrder=12, name="(n) Number of Images to Sample", description="For large datasets, one can just analyze the first 'n' images to limit calculation time and just use threshold limits based on some of the images. A value < 1 results in use of all images. The per Image method ignores this setting.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="5")
 	int n;
 	
-	@ParameterMarker(uiOrder=11, name="Pixel Sample Size", description="For large images, a subset of the pixels can be used to estimate percentiles to speed calculation. Sample size < 1 results in sampling of the entire image.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="-1")
+	@ParameterMarker(uiOrder=13, name="Pixel Sample Size", description="For large images, a subset of the pixels can be used to estimate percentiles to speed calculation. Sample size < 1 results in sampling of the entire image.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="-1")
 	int sampleSize;
 	
-	@ParameterMarker(uiOrder=12, name="Output Bit Depth", description="What bit depth should the image be saved as, scaling the image to fill the bit depth range?", ui=MarkerConstants.UI_DROPDOWN, choices={"8","16","32"}, defaultChoice=0)
+	@ParameterMarker(uiOrder=14, name="Output Bit Depth", description="What bit depth should the image be saved as, scaling the image to fill the bit depth range?", ui=MarkerConstants.UI_DROPDOWN, choices={"8","16","32"}, defaultChoice=0)
 	int outputBitDepth;
 	
-	@ParameterMarker(uiOrder=13, name="Exclusion Filter DimTable", description="Filter specific dimension combinations from analysis. (Format: <DimName1>=<a1,a2,...>;<DimName2>=<b1,b2...>)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
+	@ParameterMarker(uiOrder=15, name="Exclusion Filter DimTable", description="Filter specific dimension combinations from analysis. (Format: <DimName1>=<a1,a2,...>;<DimName2>=<b1,b2...>)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
 	String filterDimTableString;
 	
-	@ParameterMarker(uiOrder=14, name="Keep Excluded Images?", description="Should images excluded by the filter be copied to the new object?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
+	@ParameterMarker(uiOrder=16, name="Keep Excluded Images?", description="Should images excluded by the filter be copied to the new object?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
 	boolean keepExcluded;
 
 	//	@ParameterMarker(uiOrder=5, name="Plot First (n) Histograms?", description="Should the first histogram and thresholds be plotted? (REQUIRES R / RServe to be up an running)", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
@@ -165,7 +171,7 @@ public class EnhanceContrast extends JEXPlugin {
 						}
 						ImageProcessor imp = (new ImagePlus(path)).getProcessor();
 						// Get the thresholds
-						thresholds = ImageUtility.percentile(imp, this.minPercentile, this.maxPercentile, this.sampleSize);
+						thresholds = ImageUtility.percentile(imp, this.minPercentile, this.maxPercentile, this.sampleSize, this.ignoreBelow, this.ignoreAbove);
 						
 						if(thresholds == null)
 						{
@@ -302,7 +308,7 @@ public class EnhanceContrast extends JEXPlugin {
 				ImageProcessor imp = (new ImagePlus(path)).getProcessor();
 				
 				// Get the thresholds
-				thresholds = ImageUtility.percentile(imp, this.minPercentile, this.maxPercentile, this.sampleSize);
+				thresholds = ImageUtility.percentile(imp, this.minPercentile, this.maxPercentile, this.sampleSize, this.ignoreBelow, this.ignoreAbove);
 				if(thresholds == null)
 				{
 					Logs.log("Couldn't determine a threshold for image: " + map.toString() + " - " + imageMap.get(map) + ". Skipping.", this);
@@ -382,7 +388,7 @@ public class EnhanceContrast extends JEXPlugin {
 				}
 
 				// Get the thresholds
-				thresholds = ImageUtility.percentile((new ImagePlus(path)).getProcessor(), this.minPercentile, this.maxPercentile, this.sampleSize);
+				thresholds = ImageUtility.percentile((new ImagePlus(path)).getProcessor(), this.minPercentile, this.maxPercentile, this.sampleSize, this.ignoreBelow, this.ignoreAbove);
 				if(thresholds == null)
 				{
 					Logs.log("Couldn't determine a threshold for image: " + map.toString() + " - " + imageMap.get(map) + ". Skipping.", this);

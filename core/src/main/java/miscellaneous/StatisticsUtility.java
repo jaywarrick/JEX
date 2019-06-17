@@ -1715,6 +1715,43 @@ public class StatisticsUtility {
 		//		return StatisticsUtility.percentile(v, percentiles);
 	}
 	
+	/**
+	 * @param values
+	 * @param percentiles value be > 0 and <= 100
+	 * @return
+	 */
+	public static double[] percentile(List<Double> values, double[] percentiles, double ignoreBelow, double ignoreAbove)
+	{
+		double[] ret = new double[percentiles.length];
+		Collections.sort(values, Comparator.naturalOrder());
+		int first = 0, last = 0;
+		for(int i=0; i < values.size(); i++)
+		{
+			if(values.get(i) < ignoreBelow)
+			{
+				first = first + 1;
+			}
+			if(values.get(i) <= ignoreAbove)
+			{
+				last = i;
+			}
+		}
+		for(int i=0; i < ret.length; i++)
+		{
+			int j = first + (int) Math.round((last-first)*(percentiles[i]/100.0));
+			ret[i] = values.get(j);
+		}
+		return ret;
+		//		double[] v = new double[values.size()];
+		//		int count = 0;
+		//		for (Double d : values)
+		//		{
+		//			v[count] = d;
+		//			count++;
+		//		}
+		//		return StatisticsUtility.percentile(v, percentiles);
+	}
+	
 	public static Pair<Double,Double> percentile(float[] pixelsCopy, double minPercentile, double maxPercentile)
 	{
 		if(minPercentile < 0.0 || maxPercentile > 100.0)
@@ -1724,6 +1761,30 @@ public class StatisticsUtility {
 		Arrays.sort(pixelsCopy);
 		int minI = (int) Math.round((pixelsCopy.length-1)*(minPercentile/100.0));
 		int maxI = (int) Math.round((pixelsCopy.length-1)*(maxPercentile/100.0));
+		return new Pair<>((double) pixelsCopy[minI], (double) pixelsCopy[maxI]);
+	}
+	
+	public static Pair<Double,Double> percentile(float[] pixelsCopy, double minPercentile, double maxPercentile, double ignoreBelow, double ignoreAbove)
+	{
+		if(minPercentile < 0.0 || maxPercentile > 100.0)
+		{
+			return null;
+		}
+		Arrays.sort(pixelsCopy);
+		int first = 0, last = 0;
+		for(int i=0; i < pixelsCopy.length; i++)
+		{
+			if(pixelsCopy[i] < ignoreBelow)
+			{
+				first = first + 1;
+			}
+			if(pixelsCopy[i] <= ignoreAbove)
+			{
+				last = i;
+			}
+		}
+		int minI = first + (int) Math.round((last-first)*(minPercentile/100.0));
+		int maxI = first + (int) Math.round((last-first)*(maxPercentile/100.0));
 		return new Pair<>((double) pixelsCopy[minI], (double) pixelsCopy[maxI]);
 	}
 	
@@ -1739,6 +1800,30 @@ public class StatisticsUtility {
 		return new Pair<>((double) pixelsCopy[minI], (double) pixelsCopy[maxI]);
 	}
 	
+	public static Pair<Double,Double> percentile(short[] pixelsCopy, double minPercentile, double maxPercentile, double ignoreBelow, double ignoreAbove)
+	{
+		if(minPercentile < 0.0 || maxPercentile > 100.0)
+		{
+			return null;
+		}
+		Arrays.sort(pixelsCopy);
+		int first = 0, last = 0;
+		for(int i=0; i < pixelsCopy.length; i++)
+		{
+			if(pixelsCopy[i] < ignoreBelow)
+			{
+				first = first + 1;
+			}
+			if(pixelsCopy[i] <= ignoreAbove)
+			{
+				last = i;
+			}
+		}
+		int minI = first + (int) Math.round((last-first)*(minPercentile/100.0));
+		int maxI = first + (int) Math.round((last-first)*(maxPercentile/100.0));
+		return new Pair<>((double) pixelsCopy[minI], (double) pixelsCopy[maxI]);
+	}
+	
 	public static Pair<Double,Double> percentile(byte[] pixelsCopy, double minPercentile, double maxPercentile)
 	{
 		if(minPercentile < 0.0 || maxPercentile > 100.0)
@@ -1751,6 +1836,30 @@ public class StatisticsUtility {
 		return new Pair<>((double) pixelsCopy[minI], (double) pixelsCopy[maxI]);
 	}
 
+	public static Pair<Double,Double> percentile(byte[] pixelsCopy, double minPercentile, double maxPercentile, double ignoreBelow, double ignoreAbove)
+	{
+		if(minPercentile < 0.0 || maxPercentile > 100.0)
+		{
+			return null;
+		}
+		Arrays.sort(pixelsCopy);
+		int first = 0, last = 0;
+		for(int i=0; i < pixelsCopy.length; i++)
+		{
+			if(pixelsCopy[i] < ignoreBelow)
+			{
+				first = first + 1;
+			}
+			if(pixelsCopy[i] <= ignoreAbove)
+			{
+				last = i;
+			}
+		}
+		int minI = first + (int) Math.round((last-first)*(minPercentile/100.0));
+		int maxI = first + (int) Math.round((last-first)*(maxPercentile/100.0));
+		return new Pair<>((double) pixelsCopy[minI], (double) pixelsCopy[maxI]);
+	}
+	
 	public static int mode(int[] values)
 	{
 		double[] d = new double[values.length];
