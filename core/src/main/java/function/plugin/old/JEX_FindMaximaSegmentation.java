@@ -4,6 +4,7 @@ import java.awt.Shape;
 import java.io.File;
 import java.util.HashMap;
 import java.util.TreeMap;
+import java.util.Vector;
 
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
@@ -22,6 +23,7 @@ import function.plugin.plugins.imageProcessing.RankFilters2;
 import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.plugin.filter.GaussianBlur;
+import ij.process.Blitter;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
@@ -30,8 +32,11 @@ import image.roi.PointList;
 import image.roi.ROIPlus;
 import inra.ijpb.binary.BinaryImages;
 import inra.ijpb.watershed.Watershed;
+import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import logs.Logs;
+import miscellaneous.CSVList;
+import miscellaneous.FileUtility;
 import miscellaneous.JEXCSVWriter;
 import tables.DimTable;
 import tables.DimensionMap;
@@ -172,6 +177,7 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 		Parameter p00 = getNumThreadsParameter(10, 4);
 		Parameter p0a = new Parameter("Pre-Despeckle Radius", "Radius of median filter applied before max finding", "0");
 		Parameter p0b = new Parameter("Pre-Smoothing Radius", "Radius of mean filter applied before max finding", "0");
+		Parameter p0c = new Parameter("Pre-DoG Radii", "Radii of DoG filter applied before max finding. Enter 0 as first radius to skip this step. (CSV list of increasing values, whitespace ok).", "0,1");
 		Parameter pa1 = new Parameter("Color Dim Name", "Name of the color dimension.", "Color");
 		Parameter pa2 = new Parameter("Maxima Color Dim Value", "Value of the color dimension to analyze for determing maxima. (leave blank to ignore and perform on all images)", "");
 		Parameter pa3 = new Parameter("Segmentation Color Dim Value", "Value of the color dimension to use for segmentation using the found maxima. (leave blank to apply to the same color used to find maxima)", "");
@@ -192,6 +198,7 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 		parameterArray.addParameter(p00);
 		parameterArray.addParameter(p0a);
 		parameterArray.addParameter(p0b);
+		parameterArray.addParameter(p0c);
 		parameterArray.addParameter(pa1);
 		parameterArray.addParameter(pa2);
 		parameterArray.addParameter(pa3);
@@ -257,6 +264,18 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 			/* GATHER PARAMETERS */
 			double despeckleR = Double.parseDouble(this.parameters.getValueOfParameter("Pre-Despeckle Radius"));
 			double smoothR = Double.parseDouble(this.parameters.getValueOfParameter("Pre-Smoothing Radius"));
+			String dogRadii = this.parameters.getValueOfParameter("Pre-DoG Radii");
+			CSVList dogRadiiList = new CSVList(dogRadii);
+			if(dogRadiiList.size() != 2)
+			{
+				JEXDialog.messageDialog("Two radii must be specified for the DoG radii, spearated by a comma (whitespace ok). If value of 0 is first value, then this filter step is omitted. Aborting.", this);
+				return false;
+			}
+			Vector<Double> dogRadiiVector = new Vector<>();
+			for(String r : dogRadiiList)
+			{
+				dogRadiiVector.add(Double.parseDouble(r));
+			}
 			String colorDimName = this.parameters.getValueOfParameter("Color Dim Name");
 			String nuclearDimValue = this.parameters.getValueOfParameter("Maxima Color Dim Value");
 			String segDimValue = this.parameters.getValueOfParameter("Segmentation Color Dim Value");
@@ -359,11 +378,6 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 				{
 					return false;
 				}
-				// // Update the display
-				count = count + 1;
-				percentage = (int) (100 * ((double) (count) / ((double) total)));
-				JEXStatics.statusBar.setProgressPercentage(percentage);
-				counter = counter + 1;
 				
 				if(smoothR > 0)
 				{
@@ -373,6 +387,22 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 					GaussianBlur gb = new GaussianBlur();
 					gb.blurGaussian(ip, smoothR, smoothR, 0.0002); // Default accuracy = 0.0002
 				}
+				
+				if(dogRadiiVector.get(0) != 0)
+				{
+					FloatProcessor copy = (FloatProcessor) ip.duplicate();
+					
+					// //// Begin Actual Function
+					GaussianBlur gb = new GaussianBlur();
+					gb.blurGaussian(copy, dogRadiiVector.get(0), dogRadiiVector.get(0), 0.0002); // Default accuracy = 0.0002
+					gb.blurGaussian(ip, dogRadiiVector.get(1), dogRadiiVector.get(1), 0.0002); // Default accuracy = 0.0002
+					copy.copyBits(ip, 0, 0, Blitter.SUBTRACT);
+					ip = copy;
+//					FileUtility.openFileDefaultApplication(JEXWriter.saveImage(ip));
+					im.setProcessor(ip);
+					copy = null;
+				}
+				
 				if(this.isCanceled())
 				{
 					return false;
