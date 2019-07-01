@@ -12,14 +12,19 @@ import Database.Definition.ParameterSet;
 import Database.Definition.TypeName;
 import Database.SingleUserDatabase.JEXWriter;
 import function.JEXCrunchable;
+import function.plugin.plugins.imageProcessing.GaussianBlur2;
+import function.plugin.plugins.imageProcessing.GaussianBlurForcedRadius;
 import function.plugin.plugins.imageProcessing.RankFilters2;
 import ij.ImagePlus;
-import ij.plugin.filter.GaussianBlur;
+import ij.plugin.filter.Convolver;
 import ij.process.Blitter;
+import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
+import jex.utilities.ImageUtility;
 import miscellaneous.CSVList;
+import miscellaneous.Pair;
 import miscellaneous.StringUtility;
 import tables.DimTable;
 import tables.DimensionMap;
@@ -36,7 +41,7 @@ import tables.DimensionMap;
  */
 public class JEX_ImageFilters extends JEXCrunchable {
 
-	public static String MEAN = "mean", MIN = "min", MAX = "max", MEDIAN = "median", VARIANCE = "variance", STDEV = "std. dev.", OUTLIERS="outliers", DESPECKLE="despeckle", REMOVE_NAN="remove NaN", OPEN="open", CLOSE="close", OPEN_TOPHAT="open top-hat", CLOSE_TOPHAT="close top-hat", SUM="sum", SNR="Signal:Noise Ratio", NSR="Noise:Signal Ratio", GAUSSIAN="Gaussian", DOG="DoG";
+	public static String MEAN = "mean", MIN = "min", MAX = "max", MEDIAN = "median", VARIANCE = "variance", STDEV = "std. dev.", OUTLIERS="outliers", DESPECKLE="despeckle", REMOVE_NAN="remove NaN", OPEN="open", CLOSE="close", OPEN_TOPHAT="open top-hat", CLOSE_TOPHAT="close top-hat", SUM="sum", SNR="Signal:Noise Ratio", NSR="Noise:Signal Ratio", GAUSSIAN="Gaussian", DOG="DoG",  GAUSSIAN_FORCED_RADIUS="Gaussian (forced radius)", VARIANCE_WEIGHTS="Variance Weights";
 	public static String OP_NONE = "None", OP_LOG = "Natural Log", OP_EXP="Exp", OP_SQRT="Square Root", OP_SQR="Square", OP_INVERT="Invert";
 
 	public JEX_ImageFilters()
@@ -149,7 +154,7 @@ public class JEX_ImageFilters extends JEXCrunchable {
 		// Parameter p0 = new
 		// Parameter("Dummy Parameter","Lets user know that the function has been selected.",FormLine.DROPDOWN,new
 		// String[] {"true"},0);
-		Parameter p1 = new Parameter("Filter Type", "Type of filter to apply.", Parameter.DROPDOWN, new String[] { MEAN, MIN, MAX, MEDIAN, VARIANCE, STDEV, OUTLIERS, DESPECKLE, REMOVE_NAN, OPEN, CLOSE, OPEN_TOPHAT, CLOSE_TOPHAT, SUM, SNR, NSR, GAUSSIAN, DOG}, 0);
+		Parameter p1 = new Parameter("Filter Type", "Type of filter to apply.", Parameter.DROPDOWN, new String[] { MEAN, MIN, MAX, MEDIAN, VARIANCE, STDEV, OUTLIERS, DESPECKLE, REMOVE_NAN, OPEN, CLOSE, OPEN_TOPHAT, CLOSE_TOPHAT, SUM, SNR, NSR, GAUSSIAN, GAUSSIAN_FORCED_RADIUS, DOG, VARIANCE_WEIGHTS}, 0);
 		Parameter p7 = new Parameter("Exclusion Filter Table", "<DimName>=<Val1>,<Val2>,...<Valn>;<DimName2>=<Val1>,<Val2>,...<Valn>, Specify the dimension and dimension values to exclude. Leave blank to process all.", "");
 		Parameter p8 = new Parameter("Keep Unprocessed Images?", "Should the images within the object that are exlcluded from analysis by the Dimension Filter be kept in the result?", Parameter.CHECKBOX, true);
 		Parameter p2 = new Parameter("Radius", "Radius/Sigma of filter in pixels. (CSV list of 2 radii of increasing size for DoG <Val1>,<Val2>, whitespace ok)", "2.0");
@@ -219,6 +224,23 @@ public class JEX_ImageFilters extends JEXCrunchable {
 		TreeMap<DimensionMap,String> imageMap = ImageReader.readObjectToImagePathTable(imageData);
 		TreeMap<DimensionMap,String> outputImageMap = new TreeMap<DimensionMap,String>();
 		int count = 0, percentage = 0;
+		
+		// set up this kernel just once if necessary
+//		float[] kernel = null;
+//		Convolver conv = new Convolver();
+//		if(method.equals(ONE_OVER_R_TO_POWER))
+//		{
+//			if(radii.size() > 1)
+//			{
+//				kernel = makeDistanceKernal((int) Math.ceil(radius), Double.parseDouble(radii.get(1)));
+//			}
+//			else
+//			{
+//				JEXDialog.messageDialog("The 1/(r^power) filter requires a maximum radius of the kernel followed by a power factor provided as a CSV list. Supply as a simple CSV list, 'radius, power'", this);
+//				return false;
+//			}
+//		}
+		
 		for (DimensionMap map : imageMap.keySet())
 		{
 			if(this.isCanceled())
@@ -251,7 +273,8 @@ public class JEX_ImageFilters extends JEXCrunchable {
 
 			// //// Begin Actual Function
 			RankFilters2 rF = new RankFilters2();
-			GaussianBlur gb = new GaussianBlur();
+			GaussianBlur2 gb = new GaussianBlur2();
+			GaussianBlurForcedRadius gbfr = new GaussianBlurForcedRadius();
 			if(!(method.equals(GAUSSIAN) || method.equals(DOG)))
 			{
 				rF.rank(ip, radius, getMethodInt(method));
@@ -281,6 +304,7 @@ public class JEX_ImageFilters extends JEXCrunchable {
 				else
 				{
 					JEXDialog.messageDialog("The DoG filter requires two radii as a CSV list. Supply as a simple CSV list, 'radius1, radius2'", this);
+					return false;
 				}
 			}
 			else if(method.equals(NSR))
@@ -295,6 +319,43 @@ public class JEX_ImageFilters extends JEXCrunchable {
 				rF.rank(orig, radius, RankFilters2.STDEV);
 				ip.copyBits(orig, 0, 0, Blitter.DIVIDE);
 				orig = null;
+			}
+			else if(method.equals(VARIANCE_WEIGHTS))
+			{
+				if(radii.size() > 1)
+				{
+					Pair<FloatProcessor[], FloatProcessor> ret = ImageUtility.getImageVarianceWeights(ip, radius, false, false, Double.parseDouble(radii.get(1)));
+					ip = ret.p1[0];
+//					float[] pixels = (float[]) ip.getPixels();
+//					for(int i = 0; i < pixels.length; i++)
+//					{
+//						if(pixels[i] <= 0.5)
+//						{
+//							pixels[i] = 0;
+//						}
+//						else
+//						{
+//							pixels[i] = 1;
+//						}
+//					}
+//					ip.setPixels(pixels);
+//					ip.resetMinAndMax();
+//					rF.rank(ip, 4.0, RankFilters2.MAX);
+//					rF.rank(ip, 4.0, RankFilters2.MIN);
+//					rF.rank(ip, 4.0, RankFilters2.MIN);
+//					rF.rank(ip, 4.0, RankFilters2.MAX);
+					ip.invert();
+				}
+				else
+				{
+					JEXDialog.messageDialog("The Variance Weight filter requires a radius followed by a scaling factor provided as a CSV list (see Weighted Mean Filter). Supply as a simple CSV list, 'radius, scale'", this);
+					return false;
+				}
+				
+			}
+			else if(method.equals(GAUSSIAN_FORCED_RADIUS))
+			{
+				gbfr.blurGaussian(ip, radius, radius, Double.parseDouble(radii.get(1)));
 			}
 			
 			if(!mathOp.equals(OP_NONE))
@@ -349,6 +410,54 @@ public class JEX_ImageFilters extends JEXCrunchable {
 		realOutputs.add(output1);
 
 		// Return status
+		return true;
+	}
+	
+	/**
+	 * Make a kernel that falls off (or rises) with 1/(r+1)^power (r+1 is used to to keep the function well behaved at the center pixel).
+	 * @param radius - value >= 1
+	 * @param power
+	 * @return
+	 */
+	public static float[] makeDistanceKernal(int radius, double power)
+	{
+		if(radius < 1)
+		{
+			return null;
+		}
+		float[] ret = new float[(2*radius+1)*(2*radius+1)];
+		int k = 0;
+		if((radius % 2)!=0)
+		{
+			radius = radius + 1;
+		}
+		ret[(radius+1)*(radius+1)] = 1; // center pixel
+		for(int i = 0; i < (2*radius+1); i++)
+		{
+			for(int j=0; j < 2*radius+1; j++)
+			{
+				int x = i - (radius + 1);
+				int y = j - (radius + 1);
+				double r = Math.sqrt((x*x + y*y));
+				ret[k] = (float) (1/Math.pow(r+1.0, power));
+				k = k + 1;
+			}
+		}
+		
+		return ret;
+	}
+	
+	public static boolean filterByOneOverRtoPower(ImageProcessor ip, double radius, double power)
+	{
+		float[] kernel = null;
+		Convolver conv = new Convolver();
+		kernel = makeDistanceKernal((int) Math.ceil(radius), power);
+		boolean result = conv.convolve(ip, kernel, (2*((int) Math.ceil(radius)) + 1),  (2*((int) Math.ceil(radius)) + 1));
+		if(!result)
+		{
+			JEXDialog.messageDialog("User canceled convolve operation. Aborting", JEX_ImageFilters.class);
+			return false;
+		}
 		return true;
 	}
 	

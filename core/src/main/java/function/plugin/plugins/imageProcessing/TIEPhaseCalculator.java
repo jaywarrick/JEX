@@ -17,12 +17,16 @@ import function.plugin.mechanism.OutputMarker;
 import function.plugin.mechanism.ParameterMarker;
 import ij.ImagePlus;
 import ij.plugin.filter.BackgroundSubtracter;
+import ij.process.Blitter;
+import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
+import ij.process.ShortProcessor;
 import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import jex.utilities.ImageUtility;
 import logs.Logs;
+import miscellaneous.CSVList;
 import miscellaneous.Pair;
 import tables.Dim;
 import tables.DimTable;
@@ -90,7 +94,7 @@ public class TIEPhaseCalculator extends JEXPlugin {
 //	@ParameterMarker(uiOrder = 10, name = "Filter and Scale Result?", description = "Should the result be FFT filtered to remove noise and then scaled for saving at a particular bit depth?", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = true)
 	boolean doFilteringAndScaling = true;
 
-	@ParameterMarker(uiOrder = 11, name = "FFT: Feature Size Cutoff [pixels]", description = "The filter removes low frequency fluctuations (e.g., background) and keeps small features (higher frequency items). What is the feature size cutoff? [pixels].", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "100.0")
+	@ParameterMarker(uiOrder = 11, name = "FFT: Feature Size Cutoff [pixels]", description = "The filter removes low frequency fluctuations (e.g., background) and keeps small features (higher frequency items). What is the feature size cutoff? [pixels].", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "350")
 	double filterLargeDia;
 	
 //	@ParameterMarker(uiOrder = 12, name = "Filter (WM): Kernal Outer Weighting Factor", description="How much weight should the outer portion of the kernel be given relative to the inner portion (Kernel = Gaussian * (1-Gaussian)^factor). Typically 0 (standard Gaussian) to 5 (weighted to outer portion), but can go higher with diminishing impact.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0")
@@ -102,25 +106,31 @@ public class TIEPhaseCalculator extends JEXPlugin {
 	@ParameterMarker(uiOrder = 12, name = "Filter (WMF): Do weighted mean filtering step?", description="Should the weighted mean filtering step be performed at all?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
 	boolean doWMF;
 	
-	@ParameterMarker(uiOrder = 13, name = "Filter (WMF): Subtraction Sharpness Parameter", description="How sharp a difference should there be between the weights of background and foreground pixels. A higher number causes a sharper transition in weighting. A sharper transition means less dark shadow around bright features (typically 0.5-3).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="2.0")
+	@ParameterMarker(uiOrder = 13, name = "Filter (WMF): Gaussian Filter Radius", description="Sigma of the gaussian filter used with WMF. Optionally supply a second argument (CSV list, e.g., '50,300') to specify how far out the gaussian kernel should extend in pixels. The second radius must be larger than the first.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="20,350")
+	String radiiWMF;
+	
+	@ParameterMarker(uiOrder = 14, name = "Filter (WMF): Variance Filter Radius", description="Radius of the variance filter used with WMF to detect background pixels. Typically 2 to 4", ui=MarkerConstants.UI_TEXTFIELD, defaultText="4.0")
+	double radiusVarWMF;
+	
+	@ParameterMarker(uiOrder = 15, name = "Filter (WMF): Subtraction Sharpness Parameter", description="How sharp a difference should there be between the weights of background and foreground pixels. A higher number causes a sharper transition in weighting. A sharper transition means less dark shadow around bright features (typically 0.5-5).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="4.0")
 	double subtractionPower;
 	
-	@ParameterMarker(uiOrder = 14, name = "Filter (WMF): Zero the Background", description="Typically the mean background is half the bit depth range of the final image. This subtracts that value to set the mean background to zero.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
+	@ParameterMarker(uiOrder = 16, name = "Filter (WMF): Zero the Background", description="Typically the mean background is half the bit depth range of the final image. This subtracts that value to set the mean background to zero.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
 	boolean zero;
 	
-	@ParameterMarker(uiOrder = 15, name = "Filter (WMF): Save Thresholded Filter Result?", description = "Should a thresholded image be generated from the filtered and scaled phase image?", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
+	@ParameterMarker(uiOrder = 17, name = "Filter (WMF): Save Thresholded Filter Result?", description = "Should a thresholded image be generated from the filtered and scaled phase image?", ui = MarkerConstants.UI_CHECKBOX, defaultBoolean = false)
 	boolean saveThresholdImage;
 	
-	@ParameterMarker(uiOrder = 16, name = "Filter (WMF): Threshold Sharpness Parameter", description="How sharp a difference should there be between the weights of background and foreground pixels. A higher number causes a sharper transition in weighting. A sharper transition means less dark shadow around bright features (typically lower than used for subtraction to create better defined edges, 0.5-3).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1.0")
+	@ParameterMarker(uiOrder = 18, name = "Filter (WMF): Threshold Sharpness Parameter", description="How sharp a difference should there be between the weights of background and foreground pixels. A higher number causes a sharper transition in weighting. A sharper transition means less dark shadow around bright features (typically lower than used for subtraction to create better defined edges, 0.5-5).", ui=MarkerConstants.UI_TEXTFIELD, defaultText="1.0")
 	double thresholdPower;
 
-	@ParameterMarker(uiOrder = 17, name = "Filter (WMF): Threshold: Sigma", description = "How many sigma above background should the threshold cutoff be? Use 0 to save the 'signal-to-noise' image which can be then thresholded or used to determine the best sigma.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "0.0")
+	@ParameterMarker(uiOrder = 19, name = "Filter (WMF): Threshold: Sigma", description = "How many sigma above background should the threshold cutoff be? Use 0 to save the 'signal-to-noise' image which can be then thresholded or used to determine the best sigma.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "0.0")
 	double sigma;
 	
-	@ParameterMarker(uiOrder = 18, name = "RBF: Do rolling ball filtering (RBF) step?", description="Should the rolling ball filtering step be performed at all?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
+	@ParameterMarker(uiOrder = 20, name = "RBF: Do rolling ball filtering (RBF) step?", description="Should the rolling ball filtering step be performed at all?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
 	boolean doRBF;
 	
-	@ParameterMarker(uiOrder = 19, name = "RBF: Rolling Ball Radius", description="Radius of the rolling ball filter in pixels. Recommend to use parabaloid with very small radius (~0.1-0.25). Rolling ball version should use normal radius similar to feature size cutoff specified above.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.5")
+	@ParameterMarker(uiOrder = 21, name = "RBF: Rolling Ball Radius", description="Radius of the rolling ball filter in pixels. Recommend to use parabaloid with very small radius (~0.1-0.25). Rolling ball version should use normal radius similar to feature size cutoff specified above.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="5")
 	double radiusRBF;
 	
 //	@ParameterMarker(uiOrder=2, name="Filter (RBF): Light background?", description="Generally false for fluorescent images and true for bright-field etc.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
@@ -129,50 +139,56 @@ public class TIEPhaseCalculator extends JEXPlugin {
 //	@ParameterMarker(uiOrder=3, name="Filter (RBF): Create background (don't subtract)?", description="Output an 'image' of the background instead of subtracting from the original and outputing the result?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
 	boolean createBackground = false;
 
-	@ParameterMarker(uiOrder = 20, name = "RBF: Sliding parabaloid?", description="Parabaloid is generally a little faster and has less artifacts than rolling ball.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
+	@ParameterMarker(uiOrder = 22, name = "RBF: Sliding parabaloid?", description="Parabaloid is generally a little faster and has less artifacts than rolling ball.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
 	boolean paraboloid;
 
-	@ParameterMarker(uiOrder = 21, name = "RBF: Do presmoothing?", description="Should a 3x3 mean filter be applied prior to rolling ball subtraction (good for speckly/noisy images)", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	@ParameterMarker(uiOrder = 23, name = "RBF: Do presmoothing?", description="Should a 3x3 mean filter be applied prior to rolling ball subtraction (good for speckly/noisy images)", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
 	boolean presmooth;
+	
+	@ParameterMarker(uiOrder = 24, name = "Hybrid Filter: Combine RBF and WMF?", description="Overides selections for RBF and WMF. A mask is made from the variance weights as well as from the RBF image (lowest pixels in RBF get high weight) and unioned. Those weights are used to inform WMF.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
+	boolean hybrid;
+	
+	@ParameterMarker(uiOrder = 25, name = "Hybrid Filter: RBF Percentile?", description="Select the lowest X percent pixels from an RBF filtered result to help inform WMF background subtraction. Typical = 0.5%. Set to < 0 to ignore RBF points.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.5")
+	double hybridPercentile;
 
-	// @ParameterMarker(uiOrder=11, name="FFT Post-Filter: Min Size", description="The smallest features to keep [pixels].", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
-	double filterSmallDia = 0;
+//	// @ParameterMarker(uiOrder=11, name="FFT Post-Filter: Min Size", description="The smallest features to keep [pixels].", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
+//	double filterSmallDia = 0;
 
-	// @ParameterMarker(uiOrder=2, name="Filter: DC Component?", description="Should the 'DC component' or constant background be subtracted?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
-	boolean filterDC = true;
+//	// @ParameterMarker(uiOrder=2, name="Filter: DC Component?", description="Should the 'DC component' or constant background be subtracted?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
+//	boolean filterDC = true;
 
-	// @ParameterMarker(uiOrder=3, name="Suppress Stripes", description="Should stripes be suppressed and, if so, which direction should be suppressed.", ui=MarkerConstants.UI_DROPDOWN, choices={"None","Horizontal","Vertical"}, defaultChoice=0)
-	String choiceDia = "None";
+//	// @ParameterMarker(uiOrder=3, name="Suppress Stripes", description="Should stripes be suppressed and, if so, which direction should be suppressed.", ui=MarkerConstants.UI_DROPDOWN, choices={"None","Horizontal","Vertical"}, defaultChoice=0)
+//	String choiceDia = "None";
 
-	// @ParameterMarker(uiOrder=4, name="Tolerane of Direction", description="Tolerance of direction for stripe suppression [%].", ui=MarkerConstants.UI_TEXTFIELD, defaultText="5.0")
-	double toleranceDia = 5.0;
+//	// @ParameterMarker(uiOrder=4, name="Tolerane of Direction", description="Tolerance of direction for stripe suppression [%].", ui=MarkerConstants.UI_TEXTFIELD, defaultText="5.0")
+//	double toleranceDia = 5.0;
 
-	// @ParameterMarker(uiOrder=5, name="Save filter?", description="Should the filter in the frequency domain be saved as an image?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
-	boolean saveFilter = false;
+//	// @ParameterMarker(uiOrder=5, name="Save filter?", description="Should the filter in the frequency domain be saved as an image?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+//	boolean saveFilter = false;
 
-	// @ParameterMarker(uiOrder=6, name="Autoscale result?", description="Should the result be automatically scaled?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
-	boolean doScalingDia = false;
+//	// @ParameterMarker(uiOrder=6, name="Autoscale result?", description="Should the result be automatically scaled?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+//	boolean doScalingDia = false;
 
 	// @ParameterMarker(uiOrder=7, name="Saturate autoscaling?", description="If autoscaled, should the result be saturated (1% at tails) to better fill the dynamic range?", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
 	boolean saturateDia = false;
 
-	@ParameterMarker(uiOrder = 22, name = "Scale: Output Bit Depth", description = "Depth of the outputted image for all channels.", ui = MarkerConstants.UI_DROPDOWN, choices = {
+	@ParameterMarker(uiOrder = 26, name = "Scale: Output Bit Depth", description = "Depth of the outputted image for all channels.", ui = MarkerConstants.UI_DROPDOWN, choices = {
 			"8", "16", "32" }, defaultChoice = 1)
 	int bitDepth;
 
-	@ParameterMarker(uiOrder = 23, name = "Scale: +/- Scale", description = "The result will be scaled such that -Scale to +Scale in the initial phase result will be scaled to fill the range of the bit depth selected. Therefore 0 will be the middlest value of the final image range. (32-bit results in no scaling)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "25.0")
+	@ParameterMarker(uiOrder = 27, name = "Scale: +/- Scale", description = "The result will be scaled such that -Scale to +Scale in the initial phase result will be scaled to fill the range of the bit depth selected. Therefore 0 will be the middlest value of the final image range. (32-bit results in no scaling)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "25.0")
 	double scale;
 
-	@ParameterMarker(uiOrder = 24, name = "Tiles: Rows", description = "If desired, the images can be split into tiles before processing by setting the number of tile rows here to > 1.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "1")
+	@ParameterMarker(uiOrder = 28, name = "Tiles: Rows", description = "If desired, the images can be split into tiles before processing by setting the number of tile rows here to > 1.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "1")
 	int rows;
 
-	@ParameterMarker(uiOrder = 25, name = "Tiles: Cols", description = "If desired, the images can be split into tiles before processing by setting the number of tile cols here to > 1.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "1")
+	@ParameterMarker(uiOrder = 29, name = "Tiles: Cols", description = "If desired, the images can be split into tiles before processing by setting the number of tile cols here to > 1.", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "1")
 	int cols;
 
-	@ParameterMarker(uiOrder = 26, name = "Tiles: Overlap", description = "Set the percent overlap of the tiles", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "1.0")
+	@ParameterMarker(uiOrder = 30, name = "Tiles: Overlap", description = "Set the percent overlap of the tiles", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "1.0")
 	double overlap;
 
-	@ParameterMarker(uiOrder = 27, name = "Exclusion Filter DimTable", description = "Filter specific dimension combinations from analysis. (Format: <DimName1>=<a1,a2,...>;<DimName2>=<b1,b2...>)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
+	@ParameterMarker(uiOrder = 31, name = "Exclusion Filter DimTable", description = "Filter specific dimension combinations from analysis. (Format: <DimName1>=<a1,a2,...>;<DimName2>=<b1,b2...>)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
 	String filterDimTableString;
 
 	/////////// Define Outputs ///////////
@@ -188,6 +204,8 @@ public class TIEPhaseCalculator extends JEXPlugin {
 		return 10;
 	}
 
+	public double sigmaWMF = 0;
+	public Double radiusWMF = null;
 	@Override
 	public boolean run(JEXEntry optionalEntry) {
 		// Validate the input data
@@ -199,6 +217,18 @@ public class TIEPhaseCalculator extends JEXPlugin {
 			JEXDialog.messageDialog("The number of tile rows and cols must both be >= 1. Aborting.", this);
 			return false;
 		}
+		
+		CSVList radiiWMFList = new CSVList(this.radiiWMF);
+		this.sigmaWMF = Double.parseDouble(radiiWMFList.get(0));
+		if(radiiWMFList.size() > 1)
+		{
+			this.radiusWMF = Double.parseDouble(radiiWMFList.get(1));
+		}
+		if(this.radiusWMF == null || this.radiusWMF < this.sigmaWMF)
+		{
+			this.radiusWMF = 5*this.sigmaWMF;
+		}
+		
 
 		boolean successive = this.dIdzAlg.equals("2-Plane Method");
 
@@ -294,6 +324,7 @@ public class TIEPhaseCalculator extends JEXPlugin {
 		}
 		
 		int originalBitDepth = 0;
+		RankFilters2 rF = new RankFilters2();
 		for (DimensionMap map : dt.getMapIterator())
 		{
 			if (filterTable.testMapAsExclusionFilter(map))
@@ -562,6 +593,7 @@ public class TIEPhaseCalculator extends JEXPlugin {
 									(FloatProcessor) tiles.get(tileMap.copyAndSet("TIEZ=Hi")));
 						}
 
+						ImageProcessor out = null;
 						if (this.doFilteringAndScaling) {
 							
 							//							if(this.doFFT)
@@ -569,11 +601,11 @@ public class TIEPhaseCalculator extends JEXPlugin {
 							//								fft.filter(phi);
 							//							}
 							
-							Pair<FloatProcessor, ImageProcessor> images = null;
-							if(this.doWMF)
+							Pair<FloatProcessor, ?> images = null;
+							if(this.doWMF & !this.hybrid)
 							{
 								images = ImageUtility.getWeightedMeanFilterImage(phi,
-										this.saveThresholdImage, true, true, false, 0.4*this.filterLargeDia, 2d, this.subtractionPower, this.thresholdPower, 0d, this.sigma, 0d);
+										this.saveThresholdImage, true, true, false, 0.4*this.filterLargeDia, 2d, this.subtractionPower, this.thresholdPower, 0d, this.sigma, 0d, this.radiusWMF);
 								phi = images.p1;
 							}
 							
@@ -607,7 +639,74 @@ public class TIEPhaseCalculator extends JEXPlugin {
 							if (this.bitDepth < 32 && (this.doWMF & !this.zero) || (this.doRBF) || (!this.doWMF & !this.doRBF)) {
 								phi.add(max / 2);
 							}
-							phi.resetMinAndMax();
+							phi.resetMinAndMax();							
+							
+							if(this.doRBF & !this.hybrid)
+							{
+								out = JEXWriter.convertToBitDepthIfNecessary(phi, this.bitDepth);
+								// apply the function to imp
+								bS.rollingBallBackground(out, this.radiusRBF, this.createBackground, this.lightBackground, this.paraboloid, this.presmooth, true);
+							}
+							
+							if(this.hybrid)
+							{
+								Pair<FloatProcessor[], FloatProcessor> ret = null;
+								if(this.hybridPercentile >= 0)
+								{
+									// Get variance weights, threshold, and filter
+									ret = ImageUtility.getImageVarianceWeights((FloatProcessor) tiles.get(tileMap.copyAndSet("TIEZ=Hi")), this.radiusVarWMF, false, false, this.scale);
+									this.threshold(ret.p1[0], 0.5);
+									rF.rank(ret.p1[0], 2*this.radiusVarWMF, RankFilters2.MIN);
+									rF.rank(ret.p1[0], 2*this.radiusVarWMF, RankFilters2.MAX);
+//									rF.rank(ret.p1[0], 2*this.radiusVarWMF, RankFilters2.MAX);
+//									rF.rank(ret.p1[0], 2*this.radiusVarWMF, RankFilters2.MIN);
+//									ret.p1[0].invert();
+									
+//									FileUtility.showImg(ret.p1[0], true);
+//									FileUtility.showImg(temp, true);
+								}
+								
+								
+								// Do RBF
+								
+								if(this.hybridPercentile != 0)
+								{
+									ImageProcessor temp = JEXWriter.convertToBitDepthIfNecessary(phi, this.bitDepth);
+									byte[] overPixels = this.getOverPixels(temp);
+//									FileUtility.showImg(temp, true);
+									bS.rollingBallBackground(temp, this.radiusRBF, this.createBackground, this.lightBackground, this.paraboloid, this.presmooth, true);
+									Pair<Double, Double>thresholds = ImageUtility.percentile(temp, Math.abs(this.hybridPercentile), Math.abs(this.hybridPercentile), -1, -1, Double.MAX_VALUE);
+									
+									this.thresholdLoHi(temp, thresholds.p1, overPixels);
+//									FileUtility.showImg(temp, true);
+//									FileUtility.showImg(temp, true);
+									temp.invert();
+//									FileUtility.showImg(temp, true);
+									
+									if(this.hybridPercentile > 0)
+									{
+										ret.p1[0].copyBits(temp, 0, 0, Blitter.OR); // Final Weights for WMF
+										images = new Pair<>(null, new ImageProcessor[] {ret.p1[0], temp});
+									}
+									else
+									{
+										images = new Pair<>(null, new ImageProcessor[] {temp});
+									}
+									
+								}
+								else
+								{
+									images = new Pair<>(null, new ImageProcessor[] {ret.p1[0]});
+								}
+								
+//								ret.p1[0].invert();
+//								ret.p1[0].resetMinAndMax();
+//								FileUtility.showImg(ret.p1[0], true);
+								out = ImageUtility.getWeightedMeanFilterImage(phi, ((ImageProcessor[]) images.p2)[0].convertToFloatProcessor(), true, false, false, this.sigmaWMF, this.radiusVarWMF, this.scale, this.scale, 0.0, 0.0, 0.0, this.radiusWMF);
+								out = JEXWriter.convertToBitDepthIfNecessary(out, this.bitDepth);
+								
+							}
+							
 							DimensionMap mapToSave = toSave.copy();
 							if (this.rows > 1) {
 								mapToSave.put("ImRow", tileMap.get("ImRow"));
@@ -615,23 +714,37 @@ public class TIEPhaseCalculator extends JEXPlugin {
 							if (this.cols > 1) {
 								mapToSave.put("ImCol", tileMap.get("ImCol"));
 							}
-							if (images != null && images.p2 != null) {
-								String maskPath = JEXWriter.saveImage(images.p2, 8);
-								maskMap.put(mapToSave, maskPath);
+							if (images != null && images.p2 != null)
+							{
+								if(images.p2 instanceof ImageProcessor[])
+								{
+									String maskPath = JEXWriter.saveImage(((ImageProcessor[])images.p2)[0], 8);
+									maskMap.put(mapToSave.copyAndSet("Mask=Final"), maskPath);
+									if(((ImageProcessor[]) images.p2).length > 1)
+									{
+										maskPath = JEXWriter.saveImage(((ImageProcessor[])images.p2)[1], 8);
+										maskMap.put(mapToSave.copyAndSet("Mask=RBF"), maskPath);
+									}
+								}
+								else
+								{
+									String maskPath = JEXWriter.saveImage((ImageProcessor) images.p2, 8);
+									maskMap.put(mapToSave.copyAndSet("Mask=RBF"), maskPath);
+								}
 							}
+							
 						} else {
 							double originalMax = Math.pow(2, originalBitDepth) - 1;
 							phi.multiply(1 / originalMax); // This mimics preadjusting all the images to a range of 0-1.
 							phi.resetMinAndMax();
 						}
 
-						ImageProcessor out = JEXWriter.convertToBitDepthIfNecessary(phi, this.bitDepth);
-						
-						if(this.doRBF)
+						if(out == null)
 						{
-							// apply the function to imp
-							bS.rollingBallBackground(out, this.radiusRBF, this.createBackground, this.lightBackground, this.paraboloid, this.presmooth, true);
+							out = JEXWriter.convertToBitDepthIfNecessary(phi, this.bitDepth);
 						}
+						
+						
 						
 						tempPath = JEXWriter.saveImage(out);
 						if (tempPath != null) {
@@ -693,6 +806,148 @@ public class TIEPhaseCalculator extends JEXPlugin {
 			hi++;
 		}
 		return ret;
+	}
+	
+	private void threshold(ImageProcessor imp, Double thresh)
+	{
+		if(imp instanceof FloatProcessor)
+		{
+			float[] pixels = (float[]) imp.getPixels();
+			for(int j = 0; j < pixels.length; j++)
+			{
+				if(pixels[j] <= thresh)
+				{
+					pixels[j] = 0f;
+				}
+				else
+				{
+					pixels[j] = 1f;
+				}
+			}
+			imp.resetMinAndMax();
+		}
+		if(imp instanceof ShortProcessor)
+		{
+			short[] pixels = (short[]) imp.getPixels();
+			for(int j = 0; j < pixels.length; j++)
+			{
+				if(pixels[j] <= thresh)
+				{
+					pixels[j] = (short) 0;
+				}
+				else
+				{
+					pixels[j] = (short) 1;
+				}
+			}
+		}
+		if(imp instanceof ByteProcessor)
+		{
+			byte[] pixels = (byte[]) imp.getPixels();
+			for(int j = 0; j < pixels.length; j++)
+			{
+				if(pixels[j] <= thresh)
+				{
+					pixels[j] = (byte) 0;
+				}
+				else
+				{
+					pixels[j] = (byte) 1;
+				}
+			}
+		}
+	}
+	
+	private byte[] getOverPixels(ImageProcessor imp)
+	{
+		byte[] ret = null;
+		if(imp instanceof FloatProcessor)
+		{
+			float[] pixels = (float[]) imp.getPixels();
+			ret = new byte[pixels.length];
+			for(int j = 0; j < pixels.length; j++)
+			{
+				if(pixels[j] == Float.POSITIVE_INFINITY)
+				{
+					ret[j] = (byte) 1;
+				}
+			}
+		}
+		if(imp instanceof ShortProcessor)
+		{
+			short[] pixels = (short[]) imp.getPixels();
+			ret = new byte[pixels.length];
+			for(int j = 0; j < pixels.length; j++)
+			{
+				if((pixels[j] & 0xffff) == 65535)
+				{
+					ret[j] = (byte) 1;
+				}
+			}
+		}
+		if(imp instanceof ByteProcessor)
+		{
+			byte[] pixels = (byte[]) imp.getPixels();
+			ret = new byte[pixels.length];
+			for(int j = 0; j < pixels.length; j++)
+			{
+				if(pixels[j] == 255)
+				{
+					ret[j] = (byte) 1;
+				}
+			}
+		}
+		return ret;
+	}
+	
+	private void thresholdLoHi(ImageProcessor imp, Double lo, byte[] overPixels)
+	{
+		if(imp instanceof FloatProcessor)
+		{
+			float[] pixels = (float[]) imp.getPixels();
+			for(int j = 0; j < pixels.length; j++)
+			{
+				if(pixels[j] > lo || overPixels[j] == 1)
+				{
+					pixels[j] = 1f;
+				}
+				else
+				{
+					pixels[j] = 0f;
+				}
+			}
+			imp.resetMinAndMax();
+		}
+		if(imp instanceof ShortProcessor)
+		{
+			short[] pixels = (short[]) imp.getPixels();
+			for(int j = 0; j < pixels.length; j++)
+			{
+				if((pixels[j] & 0xffff) > lo || (overPixels[j] & 0xffff) == 1)
+				{
+					pixels[j] = (short) 1;
+				}
+				else
+				{
+					pixels[j] = (short) 0;
+				}
+			}
+		}
+		if(imp instanceof ByteProcessor)
+		{
+			byte[] pixels = (byte[]) imp.getPixels();
+			for(int j = 0; j < pixels.length; j++)
+			{
+				if((pixels[j] & 0xFF) > lo || (overPixels[j] & 0xFF) == 1)
+				{
+					pixels[j] = (byte) 1;
+				}
+				else
+				{
+					pixels[j] = (byte) 0;
+				}
+			}
+		}
 	}
 
 }

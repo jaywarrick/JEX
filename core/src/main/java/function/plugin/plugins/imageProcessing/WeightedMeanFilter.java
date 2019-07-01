@@ -64,8 +64,11 @@ public class WeightedMeanFilter extends JEXPlugin {
 
 	/////////// Define Parameters ///////////
 
-	@ParameterMarker(uiOrder=1, name="Mean Filter Radius", description="Radius of the weighted mean filter. Should be large enough to encompass features of interest.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="50")
+	@ParameterMarker(uiOrder=0, name="Gaussian Filter Radius", description="Radius of the weighted gaussian mean filter.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="50")
 	double meanRadius;
+	
+	@ParameterMarker(uiOrder=1, name="Gaussian Filter Kernel Radius", description="Radius of the weighted gaussian mean filter kernel. This should be big enough to encompass the objects of interest..", ui=MarkerConstants.UI_TEXTFIELD, defaultText="50")
+	double meanOuterRadius;
 	
 //	@ParameterMarker(uiOrder=2, name="Kernal Outer Weighting Factor", description="How much weight should the outer portion of the kernel be given relative to the inner portion (Kernel = Gaussian * (1-Gaussian)^factor). Typically 0 (standard Gaussian) to 5 (weighted to outer portion), but can go higher with diminishing impact.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0")
 //	double outerWeighting;
@@ -162,6 +165,10 @@ public class WeightedMeanFilter extends JEXPlugin {
 			return false;
 		}
 
+		if(this.meanOuterRadius < this.meanRadius)
+		{
+			this.meanOuterRadius = 5*this.meanRadius;
+		}
 		boolean doBackgroundOnly = false;
 		boolean doSubtraction = false;
 		boolean doThreshold = false;
@@ -302,7 +309,7 @@ public class WeightedMeanFilter extends JEXPlugin {
 			{
 				if(maskTiles.size() != 0)
 				{
-					FloatProcessor fpToSave = ImageUtility.getWeightedMeanFilterImage((FloatProcessor) e.getValue(), (FloatProcessor) maskTiles.get(e.getKey()), doSubtraction, doBackgroundOnly, doDivision, 0.4*this.meanRadius, this.varRadius, this.subScale, this.threshScale, 0d, sigma, this.darkfield);
+					FloatProcessor fpToSave = ImageUtility.getWeightedMeanFilterImage((FloatProcessor) e.getValue(), (FloatProcessor) maskTiles.get(e.getKey()), doSubtraction, doBackgroundOnly, doDivision, 0.4*this.meanRadius, this.varRadius, this.subScale, this.threshScale, 0d, sigma, this.darkfield, this.meanOuterRadius);
 					if(IFTiles.get(e.getKey()) != null)
 					{
 						FloatBlitter blit = new FloatBlitter(fpToSave);
@@ -314,7 +321,7 @@ public class WeightedMeanFilter extends JEXPlugin {
 				}
 				else
 				{
-					Pair<FloatProcessor, ImageProcessor> images = ImageUtility.getWeightedMeanFilterImage((FloatProcessor) e.getValue(), doThreshold, doSubtraction, doBackgroundOnly, doDivision, 0.4*this.meanRadius, this.varRadius, this.subScale, this.threshScale, 0d, sigma, this.darkfield);
+					Pair<FloatProcessor, ImageProcessor> images = ImageUtility.getWeightedMeanFilterImage((FloatProcessor) e.getValue(), doThreshold, doSubtraction, doBackgroundOnly, doDivision, 0.4*this.meanRadius, this.varRadius, this.subScale, this.threshScale, 0d, sigma, this.darkfield, this.meanOuterRadius);
 					if(images.p1 != null)
 					{
 						if(IFTiles.get(e.getKey()) != null)
