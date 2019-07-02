@@ -15,9 +15,11 @@ import function.JEXCrunchable;
 import function.plugin.plugins.imageProcessing.GaussianBlur2;
 import function.plugin.plugins.imageProcessing.GaussianBlurForcedRadius;
 import function.plugin.plugins.imageProcessing.RankFilters2;
+import function.plugin.plugins.imageProcessing.TIECalculator;
 import ij.ImagePlus;
 import ij.plugin.filter.Convolver;
 import ij.process.Blitter;
+import ij.process.FHT;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import jex.statics.JEXDialog;
@@ -41,7 +43,7 @@ import tables.DimensionMap;
  */
 public class JEX_ImageFilters extends JEXCrunchable {
 
-	public static String MEAN = "mean", MIN = "min", MAX = "max", MEDIAN = "median", VARIANCE = "variance", STDEV = "std. dev.", OUTLIERS="outliers", DESPECKLE="despeckle", REMOVE_NAN="remove NaN", OPEN="open", CLOSE="close", OPEN_TOPHAT="open top-hat", CLOSE_TOPHAT="close top-hat", SUM="sum", SNR="Signal:Noise Ratio", NSR="Noise:Signal Ratio", GAUSSIAN="Gaussian", DOG="DoG",  GAUSSIAN_FORCED_RADIUS="Gaussian (forced radius)", VARIANCE_WEIGHTS="Variance Weights";
+	public static String MEAN = "mean", MIN = "min", MAX = "max", MEDIAN = "median", VARIANCE = "variance", STDEV = "std. dev.", OUTLIERS="outliers", DESPECKLE="despeckle", REMOVE_NAN="remove NaN", OPEN="open", CLOSE="close", OPEN_TOPHAT="open top-hat", CLOSE_TOPHAT="close top-hat", SUM="sum", SNR="Signal:Noise Ratio", NSR="Noise:Signal Ratio", GAUSSIAN="Gaussian", DOG="DoG",  GAUSSIAN_FORCED_RADIUS="Gaussian (forced radius)", VARIANCE_WEIGHTS="Variance Weights", DECAY="Power Decay 1/(1+(r/radius)^power)";
 	public static String OP_NONE = "None", OP_LOG = "Natural Log", OP_EXP="Exp", OP_SQRT="Square Root", OP_SQR="Square", OP_INVERT="Invert";
 
 	public JEX_ImageFilters()
@@ -154,7 +156,7 @@ public class JEX_ImageFilters extends JEXCrunchable {
 		// Parameter p0 = new
 		// Parameter("Dummy Parameter","Lets user know that the function has been selected.",FormLine.DROPDOWN,new
 		// String[] {"true"},0);
-		Parameter p1 = new Parameter("Filter Type", "Type of filter to apply.", Parameter.DROPDOWN, new String[] { MEAN, MIN, MAX, MEDIAN, VARIANCE, STDEV, OUTLIERS, DESPECKLE, REMOVE_NAN, OPEN, CLOSE, OPEN_TOPHAT, CLOSE_TOPHAT, SUM, SNR, NSR, GAUSSIAN, GAUSSIAN_FORCED_RADIUS, DOG, VARIANCE_WEIGHTS}, 0);
+		Parameter p1 = new Parameter("Filter Type", "Type of filter to apply.", Parameter.DROPDOWN, new String[] { MEAN, MIN, MAX, MEDIAN, VARIANCE, STDEV, OUTLIERS, DESPECKLE, REMOVE_NAN, OPEN, CLOSE, OPEN_TOPHAT, CLOSE_TOPHAT, SUM, SNR, NSR, GAUSSIAN, GAUSSIAN_FORCED_RADIUS, DOG, VARIANCE_WEIGHTS, DECAY}, 0);
 		Parameter p7 = new Parameter("Exclusion Filter Table", "<DimName>=<Val1>,<Val2>,...<Valn>;<DimName2>=<Val1>,<Val2>,...<Valn>, Specify the dimension and dimension values to exclude. Leave blank to process all.", "");
 		Parameter p8 = new Parameter("Keep Unprocessed Images?", "Should the images within the object that are exlcluded from analysis by the Dimension Filter be kept in the result?", Parameter.CHECKBOX, true);
 		Parameter p2 = new Parameter("Radius", "Radius/Sigma of filter in pixels. (CSV list of 2 radii of increasing size for DoG <Val1>,<Val2>, whitespace ok)", "2.0");
@@ -241,6 +243,8 @@ public class JEX_ImageFilters extends JEXCrunchable {
 //			}
 //		}
 		
+		FHT kernel = null;
+		
 		for (DimensionMap map : imageMap.keySet())
 		{
 			if(this.isCanceled())
@@ -275,7 +279,7 @@ public class JEX_ImageFilters extends JEXCrunchable {
 			RankFilters2 rF = new RankFilters2();
 			GaussianBlur2 gb = new GaussianBlur2();
 			GaussianBlurForcedRadius gbfr = new GaussianBlurForcedRadius();
-			if(!(method.equals(GAUSSIAN) || method.equals(DOG)))
+			if(!(method.equals(GAUSSIAN) || method.equals(DOG) || method.equals(VARIANCE_WEIGHTS) || method.equals(GAUSSIAN_FORCED_RADIUS) || method.equals(DECAY)))
 			{
 				rF.rank(ip, radius, getMethodInt(method));
 			}
@@ -344,7 +348,7 @@ public class JEX_ImageFilters extends JEXCrunchable {
 //					rF.rank(ip, 4.0, RankFilters2.MIN);
 //					rF.rank(ip, 4.0, RankFilters2.MIN);
 //					rF.rank(ip, 4.0, RankFilters2.MAX);
-					ip.invert();
+//					ip.invert();
 				}
 				else
 				{
@@ -356,6 +360,23 @@ public class JEX_ImageFilters extends JEXCrunchable {
 			else if(method.equals(GAUSSIAN_FORCED_RADIUS))
 			{
 				gbfr.blurGaussian(ip, radius, radius, Double.parseDouble(radii.get(1)));
+			}
+			else if(method.equals(DECAY))
+			{
+//				FileUtility.showImg(temp, true);
+				if(radii.size() > 1)
+				{
+					double radius2 = Double.parseDouble(radii.get(1));
+					int FHTSize = TIECalculator.nearestSuperiorPowerOf2((int) Math.max(ip.getWidth(), ip.getHeight()));
+					kernel = getDecayKernel((int) Math.pow(2, FHTSize), radius, radius2);
+				}
+				else
+				{
+					JEXDialog.messageDialog("The Power Decay filter requires two values as a CSV list. Supply as a simple CSV list, 'v1, v2'", this);
+					return false;
+				}
+				convolve(ip, kernel);
+//				FileUtility.showImg(temp, true);
 			}
 			
 			if(!mathOp.equals(OP_NONE))
@@ -513,6 +534,51 @@ public class JEX_ImageFilters extends JEXCrunchable {
 			methodInt = RankFilters2.MEAN;
 		}
 		return methodInt;
+	}
+	
+	public static FHT getDecayKernel(int width, double radius, double power)
+	{
+		FloatProcessor fp = new FloatProcessor(width, width);
+		double tot = 0;
+		int origin = (int) width/2;
+		for(int x=0; x < width; x++)
+		{
+			for(int y=0; y < width; y++)
+			{
+				double r = Math.sqrt((x-origin)*(x-origin) + (y-origin)*(y-origin));
+				double v = 0;
+				if(r <= origin)
+				{
+					v = 1/(1+Math.pow(r/radius, power));// - 1/(1+Math.pow(width/radius, power));
+					fp.putPixelValue(x, y, v);
+					tot = tot + v;
+				}
+			}
+		}
+		fp.resetMinAndMax();
+		for(int x=0; x < width; x++)
+		{
+			for(int y=0; y < width; y++)
+			{
+				fp.putPixelValue(x, y, Float.intBitsToFloat(fp.getPixel(x, y))/tot);
+			}
+		}
+		fp.resetMinAndMax();
+//		FileUtility.showImg(fp, true);
+		FHT ret = new FHT(fp);
+		ret.transform();
+		return ret;
+	}
+	
+	public static void convolve(ImageProcessor ip1, FHT kernel)
+	{
+		ImageProcessor temp = TIECalculator.pad2Power2(ip1);
+		FHT h1 = new FHT(temp);
+		h1.transform();
+		FHT ret = h1.multiply(kernel);
+		ret.inverseTransform();
+		ret.swapQuadrants();
+		ip1.copyBits(ret, -((int) (temp.getWidth()/2 - ip1.getWidth()/2)), -((int) (temp.getHeight()/2 - ip1.getHeight()/2)), Blitter.COPY);
 	}
 
 }

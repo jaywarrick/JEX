@@ -2,11 +2,13 @@ package function.plugin.plugins.imageProcessing;
 
 import org.jtransforms.dct.FloatDCT_2D;
 import org.jtransforms.fft.FloatFFT_2D;
+import org.python.modules.math;
 
 import edu.emory.mathcs.utils.ConcurrencyUtils;
 import ij.process.Blitter;
 import ij.process.FloatBlitter;
 import ij.process.FloatProcessor;
+import ij.process.ImageProcessor;
 import miscellaneous.FileUtility;
 import miscellaneous.Pair;
 
@@ -380,20 +382,85 @@ public class TIECalculator {
 		ip.setPixels(pixels);
 	}
 
-	public FloatProcessor replicate(FloatProcessor fp)
+	public static <A extends ImageProcessor> A replicate(A fp)
 	{
 		int W = fp.getWidth();
 		int H = fp.getHeight();
-		FloatProcessor ret = new FloatProcessor(2*W, 2*H);
-		FloatBlitter b = new FloatBlitter(ret);
-		b.copyBits(fp, 0, 0, Blitter.COPY);
+		@SuppressWarnings("unchecked")
+		A ret = (A) fp.createProcessor(2*W, 2*H);
+		ret.copyBits(fp, 0, 0, Blitter.COPY);
 		fp.flipHorizontal();
-		b.copyBits(fp, W, 0, Blitter.COPY);
+		ret.copyBits(fp, W, 0, Blitter.COPY);
 		fp.flipVertical();
-		b.copyBits(fp, W, H, Blitter.COPY);
+		ret.copyBits(fp, W, H, Blitter.COPY);
 		fp.flipHorizontal();
-		b.copyBits(fp, 0, H, Blitter.COPY);
+		ret.copyBits(fp, 0, H, Blitter.COPY);
 		fp.flipVertical(); // Bring image back to original state to reuse again
+		return ret;
+	}
+	
+	public static int nearestSuperiorPowerOf2(int a)
+	{
+		return a == 0 ? 0 : 32 - Integer.numberOfLeadingZeros(a - 1);
+	}
+	
+	public static <A extends ImageProcessor> A pad2Power2(A fp)
+	{
+		int W = fp.getWidth();
+		int H = fp.getHeight();
+		
+		int power = nearestSuperiorPowerOf2(Math.max(W, H));
+		int size = (int) Math.pow(2, power);
+		int originX = (int) (size/2-W/2);
+		int originY = (int) (size/2-H/2);
+		int endX = (int) (originX+W)-1;
+		int endY = (int) (originY+H)-1;
+		
+		@SuppressWarnings("unchecked")
+		A ret = (A) fp.createProcessor(size, size);
+//		ret.copyBits(fp, originX, originY, Blitter.COPY);
+		for(int x = 0; x < size; x++)
+		{
+			for(int y = 0; y < size; y++)
+			{
+				if(x < originX & y < originY)
+				{
+					ret.putPixel(x, y, fp.getPixel(0, 0));
+				}
+				else if(x >= originX & x <= endX & y < originY)
+				{
+					ret.putPixel(x, y, fp.getPixel(x-originX, 0));
+				}
+				else if(x > endX & y < originY)
+				{
+					ret.putPixel(x, y, fp.getPixel(fp.getWidth()-1, 0));
+				}
+				else if(x > endX & y >= originY & y <= endY)
+				{
+					ret.putPixel(x, y, fp.getPixel(fp.getWidth()-1, y-originY));
+				}
+				else if(x > endX & y > endY)
+				{
+					ret.putPixel(x, y, fp.getPixel(fp.getWidth()-1, fp.getHeight()-1));
+				}
+				else if(x >= originX & x <= endX & y > endY)
+				{
+					ret.putPixel(x, y, fp.getPixel(x-originX, fp.getHeight()-1));
+				}
+				else if(x < originX & y > endY)
+				{
+					ret.putPixel(x, y, fp.getPixel(0, fp.getHeight()-1));
+				}
+				else if(x < originX & y >= originY & y <= endY)
+				{
+					ret.putPixel(x, y, fp.getPixel(0, y-originY));
+				}
+				else
+				{
+					ret.putPixel(x, y, fp.getPixel(x-originX, y-originY));
+				}
+			}
+		}
 		return ret;
 	}
 
