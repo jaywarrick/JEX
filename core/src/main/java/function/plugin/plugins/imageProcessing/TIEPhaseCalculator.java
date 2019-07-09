@@ -159,8 +159,8 @@ public class TIEPhaseCalculator extends JEXPlugin {
 	double radiusHMF;
 	
 	@ParameterMarker(uiOrder = 20, name = "Filter (Hybrid Mask): Decay Filter Power", description="Radius of the power decay filter (1/(1+(x/radius)^power)). Typically 2-5", ui=MarkerConstants.UI_TEXTFIELD, defaultText="3.5")
-	double powerHMF;	
-
+	double powerHMF;
+	
 //	// @ParameterMarker(uiOrder=11, name="FFT Post-Filter: Min Size", description="The smallest features to keep [pixels].", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
 //	double filterSmallDia = 0;
 
@@ -197,6 +197,9 @@ public class TIEPhaseCalculator extends JEXPlugin {
 
 	@ParameterMarker(uiOrder = 30, name = "Tiles: Overlap", description = "Set the percent overlap of the tiles", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "1.0")
 	double overlap;
+	
+	@ParameterMarker(uiOrder = 21, name = "Save SNR Mask if Possible?", description="Should the background weight mask be saved as the second function output? (default is false to save disk space)", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	boolean saveSNRMask;
 
 	@ParameterMarker(uiOrder = 31, name = "Exclusion Filter DimTable", description = "Filter specific dimension combinations from analysis. (Format: <DimName1>=<a1,a2,...>;<DimName2>=<b1,b2...>)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
 	String filterDimTableString;
@@ -758,7 +761,7 @@ public class TIEPhaseCalculator extends JEXPlugin {
 							if (this.cols > 1) {
 								mapToSave.put("ImCol", tileMap.get("ImCol"));
 							}
-							if (images != null && images.p2 != null)
+							if (images != null && images.p2 != null && this.saveSNRMask)
 							{
 								if(images.p2 instanceof ImageProcessor[])
 								{
