@@ -146,21 +146,21 @@ public class TIEPhaseCalculator extends JEXPlugin {
 	@ParameterMarker(uiOrder = 15, name = "Filter (RBF): Do presmoothing?", description="Should a 3x3 mean filter be applied prior to rolling ball subtraction (good for speckly/noisy images)", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
 	boolean presmooth;
 	
-	@ParameterMarker(uiOrder = 16, name = "Filter (Hybrid Mask): Do hybrid masked BG subtraction?", description="Overides selections for RBF. A mask is made from the variance weights as well as from the RBF image (lowest pixels in RBF get high weight) and unioned. Those weights are used to inform a weighted mean filter.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
+	@ParameterMarker(uiOrder = 16, name = "Filter (Hybrid): Do hybrid BG subtraction?", description="Overides selections for RBF. A mask is made from the variance weights as well as from the RBF image (lowest pixels in RBF get high weight) and unioned. Those weights are used to inform a weighted mean filter.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=true)
 	boolean doHMF;
 	
-	@ParameterMarker(uiOrder = 17, name = "Filter (Hybrid Mask): RBF Percentile?", description="Select the lowest X percent pixels from an RBF filtered result to help inform WMF background subtraction. Typical = 0.5%. Set to < 0 to ignore RBF points.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.5")
+	@ParameterMarker(uiOrder = 17, name = "Filter (Hybrid): RBF Percentile?", description="Select the lowest X percent pixels from an RBF filtered result to help inform WMF background subtraction. Typical = 0.5%. Set to < 0 to ignore RBF points.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.5")
 	double HMFPercentile;
 	
-	@ParameterMarker(uiOrder = 18, name = "Filter (Hybrid Mask): Variance Weighting Filter Radius", description="Radius of the variance weighting filter used to detect background pixels.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="4.0")
+	@ParameterMarker(uiOrder = 18, name = "Filter (Hybrid): Variance Weighting Filter Radius", description="Radius of the variance weighting filter used to detect background pixels.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="4.0")
 	double radiusVariance;
 	
-	@ParameterMarker(uiOrder = 19, name = "Filter (Hybrid Mask): Decay Filter Radius", description="Radius of the power decay filter (1/(1+(x/radius)^power)). The radius at which weights drop to 0.5 of max. Typically 2-50", ui=MarkerConstants.UI_TEXTFIELD, defaultText="5")
+	@ParameterMarker(uiOrder = 19, name = "Filter (Hybrid): Decay Filter Radius", description="Radius of the power decay filter (1/(1+(x/radius)^power)). The radius at which weights drop to 0.5 of max. Typically 2-50", ui=MarkerConstants.UI_TEXTFIELD, defaultText="5")
 	double radiusHMF;
 	
-	@ParameterMarker(uiOrder = 20, name = "Filter (Hybrid Mask): Decay Filter Power", description="Radius of the power decay filter (1/(1+(x/radius)^power)). Typically 2-5", ui=MarkerConstants.UI_TEXTFIELD, defaultText="3.5")
+	@ParameterMarker(uiOrder = 20, name = "Filter (Hybrid): Decay Filter Power", description="Radius of the power decay filter (1/(1+(x/radius)^power)). Typically 2-5", ui=MarkerConstants.UI_TEXTFIELD, defaultText="3.5")
 	double powerHMF;
-	
+
 //	// @ParameterMarker(uiOrder=11, name="FFT Post-Filter: Min Size", description="The smallest features to keep [pixels].", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0.0")
 //	double filterSmallDia = 0;
 
@@ -198,10 +198,10 @@ public class TIEPhaseCalculator extends JEXPlugin {
 	@ParameterMarker(uiOrder = 30, name = "Tiles: Overlap", description = "Set the percent overlap of the tiles", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "1.0")
 	double overlap;
 	
-	@ParameterMarker(uiOrder = 21, name = "Save SNR Mask if Possible?", description="Should the background weight mask be saved as the second function output? (default is false to save disk space)", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
+	@ParameterMarker(uiOrder = 31, name = "Save SNR Mask if Possible?", description="Should the background weight mask be saved as the second function output? (default is false to save disk space)", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
 	boolean saveSNRMask;
 
-	@ParameterMarker(uiOrder = 31, name = "Exclusion Filter DimTable", description = "Filter specific dimension combinations from analysis. (Format: <DimName1>=<a1,a2,...>;<DimName2>=<b1,b2...>)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
+	@ParameterMarker(uiOrder = 32, name = "Exclusion Filter DimTable", description = "Filter specific dimension combinations from analysis. (Format: <DimName1>=<a1,a2,...>;<DimName2>=<b1,b2...>)", ui = MarkerConstants.UI_TEXTFIELD, defaultText = "")
 	String filterDimTableString;
 
 	/////////// Define Outputs ///////////
