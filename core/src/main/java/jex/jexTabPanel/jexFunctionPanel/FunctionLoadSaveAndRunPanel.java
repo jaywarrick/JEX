@@ -129,15 +129,23 @@ public class FunctionLoadSaveAndRunPanel implements ActionListener, ItemListener
 		}
 		if(e.getSource() == this.cancelAll)
 		{
-			int choice = JEXDialog.getChoice("Cancel All", "Should all functions in the queue be canceled or uncanceled?", new String[] {"Canceled","Uncanceled"}, 0);
+			int choice = JEXDialog.getChoice("Cancel All", "Should all functions (except first) in the queue be canceled or uncanceled?", new String[] {"Canceled","Uncanceled"}, 0);
 			if(choice == 0)
 			{
+				boolean isFirst = true;
 				for(BatchPanel bp : JEXStatics.cruncher.batchList.batchList)
 				{
-					bp.cancel();
-					this.autoUpdate.setSelected(false);
-					this.autoUpdate.setText("Auto-Updating (OFF)");
+					if(isFirst)
+					{
+						isFirst = false;
+					}
+					else
+					{
+						bp.cancel();
+					}
 				}
+				this.autoUpdate.setSelected(false);
+				this.autoUpdate.setText("Auto-Updating (OFF)");
 			}
 			else if(choice == 1)
 			{
