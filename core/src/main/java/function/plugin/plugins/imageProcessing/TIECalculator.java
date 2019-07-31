@@ -2,15 +2,14 @@ package function.plugin.plugins.imageProcessing;
 
 import org.jtransforms.dct.FloatDCT_2D;
 import org.jtransforms.fft.FloatFFT_2D;
-import org.python.modules.math;
 
-import edu.emory.mathcs.utils.ConcurrencyUtils;
 import ij.process.Blitter;
 import ij.process.FloatBlitter;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import miscellaneous.FileUtility;
 import miscellaneous.Pair;
+import pl.edu.icm.jlargearrays.ConcurrencyUtils;
 
 /**
  * Transport of Intensity Equation Calculator
