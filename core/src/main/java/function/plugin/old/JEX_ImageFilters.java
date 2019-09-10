@@ -298,10 +298,12 @@ public class JEX_ImageFilters extends JEXCrunchable {
 			{
 				if(radii.size() > 1)
 				{
+//					FileUtility.showImg(orig, true);
 					double radius2 = Double.parseDouble(radii.get(1));
 					gb.blurGaussian(orig, radius, radius, 0.0002); // Default accuracy = 0.0002
 					gb.blurGaussian(ip, radius2, radius2, 0.0002); // Default accuracy = 0.0002
 					orig.copyBits(ip, 0, 0, Blitter.SUBTRACT);
+//					FileUtility.showImg(orig, true);
 					ip = orig;
 					orig = null;
 				}

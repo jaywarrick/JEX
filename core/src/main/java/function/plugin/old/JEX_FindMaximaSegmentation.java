@@ -397,7 +397,7 @@ public class JEX_FindMaximaSegmentation extends JEXCrunchable {
 					gb.blurGaussian(ip, dogRadiiVector.get(1), dogRadiiVector.get(1), 0.0002); // Default accuracy = 0.0002
 					copy.copyBits(ip, 0, 0, Blitter.SUBTRACT);
 					ip = copy;
-//					FileUtility.openFileDefaultApplication(JEXWriter.saveImage(ip));
+//					FileUtility.showImg(ip, true);
 					im.setProcessor(ip);
 					copy = null;
 				}
