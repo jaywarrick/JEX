@@ -10,7 +10,9 @@ import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;
 import Database.DataReader.RoiReader;
+import Database.DataWriter.FileWriter;
 import Database.DataWriter.RoiWriter;
+import Database.SingleUserDatabase.JEXWriter;
 import function.imageUtility.TurboReg_;
 import function.plugin.mechanism.InputMarker;
 import function.plugin.mechanism.JEXPlugin;
@@ -94,6 +96,9 @@ public class RegisterMultiColorImageSet_Roi extends JEXPlugin {
 	
 	@OutputMarker(uiOrder=1, name="Crop ROI", type=MarkerConstants.TYPE_ROI, flavor="", description="The resultant roi that can be used to crop images for stabalizing the image set.", enabled=true)
 	JEXData output;
+	
+	@OutputMarker(uiOrder=1, name="Affine Transforms", type=MarkerConstants.TYPE_FILE, flavor="", description="The affine transform information used on each image", enabled=true)
+	JEXData affineTransforms;
 
 	public RegisterMultiColorImageSet_Roi()
 	{}
@@ -140,7 +145,12 @@ public class RegisterMultiColorImageSet_Roi extends JEXPlugin {
 
 		// Create a dim table that points only to the target images (i.e.
 		// reference color and time point 1)
-		DimTable imageLocationDimTable = data.getDimTable().getSubTable(new DimensionMap(colorDimName + "=" + referenceColor));
+		DimTable imageLocationDimTable = data.getDimTable();
+		if(!colorDimName.equals(""))
+		{
+			imageLocationDimTable = data.getDimTable().getSubTable(new DimensionMap(colorDimName + "=" + referenceColor));
+		}
+		
 		Dim timeDim = imageLocationDimTable.getDimWithName(timeDimName);
 		int timeDimSize = 1;
 		if(timeDim != null)
@@ -161,6 +171,7 @@ public class RegisterMultiColorImageSet_Roi extends JEXPlugin {
 		int[] sCrop, tCrop;
 		TreeMap<DimensionMap,double[][]> sourcePts = new TreeMap<>();
 		TreeMap<DimensionMap,double[][]> targetPts = new TreeMap<>();
+		TreeMap<DimensionMap,String> fileTable = new TreeMap<>();
 
 		// Do the alignment for the reference color first to fill sourcePts and
 		// targetPts for use with the other colors.
@@ -255,8 +266,9 @@ public class RegisterMultiColorImageSet_Roi extends JEXPlugin {
 				sCrop = new int[]{0, 0, sourceCropImage.getWidth(), sourceCropImage.getHeight()};
 
 				// Align the selected region of the source image with the target image
-				reg.alignImages(sourceCropImage, sCrop, targetCropImage, tCrop, TurboReg_.TRANSLATION, false);
-
+				String filename = JEXWriter.getUniqueRelativeTempPath("txt");
+				fileTable.put(newMap.copy(), filename);
+				reg.alignImages(sourceCropImage, sCrop, targetCropImage, tCrop, TurboReg_.TRANSLATION, false, filename);
 				// Don't save the image yet. We need to crop it after finding all the necessary translations
 				ptsMap = newMap.copy();
 				ptsMap.remove(colorDimName); // Now ptsMap has time and location dims but no color dim
@@ -304,7 +316,9 @@ public class RegisterMultiColorImageSet_Roi extends JEXPlugin {
 
 		// Set the outputs
 		JEXData outputCropRoi = RoiWriter.makeRoiObject("temp", crops);
+		JEXData outputAffineTransforms = FileWriter.makeFileObject("dummy", null, fileTable);
 		this.output = outputCropRoi;
+		this.affineTransforms = outputAffineTransforms;
 
 		// Return status
 		return true;

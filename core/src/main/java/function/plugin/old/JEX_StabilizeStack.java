@@ -217,7 +217,7 @@ public class JEX_StabilizeStack extends JEXCrunchable {
 		Logs.log("Starting StackRef_", 1, this);
 		String mode = parameters.getValueOfParameter("Type");
 		StackReg_ stackred = new StackReg_();
-		stackred.run(sim, mode);
+		stackred.run(sim, mode, null);
 		ImageStack donestack = sim.getImageStack();
 		
 		Logs.log("Saving stabilized stack", 1, this);
