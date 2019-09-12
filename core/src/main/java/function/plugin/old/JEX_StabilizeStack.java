@@ -3,6 +3,7 @@ package function.plugin.old;
 import Database.DBObjects.JEXData;
 import Database.DBObjects.JEXEntry;
 import Database.DataReader.ImageReader;
+import Database.DataWriter.FileWriter;
 import Database.DataWriter.ImageWriter;
 import Database.Definition.Parameter;
 import Database.Definition.ParameterSet;
@@ -15,6 +16,7 @@ import ij.ImageStack;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,6 +24,7 @@ import java.util.TreeMap;
 
 import jex.statics.JEXStatics;
 import logs.Logs;
+import miscellaneous.FileUtility;
 import tables.DimensionMap;
 
 /**
@@ -123,8 +126,9 @@ public class JEX_StabilizeStack extends JEXCrunchable {
 	@Override
 	public TypeName[] getOutputs()
 	{
-		defaultOutputNames = new TypeName[1];
+		defaultOutputNames = new TypeName[2];
 		defaultOutputNames[0] = new TypeName(IMAGE, "Stabilized stack");
+		defaultOutputNames[1] = new TypeName(FILE, "Affine Transforms");
 		
 		if(outputNames == null)
 			return defaultOutputNames;
@@ -190,6 +194,7 @@ public class JEX_StabilizeStack extends JEXCrunchable {
 		TreeMap<DimensionMap,String> imageMap = ImageReader.readObjectToImagePathTable(data);
 		TreeMap<DimensionMap,String> outputMap = new TreeMap<DimensionMap,String>();
 		List<DimensionMap> dimMap = new ArrayList<DimensionMap>(0);
+		TreeMap<DimensionMap, String> fileTable = new TreeMap<>();
 		
 		// Make stack
 		int count = 0;
@@ -217,7 +222,10 @@ public class JEX_StabilizeStack extends JEXCrunchable {
 		Logs.log("Starting StackRef_", 1, this);
 		String mode = parameters.getValueOfParameter("Type");
 		StackReg_ stackred = new StackReg_();
-		stackred.run(sim, mode, null);
+		
+		String filename = JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getUniqueRelativeTempPath("txt");
+		filename = FileUtility.getFileParent(filename) + File.separator + FileUtility.getFileNameWithoutExtension(filename);
+		stackred.run(sim, mode, filename);
 		ImageStack donestack = sim.getImageStack();
 		
 		Logs.log("Saving stabilized stack", 1, this);
@@ -225,6 +233,7 @@ public class JEX_StabilizeStack extends JEXCrunchable {
 		JEXStatics.statusBar.setProgressPercentage(0);
 		for (int i = 0; i < len; i++)
 		{
+			
 			// Get dim
 			DimensionMap map = dimMap.get(i);
 			// get path
@@ -239,6 +248,11 @@ public class JEX_StabilizeStack extends JEXCrunchable {
 			// FunctionUtility.imSave(bimp, path);
 			String path = JEXWriter.saveImage(bimp);
 			
+			if(i > 0)
+			{
+				fileTable.put(map.copy(), filename + "_" + (i + 1) + ".txt");
+			}
+			
 			outputMap.put(map, path);
 			Logs.log("Saved image " + i + " of " + len + ".", 1, this);
 			
@@ -249,7 +263,9 @@ public class JEX_StabilizeStack extends JEXCrunchable {
 		
 		// . Collect outputs
 		JEXData output1 = ImageWriter.makeImageStackFromPaths(outputNames[0].getName(), outputMap);
+		JEXData output2 = FileWriter.makeFileObject(outputNames[1].getName(), null, fileTable);
 		realOutputs.add(output1);
+		realOutputs.add(output2);
 		
 		// Return status
 		return true;

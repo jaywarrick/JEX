@@ -2,6 +2,7 @@ package function.plugin.plugins.imageTools;
 
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.io.File;
 import java.util.TreeMap;
 
 import org.scijava.plugin.Plugin;
@@ -97,7 +98,7 @@ public class RegisterMultiColorImageSet_Roi extends JEXPlugin {
 	@OutputMarker(uiOrder=1, name="Crop ROI", type=MarkerConstants.TYPE_ROI, flavor="", description="The resultant roi that can be used to crop images for stabalizing the image set.", enabled=true)
 	JEXData output;
 	
-	@OutputMarker(uiOrder=1, name="Affine Transforms", type=MarkerConstants.TYPE_FILE, flavor="", description="The affine transform information used on each image", enabled=true)
+	@OutputMarker(uiOrder=2, name="Affine Transforms", type=MarkerConstants.TYPE_FILE, flavor="", description="The affine transform information used on each image", enabled=true)
 	JEXData affineTransforms;
 
 	public RegisterMultiColorImageSet_Roi()
@@ -266,9 +267,9 @@ public class RegisterMultiColorImageSet_Roi extends JEXPlugin {
 				sCrop = new int[]{0, 0, sourceCropImage.getWidth(), sourceCropImage.getHeight()};
 
 				// Align the selected region of the source image with the target image
-				String filename = JEXWriter.getUniqueRelativeTempPath("txt");
+				String filename = JEXWriter.getDatabaseFolder() + File.separator + JEXWriter.getUniqueRelativeTempPath("txt");
 				fileTable.put(newMap.copy(), filename);
-				reg.alignImages(sourceCropImage, sCrop, targetCropImage, tCrop, TurboReg_.TRANSLATION, false, filename);
+				reg.alignImages(sourceCropImage, sCrop, targetCropImage, tCrop, TurboReg_.AFFINE, false, filename);
 				// Don't save the image yet. We need to crop it after finding all the necessary translations
 				ptsMap = newMap.copy();
 				ptsMap.remove(colorDimName); // Now ptsMap has time and location dims but no color dim
@@ -290,7 +291,7 @@ public class RegisterMultiColorImageSet_Roi extends JEXPlugin {
 				{
 					dx = reg.getSourcePoints()[0][0] + cropCenterDisplacement.x;
 					dy = reg.getSourcePoints()[0][1] + cropCenterDisplacement.y;
-					double[][] newSourcePoints = new double[][] { { dx, dy }, { 0.0, 0.0 }, { 0.0, 0.0 }, { 0.0, 0.0 } };
+					double[][] newSourcePoints = new double[][] { { dx, dy }, { reg.getSourcePoints()[1][0], reg.getSourcePoints()[1][1] }, { reg.getSourcePoints()[2][0], reg.getSourcePoints()[2][1] }, { reg.getSourcePoints()[3][0], reg.getSourcePoints()[3][1] } };
 					sourcePts.put(ptsMap, newSourcePoints);
 					targetPts.put(ptsMap, reg.getTargetPoints());
 				}

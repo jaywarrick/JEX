@@ -71,6 +71,8 @@ import java.awt.TextArea;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.IndexColorModel;
+import java.io.FileWriter;
+import java.io.IOException;
 
 import jex.statics.JEXStatics;
 
@@ -1320,6 +1322,29 @@ public class StackReg_ implements PlugIn
 		sourcePoints = turboReg.getSourcePoints();
 		targetPoints = turboReg.getTargetPoints();
 		localTransform = getTransformationMatrix(targetPoints, sourcePoints, transformation);
+		double[][] matrix = localTransform;
+		try
+		{
+			final FileWriter fw = new FileWriter(filename + "_" + s + ".txt");
+			fw.write("Transformation\n");
+			
+			fw.write("\n");
+			fw.write("Matrix\n");
+			for (int i = 0; i < matrix[0].length; i++)
+			{
+				fw.write(matrix[0][i] + "\t" + matrix[1][i] + "\n");
+			}
+			
+			fw.close();
+		}
+		catch (IOException e)
+		{
+			IJ.log("IOException exception " + e.getMessage());
+		}
+		catch (SecurityException e)
+		{
+			IJ.log("Security exception " + e.getMessage());
+		}
 		
 		System.out.println("   StackReg_alignement done");
 		// source.show();
