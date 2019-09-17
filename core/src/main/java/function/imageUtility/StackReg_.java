@@ -71,6 +71,8 @@ import java.awt.TextArea;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.IndexColorModel;
+import java.io.FileWriter;
+import java.io.IOException;
 
 import jex.statics.JEXStatics;
 
@@ -224,7 +226,7 @@ public class StackReg_ implements PlugIn
 		}
 		for (int s = targetSlice - 1; (0 < s); s--)
 		{
-			source = registerSlice(source, target, imp, width, height, transformation, globalTransform, anchorPoints, colorWeights, s);
+			source = registerSlice(source, target, imp, width, height, transformation, globalTransform, anchorPoints, colorWeights, s, null);
 			if(source == null)
 			{
 				imp.setSlice(targetSlice);
@@ -267,7 +269,7 @@ public class StackReg_ implements PlugIn
 		}
 		for (int s = targetSlice + 1; (s <= imp.getStackSize()); s++)
 		{
-			source = registerSlice(source, target, imp, width, height, transformation, globalTransform, anchorPoints, colorWeights, s);
+			source = registerSlice(source, target, imp, width, height, transformation, globalTransform, anchorPoints, colorWeights, s, null);
 			if(source == null)
 			{
 				imp.setSlice(targetSlice);
@@ -281,7 +283,7 @@ public class StackReg_ implements PlugIn
 	public StackReg_()
 	{}
 	
-	public void run(ImagePlus imp, String mode)
+	public void run(ImagePlus imp, String mode, String filename)
 	{
 		if(imp == null)
 		{
@@ -401,7 +403,7 @@ public class StackReg_ implements PlugIn
 		JEXStatics.statusBar.setProgressPercentage(0);
 		for (int s = targetSlice - 1; (0 < s); s--)
 		{
-			source = registerSlice(source, target, imp, width, height, transformation, globalTransform, anchorPoints, colorWeights, s);
+			source = registerSlice(source, target, imp, width, height, transformation, globalTransform, anchorPoints, colorWeights, s, filename);
 			if(source == null)
 			{
 				imp.setSlice(targetSlice);
@@ -442,7 +444,7 @@ public class StackReg_ implements PlugIn
 		}
 		for (int s = targetSlice + 1; (s <= imp.getStackSize()); s++)
 		{
-			source = registerSlice(source, target, imp, width, height, transformation, globalTransform, anchorPoints, colorWeights, s);
+			source = registerSlice(source, target, imp, width, height, transformation, globalTransform, anchorPoints, colorWeights, s, filename);
 			if(source == null)
 			{
 				imp.setSlice(targetSlice);
@@ -1235,7 +1237,7 @@ public class StackReg_ implements PlugIn
 	} /* end QRdecomposition */
 	
 	/*------------------------------------------------------------------*/
-	private ImagePlus registerSlice(ImagePlus source, final ImagePlus target, final ImagePlus imp, final int width, final int height, final int transformation, final double[][] globalTransform, final double[][] anchorPoints, final double[] colorWeights, final int s)
+	private ImagePlus registerSlice(ImagePlus source, final ImagePlus target, final ImagePlus imp, final int width, final int height, final int transformation, final double[][] globalTransform, final double[][] anchorPoints, final double[] colorWeights, final int s, final String filename)
 	{
 		
 		imp.setSlice(s);
@@ -1320,6 +1322,29 @@ public class StackReg_ implements PlugIn
 		sourcePoints = turboReg.getSourcePoints();
 		targetPoints = turboReg.getTargetPoints();
 		localTransform = getTransformationMatrix(targetPoints, sourcePoints, transformation);
+		double[][] matrix = localTransform;
+		try
+		{
+			final FileWriter fw = new FileWriter(filename + "_" + s + ".txt");
+			fw.write("Transformation\n");
+			
+			fw.write("\n");
+			fw.write("Matrix\n");
+			for (int i = 0; i < matrix[0].length; i++)
+			{
+				fw.write(matrix[0][i] + "\t" + matrix[1][i] + "\n");
+			}
+			
+			fw.close();
+		}
+		catch (IOException e)
+		{
+			IJ.log("IOException exception " + e.getMessage());
+		}
+		catch (SecurityException e)
+		{
+			IJ.log("Security exception " + e.getMessage());
+		}
 		
 		System.out.println("   StackReg_alignement done");
 		// source.show();

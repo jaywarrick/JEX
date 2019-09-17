@@ -268,7 +268,7 @@ public class JEX_ImageTools_FindImageAlignments extends JEXCrunchable {
 				// int[] sourceCrop = new int[] { 0, 0, width - 1, height - 1 }; // Top of source image
 				int[] targetCrop = new int[] { 0, 0, targetRect.width, targetRect.height };
 				int[] sourceCrop = new int[] { 0, 0, sourceRect.width, sourceRect.height };
-				reg.alignImages(sourceIm, sourceCrop, targetIm, targetCrop, TurboReg_.TRANSLATION, false);
+				reg.alignImages(sourceIm, sourceCrop, targetIm, targetCrop, TurboReg_.TRANSLATION, false, null);
 				double dx = reg.getSourcePoints()[0][0];
 				double dy = reg.getSourcePoints()[0][1];
 				verMoves.add((int) dx, (int) dy);
@@ -308,7 +308,7 @@ public class JEX_ImageTools_FindImageAlignments extends JEXCrunchable {
 				int[] targetCrop = new int[] { 0, 0, targetRect.width, targetRect.height };
 				int[] sourceCrop = new int[] { 0, 0, sourceRect.width, sourceRect.height };
 				
-				reg.alignImages(sourceIm, sourceCrop, targetIm, targetCrop, TurboReg_.TRANSLATION, false);
+				reg.alignImages(sourceIm, sourceCrop, targetIm, targetCrop, TurboReg_.TRANSLATION, false, null);
 				double dx = reg.getSourcePoints()[0][0];
 				double dy = reg.getSourcePoints()[0][1];
 				horMoves.add((int) dx, (int) dy);
