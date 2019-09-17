@@ -331,7 +331,7 @@ public class JEX_RegisterMultiColorImageSet extends JEXCrunchable {
 				//				sourceCropImage.show();
 				
 				// Align the selected region of the source image with the target image
-				reg.alignImages(sourceCropImage, sCrop, targetCropImage, tCrop, TurboReg_.TRANSLATION, false);
+				reg.alignImages(sourceCropImage, sCrop, targetCropImage, tCrop, TurboReg_.TRANSLATION, false, null);
 				
 				// Don't save the image yet. We need to crop it after finding all the necessary translations
 				ptsMap = newMap.copy();
@@ -413,7 +413,7 @@ public class JEX_RegisterMultiColorImageSet extends JEXCrunchable {
 					Logs.log("Applying alignment to " + newMap.toString(), 0, this);
 					reg.sourcePoints = sourcePts.get(newMap);
 					reg.targetPoints = targetPts.get(newMap);
-					im = reg.transformImage(source, target.getWidth(), target.getHeight(), TurboReg_.TRANSLATION, false);
+					im = reg.transformImage(source, target.getWidth(), target.getHeight(), TurboReg_.TRANSLATION, false, null);
 					if(cropResults)
 					{
 						imp = im.getProcessor();
