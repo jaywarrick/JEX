@@ -119,7 +119,7 @@ public class ImportThread implements Callable<Object>, Canceler {
 			}
 			else if(objectType.matches(JEXData.FILE))
 			{
-				JEXData data = FileWriter.makeFileObject(objectName, null, files2Drop2);
+				JEXData data = FileWriter.makeFileObject(objectName, null, files2Drop2, this.virtual);
 				data.setDataObjectInfo(objectInfo);
 				if(this.virtual)
 				{

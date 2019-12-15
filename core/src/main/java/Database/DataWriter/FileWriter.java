@@ -1,14 +1,13 @@
 package Database.DataWriter;
 
-import Database.DBObjects.JEXData;
-import Database.DBObjects.JEXDataSingle;
-import Database.Definition.Type;
-import Database.SingleUserDatabase.JEXWriter;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
+import Database.DBObjects.JEXData;
+import Database.DBObjects.JEXDataSingle;
+import Database.Definition.Type;
+import Database.SingleUserDatabase.JEXWriter;
 import logs.Logs;
 import miscellaneous.FileUtility;
 import tables.DimensionMap;
@@ -84,6 +83,45 @@ public class FileWriter {
 
 			// If the file is a string, make a JEXDataSingle with the string embedded
 			JEXDataSingle ds = saveFileDataSingle((String) fileObject);
+
+			// test the JEXDataSingle
+			if (ds == null)
+				continue;
+
+			// Add the datasingle to the data
+			data.addData(map.copy(), ds);
+		}
+
+		// Test to see that the data was well inputed in the new JEXData, else return null
+		if(data.getDataMap().size() == 0)
+		{
+			return null;
+		}
+
+		// Return the JEXData
+		return data;
+	}
+	
+	/**
+	 * Return an image stack object from filepaths and a dimensionname (ie T, Time, Z, etc...)
+	 * 
+	 * @param objectName
+	 * @param imageMap
+	 * @return
+	 */
+	public static JEXData makeFileObject(String objectName, String objectFlavor, Map<DimensionMap,?> fileMap, boolean virtual)
+	{
+		// Make the data that will be returned
+		JEXData data = new JEXData(new Type(JEXData.FILE, objectFlavor), objectName);
+
+		// loop through the file objects
+		for (DimensionMap map : fileMap.keySet())
+		{
+			// Get the file object
+			Object fileObject = fileMap.get(map);
+
+			// If the file is a string, make a JEXDataSingle with the string embedded
+			JEXDataSingle ds = FileWriter.saveFileDataSingle((String) fileObject, virtual);
 
 			// test the JEXDataSingle
 			if (ds == null)
