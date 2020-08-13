@@ -20,6 +20,8 @@ import function.plugin.mechanism.ParameterMarker;
 import ij.ImagePlus;
 import ij.gui.ProfilePlot;
 import ij.gui.Roi;
+import image.roi.IdPoint;
+import image.roi.PointList;
 import image.roi.ROIPlus;
 import jex.statics.JEXStatics;
 import logs.Logs;
@@ -116,16 +118,23 @@ public class MeasureROILineProfileToArff extends JEXPlugin {
 					return false;
 				}
 				
-				im = new ImagePlus(images.get(map));
-				Roi line = roi.getRoi();
-				line.setStrokeWidth(this.width);
-				im.setRoi(line);
-				ProfilePlot pp = new ProfilePlot(im);
-				double[] profile = pp.getProfile();
-				
-				List<String> info = getRowOfInfo(map, profile);
-				
-				writer.write(info);
+				PointList pattern = roi.getPattern();
+				IdPoint p0 = roi.getPointList().getCenter();
+				for(IdPoint p : pattern)
+				{
+					im = new ImagePlus(images.get(map));
+					roi.getPointList().setCenter(p0);
+					roi.getPointList().translate(p.getX(), p.getY());;
+					Roi line = roi.getRoi();
+					line.setStrokeWidth(this.width);
+					im.setRoi(line);
+					ProfilePlot pp = new ProfilePlot(im);
+					double[] profile = pp.getProfile();
+					
+					List<String> info = getRowOfInfo(map, profile, new String[] {""+p.id, ""+p.x, ""+p.y});
+					
+					writer.write(info);
+				}
 				
 				JEXStatics.statusBar.setProgressPercentage((int) (100 * (double) count / total));
 			}
@@ -138,9 +147,17 @@ public class MeasureROILineProfileToArff extends JEXPlugin {
 		return true;
 	}
 	
-	public List<String> getRowOfInfo(DimensionMap map, double[] profile)
+	public List<String> getRowOfInfo(DimensionMap map, double[] profile, String[] prepend)
 	{
 		List<String> ret = new Vector<>();
+		if(prepend != null && prepend.length > 0)
+		{
+			for(String s : prepend)
+			{
+				ret.add(s);
+			}
+		}
+		
 		for(Entry<String,String> e : map.entrySet())
 		{
 			ret.add(e.getValue());
