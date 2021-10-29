@@ -455,6 +455,7 @@ public class ImageUtility {
 		return new Pair<>(weightImages, ip2);
 	}
 	
+	@SuppressWarnings("unused")
 	private static FloatProcessor getImageMaskWeights(FloatProcessor ip)
 	{
 		float[] pixels = (float[]) ip.getPixels();
