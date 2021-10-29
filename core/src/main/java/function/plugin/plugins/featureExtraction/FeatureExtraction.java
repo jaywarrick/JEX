@@ -333,7 +333,7 @@ public class FeatureExtraction<T extends RealType<T>> extends JEXPlugin {
 					}
 
 					// Quantify nuclear region first if possible
-					if(this.nucExists && !this.filterTable.getDimWithName(this.channelName).containsValue(this.maskNuclearChannelValue))
+					if(this.nucExists && this.filterTable.size() > 0 && !this.filterTable.getDimWithName(this.channelName).containsValue(this.maskNuclearChannelValue))
 					{
 						if(!this.quantifyFeatures(this.maskNuclearChannelValue, firstTimeThrough))
 							return false;
