@@ -1,4 +1,4 @@
-package function.ops.namespace;
+package function.ops;
 
 import org.scijava.plugin.Plugin;
 
@@ -10,7 +10,7 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.util.ValuePair;
 
 @Plugin(type = Namespace.class)
-public class Histogram extends AbstractNamespace {
+public class HistogramNamespace extends AbstractNamespace {
 
 	@Override
 	public String getName() {

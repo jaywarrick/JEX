@@ -1,4 +1,4 @@
-package function.ops.namespace;
+package function.ops;
 
 import org.scijava.plugin.Plugin;
 
@@ -13,7 +13,7 @@ import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
 
 @Plugin(type = Namespace.class)
-public class Stats extends AbstractNamespace {
+public class StatsNamespace extends AbstractNamespace {
 
 	@Override
 	public String getName() {

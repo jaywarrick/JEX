@@ -1,4 +1,4 @@
-package function.ops.namespace;
+package function.ops;
 
 import java.util.Collection;
 import java.util.List;
@@ -17,7 +17,7 @@ import net.imglib2.roi.labeling.LabelRegion;
 import net.imglib2.type.numeric.RealType;
 
 @Plugin(type = Namespace.class)
-public class Geom extends AbstractNamespace {
+public class GeomNamespace extends AbstractNamespace {
 
 	@Override
 	public String getName() {
@@ -26,7 +26,7 @@ public class Geom extends AbstractNamespace {
 
 	@OpMethod(
 			op = function.ops.geometry.DefaultSmallestEnclosingCircle.class)
-	public Circle smallestenclosingboundingbox(final List<? extends RealLocalizable> in, RealLocalizable center, boolean randomizePointRemoval, int rndSeed) {
+	public Circle smallestEnclosingCircle(final List<? extends RealLocalizable> in, RealLocalizable center, boolean randomizePointRemoval, int rndSeed) {
 		final Circle result = (Circle) ops().run(
 				function.ops.geometry.DefaultSmallestEnclosingCircle.class, in, center, randomizePointRemoval, rndSeed);
 		return result;
@@ -34,7 +34,7 @@ public class Geom extends AbstractNamespace {
 	
 	@OpMethod(
 			op = function.ops.geometry.DefaultSmallestEnclosingCircleOfCollection.class)
-	public Circle smallestenclosingboundingbox(final Collection<? extends RealLocalizable> in, RealLocalizable center, boolean randomizePointRemoval, int rndSeed) {
+	public Circle smallestEnclosingCircle(final Collection<? extends RealLocalizable> in, RealLocalizable center, boolean randomizePointRemoval, int rndSeed) {
 		final Circle result = (Circle) ops().run(
 				function.ops.geometry.DefaultSmallestEnclosingCircleOfCollection.class, in, center, randomizePointRemoval, rndSeed);
 		return result;
@@ -42,7 +42,7 @@ public class Geom extends AbstractNamespace {
 	
 	@OpMethod(
 			op = function.ops.geometry.DefaultSmallestEnclosingCircleOfRealCursor.class)
-	public Circle smallestenclosingboundingbox(final RealCursor<?> in, RealLocalizable center, boolean randomizePointRemoval, int rndSeed) {
+	public Circle smallestEnclosingCircle(final RealCursor<?> in, RealLocalizable center, boolean randomizePointRemoval, int rndSeed) {
 		final Circle result = (Circle) ops().run(
 				function.ops.geometry.DefaultSmallestEnclosingCircleOfRealCursor.class, in, center, randomizePointRemoval, rndSeed);
 		return result;

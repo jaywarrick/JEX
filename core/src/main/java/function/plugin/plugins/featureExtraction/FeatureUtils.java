@@ -9,9 +9,11 @@ import java.util.TreeSet;
 import java.util.Vector;
 
 import Database.SingleUserDatabase.JEXReader;
+import function.ops.JEXOps;
 import function.ops.intervals.CroppedRealRAI;
 import function.ops.intervals.IntersectedBooleanRAI;
 import function.ops.intervals.MapIIToSamplingRAI;
+import function.ops.logic.RealLogic;
 import function.plugin.IJ2.IJ2PluginUtility;
 import ij.ImagePlus;
 import ij.gui.Roi;
@@ -28,7 +30,6 @@ import miscellaneous.Pair;
 import net.imagej.ops.Op;
 import net.imagej.ops.Ops;
 import net.imagej.ops.geom.geom2d.Circle;
-import net.imagej.ops.logic.RealLogic;
 import net.imagej.ops.special.function.Functions;
 import net.imagej.ops.special.function.UnaryFunctionOp;
 import net.imglib2.Cursor;
@@ -1241,9 +1242,9 @@ public class FeatureUtils {
 		PointSamplerList<IntType> psl = new PointSamplerList<>(pg, new IntType(0));
 		if(this.cirOp == null)
 		{
-			cirOp = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.SmallestEnclosingCircle.class, Circle.class, psl.cursor(), center);
+			cirOp = Functions.unary(IJ2PluginUtility.ij().op(), JEXOps.SmallestEnclosingCircle.class, Circle.class, psl.cursor(), center);
 		}
-		UnaryFunctionOp<RealCursor<IntType>,Circle> cirOp = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.SmallestEnclosingCircle.class, Circle.class, psl.cursor(), center);
+		UnaryFunctionOp<RealCursor<IntType>,Circle> cirOp = Functions.unary(IJ2PluginUtility.ij().op(), JEXOps.SmallestEnclosingCircle.class, Circle.class, psl.cursor(), center);
 		return cirOp.calculate(psl.cursor());
 	}
 

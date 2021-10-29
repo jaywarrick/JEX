@@ -10,15 +10,15 @@ import org.scijava.Priority;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
-import net.imagej.ops.Ops;
+import function.ops.JEXOps;
 import net.imagej.ops.geom.geom2d.Circle;
 import net.imagej.ops.special.function.AbstractUnaryFunctionOp;
 import net.imglib2.RealLocalizable;
 import net.imglib2.RealPoint;
 
-@Plugin(type = Ops.Geometric.SmallestEnclosingCircle.class, priority = Priority.NORMAL)
+@Plugin(type = JEXOps.SmallestEnclosingCircle.class, priority = Priority.NORMAL)
 public class DefaultSmallestEnclosingCircle extends AbstractUnaryFunctionOp<List<? extends RealLocalizable>, Circle>
-implements Ops.Geometric.SmallestEnclosingCircle {
+implements JEXOps.SmallestEnclosingCircle {
 
 	@Parameter(required = false)
 	RealLocalizable center = null;

@@ -18,6 +18,7 @@ import function.algorithm.neighborhood.EdgeCursor;
 import function.algorithm.neighborhood.Indexer;
 import function.algorithm.neighborhood.PositionableRunningNeighborhood;
 import function.algorithm.neighborhood.SnakingCursor;
+import function.ops.JEXOps;
 import function.ops.geometry.DefaultSmallestEnclosingCircle;
 import function.ops.histogram.PolynomialRegression;
 import function.ops.zernike.ZernikeComputer;
@@ -830,7 +831,7 @@ public class TestStuff {
 		UnaryFunctionOp<IterableInterval<IntType>,RealLocalizable> opCenter = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.CenterOfGravity.class, RealLocalizable.class, ii);
 		RealLocalizable center = opCenter.calculate(ii);
 
-		UnaryFunctionOp<RealCursor<IntType>,Circle> opCircle = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.SmallestEnclosingCircle.class, Circle.class, ii.cursor(), center, false, 1234);
+		UnaryFunctionOp<RealCursor<IntType>,Circle> opCircle = Functions.unary(IJ2PluginUtility.ij().op(), JEXOps.SmallestEnclosingCircle.class, Circle.class, ii.cursor(), center, false, 1234);
 		Circle c = opCircle.calculate(ii.cursor());
 
 		ZernikeComputer<IntType> comp = new ZernikeComputer<>();
@@ -912,7 +913,7 @@ public class TestStuff {
 		//Circle retCollection = (Circle) IJ2PluginUtility.ij().op().run(opCollection, theCollection, null, false, null);
 
 		//Circle result1 = (Circle) IJ2PluginUtility.ij().op().run(Ops.Geometric.SmallestEnclosingCircle.class, col, (RealLocalizable) null, false, null);
-		UnaryFunctionOp<RealCursor<IntType>,Circle> op = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.SmallestEnclosingCircle.class, Circle.class, pl.cursor(), (RealLocalizable) null, false, null);
+		UnaryFunctionOp<RealCursor<IntType>,Circle> op = Functions.unary(IJ2PluginUtility.ij().op(), JEXOps.SmallestEnclosingCircle.class, Circle.class, pl.cursor(), (RealLocalizable) null, false, null);
 
 		//		List<Circle> result = (List<Circle>) op.calculate(plII);
 		Circle result = (Circle) op.calculate(pl.cursor());
@@ -997,7 +998,7 @@ public class TestStuff {
 	{
 		PointSamplerII<T> plII = new PointSamplerII<>(pl);
 		RealLocalizable center = getCenterOfMass(plII.pl);
-		UnaryFunctionOp<IterableInterval<T>,Circle> op = Functions.unary(IJ2PluginUtility.ij().op(), Ops.Geometric.SmallestEnclosingCircle.class, Circle.class, plII, (RealLocalizable) null);
+		UnaryFunctionOp<IterableInterval<T>,Circle> op = Functions.unary(IJ2PluginUtility.ij().op(), JEXOps.SmallestEnclosingCircle.class, Circle.class, plII, (RealLocalizable) null);
 		Circle result = op.calculate(plII);
 
 		UnaryFunctionOp<IterableInterval<T>,ZernikeMoment> opZ = Functions.unary(IJ2PluginUtility.ij().op(), ZernikeComputer.class, ZernikeMoment.class, plII, 2, 2, null, null);

@@ -31,7 +31,7 @@ public class JEXOps {
 	public interface LogicalNotEqual extends Op {
 		String NAME = "logic.logicalNotEqual";
 	}
-
+	
 	/**
 	 * Base interface for "spearmansRankCorrelationCoefficient" operations.
 	 * <p>
@@ -128,6 +128,20 @@ public class JEXOps {
 	 */
 	public interface SymmetryCoefficients extends Op {
 		String NAME = "geometry.symmetrycoefficients";
+	}
+	
+	/**
+	 * Base interface for "smallestenclosingcircle" operations.
+	 * <p>
+	 * Implementing classes should be annotated with:
+	 * </p>
+	 *
+	 * <pre>
+	 * @Plugin(type = JEXOps.SmallestEnclosingCircle.class
+	 * </pre>
+	 */
+	public interface SmallestEnclosingCircle extends Op {
+		String NAME = "geometry.smallestenclosingcircle";
 	}
 	
 }

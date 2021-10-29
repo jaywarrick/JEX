@@ -32,7 +32,7 @@ import logs.Logs;
 import miscellaneous.CSVList;
 import miscellaneous.Pair;
 import net.imagej.ops.Op;
-import net.imagej.ops.logic.RealLogic;
+import function.ops.logic.RealLogic;
 import net.imglib2.img.Img;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;

@@ -32,8 +32,8 @@ package function.ops.zernike;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
+import function.ops.JEXOps;
 import net.imagej.ops.Op;
-import net.imagej.ops.Ops;
 import net.imagej.ops.features.zernike.helper.Polynom;
 import net.imagej.ops.features.zernike.helper.ZernikeMoment;
 import net.imagej.ops.geom.geom2d.Circle;
@@ -77,7 +77,7 @@ public class ZernikeComputer<T extends RealType<T>> extends
 		Circle circle = enclosingCircle;
 		if(circle == null)
 		{
-			UnaryFunctionOp<RealCursor<T>,Circle> cirOp = Functions.unary(ops(), Ops.Geometric.SmallestEnclosingCircle.class, Circle.class, in().cursor(), (RealLocalizable) null);
+			UnaryFunctionOp<RealCursor<T>,Circle> cirOp = Functions.unary(ops(), JEXOps.SmallestEnclosingCircle.class, Circle.class, in().cursor(), (RealLocalizable) null);
 			circle = cirOp.calculate(ii.cursor());
 		}
 		

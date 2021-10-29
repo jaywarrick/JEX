@@ -8,16 +8,16 @@ import org.scijava.Priority;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
-import net.imagej.ops.Ops;
+import function.ops.JEXOps;
 import net.imagej.ops.geom.geom2d.Circle;
 import net.imagej.ops.special.function.AbstractUnaryFunctionOp;
 import net.imagej.ops.special.function.Functions;
 import net.imagej.ops.special.function.UnaryFunctionOp;
 import net.imglib2.RealLocalizable;
 
-@Plugin(type = Ops.Geometric.SmallestEnclosingCircle.class, priority = Priority.NORMAL)
+@Plugin(type = JEXOps.SmallestEnclosingCircle.class, priority = Priority.NORMAL)
 public class DefaultSmallestEnclosingCircleOfCollection extends AbstractUnaryFunctionOp<Collection<? extends RealLocalizable>, Circle>
-implements Ops.Geometric.SmallestEnclosingCircle {
+implements JEXOps.SmallestEnclosingCircle {
 
 	@Parameter(required = false)
 	RealLocalizable center = null;
@@ -33,7 +33,7 @@ implements Ops.Geometric.SmallestEnclosingCircle {
 	@Override
 	public void initialize()
 	{
-		op = Functions.unary(ops(), Ops.Geometric.SmallestEnclosingCircle.class, Circle.class, (List<? extends RealLocalizable>) null, center, randomizePointRemoval, rndSeed);
+		op = Functions.unary(ops(), JEXOps.SmallestEnclosingCircle.class, Circle.class, (List<? extends RealLocalizable>) null, center, randomizePointRemoval, rndSeed);
 	}
 
 	@Override
