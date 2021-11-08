@@ -69,7 +69,7 @@
 	</modules>
 
 	<scm>
-		<connection>scm:git:git://github.com/jaywarrick/JEX</connection>
+		<connection>scm:git:https://github.com/jaywarrick/JEX</connection>
 		<developerConnection>scm:git:git@github.com:jaywarrick/JEX</developerConnection>
 		<tag>HEAD</tag>
 		<url>http://github.com/jaywarrick/JEX</url>
