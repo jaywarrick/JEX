@@ -133,7 +133,7 @@ public class TIEPhaseCalculator extends JEXPlugin {
 	@ParameterMarker(uiOrder = 12, name = "Filter Method", description="Which background filtering method should be used.", ui=MarkerConstants.UI_DROPDOWN, choices= {METHOD_ALL, METHOD_NONE, METHOD_RBF, METHOD_RBFw, METHOD_VARw, METHOD_COMBOw}, defaultChoice=5)
 	String method;
 	
-	@ParameterMarker(uiOrder = 13, name = "Filter (RBF): Rolling Ball Radius", description="Radius of the rolling ball filter in pixels. Recommend to use parabaloid with very small radius (~0.1-0.25). Rolling ball version should use normal radius similar to feature size cutoff specified above.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="5")
+	@ParameterMarker(uiOrder = 13, name = "Filter (RBF): Rolling Ball Radius", description="Radius of the rolling ball filter in pixels. Recommend to use parabaloid with very small radius (~0.1-0.25). Rolling-ball-only version should use normal radius similar to feature size cutoff specified above. A combo weighted mean and rolling ball approach should use a small radius ~2 times the std dev filter radius.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="5")
 	double radiusRBF;
 	
 //	@ParameterMarker(uiOrder=2, name="Filter (RBF): Light background?", description="Generally false for fluorescent images and true for bright-field etc.", ui=MarkerConstants.UI_CHECKBOX, defaultBoolean=false)
