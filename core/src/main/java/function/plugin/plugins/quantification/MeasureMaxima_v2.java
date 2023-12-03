@@ -1,5 +1,6 @@
 package function.plugin.plugins.quantification;
 
+import java.awt.Point;
 import java.awt.Shape;
 import java.text.DecimalFormat;
 import java.util.Map.Entry;
@@ -22,6 +23,7 @@ import function.plugin.mechanism.ParameterMarker;
 import function.singleCellAnalysis.SingleCellUtility;
 import ij.ImagePlus;
 import ij.measure.Measurements;
+import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import image.roi.IdPoint;
 import image.roi.PointList;
@@ -30,6 +32,8 @@ import image.roi.ROIPlus.PatternRoiIterator;
 import jex.statics.JEXDialog;
 import jex.statics.JEXStatics;
 import logs.Logs;
+import miscellaneous.CSVList;
+import miscellaneous.StatisticsUtility;
 import tables.Dim;
 import tables.DimTable;
 import tables.DimensionMap;
@@ -71,7 +75,7 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 	/////////// Define Parameters ///////////
 
 	public static final String[] measurements = new String[]{ "Mean", "Median", "Max", "Min", "Mode", "St.Dev", "Skewness", "Kurtosis"};
-	@ParameterMarker(uiOrder=1, name="Measurement", description="The type(s) of measurement(s) to be performed.", ui=MarkerConstants.UI_DROPDOWN, choices={ "All", "Mean", "Median", "Max", "Min", "Mode", "StDev", "Skewness", "Kurtosis"}, defaultChoice=0)
+	@ParameterMarker(uiOrder=1, name="Measurement", description="The type(s) of measurement(s) to be performed.", ui=MarkerConstants.UI_DROPDOWN, choices={ "All", "Mean", "Median", "Max", "Min", "Mode", "StDev", "Skewness", "Kurtosis", "Quantile Means"}, defaultChoice=0)
 	String measurementType;
 
 	@ParameterMarker(uiOrder=2, name="Type", description="The type of roi around each maxima to be created to quantify intensity information.", ui=MarkerConstants.UI_DROPDOWN, choices={ "Rectangle", "Ellipse", "Line", "Point" }, defaultChoice=0)
@@ -91,6 +95,12 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 
 	@ParameterMarker(uiOrder=7, name="Offset", description="Value to offset all values by. Useful if the image does not have a zero background. (final value = measured value + offset)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0")
 	double nominal;
+	
+	@ParameterMarker(uiOrder=8, name="Quantiles", description="Comma separated list of quantiles (0.0-100.0) to use for mean calculations. Positive and negative quantiles are upper (inclusive) and lower (exclusive) means, respectively.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="-50,50")
+	String quantiles;
+	
+	double[] quantileDoubles = null;
+	DecimalFormat formatD = new DecimalFormat("##0.000");
 
 	/////////// Define Outputs ///////////
 
@@ -138,6 +148,16 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 		{
 			roiType = ROIPlus.ROI_POINT;
 		}
+		
+		CSVList quantileStrings = new CSVList(quantiles);
+		this.quantileDoubles = new double[quantileStrings.size()]; 
+		int i = 0;
+		for(String quantileString : quantileStrings)
+		{
+			Double q = new Double(quantileString);
+			this.quantileDoubles[i] = q;
+			i = i + 1;
+		}
 
 		// Catch bad scenarios
 		if(!this.colorDimName.equals("") && this.imageData.getDimTable().getDimWithName(this.colorDimName) == null)
@@ -170,10 +190,21 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 		if(this.measurementType.equals("All"))
 		{
 			this.measurementDim = new Dim("Measurement", measurements);
+			for(double d : quantileDoubles)
+			{
+				this.measurementDim.dimValues.add("QuantileMean<" + formatD.format(d) + ">");
+			}
+		}
+		else if(!this.measurementType.equals("Quantile Means"))
+		{
+			this.measurementDim = new Dim("Measurement", this.measurementType);
 		}
 		else
 		{
-			this.measurementDim = new Dim("Measurement", this.measurementType);
+			for(double d : quantileDoubles)
+			{
+				this.measurementDim.dimValues.add("QuantileMean<" + formatD.format(d) + ">");
+			}
 		}
 		this.measurementDim.dimValues.add("X");
 		this.measurementDim.dimValues.add("Y");
@@ -241,7 +272,6 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 		ROIPlus regionRoi = null;
 		PatternRoiIterator regionIterator = null;
 		ImagePlus im;
-		DecimalFormat formatD = new DecimalFormat("##0.000");
 		int count = 0;
 		int total = imageTable.mapCount();
 		int percentage = 0;
@@ -324,7 +354,7 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 							}
 							ROIPlus maximaSubset = new ROIPlus(subset, ROIPlus.ROI_POINT);
 							measuredPoints.addAll(subset);
-							this.quantifyPoints(im, maximaSubset, templateRoi, formatD, imMap, firstChannel, writer, regionId);
+							this.quantifyPoints(im, maximaSubset, templateRoi, imMap, firstChannel, writer, regionId);
 						}
 					}
 					measuredRois.put(imMap, new ROIPlus(measuredPoints, ROIPlus.ROI_POINT));
@@ -333,7 +363,7 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 				{
 					// Just do all the points. This catches the case where no region roi is provided.
 					// It also avoids, when regionRoiData != null but there is no regionRoi object for a particular image.
-					this.quantifyPoints(im, maximaRoi, templateRoi, formatD, imMap, firstChannel, writer, -1);
+					this.quantifyPoints(im, maximaRoi, templateRoi, imMap, firstChannel, writer, -1);
 					measuredRois.put(imMap, maximaRoi.copy());
 				}
 
@@ -362,7 +392,7 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 		}
 	}
 
-	private void quantifyPoints(ImagePlus im, ROIPlus maximaRoi, ROIPlus templateRoi, DecimalFormat formatD, DimensionMap imMap, String firstChannel, JEXTableWriter writer, int regionId)
+	private void quantifyPoints(ImagePlus im, ROIPlus maximaRoi, ROIPlus templateRoi, DimensionMap imMap, String firstChannel, JEXTableWriter writer, int regionId)
 	{
 		// Create a copy of the templateRoi and move it to the correct location for measurement.
 		IdPoint pointToMeasure = new IdPoint(-1, -1, 0);
@@ -377,26 +407,40 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 			pointToMeasure = p.copy();
 
 			im.setRoi(roip.getRoi());
+			
+			Double[] QMs = null;
+			Integer numPixels = null;
+			
 			ImageStatistics stats = im.getStatistics(Measurements.MEAN + Measurements.MEDIAN + Measurements.MIN_MAX + Measurements.MODE + Measurements.STD_DEV + Measurements.SKEWNESS + Measurements.KURTOSIS);
-			if(stats != null)
+			if(measurementType.equals("All") || measurementType.equals("Quantile Mean"))
 			{
-				String dataString = formatD.format(stats.mean);
-				if(dataString != null && !dataString.equals(""))
+				ImageProcessor imp = im.getProcessor();
+				Point[] pixelLocs = roip.getRoi().getContainedPoints();
+				double[] vals = new double[pixelLocs.length];
+				int i = 0;
+				for(Point pixelLoc : pixelLocs)
 				{
-					// DimensionMap for storing data (Color will be
-					// detected and removed in writeData function, we
-					// need color temporarily to convert it to a
-					// measurement e.g. color 0 = measurement Blue
-					DimensionMap mapToSave = imMap.copy();
-					mapToSave.put("Point", "" + pointToMeasure.id);
-					if(regionId >=0)
-					{
-						mapToSave.put("Region", "" + regionId);
-					}
-
-					// Write the data to the ongoing file
-					this.writeData(writer, mapToSave, firstChannel, stats, pointToMeasure, nominal, measurementType);
+					vals[i] = imp.getf(pixelLoc.x, pixelLoc.y);
+					i = i + 1;
 				}
+				QMs = StatisticsUtility.quantileMeans(vals, quantileDoubles);
+				numPixels = pixelLocs.length;
+			}
+			
+			if(QMs != null || (stats != null && formatD.format(stats.mean) != null && !formatD.format(stats.mean).equals("")))
+			{
+				// DimensionMap for storing data (Color will be
+				// detected and removed in writeData function, we
+				// need color temporarily to convert it to a
+				// measurement e.g. color 0 = measurement Blue
+				DimensionMap mapToSave = imMap.copy();
+				mapToSave.put("Point", "" + pointToMeasure.id);
+				if(regionId >=0)
+				{
+					mapToSave.put("Region", "" + regionId);
+				}
+				// Write the data to the ongoing file
+				this.writeData(writer, mapToSave, firstChannel, stats, QMs, numPixels, pointToMeasure, nominal, measurementType);
 			}
 		}
 	}
@@ -408,7 +452,7 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 		return(name);
 	}
 
-	private void writeData(JEXTableWriter writer, DimensionMap mapToSave, String firstChannel, ImageStatistics stats, IdPoint p, double nominal, String measurementType)
+	private void writeData(JEXTableWriter writer, DimensionMap mapToSave, String firstChannel, ImageStatistics stats, Double[] QMs, Integer numPixels, IdPoint p, double nominal, String measurementType)
 	{
 		// DimensionMap mapToSave = map.copy();
 		String color = mapToSave.remove(this.colorDimName);
@@ -481,6 +525,18 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 			measurement = stats.kurtosis;
 			mapToSave.put("Measurement", "Kurtosis");
 			writer.writeData(mapToSave, new Double(measurement)); // Don't need to subtract offset in this case
+		}
+		if(measurementType.equals("All") ||measurementType.equals("Upper and Lower Quantile Mean"))
+		{
+			int i = 0;
+			for(Double QM : QMs)
+			{
+				mapToSave.put("Measurement",  "QuantileMean<" + formatD.format(quantileDoubles[i]) + ">");
+				writer.writeData(mapToSave, new Double(QM.doubleValue()-nominal));
+				i = i + 1;
+			}
+			mapToSave.put("Measurement", "numPixels");
+			writer.writeData(mapToSave, numPixels);
 		}
 	}
 }

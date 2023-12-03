@@ -243,6 +243,22 @@ public class StatisticsUtility {
 		}
 		return result;
 	}
+	
+	/**
+	 * Return the mean value of the list
+	 * 
+	 * @param dList
+	 * @return
+	 */
+	public static double mean(float[] floats)
+	{
+		double result = 0;
+		for (float d : floats)
+		{
+			result = result + d / floats.length;
+		}
+		return result;
+	}
 
 	/**
 	 * Return the min of the list
@@ -1479,6 +1495,7 @@ public class StatisticsUtility {
 		return median(v);
 	}
 
+
 	public static Vector<Point> generateRandomPointsInRectangularRegion(Interval interval, int numPoints)
 	{
 		// the number of dimensions
@@ -1579,6 +1596,44 @@ public class StatisticsUtility {
 			ret[i] = randomAccess.get().getRealDouble();
 		}
 
+		return ret;
+	}
+	
+	public static Double quantileMean(double[] pixelsCopy, double quantile)
+	{
+		if(pixelsCopy.length == 0)
+		{
+			return null;
+		}
+		if(quantile == 0.0)
+		{
+			return mean(pixelsCopy);
+		}
+		if(pixelsCopy.length == 1)
+		{
+			return new Double(pixelsCopy[0]);
+		}
+		Arrays.sort(pixelsCopy);
+		int i = (int) Math.ceil((pixelsCopy.length-1)*(Math.abs(quantile)/100.0));
+		if(quantile < 0)
+		{
+			return mean(Arrays.copyOfRange(pixelsCopy, 0, i-1));
+		}
+		else
+		{
+			return mean(Arrays.copyOfRange(pixelsCopy, i, pixelsCopy.length));
+		}
+	}
+	
+	public static Double[] quantileMeans(double[] pixelsCopy, double[] quantiles)
+	{
+		Double[] ret = new Double[quantiles.length];
+		int i = 0;
+		for(double d : quantiles)
+		{
+			ret[i] = quantileMean(pixelsCopy, d);
+			i = i + 1;
+		}
 		return ret;
 	}
 
