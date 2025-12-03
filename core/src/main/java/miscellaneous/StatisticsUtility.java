@@ -1599,43 +1599,43 @@ public class StatisticsUtility {
 		return ret;
 	}
 	
-	public static Double quantileMean(double[] pixelsCopy, double quantile)
+	public static Double[] quantileMean(double[] pixelsCopy, double loQuantile_incl, double hiQuantile_incl)
 	{
+		Double[] ret = new Double[1];
+		if(loQuantile_incl > hiQuantile_incl)
+		{
+			return null;
+		}
 		if(pixelsCopy.length == 0)
 		{
 			return null;
 		}
-		if(quantile == 0.0)
+		if(loQuantile_incl == 0.0 && hiQuantile_incl == 1.0)
 		{
-			return mean(pixelsCopy);
+			ret[0] = mean(pixelsCopy);
 		}
 		if(pixelsCopy.length == 1)
 		{
-			return new Double(pixelsCopy[0]);
+			ret[0] = pixelsCopy[0];
 		}
 		Arrays.sort(pixelsCopy);
-		int i = (int) Math.ceil((pixelsCopy.length-1)*(Math.abs(quantile)/100.0));
-		if(quantile < 0)
-		{
-			return mean(Arrays.copyOfRange(pixelsCopy, 0, i-1));
-		}
-		else
-		{
-			return mean(Arrays.copyOfRange(pixelsCopy, i, pixelsCopy.length));
-		}
-	}
-	
-	public static Double[] quantileMeans(double[] pixelsCopy, double[] quantiles)
-	{
-		Double[] ret = new Double[quantiles.length];
-		int i = 0;
-		for(double d : quantiles)
-		{
-			ret[i] = quantileMean(pixelsCopy, d);
-			i = i + 1;
-		}
+		int lo_i = (int) Math.ceil((pixelsCopy.length-1)*(Math.abs(loQuantile_incl)/100.0));
+		int hi_i = (int) Math.ceil((pixelsCopy.length-1)*(Math.abs(hiQuantile_incl)/100.0));
+		ret[0] = mean(Arrays.copyOfRange(pixelsCopy, lo_i, hi_i+1));
 		return ret;
 	}
+	
+//	public static Double[] quantileMeans(double[] pixelsCopy, double[] quantiles)
+//	{
+//		Double[] ret = new Double[quantiles.length];
+//		int i = 0;
+//		for(double d : quantiles)
+//		{
+//			ret[i] = quantileMean(pixelsCopy, d);
+//			i = i + 1;
+//		}
+//		return ret;
+//	}
 
 	/**
 	 * @param values

@@ -96,7 +96,7 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 	@ParameterMarker(uiOrder=7, name="Offset", description="Value to offset all values by. Useful if the image does not have a zero background. (final value = measured value + offset)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="0")
 	double nominal;
 	
-	@ParameterMarker(uiOrder=8, name="Quantiles", description="Comma separated list of quantiles (0.0-100.0) to use for mean calculations. Positive and negative quantiles are upper (inclusive) and lower (exclusive) means, respectively.", ui=MarkerConstants.UI_TEXTFIELD, defaultText="-50,50")
+	@ParameterMarker(uiOrder=8, name="Quantile Range", description="Comma separated list of lower (inclusive) quantile (0.0-100.0) and upper (inclusive) quantile of pixels to use for mean calculations. (e.g., 50,50 results in the median pixel)", ui=MarkerConstants.UI_TEXTFIELD, defaultText="50,50")
 	String quantiles;
 	
 	double[] quantileDoubles = null;
@@ -132,7 +132,7 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 		if(maximaRoiData == null || !maximaRoiData.getTypeName().getType().matches(JEXData.ROI))
 		{
 			return false;
-		}		
+		}	
 
 		// Gather parameters
 		int roiType = ROIPlus.ROI_RECT;
@@ -157,6 +157,11 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 			Double q = new Double(quantileString);
 			this.quantileDoubles[i] = q;
 			i = i + 1;
+		}
+		
+		if(this.quantileDoubles[0] > this.quantileDoubles[1])
+		{
+			JEXDialog.messageDialog("The lower quantile must be larger than the upper quantile. Returning false.", this);
 		}
 
 		// Catch bad scenarios
@@ -423,7 +428,7 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 					vals[i] = imp.getf(pixelLoc.x, pixelLoc.y);
 					i = i + 1;
 				}
-				QMs = StatisticsUtility.quantileMeans(vals, quantileDoubles);
+				QMs = StatisticsUtility.quantileMean(vals, quantileDoubles[0], quantileDoubles[1]);
 				numPixels = pixelLocs.length;
 			}
 			
@@ -440,6 +445,7 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 					mapToSave.put("Region", "" + regionId);
 				}
 				// Write the data to the ongoing file
+				System.out.println(mapToSave.toString());
 				this.writeData(writer, mapToSave, firstChannel, stats, QMs, numPixels, pointToMeasure, nominal, measurementType);
 			}
 		}
@@ -477,7 +483,7 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 		{
 			color = "NULL";
 		}
-		mapToSave.put("Channel", color);
+		mapToSave.put(this.colorDimName, color);
 		if(measurementType.equals("All") || measurementType.equals("Median"))
 		{
 			measurement = stats.median;
@@ -528,13 +534,15 @@ public class MeasureMaxima_v2 extends JEXPlugin {
 		}
 		if(measurementType.equals("All") ||measurementType.equals("Upper and Lower Quantile Mean"))
 		{
-			int i = 0;
-			for(Double QM : QMs)
-			{
-				mapToSave.put("Measurement",  "QuantileMean<" + formatD.format(quantileDoubles[i]) + ">");
-				writer.writeData(mapToSave, new Double(QM.doubleValue()-nominal));
-				i = i + 1;
-			}
+			mapToSave.put("Measurement",  "QuantileMean<" + formatD.format(quantileDoubles[0]) + "-" + formatD.format(quantileDoubles[1]) + ">");
+			writer.writeData(mapToSave, new Double(QMs[0].doubleValue()-nominal));
+//			int i = 0;
+//			for(Double QM : QMs)
+//			{
+//				mapToSave.put("Measurement",  "QuantileMean<" + formatD.format(quantileDoubles[i]) + ">");
+//				writer.writeData(mapToSave, new Double(QM.doubleValue()-nominal));
+//				i = i + 1;
+//			}
 			mapToSave.put("Measurement", "numPixels");
 			writer.writeData(mapToSave, numPixels);
 		}
